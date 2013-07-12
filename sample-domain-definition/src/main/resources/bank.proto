@@ -1,0 +1,65 @@
+package sample_bank_account;
+
+option java_package = "com.example.generated_by_protoc";
+option java_outer_classname = "BankProtos";
+
+message User {
+   required int32 id = 1;
+
+   repeated int32 accountId = 2;
+
+   required string name = 3;
+
+   required string surname = 4;
+
+   message Address {
+      required string street = 1;
+      required string postCode = 2;
+   }
+
+   repeated Address address = 5;
+
+   optional int32 age = 6;   // persisting age instead of birth date is not ideal but is ok for our sample code
+
+   enum Gender {
+      MALE = 0;    //NOTE: It seem negative values are accepted too!
+      FEMALE = 1;
+   }
+
+   optional Gender gender = 7;
+}
+
+message Account {
+   required int32 id = 1;
+
+   optional string description = 2;
+
+   optional group Limits = 3 {
+      optional double maxDailyWithdrawalLimit = 1;
+      optional double maxDailyOnlineTransactionLimit = 2;
+   }
+}
+
+message Transaction {
+   required int32 id = 1;
+
+   optional string description = 2;
+
+   required int32 accountId = 3;
+
+   required fixed64 date = 4;  // there is no native Date type in protobuf so we have to store it as a long
+
+   required double amount = 5; // how do I store a BigDecimal? maybe as a byte array ..
+
+   required bool debit = 6;
+}
+
+message int_array {
+   repeated int32 theArray = 1;
+}
+
+message user_list {
+   repeated User theList = 1;
+}
+
+//todo demonstrate collection of 'any'

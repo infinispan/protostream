@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.infinispan.protostream</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>sample-domain-definition</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Domain model definitions in proto file</name>
+    <description>
+        Defines entities in a protobuf file which is then compiled into a binary descriptor and both proto and
+        its binary counterpart are packaged into a jar to be used by other projects.
+    </description>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.proto</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>target</directory>
+                <includes>
+                    <include>**/*.protobin</include>
+                </includes>
+            </resource>
+        </resources>
+
+        <plugins>
+            <!-- Execute protoc to parse our proto definitions and generate the serialized descriptor set. -->
+            <!-- Ideally, we should use a dedicated maven plugin for this but none of the 3-4 available plugins actually work for us. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- please make sure protoc is installed and available in your path -->
+                    <executable>protoc</executable>
+                    <workingDirectory>${project.build.directory}</workingDirectory>
+                    <arguments>
+                        <argument>--proto_path=${project.basedir}/src/main/resources</argument>
+                        <argument>${project.basedir}/src/main/resources/bank.proto</argument>
+                        <argument>--descriptor_set_out=${project.build.directory}/bank.protobin</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

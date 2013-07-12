@@ -1,0 +1,35 @@
+package org.infinispan.protostream;
+
+// We use this wrapper to provide implicit wrapping
+// Protobuf messages do not identify the message type, so we define our own wrapper just to be able to indicate
+// the type of the top level value/message that is wrapped
+message WrappedMessage {
+   // one of these fields is used if the wrapped value is a scalar type
+   optional double wrappedDouble = 1;
+   optional float wrappedFloat = 2;
+   optional int64 wrappedInt64 = 3;
+   optional uint64 wrappedUInt64 = 4;
+   optional int32 wrappedInt32 = 5;
+   optional fixed64 wrappedFixed64 = 6;
+   optional fixed32 wrappedFixed32 = 7;
+   optional bool wrappedBool = 8;
+   optional string wrappedString = 9;
+   optional bytes wrappedBytes = 10;
+   optional uint32 wrappedUInt32 = 11;
+   optional sfixed32 wrappedSFixed32 = 12;
+   optional sfixed64 wrappedSFixed64 = 13;
+   optional sint32 wrappedSInt32 = 14;
+   optional sint64 wrappedSInt64 = 15;
+
+   // this field is used only if the wrapped value is a message or an enum
+   optional string wrappedDescriptorFullName = 16;
+
+   // this is used if the wrapped value is a message
+   optional bytes wrappedMessageBytes = 17;
+
+   // this is used if the wrapped value is an enum
+   optional int32 wrappedEnum = 18;
+}
+
+
+//todo how do we handle arrays and collections?
