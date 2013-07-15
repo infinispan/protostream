@@ -6,12 +6,11 @@
     <parent>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0.Alpha1</version>
         <relativePath>parent/pom.xml</relativePath>
     </parent>
 
     <artifactId>protostream-aggregator</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Aggregator module for the ProtoStream project</name>

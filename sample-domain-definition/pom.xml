@@ -6,13 +6,11 @@
     <parent>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0.Alpha1</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
     <artifactId>sample-domain-definition</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
 
     <name>Domain model definitions in proto file</name>
     <description>

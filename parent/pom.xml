@@ -5,28 +5,71 @@
 
     <groupId>org.infinispan.protostream</groupId>
     <artifactId>parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0.Alpha1</version>
     <packaging>pom</packaging>
 
     <name>Parent for all ProtoStream modules</name>
     <description>Parent for all ProtoStream modules</description>
+    <url>http://www.infinispan.org</url>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/
-        </jboss.releases.repo.url>
-        <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots
-        </jboss.snapshots.repo.url>
-        <protobuf.version>2.5.0</protobuf.version>
-        <junit.version>4.11</junit.version>
-    </properties>
+    <organization>
+        <name>JBoss, a division of Red Hat</name>
+        <url>http://www.jboss.org</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>placeholder</id>
+            <name>See http://www.infinispan.org for a complete list of contributors</name>
+        </developer>
+    </developers>
+
+    <mailingLists>
+        <mailingList>
+            <name>Infinispan Issues</name>
+            <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</subscribe>
+            <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</unsubscribe>
+            <post>infinispan-issues@lists.jboss.org</post>
+            <archive>http://lists.jboss.org/pipermail/infinispan-issues/</archive>
+        </mailingList>
+        <mailingList>
+            <name>Infinispan Developers</name>
+            <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
+            <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
+            <post>infinispan-dev@lists.jboss.org</post>
+            <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
+        </mailingList>
+    </mailingLists>
 
     <scm>
         <connection>scm:git:git@github.com:infinispan/protostream.git</connection>
         <developerConnection>scm:git:git@github.com:infinispan/protostream.git</developerConnection>
         <url>https://github.com/infinispan/protostream</url>
     </scm>
+
+    <issueManagement>
+        <system>jira</system>
+        <url>https://issues.jboss.org/browse/ISPN</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>TeamCity</system>
+        <url>http://ci.infinispan.org</url>
+        <notifiers>
+            <notifier>
+                <type>mail</type>
+                <address>infinispan-commits@lists.jboss.org</address>
+            </notifier>
+        </notifiers>
+    </ciManagement>
 
     <distributionManagement>
         <repository>
@@ -41,6 +84,15 @@
             <url>${jboss.snapshots.repo.url}</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2</jboss.releases.repo.url>
+        <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots</jboss.snapshots.repo.url>
+        <protobuf.version>2.5.0</protobuf.version>
+        <junit.version>4.11</junit.version>
+    </properties>
 
     <repositories>
         <repository>
@@ -125,4 +177,37 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <profiles>
+        <profile>
+            <id>extras</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- Make sure we generate src jars too -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                    <goal>test-jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <inherited>true</inherited>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <!-- By default create OSGI bundles -->
+                <packaging>bundle</packaging>
+            </properties>
+        </profile>
+    </profiles>
 </project>
