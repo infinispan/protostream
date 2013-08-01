@@ -13,7 +13,7 @@ import org.infinispan.protostream.domain.Transaction;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.domain.marshallers.AccountMarshaller;
 import org.infinispan.protostream.domain.marshallers.AddressMarshaller;
-import org.infinispan.protostream.domain.marshallers.GenderEncoder;
+import org.infinispan.protostream.domain.marshallers.GenderMarshaller;
 import org.infinispan.protostream.domain.marshallers.TransactionMarshaller;
 import org.infinispan.protostream.domain.marshallers.UserMarshaller;
 import org.junit.Test;
@@ -44,7 +44,7 @@ public class MarshallingWithWrappingTest {
          }
 
          @Override
-         public int[] readFrom(ProtobufReader reader) throws IOException {
+         public int[] readFrom(ProtoStreamReader reader) throws IOException {
             Integer[] x = reader.readArray("theArray", Integer.class);
             int[] y = new int[x.length];
             for (int i = 0; i < x.length; i++) {
@@ -54,7 +54,7 @@ public class MarshallingWithWrappingTest {
          }
 
          @Override
-         public void writeTo(ProtobufWriter writer, int[] ints) throws IOException {
+         public void writeTo(ProtoStreamWriter writer, int[] ints) throws IOException {
             Integer[] x = new Integer[ints.length];
             for (int i = 0; i < x.length; i++) {
                x[i] = ints[i];
@@ -81,12 +81,12 @@ public class MarshallingWithWrappingTest {
          }
 
          @Override
-         public ArrayList readFrom(ProtobufReader reader) throws IOException {
+         public ArrayList readFrom(ProtoStreamReader reader) throws IOException {
             return reader.readCollection("theList", new ArrayList<User>(), User.class);
          }
 
          @Override
-         public void writeTo(ProtobufWriter writer, ArrayList list) throws IOException {
+         public void writeTo(ProtoStreamWriter writer, ArrayList list) throws IOException {
             writer.writeCollection("theList", list, User.class);
          }
       });
@@ -172,7 +172,7 @@ public class MarshallingWithWrappingTest {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       ctx.registerProtofile("/bank.protobin");
       ctx.registerMarshaller(User.class, new UserMarshaller());
-      ctx.registerEnumEncoder(User.Gender.class, new GenderEncoder());
+      ctx.registerMarshaller(User.Gender.class, new GenderMarshaller());
       ctx.registerMarshaller(Address.class, new AddressMarshaller());
       ctx.registerMarshaller(Account.class, new AccountMarshaller());
       ctx.registerMarshaller(Transaction.class, new TransactionMarshaller());

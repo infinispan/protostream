@@ -39,7 +39,7 @@ abstract class MessageContext<E extends MessageContext> {
    Descriptors.FieldDescriptor getFieldId(String fieldName) {
       Descriptors.FieldDescriptor fd = fieldDescriptors.get(fieldName);
       if (fd == null) {
-         throw new IllegalArgumentException("Unknown field : " + fieldName);   //todo throw a better exception
+         throw new IllegalArgumentException("Unknown field : " + fieldName);   //todo [anistor] throw a better exception
       }
       return fd;
    }

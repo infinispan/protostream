@@ -25,7 +25,7 @@ public interface SerializationContext {
 
    Descriptors.EnumDescriptor getEnumDescriptor(String fullName);
 
-   <T> void registerMarshaller(Class<? extends T> clazz, MessageMarshaller<T> marshaller);
+   <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller);
 
    /**
     * Checks if the message or enum type can be marshalled (a marshaller is defined for it).
@@ -35,13 +35,7 @@ public interface SerializationContext {
     */
    boolean canMarshall(Class clazz);
 
-   <T> MessageMarshaller<T> getMarshaller(String descriptorFullName);
+   <T> BaseMarshaller<T> getMarshaller(String descriptorFullName);
 
-   <T> MessageMarshaller<T> getMarshaller(Class<T> clazz);
-
-   <T extends Enum<T>> void registerEnumEncoder(Class<T> clazz, EnumEncoder<T> enumEncoder);
-
-   <T extends Enum<T>> EnumEncoder<T> getEnumEncoder(String descriptorFullName);
-
-   <T extends Enum<T>> EnumEncoder<T> getEnumEncoder(Class<T> clazz);
+   <T> BaseMarshaller<T> getMarshaller(Class<T> clazz);
 }

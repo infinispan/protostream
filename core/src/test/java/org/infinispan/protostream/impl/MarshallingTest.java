@@ -12,7 +12,7 @@ import org.infinispan.protostream.domain.Transaction;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.domain.marshallers.AccountMarshaller;
 import org.infinispan.protostream.domain.marshallers.AddressMarshaller;
-import org.infinispan.protostream.domain.marshallers.GenderEncoder;
+import org.infinispan.protostream.domain.marshallers.GenderMarshaller;
 import org.infinispan.protostream.domain.marshallers.TransactionMarshaller;
 import org.infinispan.protostream.domain.marshallers.UserMarshaller;
 import org.junit.Test;
@@ -78,7 +78,7 @@ public class MarshallingTest {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       ctx.registerProtofile("/bank.protobin");
       ctx.registerMarshaller(User.class, new UserMarshaller());
-      ctx.registerEnumEncoder(User.Gender.class, new GenderEncoder());
+      ctx.registerMarshaller(User.Gender.class, new GenderMarshaller());
       ctx.registerMarshaller(Address.class, new AddressMarshaller());
       ctx.registerMarshaller(Account.class, new AccountMarshaller());
       ctx.registerMarshaller(Transaction.class, new TransactionMarshaller());

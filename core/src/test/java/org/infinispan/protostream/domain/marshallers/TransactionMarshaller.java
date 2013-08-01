@@ -17,7 +17,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
    }
 
    @Override
-   public Transaction readFrom(ProtobufReader reader) throws IOException {
+   public Transaction readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
       String description = reader.readString("description");
       int accountId = reader.readInt("accountId");
@@ -36,7 +36,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
    }
 
    @Override
-   public void writeTo(ProtobufWriter writer, Transaction transaction) throws IOException {
+   public void writeTo(ProtoStreamWriter writer, Transaction transaction) throws IOException {
       writer.writeInt("id", transaction.getId());
       writer.writeString("description", transaction.getDescription());
       writer.writeInt("accountId", transaction.getAccountId());

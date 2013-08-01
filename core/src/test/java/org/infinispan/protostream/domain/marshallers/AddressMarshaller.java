@@ -16,7 +16,7 @@ public class AddressMarshaller implements MessageMarshaller<Address> {
    }
 
    @Override
-   public Address readFrom(ProtobufReader reader) throws IOException {
+   public Address readFrom(ProtoStreamReader reader) throws IOException {
       String street = reader.readString("street");
       String postCode = reader.readString("postCode");
 
@@ -27,7 +27,7 @@ public class AddressMarshaller implements MessageMarshaller<Address> {
    }
 
    @Override
-   public void writeTo(ProtobufWriter writer, Address address) throws IOException {
+   public void writeTo(ProtoStreamWriter writer, Address address) throws IOException {
       writer.writeString("street", address.getStreet());
       writer.writeString("postCode", address.getPostCode());
    }

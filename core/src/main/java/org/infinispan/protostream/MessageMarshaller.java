@@ -6,19 +6,17 @@ import java.util.Collection;
 /**
  * @author anistor@redhat.com
  */
-public interface MessageMarshaller<T> {
+public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
-   String getFullName();
+   T readFrom(ProtoStreamReader reader) throws IOException;
 
-   T readFrom(ProtobufReader reader) throws IOException;
-
-   void writeTo(ProtobufWriter writer, T t) throws IOException;
+   void writeTo(ProtoStreamWriter writer, T t) throws IOException;
 
    /**
     * An high-level interface for the wire encoding of a protobuf stream that allows reading named and typed message
     * fields.
     */
-   interface ProtobufReader {
+   interface ProtoStreamReader {
 
       /**
        * Can't return an {@code int} here because the field might be declared optional and missing so we might need to
@@ -36,7 +34,7 @@ public interface MessageMarshaller<T> {
 
       String readString(String fieldName) throws IOException;
 
-      byte[] readBytes(String fieldName) throws IOException;    //todo handle repeatable bytes[] fields
+      byte[] readBytes(String fieldName) throws IOException;    //todo [anistor] handle repeatable bytes[] fields
 
       <A> A readObject(String fieldName, Class<? extends A> clazz) throws IOException;
 
@@ -45,7 +43,7 @@ public interface MessageMarshaller<T> {
       <A> A[] readArray(String fieldName, Class<? extends A> clazz) throws IOException;
    }
 
-   interface ProtobufWriter {
+   interface ProtoStreamWriter {
 
       void writeInt(String fieldName, Integer value) throws IOException;
 

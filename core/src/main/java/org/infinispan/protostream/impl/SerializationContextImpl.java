@@ -2,9 +2,10 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
-import org.infinispan.protostream.EnumEncoder;
-import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.BaseMarshaller;
+import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.WrappedMessage;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,15 +25,14 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private Map<String, Descriptors.EnumDescriptor> enumDescriptors = new HashMap<String, Descriptors.EnumDescriptor>();
 
-   private Map<Class<?>, MessageMarshaller<?>> marshallersByClass = new HashMap<Class<?>, MessageMarshaller<?>>();
-   private Map<String, MessageMarshaller<?>> marshallersByName = new HashMap<String, MessageMarshaller<?>>();
+   private Map<Class<?>, BaseMarshaller<?>> marshallersByClass = new HashMap<Class<?>, BaseMarshaller<?>>();
 
-   private Map<Class<?>, EnumEncoder<?>> enumEncodersByClass = new HashMap<Class<?>, EnumEncoder<?>>();
-   private Map<String, EnumEncoder<?>> enumEncodersByName = new HashMap<String, EnumEncoder<?>>();
+   private Map<String, BaseMarshaller<?>> marshallersByName = new HashMap<String, BaseMarshaller<?>>();
 
    public SerializationContextImpl() {
       try {
          registerProtofile("/message-wrapping.protobin");
+         registerMarshaller(WrappedMessage.class, new WrappedMessageMarshaller());
       } catch (IOException e) {
          e.printStackTrace();  // TODO: Customise this generated block
       } catch (Descriptors.DescriptorValidationException e) {
@@ -116,20 +116,25 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public <T> void registerMarshaller(Class<? extends T> clazz, MessageMarshaller<T> marshaller) {
-      getMessageDescriptor(marshaller.getFullName()); // we try to validate that a message descriptor exists
+   public <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller) {
+      // we try to validate first that a message descriptor exists
+      if (marshaller instanceof EnumMarshaller) {
+         getEnumDescriptor(marshaller.getFullName());
+      } else {
+         getMessageDescriptor(marshaller.getFullName());
+      }
       marshallersByClass.put(clazz, marshaller);
       marshallersByName.put(marshaller.getFullName(), marshaller);
    }
 
    @Override
    public boolean canMarshall(Class clazz) {
-      return Enum.class.isAssignableFrom(clazz) ? enumEncodersByClass.containsKey(clazz) : marshallersByClass.containsKey(clazz);
+      return marshallersByClass.containsKey(clazz);
    }
 
    @Override
-   public <T> MessageMarshaller<T> getMarshaller(String descriptorFullName) {
-      MessageMarshaller<T> marshaller = (MessageMarshaller<T>) marshallersByName.get(descriptorFullName);
+   public <T> BaseMarshaller<T> getMarshaller(String descriptorFullName) {
+      BaseMarshaller<T> marshaller = (BaseMarshaller<T>) marshallersByName.get(descriptorFullName);
       if (marshaller == null) {
          throw new IllegalArgumentException("No marshaller registered for " + descriptorFullName);
       }
@@ -137,35 +142,10 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public <T> MessageMarshaller<T> getMarshaller(Class<T> clazz) {
-      MessageMarshaller<T> marshaller = (MessageMarshaller<T>) marshallersByClass.get(clazz);
+   public <T> BaseMarshaller<T> getMarshaller(Class<T> clazz) {
+      BaseMarshaller<T> marshaller = (BaseMarshaller<T>) marshallersByClass.get(clazz);
       if (marshaller == null) {
          throw new IllegalArgumentException("No marshaller registered for " + clazz);
-      }
-      return marshaller;
-   }
-
-   @Override
-   public <T extends Enum<T>> void registerEnumEncoder(Class<T> clazz, EnumEncoder<T> enumEncoder) {
-      getEnumDescriptor(enumEncoder.getFullName());   // we try to validate that an enum descriptor exists
-      enumEncodersByClass.put(clazz, enumEncoder);
-      enumEncodersByName.put(enumEncoder.getFullName(), enumEncoder);
-   }
-
-   @Override
-   public <T extends Enum<T>> EnumEncoder<T> getEnumEncoder(String descriptorFullName) {
-      EnumEncoder<T> marshaller = (EnumEncoder<T>) enumEncodersByName.get(descriptorFullName);
-      if (marshaller == null) {
-         throw new IllegalArgumentException("No enum encoder registered for " + descriptorFullName);
-      }
-      return marshaller;
-   }
-
-   @Override
-   public <T extends Enum<T>> EnumEncoder<T> getEnumEncoder(Class<T> clazz) {
-      EnumEncoder<T> marshaller = (EnumEncoder<T>) enumEncodersByClass.get(clazz);
-      if (marshaller == null) {
-         throw new IllegalArgumentException("No enum encoder registered for " + clazz);
       }
       return marshaller;
    }

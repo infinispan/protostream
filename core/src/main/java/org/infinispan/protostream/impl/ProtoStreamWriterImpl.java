@@ -5,9 +5,11 @@ import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.ProtocolMessageEnum;
-import org.infinispan.protostream.EnumEncoder;
+import org.infinispan.protostream.BaseMarshaller;
+import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.UnknownFieldSet;
 
@@ -19,13 +21,13 @@ import java.util.Collection;
 /**
  * @author anistor@redhat.com
  */
-public final class ProtobufWriterImpl implements MessageMarshaller.ProtobufWriter {
+public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter {
 
    private final SerializationContext ctx;
 
    private WriteMessageContext messageContext;
 
-   public ProtobufWriterImpl(SerializationContext ctx) {
+   public ProtoStreamWriterImpl(SerializationContext ctx) {
       this.ctx = ctx;
    }
 
@@ -34,17 +36,21 @@ public final class ProtobufWriterImpl implements MessageMarshaller.ProtobufWrite
       if (t instanceof MessageLite) {
          ((MessageLite) t).writeTo(out);
       } else {
-         MessageMarshaller marshaller = ctx.getMarshaller(t.getClass());
+         BaseMarshaller marshaller = ctx.getMarshaller(t.getClass());
          Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getFullName());
          enterContext(messageDescriptor, out);
-         marshall(t, marshaller);
+         marshall(t, marshaller, out);
          exitContext();
       }
       out.flush();
    }
 
-   private void marshall(Object value, MessageMarshaller marshaller) throws IOException {
-      marshaller.writeTo(this, value);
+   private void marshall(Object value, BaseMarshaller marshaller, CodedOutputStream out) throws IOException {
+      if (marshaller instanceof MessageMarshaller) {
+         ((MessageMarshaller) marshaller).writeTo(this, value);
+      } else {
+         ((RawProtobufMarshaller) marshaller).writeTo(ctx, out, value);
+      }
       if (value instanceof Message) {
          UnknownFieldSet unknownFieldSet = ((Message) value).getUnknownFieldSet();
          if (unknownFieldSet != null) {
@@ -66,7 +72,7 @@ public final class ProtobufWriterImpl implements MessageMarshaller.ProtobufWrite
       // validate that all the required fields were written
       for (Descriptors.FieldDescriptor fd : messageContext.messageDescriptor.getFields()) {
          if (fd.isRequired() && !messageContext.writtenFields.contains(fd)) {
-            throw new IllegalStateException("Required field \"" + fd.getName() + "\" should have been written by a calling one of " + MessageMarshaller.ProtobufWriter.class.getName() + " writeXYZ(..) methods");
+            throw new IllegalStateException("Required field \"" + fd.getName() + "\" should have been written by a calling one of " + MessageMarshaller.ProtoStreamWriter.class.getName() + " writeXYZ(..) methods");
          }
       }
       messageContext = messageContext.parentContext;
@@ -395,11 +401,11 @@ public final class ProtobufWriterImpl implements MessageMarshaller.ProtobufWrite
       if (MessageLite.class.isAssignableFrom(clazz)) {
          messageContext.out.writeMessage(fd.getNumber(), (MessageLite) value);
       } else {
-         MessageMarshaller marshaller = ctx.getMarshaller(clazz);
+         BaseMarshaller marshaller = ctx.getMarshaller(clazz);
          ByteArrayOutputStream baos = new ByteArrayOutputStream();      //todo here we should use a better buffer allocation strategy
          CodedOutputStream out = CodedOutputStream.newInstance(baos);
          enterContext(fd.getMessageType(), out);
-         marshall(value, marshaller);
+         marshall(value, marshaller, out);
          out.flush();
          exitContext();
          messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_LENGTH_DELIMITED);
@@ -414,8 +420,8 @@ public final class ProtobufWriterImpl implements MessageMarshaller.ProtobufWrite
          messageContext.out.writeGroup(fd.getNumber(), (MessageLite) value);
       } else {
          enterContext(fd.getMessageType(), messageContext.out);
-         MessageMarshaller marshaller = ctx.getMarshaller(clazz);
-         marshall(value, marshaller);
+         BaseMarshaller marshaller = ctx.getMarshaller(clazz);
+         marshall(value, marshaller, messageContext.out);
          exitContext();
       }
       messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_END_GROUP);
@@ -426,7 +432,7 @@ public final class ProtobufWriterImpl implements MessageMarshaller.ProtobufWrite
       if (value instanceof ProtocolMessageEnum) {
          enumValue = ((ProtocolMessageEnum) value).getNumber();
       } else {
-         EnumEncoder<T> encoder = (EnumEncoder<T>) ctx.getEnumEncoder(value.getClass());
+         EnumMarshaller<T> encoder = (EnumMarshaller<T>) ctx.getMarshaller(value.getClass());
          enumValue = encoder.encode(value);
       }
 
@@ -451,7 +457,7 @@ public final class ProtobufWriterImpl implements MessageMarshaller.ProtobufWrite
       Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
 
       if (collection == null) {
-         if (fd.isRequired()) {
+         if (fd.isRequired()) {   // todo can a collection be required????
             throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
          }
          return;

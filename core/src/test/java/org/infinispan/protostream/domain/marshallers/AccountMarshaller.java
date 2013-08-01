@@ -16,7 +16,7 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
    }
 
    @Override
-   public Account readFrom(ProtobufReader reader) throws IOException {
+   public Account readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
       String description = reader.readString("description");
 
@@ -27,7 +27,7 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
    }
 
    @Override
-   public void writeTo(ProtobufWriter writer, Account account) throws IOException {
+   public void writeTo(ProtoStreamWriter writer, Account account) throws IOException {
       writer.writeInt("id", account.getId());
       writer.writeString("description", account.getDescription());
    }

@@ -43,9 +43,11 @@ message Account {
 
    optional string description = 2;
 
-   optional group Limits = 3 {
-      optional double maxDailyWithdrawalLimit = 1;
-      optional double maxDailyOnlineTransactionLimit = 2;
+   required fixed64 creationDate = 3;
+
+   optional group Limits = 4 {
+      optional double maxDailyLimit = 1;
+      optional double maxTransactionLimit = 2;
    }
 }
 

@@ -19,7 +19,7 @@ public class UserMarshaller implements MessageMarshaller<User> {
    }
 
    @Override
-   public User readFrom(ProtobufReader reader) throws IOException {
+   public User readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
       List<Integer> accountIds = reader.readCollection("accountId", new ArrayList<Integer>(), Integer.class);
 
@@ -43,7 +43,7 @@ public class UserMarshaller implements MessageMarshaller<User> {
    }
 
    @Override
-   public void writeTo(ProtobufWriter writer, User user) throws IOException {
+   public void writeTo(ProtoStreamWriter writer, User user) throws IOException {
       writer.writeInt("id", user.getId());
       writer.writeCollection("accountId", user.getAccountIds(), Integer.class);
       writer.writeString("name", user.getName());

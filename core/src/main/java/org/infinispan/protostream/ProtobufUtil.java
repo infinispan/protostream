@@ -3,8 +3,8 @@ package org.infinispan.protostream;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.WireFormat;
-import org.infinispan.protostream.impl.ProtobufReaderImpl;
-import org.infinispan.protostream.impl.ProtobufWriterImpl;
+import org.infinispan.protostream.impl.ProtoStreamReaderImpl;
+import org.infinispan.protostream.impl.ProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 
 import java.io.ByteArrayInputStream;
@@ -26,7 +26,7 @@ public class ProtobufUtil {
       if (t == null) {
          throw new IllegalArgumentException("Object to marshall cannot be null");
       }
-      ProtobufWriterImpl writer = new ProtobufWriterImpl(ctx);
+      ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl(ctx);
       writer.write(out, t);
    }
 
@@ -41,7 +41,7 @@ public class ProtobufUtil {
    }
 
    public static <A> A readFrom(SerializationContext ctx, CodedInputStream in, Class<A> clazz) throws IOException {
-      ProtobufReaderImpl reader = new ProtobufReaderImpl(ctx);
+      ProtoStreamReaderImpl reader = new ProtoStreamReaderImpl(ctx);
       return reader.read(in, clazz);
    }
 
@@ -77,12 +77,17 @@ public class ProtobufUtil {
    private static final int wrappedEnum = 18;
 
    public static byte[] toWrappedByteArray(SerializationContext ctx, Object t) throws IOException {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      CodedOutputStream out = CodedOutputStream.newInstance(baos);
+      toWrappedByteArray(ctx, out, t);
+      return baos.toByteArray();
+   }
+
+   //todo find better name
+   public static void toWrappedByteArray(SerializationContext ctx, CodedOutputStream out, Object t) throws IOException {
       if (t == null) {
          throw new IllegalArgumentException("Object to marshall cannot be null");
       }
-
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      CodedOutputStream out = CodedOutputStream.newInstance(baos);
 
       if (t instanceof String) {
          out.writeString(wrappedString, (String) t);
@@ -103,17 +108,17 @@ public class ProtobufUtil {
          out.writeRawBytes(bytes);
       } else if (t instanceof Enum) {
          // use an enum encoder
-         EnumEncoder enumEncoder = ctx.getEnumEncoder((Class<Enum>) t.getClass());
-         out.writeString(wrappedDescriptorFullName, enumEncoder.getFullName());
-         out.writeEnum(wrappedEnum, enumEncoder.encode((Enum) t));
+         EnumMarshaller enumMarshaller = (EnumMarshaller) ctx.getMarshaller((Class<Enum>) t.getClass());
+         out.writeString(wrappedDescriptorFullName, enumMarshaller.getFullName());
+         out.writeEnum(wrappedEnum, enumMarshaller.encode((Enum) t));
       } else {
          // this is either an unknown primitive type or a message type
          // try to use a message marshaller
-         MessageMarshaller marshaller = ctx.getMarshaller(t.getClass());
+         BaseMarshaller marshaller = ctx.getMarshaller(t.getClass());
          out.writeString(wrappedDescriptorFullName, marshaller.getFullName());
 
-         ByteArrayOutputStream buffer = new ByteArrayOutputStream();      //todo here we should use a better buffer allocation strategy
-         ProtobufWriterImpl writer = new ProtobufWriterImpl(ctx);
+         ByteArrayOutputStream buffer = new ByteArrayOutputStream();      //todo [anistor] here we should use a better buffer allocation strategy
+         ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl(ctx);
          writer.write(CodedOutputStream.newInstance(buffer), t);
 
          out.writeTag(wrappedMessageBytes, WireFormat.WIRETYPE_LENGTH_DELIMITED);
@@ -121,12 +126,11 @@ public class ProtobufUtil {
          out.writeRawBytes(buffer.toByteArray());
       }
       out.flush();
-
-      return baos.toByteArray();
    }
 
    /**
-    * Parses a top-level message that was wrapped according to the org.infinispan.protostream.WrappedMessage proto definition.
+    * Parses a top-level message that was wrapped according to the org.infinispan.protostream.WrappedMessage proto
+    * definition.
     *
     * @param ctx
     * @param bytes
@@ -140,7 +144,10 @@ public class ProtobufUtil {
    public static Object fromWrappedByteArray(SerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes, offset, length);
       CodedInputStream in = CodedInputStream.newInstance(bais);
+      return fromWrappedByteArray(ctx, in);
+   }
 
+   public static Object fromWrappedByteArray(SerializationContext ctx, CodedInputStream in) throws IOException {
       String descriptorFullName = null;
       int enumValue = -1;
       byte[] messageBytes = null;
@@ -222,14 +229,18 @@ public class ProtobufUtil {
       }
 
       if (messageBytes != null) {
-         MessageMarshaller marshaller = ctx.getMarshaller(descriptorFullName);
+         BaseMarshaller marshaller = ctx.getMarshaller(descriptorFullName);
          ByteArrayInputStream bais2 = new ByteArrayInputStream(messageBytes);
          CodedInputStream in2 = CodedInputStream.newInstance(bais2);
-         ProtobufReaderImpl reader = new ProtobufReaderImpl(ctx);
-         return reader.read(in2, marshaller);
+         if (marshaller instanceof MessageMarshaller) {
+            ProtoStreamReaderImpl reader = new ProtoStreamReaderImpl(ctx);
+            return reader.read(in2, (MessageMarshaller) marshaller);
+         } else {
+            return ((RawProtobufMarshaller) marshaller).readFrom(ctx, in2);
+         }
       } else {
-         EnumEncoder<? extends Enum> enumEncoder = ctx.getEnumEncoder(descriptorFullName);
-         return enumEncoder.decode(enumValue);
+         EnumMarshaller enumMarshaller = (EnumMarshaller) ctx.getMarshaller(descriptorFullName);
+         return enumMarshaller.decode(enumValue);
       }
    }
 }

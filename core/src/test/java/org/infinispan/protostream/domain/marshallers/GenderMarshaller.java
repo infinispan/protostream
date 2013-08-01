@@ -1,12 +1,12 @@
-package org.infinispan.protostream.sampledomain.marshallers;
+package org.infinispan.protostream.domain.marshallers;
 
-import org.infinispan.protostream.EnumEncoder;
-import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.domain.User;
 
 /**
  * @author anistor@redhat.com
  */
-public class GenderEncoder implements EnumEncoder<User.Gender> {
+public class GenderMarshaller implements EnumMarshaller<User.Gender> {
 
    @Override
    public String getFullName() {

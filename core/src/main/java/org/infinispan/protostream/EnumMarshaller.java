@@ -5,14 +5,7 @@ package org.infinispan.protostream;
  *
  * @author anistor@redhat.com
  */
-public interface EnumEncoder<E extends Enum<E>> {
-
-   /**
-    * Returns the full name of the enum as declared in the protobuf file.
-    *
-    * @return the full name of the enum type declared in the protobuf file.
-    */
-   String getFullName();
+public interface EnumMarshaller<E extends Enum<E>> extends BaseMarshaller<E> {
 
    /**
     * Decodes a an integer enum value read from the protobuf stream into a Java enum instance.

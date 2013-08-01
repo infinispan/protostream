@@ -17,9 +17,10 @@ public class MarshallerRegistration {
    public static void registerMarshallers(SerializationContext ctx) throws IOException, Descriptors.DescriptorValidationException {
       ctx.registerProtofile("/bank.protobin");
       ctx.registerMarshaller(User.class, new UserMarshaller());
-      ctx.registerEnumEncoder(User.Gender.class, new GenderEncoder());
+      ctx.registerMarshaller(User.Gender.class, new GenderMarshaller());
       ctx.registerMarshaller(Address.class, new AddressMarshaller());
       ctx.registerMarshaller(Account.class, new AccountMarshaller());
+      ctx.registerMarshaller(Account.Limits.class, new LimitsMarshaller());
       ctx.registerMarshaller(Transaction.class, new TransactionMarshaller());
    }
 }

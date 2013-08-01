@@ -1,10 +1,14 @@
 package org.infinispan.protostream;
 
-// We use this wrapper to provide implicit wrapping
-// Protobuf messages do not identify the message type, so we define our own wrapper just to be able to indicate
-// the type of the top level value/message that is wrapped
+/*
+   Protobuf messages do not indicate their message type or structure. Readers of protobuf data streams are expected to
+   know what message type to expect next in the stream.
+   WrappedMessage is intended to solve this problem of self-describing messages by allowing the stream reader to detect
+   the type of the message. Still, message structure is not provided as it would not be efficient. The user is expected
+   to have knowledge of the structure once it knows the type.
+*/
 message WrappedMessage {
-   // one of these fields is used if the wrapped value is a scalar type
+   // only one of these fields is used if the wrapped value is a scalar type
    optional double wrappedDouble = 1;
    optional float wrappedFloat = 2;
    optional int64 wrappedInt64 = 3;
@@ -29,7 +33,21 @@ message WrappedMessage {
 
    // this is used if the wrapped value is an enum
    optional int32 wrappedEnum = 18;
+
+/*
+   // this is used if the wrapped value is an enum
+   optional group wrappedEnum = 16 {
+      required string descriptorName = 1;
+      required int32 value = 2;
+   }
+
+   // this is used if the wrapped value is a message
+   optional group wrappedMessage = 17 {
+      required string descriptorName = 1;
+      required bytes value = 2;
+   }
+*/
 }
 
 
-//todo how do we handle arrays and collections?
+//todo [anistor] how do we handle arrays?

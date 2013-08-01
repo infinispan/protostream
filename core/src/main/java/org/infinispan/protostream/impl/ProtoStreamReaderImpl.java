@@ -6,9 +6,11 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 import com.google.protobuf.ProtocolMessageEnum;
-import org.infinispan.protostream.EnumEncoder;
+import org.infinispan.protostream.BaseMarshaller;
+import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 
 import java.io.IOException;
@@ -20,12 +22,10 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
-//todo [anistor] add logging. jbosslogging or use what hql-parser uses
-
 /**
  * @author anistor@redhat.com
  */
-public final class ProtobufReaderImpl implements MessageMarshaller.ProtobufReader {
+public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader {
 
    private final SerializationContext ctx;
 
@@ -49,7 +49,7 @@ public final class ProtobufReaderImpl implements MessageMarshaller.ProtobufReade
 
    private ReadMessageContext messageContext;
 
-   public ProtobufReaderImpl(SerializationContext ctx) {
+   public ProtoStreamReaderImpl(SerializationContext ctx) {
       this.ctx = ctx;
    }
 
@@ -65,11 +65,11 @@ public final class ProtobufReaderImpl implements MessageMarshaller.ProtobufReade
          }
       }
 
-      MessageMarshaller<A> marshaller = ctx.getMarshaller(clazz);
+      BaseMarshaller<A> marshaller = ctx.getMarshaller(clazz);
       Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getFullName());
       resetContext();
       enterContext(messageDescriptor, in);
-      A a = marshaller.readFrom(this);
+      A a = marshaller instanceof MessageMarshaller ? ((MessageMarshaller<A>) marshaller).readFrom(this) : ((RawProtobufMarshaller<A>) marshaller).readFrom(ctx, in);
       exitContext();
       return a;
    }
@@ -185,7 +185,9 @@ public final class ProtobufReaderImpl implements MessageMarshaller.ProtobufReade
 
    @Override
    public Integer readInt(String fieldName) throws IOException {
-      return (Integer) readPrimitive(fieldName, Descriptors.FieldDescriptor.JavaType.INT);
+      Object o = readPrimitive(fieldName, Descriptors.FieldDescriptor.JavaType.INT);
+      if (o == null) return null;
+      return o instanceof Integer ? (Integer) o : ((Number) o).intValue();  //todo [anistor] hack!
    }
 
    @Override
@@ -321,8 +323,8 @@ public final class ProtobufReaderImpl implements MessageMarshaller.ProtobufReade
          }
       }
 
-      EnumEncoder<A> enumEncoder = ctx.getEnumEncoder(clazz);
-      A decoded = enumEncoder.decode(enumValue);
+      EnumMarshaller<A> enumMarshaller = (EnumMarshaller<A>) ctx.getMarshaller(clazz);
+      A decoded = enumMarshaller.decode(enumValue);
 
       // the enum value was not recognized by the decoder so rather than discarding it we add it to the unknown
       if (decoded == null) {
@@ -333,18 +335,18 @@ public final class ProtobufReaderImpl implements MessageMarshaller.ProtobufReade
    }
 
    private <A> A readObject(Descriptors.FieldDescriptor fd, Class<A> clazz, CodedInputStream in, int length) throws IOException {
-      MessageMarshaller<A> marshaller = ctx.getMarshaller(clazz);
+      BaseMarshaller<A> marshaller = ctx.getMarshaller(clazz);
       enterContext(fd.getMessageType(), in);
       A a;
       if (fd.getType() == Descriptors.FieldDescriptor.Type.GROUP) {
-         a = unmarshall(marshaller);
+         a = unmarshall(marshaller, in);
          in.checkLastTagWas(WireFormat.makeTag(fd.getNumber(), WireFormat.WIRETYPE_END_GROUP));
       } else if (fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
          if (length < 0) {
             length = in.readRawVarint32();
          }
          int oldLimit = in.pushLimit(length);
-         a = unmarshall(marshaller);
+         a = unmarshall(marshaller, in);
          in.checkLastTagWas(0);
          in.popLimit(oldLimit);
       } else {
@@ -354,8 +356,8 @@ public final class ProtobufReaderImpl implements MessageMarshaller.ProtobufReade
       return a;
    }
 
-   private <A> A unmarshall(MessageMarshaller<A> marshaller) throws IOException {
-      A a = marshaller.readFrom(this);
+   private <A> A unmarshall(BaseMarshaller<A> marshaller, CodedInputStream in) throws IOException {
+      A a = marshaller instanceof MessageMarshaller ? ((MessageMarshaller<A>) marshaller).readFrom(this) : ((RawProtobufMarshaller<A>) marshaller).readFrom(ctx, in);
       messageContext.unknownFieldSet.mergeFrom(messageContext.in);
       if (a instanceof Message && !messageContext.unknownFieldSet.isEmpty()) {
          ((Message) a).setUnknownFieldSet(messageContext.unknownFieldSet);
