@@ -85,7 +85,7 @@ public class ProtobufUtil {
       CodedOutputStream out = CodedOutputStream.newInstance(baos);
 
       if (t instanceof String) {
-         out.writeString(wrappedInt64, (String) t);
+         out.writeString(wrappedString, (String) t);
       } else if (t instanceof Long) {
          out.writeInt64(wrappedInt64, (Long) t);
       } else if (t instanceof Integer) {
@@ -111,20 +111,28 @@ public class ProtobufUtil {
          // try to use a message marshaller
          MessageMarshaller marshaller = ctx.getMarshaller(t.getClass());
          out.writeString(wrappedDescriptorFullName, marshaller.getFullName());
-         out.writeTag(wrappedMessageBytes, WireFormat.WIRETYPE_LENGTH_DELIMITED);
 
-         ByteArrayOutputStream baos2 = new ByteArrayOutputStream();      //todo here we should use a better buffer allocation strategy
-         CodedOutputStream out2 = CodedOutputStream.newInstance(baos2);
+         ByteArrayOutputStream buffer = new ByteArrayOutputStream();      //todo here we should use a better buffer allocation strategy
          ProtobufWriterImpl writer = new ProtobufWriterImpl(ctx);
-         writer.write(out2, t);
-         out.writeRawVarint32(baos2.size());
-         out.writeRawBytes(baos2.toByteArray());
+         writer.write(CodedOutputStream.newInstance(buffer), t);
+
+         out.writeTag(wrappedMessageBytes, WireFormat.WIRETYPE_LENGTH_DELIMITED);
+         out.writeRawVarint32(buffer.size());
+         out.writeRawBytes(buffer.toByteArray());
       }
       out.flush();
 
       return baos.toByteArray();
    }
 
+   /**
+    * Parses a top-level message that was wrapped according to the org.infinispan.protostream.WrappedMessage proto definition.
+    *
+    * @param ctx
+    * @param bytes
+    * @return
+    * @throws IOException
+    */
    public static Object fromWrappedByteArray(SerializationContext ctx, byte[] bytes) throws IOException {
       return fromWrappedByteArray(ctx, bytes, 0, bytes.length);
    }

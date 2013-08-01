@@ -3,7 +3,7 @@ package org.infinispan.protostream.impl;
 /**
  * @author anistor@redhat.com
  */
-final class WireFormat {
+public final class WireFormat {
 
    public static final int WIRETYPE_VARINT = com.google.protobuf.WireFormat.WIRETYPE_VARINT;
    public static final int WIRETYPE_FIXED64 = com.google.protobuf.WireFormat.WIRETYPE_FIXED64;

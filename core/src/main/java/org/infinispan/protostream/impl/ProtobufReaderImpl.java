@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
+//todo [anistor] add logging. jbosslogging or use what hql-parser uses
+
 /**
  * @author anistor@redhat.com
  */
@@ -164,6 +166,7 @@ public final class ProtobufReaderImpl implements MessageMarshaller.ProtobufReade
                case SINT64:
                   return messageContext.in.readSInt64();
                default:
+                  throw new IOException("Unexpected field type : " + fd.getType());
             }
          }
          messageContext.unknownFieldSet.mergeFieldFrom(tag, messageContext.in);

@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0.0.Alpha1</version>
+        <version>1.0.0.Alpha2</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
@@ -39,30 +39,30 @@
 
     <build>
         <plugins>
+            <!-- Execute protoc to parse our proto definitions and generate the serialized descriptor set. -->
+            <!-- Ideally, we should use a dedicated maven plugin for this but none of the 3-4 available plugins actually work for us. -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.8</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
                 <executions>
                     <execution>
-                        <phase>initialize</phase>
+                        <phase>generate-resources</phase>
                         <goals>
-                            <goal>unpack</goal>
+                            <goal>exec</goal>
                         </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.infinispan.protostream</groupId>
-                                    <artifactId>sample-domain-definition</artifactId>
-                                    <version>${project.version}</version>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/protobuf</outputDirectory>
-                                    <includes>**/*.proto,**/*.protobin</includes>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <!-- please make sure protoc is installed and available in your path -->
+                    <executable>protoc</executable>
+                    <workingDirectory>${project.build.directory}</workingDirectory>
+                    <arguments>
+                        <argument>--proto_path=${project.basedir}/src/main/resources</argument>
+                        <argument>${project.basedir}/src/main/resources/message-wrapping.proto</argument>
+                        <argument>--descriptor_set_out=${project.build.directory}/message-wrapping.protobin</argument>
+                    </arguments>
+                </configuration>
             </plugin>
 
             <plugin>

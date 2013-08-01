@@ -7,7 +7,7 @@ import java.io.IOException;
 
 /**
  * {@code UnknownFieldSet} is used to keep track of fields which were seen when parsing a protocol message but whose
- * field numbers are not recognized. This usually  occurs when new fields are added to a message type and then messages
+ * field numbers are not recognized. This usually occurs when new fields are added to a message type and then messages
  * containing those fields are read by old versions of software that was built before the new types were added.
  */
 public interface UnknownFieldSet {
