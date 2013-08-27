@@ -72,6 +72,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       // validate that all the required fields were written
       for (Descriptors.FieldDescriptor fd : messageContext.messageDescriptor.getFields()) {
          if (fd.isRequired() && !messageContext.writtenFields.contains(fd)) {
+            //todo [anistor] indicate the proper merthod based on field type rather than writeXYZ. also include the full name of the message descriptor
             throw new IllegalStateException("Required field \"" + fd.getName() + "\" should have been written by a calling one of " + MessageMarshaller.ProtoStreamWriter.class.getName() + " writeXYZ(..) methods");
          }
       }
@@ -80,7 +81,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeInt(String fieldName, Integer value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -94,7 +95,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeInt(String fieldName, int value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -122,7 +123,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeLong(String fieldName, long value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -150,7 +151,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeLong(String fieldName, Long value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -164,7 +165,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeDouble(String fieldName, double value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -179,7 +180,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeDouble(String fieldName, Double value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -193,7 +194,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeFloat(String fieldName, float value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -208,7 +209,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeFloat(String fieldName, Float value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -222,12 +223,12 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBoolean(String fieldName, boolean value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
       switch (fd.getType()) {
-         case FLOAT:
+         case BOOL:
             messageContext.out.writeBool(fd.getNumber(), value);
             break;
          default:
@@ -237,7 +238,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBoolean(String fieldName, Boolean value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -333,7 +334,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeString(String fieldName, String value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -353,7 +354,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBytes(String fieldName, byte[] value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -375,7 +376,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeObject(String fieldName, Object value, Class clazz) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -454,7 +455,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
    @Override
    public <T> void writeCollection(String fieldName, Collection<T> collection, Class<T> clazz) throws IOException {
       // a repeated field is never marked as required
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (collection == null) {
          if (fd.isRequired()) {   // todo can a collection be required????
@@ -485,7 +486,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
    @Override
    public <T> void writeArray(String fieldName, T[] array, Class<T> clazz) throws IOException {
       // a repeated field is never marked as required
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
 
       if (array == null) {
          if (fd.isRequired()) {

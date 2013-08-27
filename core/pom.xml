@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0.0.Alpha3</version>
+        <version>1.0.0.Alpha4</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
@@ -58,27 +58,50 @@
             <!-- Execute protoc to parse our proto definitions and generate the serialized descriptor set. -->
             <!-- Ideally, we should use a dedicated maven plugin for this but none of the 3-4 available plugins actually work for us. -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
                 <executions>
                     <execution>
+                        <id>compile-protoc</id>
                         <phase>generate-resources</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/protobuf-descriptors/"/>
+                                <exec executable="protoc" failonerror="true">
+                                    <arg value="--proto_path=${project.basedir}/src/main/resources"/>
+                                    <arg value="--descriptor_set_out=${project.build.directory}/protobuf-descriptors/message-wrapping.protobin"/>
+                                    <arg value="${project.basedir}/src/main/resources/message-wrapping.proto"/>
+                                </exec>
+                            </target>
+                        </configuration>
                         <goals>
-                            <goal>exec</goal>
+                            <goal>run</goal>
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <!-- please make sure protoc is installed and available in your path -->
-                    <executable>protoc</executable>
-                    <workingDirectory>${project.build.directory}</workingDirectory>
-                    <arguments>
-                        <argument>--proto_path=${project.basedir}/src/main/resources</argument>
-                        <argument>${project.basedir}/src/main/resources/message-wrapping.proto</argument>
-                        <argument>--descriptor_set_out=${project.build.directory}/message-wrapping.protobin</argument>
-                    </arguments>
-                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/target/protobuf-descriptors</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>

@@ -4,6 +4,7 @@ import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.sampledomain.Account;
 
 import java.io.IOException;
+import java.util.Date;
 
 /**
  * @author anistor@redhat.com
@@ -19,10 +20,12 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
    public Account readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
       String description = reader.readString("description");
+      long creationDate = reader.readLong("creationDate");
 
       Account account = new Account();
       account.setId(id);
       account.setDescription(description);
+      account.setCreationDate(new Date(creationDate));
       return account;
    }
 
@@ -30,5 +33,6 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
    public void writeTo(ProtoStreamWriter writer, Account account) throws IOException {
       writer.writeInt("id", account.getId());
       writer.writeString("description", account.getDescription());
+      writer.writeLong("creationDate", account.getCreationDate().getTime());
    }
 }

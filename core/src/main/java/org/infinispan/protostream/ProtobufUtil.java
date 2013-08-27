@@ -86,7 +86,7 @@ public class ProtobufUtil {
    //todo find better name
    public static void toWrappedByteArray(SerializationContext ctx, CodedOutputStream out, Object t) throws IOException {
       if (t == null) {
-         throw new IllegalArgumentException("Object to marshall cannot be null");
+         return;
       }
 
       if (t instanceof String) {
@@ -215,6 +215,10 @@ public class ProtobufUtil {
             default:
                throw new IllegalStateException("Unexpected tag : " + tag);
          }
+      }
+
+      if (value == null && descriptorFullName == null && messageBytes == null) {
+         return null;
       }
 
       if (value != null) {

@@ -27,14 +27,14 @@ public class UserMarshaller implements MessageMarshaller<User> {
    @Override
    public User readFrom(ProtoStreamReader reader) throws IOException {   //todo must validate a non-repeated field is not present or attempted read multiple times
       int id = reader.readInt("id");
-      List<Integer> accountIds = reader.readCollection("accountId", new ArrayList<Integer>(), Integer.class);
+      List<Integer> accountIds = reader.readCollection("accountIds", new ArrayList<Integer>(), Integer.class);
 
       // Read them out of order. It still works!
       String surname = reader.readString("surname");
       String name = reader.readString("name");
 
       //todo also handle readMap eventually
-      List<Address> addresses = reader.readCollection("address", new ArrayList<Address>(), Address.class);
+      List<Address> addresses = reader.readCollection("addresses", new ArrayList<Address>(), Address.class);
 
       Integer age = reader.readInt("age");
       User.Gender gender = reader.readObject("gender", User.Gender.class);
@@ -53,12 +53,11 @@ public class UserMarshaller implements MessageMarshaller<User> {
    @Override
    public void writeTo(ProtoStreamWriter writer, User user) throws IOException {
       writer.writeInt("id", user.getId());
-      writer.writeCollection("accountId", user.getAccountIds(), Integer.class);
+      writer.writeCollection("accountIds", user.getAccountIds(), Integer.class);
       writer.writeString("name", user.getName());
       writer.writeString("surname", user.getSurname());
-      writer.writeCollection("address", user.getAddresses(), Address.class);
+      writer.writeCollection("addresses", user.getAddresses(), Address.class);
       writer.writeInt("age", user.getAge());
       writer.writeObject("gender", user.getGender(), User.Gender.class);
    }
 }
-

@@ -1,23 +1,0 @@
-
-õ
-message-wrapping.protoorg.infinispan.protostream"¾
-WrappedMessage
-wrappedDouble (
-wrappedFloat (
-wrappedInt64 (
-wrappedUInt64 (
-wrappedInt32 (
-wrappedFixed64 (
-wrappedFixed32 (
-wrappedBool (
-wrappedString	 (	
-wrappedBytes
- (
-wrappedUInt32 (
-wrappedSFixed32 (
-wrappedSFixed64 (
-wrappedSInt32 (
-wrappedSInt64 (!
-wrappedDescriptorFullName (	
-wrappedMessageBytes (
-wrappedEnum (

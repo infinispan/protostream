@@ -23,6 +23,8 @@ public class ProtobufParser {
    }
 
    private void parse(TagHandler tagHandler, Descriptors.Descriptor messageDescriptor, CodedInputStream in) throws IOException {
+      tagHandler.onStart();
+
       int tag;
       while ((tag = in.readTag()) != 0) {
          final int fieldNumber = WireFormat.getTagFieldNumber(tag);
@@ -132,8 +134,10 @@ public class ProtobufParser {
             }
 
             default:
-               throw new IOException("Found tag with unexpected wire type : " + tag);
+               throw new IOException("Found tag with invalid wire type : " + tag);
          }
       }
+
+      tagHandler.onEnd();
    }
 }

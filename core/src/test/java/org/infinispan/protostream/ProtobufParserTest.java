@@ -44,6 +44,11 @@ public class ProtobufParserTest {
          private Descriptors.Descriptor nextDescriptor = null;
 
          @Override
+         public void onStart() {
+            log.trace("ProtobufParserTest.onStart");
+         }
+
+         @Override
          public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object value) {
             log.tracef("ProtobufParserTest.onTag %s %s", fieldName, value);
 
@@ -66,6 +71,11 @@ public class ProtobufParserTest {
          @Override
          public void onEndNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
             log.tracef("ProtobufParserTest.onEndNested %s", fieldName);
+         }
+
+         @Override
+         public void onEnd() {
+            log.trace("ProtobufParserTest.onEnd");
          }
       };
 

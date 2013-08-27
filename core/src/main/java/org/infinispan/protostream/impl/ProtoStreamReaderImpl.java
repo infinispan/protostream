@@ -109,7 +109,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    private Object readPrimitive(String fieldName, Descriptors.FieldDescriptor.JavaType javaType) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() == Descriptors.FieldDescriptor.Type.ENUM
             || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP
             || fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
@@ -222,7 +222,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <A> A readObject(String fieldName, Class<? extends A> clazz) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkNonRepeatedField(fd);
 
       if (fd.getType() == Descriptors.FieldDescriptor.Type.ENUM) {
@@ -367,7 +367,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <A, C extends Collection<? super A>> C readCollection(String fieldName, C collection, Class<? extends A> clazz) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldId(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkRepeatedField(fd);
 
       if (primitiveTypes.contains(fd.getType())) {

@@ -10,9 +10,6 @@ public final class WrappedMessage {
    private final Object value;
 
    public WrappedMessage(Object value) {
-      if (value == null) {
-         throw new IllegalArgumentException("value cannot be null");
-      }
       this.value = value;
    }
 
@@ -26,12 +23,12 @@ public final class WrappedMessage {
       if (o == null || getClass() != o.getClass()) return false;
 
       WrappedMessage that = (WrappedMessage) o;
-      return value.equals(that.value);
 
+      return !(value != null ? !value.equals(that.value) : that.value != null);
    }
 
    @Override
    public int hashCode() {
-      return value.hashCode();
+      return value != null ? value.hashCode() : 0;
    }
 }
