@@ -49,14 +49,14 @@ public class ProtobufParserTest {
          }
 
          @Override
-         public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object value) {
-            log.tracef("ProtobufParserTest.onTag %s %s", fieldName, value);
+         public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object tagValue) {
+            log.tracef("ProtobufParserTest.onTag %s %s", fieldName, tagValue);
 
             if (fieldName.equals("wrappedDescriptorFullName")) {
-               nextDescriptor = ctx.getMessageDescriptor((String) value);
+               nextDescriptor = ctx.getMessageDescriptor((String) tagValue);
             } else if (fieldName.equals("wrappedMessageBytes")) {
                try {
-                  new ProtobufParser().parse(this, nextDescriptor, (byte[]) value);
+                  new ProtobufParser().parse(this, nextDescriptor, (byte[]) tagValue);
                } catch (IOException e) {
                   e.printStackTrace();  // TODO: Customise this generated block
                }

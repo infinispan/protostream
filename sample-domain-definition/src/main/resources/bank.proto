@@ -41,7 +41,7 @@ message User {
 message Account {
    required int32 id = 1;
 
-   optional string description = 2;
+   optional string description = 2 [default = "Checking account"];
 
    required fixed64 creationDate = 3;
 

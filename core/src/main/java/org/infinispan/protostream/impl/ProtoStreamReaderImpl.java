@@ -68,7 +68,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       BaseMarshaller<A> marshaller = ctx.getMarshaller(clazz);
       Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getFullName());
       resetContext();
-      enterContext(messageDescriptor, in);
+      enterContext(null, messageDescriptor, in);
       A a = marshaller instanceof MessageMarshaller ? ((MessageMarshaller<A>) marshaller).readFrom(this) : ((RawProtobufMarshaller<A>) marshaller).readFrom(ctx, in);
       exitContext();
       return a;
@@ -77,7 +77,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    public <A> A read(CodedInputStream in, MessageMarshaller<A> marshaller) throws IOException {
       Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getFullName());
       resetContext();
-      enterContext(messageDescriptor, in);
+      enterContext(null, messageDescriptor, in);
       A a = marshaller.readFrom(this);
       exitContext();
       return a;
@@ -87,8 +87,8 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       messageContext = null;
    }
 
-   private void enterContext(Descriptors.Descriptor messageDescriptor, CodedInputStream in) {
-      messageContext = new ReadMessageContext(messageContext, messageDescriptor, in);
+   private void enterContext(String fieldName, Descriptors.Descriptor messageDescriptor, CodedInputStream in) {
+      messageContext = new ReadMessageContext(messageContext, fieldName, messageDescriptor, in);
    }
 
    private void exitContext() {
@@ -97,15 +97,15 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       //todo check now that we have seen in the stream all required fields (ie. the app that wrote the message did not break the protocol)
 
       // check that all required fields were read
-      for (Descriptors.FieldDescriptor fd : messageContext.fieldDescriptors.values()) {
-         if (fd.isRequired() && !messageContext.readFields.contains(fd)) {
+      for (Descriptors.FieldDescriptor fd : messageContext.getFieldDescriptors().values()) {
+         if (fd.isRequired() && !messageContext.getSeenFields().contains(fd.getNumber())) {
             throw new IllegalStateException("Field " + fd.getName() + " is declared as required but was never read by the MessageMarshaller");
          }
       }
-      if (messageContext.fieldDescriptors.size() != messageContext.readFields.size()) {
+      if (messageContext.getFieldDescriptors().size() != messageContext.getSeenFields().size()) {
          //todo log that not all declared fields were processed by the marshaller
       }
-      messageContext = messageContext.parentContext;
+      messageContext = messageContext.getParentContext();
    }
 
    private Object readPrimitive(String fieldName, Descriptors.FieldDescriptor.JavaType javaType) throws IOException {
@@ -336,7 +336,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    private <A> A readObject(Descriptors.FieldDescriptor fd, Class<A> clazz, CodedInputStream in, int length) throws IOException {
       BaseMarshaller<A> marshaller = ctx.getMarshaller(clazz);
-      enterContext(fd.getMessageType(), in);
+      enterContext(fd.getName(), fd.getMessageType(), in);
       A a;
       if (fd.getType() == Descriptors.FieldDescriptor.Type.GROUP) {
          a = unmarshall(marshaller, in);
@@ -484,7 +484,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       if (!fd.isRepeated()) {
          throw new IllegalArgumentException("This field is not repeated and cannot be read with one of the methods intended for collections or arrays: " + fd.getName());
       }
-      if (!messageContext.readFields.add(fd)) {
+      if (!messageContext.getSeenFields().add(fd.getNumber())) {
          throw new IllegalArgumentException("Cannot read a field twice : " + fd.getName());
       }
    }
@@ -493,7 +493,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       if (fd.isRepeated()) {
          throw new IllegalArgumentException("A repeated field should be read with one of the methods intended for collections or arrays: " + fd.getName());
       }
-      if (!messageContext.readFields.add(fd)) {
+      if (!messageContext.getSeenFields().add(fd.getNumber())) {
          throw new IllegalArgumentException("Cannot read a field twice : " + fd.getName());
       }
    }

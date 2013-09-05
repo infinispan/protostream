@@ -5,7 +5,7 @@
 
     <groupId>org.infinispan.protostream</groupId>
     <artifactId>parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0.Alpha5</version>
     <packaging>pom</packaging>
 
     <name>Parent for all ProtoStream modules</name>
@@ -131,8 +131,14 @@
 
     <dependencyManagement>
         <dependencies>
+           <dependency>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>protostream</artifactId>
+              <version>${project.version}</version>
+           </dependency>
+
             <dependency>
-                <groupId>org.infinispan.protostream</groupId>
+                <groupId>${project.groupId}</groupId>
                 <artifactId>sample-domain-definition</artifactId>
                 <version>${project.version}</version>
             </dependency>

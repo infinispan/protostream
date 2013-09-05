@@ -38,7 +38,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       } else {
          BaseMarshaller marshaller = ctx.getMarshaller(t.getClass());
          Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getFullName());
-         enterContext(messageDescriptor, out);
+         enterContext(null, messageDescriptor, out);
          marshall(t, marshaller, out);
          exitContext();
       }
@@ -64,19 +64,19 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       messageContext = null;
    }
 
-   private void enterContext(Descriptors.Descriptor messageDescriptor, CodedOutputStream out) {
-      messageContext = new WriteMessageContext(messageContext, messageDescriptor, out);
+   private void enterContext(String fieldName, Descriptors.Descriptor messageDescriptor, CodedOutputStream out) {
+      messageContext = new WriteMessageContext(messageContext, fieldName, messageDescriptor, out);
    }
 
    private void exitContext() {
       // validate that all the required fields were written
-      for (Descriptors.FieldDescriptor fd : messageContext.messageDescriptor.getFields()) {
-         if (fd.isRequired() && !messageContext.writtenFields.contains(fd)) {
+      for (Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
+         if (fd.isRequired() && !messageContext.getSeenFields().contains(fd.getNumber())) {
             //todo [anistor] indicate the proper merthod based on field type rather than writeXYZ. also include the full name of the message descriptor
             throw new IllegalStateException("Required field \"" + fd.getName() + "\" should have been written by a calling one of " + MessageMarshaller.ProtoStreamWriter.class.getName() + " writeXYZ(..) methods");
          }
       }
-      messageContext = messageContext.parentContext;
+      messageContext = messageContext.getParentContext();
    }
 
    @Override
@@ -405,7 +405,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
          BaseMarshaller marshaller = ctx.getMarshaller(clazz);
          ByteArrayOutputStream baos = new ByteArrayOutputStream();      //todo here we should use a better buffer allocation strategy
          CodedOutputStream out = CodedOutputStream.newInstance(baos);
-         enterContext(fd.getMessageType(), out);
+         enterContext(fd.getName(), fd.getMessageType(), out);
          marshall(value, marshaller, out);
          out.flush();
          exitContext();
@@ -420,7 +420,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       if (MessageLite.class.isAssignableFrom(clazz)) {
          messageContext.out.writeGroup(fd.getNumber(), (MessageLite) value);
       } else {
-         enterContext(fd.getMessageType(), messageContext.out);
+         enterContext(fd.getName(), fd.getMessageType(), messageContext.out);
          BaseMarshaller marshaller = ctx.getMarshaller(clazz);
          marshall(value, marshaller, messageContext.out);
          exitContext();
@@ -524,7 +524,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
             throw new IllegalArgumentException("This field is not repeated and cannot be written with one of the methods intended for collections or arrays: " + fd.getName());
          }
       }
-      if (!messageContext.writtenFields.add(fd)) {
+      if (!messageContext.getSeenFields().add(fd.getNumber())) {
          throw new IllegalArgumentException("Cannot write a field twice : " + fd.getName());
       }
    }

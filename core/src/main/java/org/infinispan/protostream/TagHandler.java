@@ -11,7 +11,7 @@ public interface TagHandler {
 
    void onStart();
 
-   void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object value);
+   void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object tagValue);
 
    void onStartNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor);
 
