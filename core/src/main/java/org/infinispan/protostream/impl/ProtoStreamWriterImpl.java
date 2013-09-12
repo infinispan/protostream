@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
+//todo [anistor] validate that marshallers write all fields in ascending sequence and throw an error or at least log a warning
 /**
  * @author anistor@redhat.com
  */
@@ -37,7 +38,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
          ((MessageLite) t).writeTo(out);
       } else {
          BaseMarshaller marshaller = ctx.getMarshaller(t.getClass());
-         Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getFullName());
+         Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getTypeName());
          enterContext(null, messageDescriptor, out);
          marshall(t, marshaller, out);
          exitContext();

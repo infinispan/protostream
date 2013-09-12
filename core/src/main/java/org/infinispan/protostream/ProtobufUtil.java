@@ -109,13 +109,13 @@ public class ProtobufUtil {
       } else if (t instanceof Enum) {
          // use an enum encoder
          EnumMarshaller enumMarshaller = (EnumMarshaller) ctx.getMarshaller((Class<Enum>) t.getClass());
-         out.writeString(wrappedDescriptorFullName, enumMarshaller.getFullName());
+         out.writeString(wrappedDescriptorFullName, enumMarshaller.getTypeName());
          out.writeEnum(wrappedEnum, enumMarshaller.encode((Enum) t));
       } else {
          // this is either an unknown primitive type or a message type
          // try to use a message marshaller
          BaseMarshaller marshaller = ctx.getMarshaller(t.getClass());
-         out.writeString(wrappedDescriptorFullName, marshaller.getFullName());
+         out.writeString(wrappedDescriptorFullName, marshaller.getTypeName());
 
          ByteArrayOutputStream buffer = new ByteArrayOutputStream();      //todo [anistor] here we should use a better buffer allocation strategy
          ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl(ctx);

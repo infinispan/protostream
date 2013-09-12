@@ -39,8 +39,13 @@ public class MarshallingWithWrappingTest {
 
       ctx.registerMarshaller(int[].class, new MessageMarshaller<int[]>() {
          @Override
-         public String getFullName() {
+         public String getTypeName() {
             return "sample_bank_account.int_array";
+         }
+
+         @Override
+         public Class<? extends int[]> getJavaClass() {
+            return int[].class;
          }
 
          @Override
@@ -76,8 +81,13 @@ public class MarshallingWithWrappingTest {
       ctx.registerMarshaller(ArrayList.class, new MessageMarshaller<ArrayList>() {
 
          @Override
-         public String getFullName() {
+         public String getTypeName() {
             return "sample_bank_account.user_list";
+         }
+
+         @Override
+         public Class<? extends ArrayList> getJavaClass() {
+            return ArrayList.class;
          }
 
          @Override

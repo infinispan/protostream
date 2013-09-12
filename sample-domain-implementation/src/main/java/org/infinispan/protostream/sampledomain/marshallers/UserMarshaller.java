@@ -14,8 +14,13 @@ import java.util.List;
 public class UserMarshaller implements MessageMarshaller<User> {
 
    @Override
-   public String getFullName() {
+   public String getTypeName() {
       return "sample_bank_account.User";
+   }
+
+   @Override
+   public Class<? extends User> getJavaClass() {
+      return User.class;
    }
 
    @Override

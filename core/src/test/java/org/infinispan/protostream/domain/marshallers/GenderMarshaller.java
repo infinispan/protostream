@@ -9,7 +9,12 @@ import org.infinispan.protostream.domain.User;
 public class GenderMarshaller implements EnumMarshaller<User.Gender> {
 
    @Override
-   public String getFullName() {
+   public Class<? extends User.Gender> getJavaClass() {
+      return User.Gender.class;
+   }
+
+   @Override
+   public String getTypeName() {
       return "sample_bank_account.User.Gender";
    }
 

@@ -18,8 +18,13 @@ import java.util.List;
 public class UserMarshaller implements MessageMarshaller<User> {
 
    @Override
-   public String getFullName() {
+   public String getTypeName() {
       return "sample_bank_account.User";
+   }
+
+   @Override
+   public Class<? extends User> getJavaClass() {
+      return User.class;
    }
 
    // todo for efficiency's sake we must recommend user to write and read in the same order (which should also be identical with order declared in proto file)

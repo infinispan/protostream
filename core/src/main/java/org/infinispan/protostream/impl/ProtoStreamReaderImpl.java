@@ -66,7 +66,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       }
 
       BaseMarshaller<A> marshaller = ctx.getMarshaller(clazz);
-      Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getFullName());
+      Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getTypeName());
       resetContext();
       enterContext(null, messageDescriptor, in);
       A a = marshaller instanceof MessageMarshaller ? ((MessageMarshaller<A>) marshaller).readFrom(this) : ((RawProtobufMarshaller<A>) marshaller).readFrom(ctx, in);
@@ -75,7 +75,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    public <A> A read(CodedInputStream in, MessageMarshaller<A> marshaller) throws IOException {
-      Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getFullName());
+      Descriptors.Descriptor messageDescriptor = ctx.getMessageDescriptor(marshaller.getTypeName());
       resetContext();
       enterContext(null, messageDescriptor, in);
       A a = marshaller.readFrom(this);

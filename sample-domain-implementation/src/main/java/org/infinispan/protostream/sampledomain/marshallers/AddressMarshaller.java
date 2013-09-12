@@ -11,8 +11,13 @@ import java.io.IOException;
 public class AddressMarshaller implements MessageMarshaller<Address> {
 
    @Override
-   public String getFullName() {
+   public String getTypeName() {
       return "sample_bank_account.User.Address";
+   }
+
+   @Override
+   public Class<? extends Address> getJavaClass() {
+      return Address.class;
    }
 
    @Override

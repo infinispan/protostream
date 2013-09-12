@@ -15,7 +15,12 @@ import java.io.IOException;
 public class WrappedMessageMarshaller implements RawProtobufMarshaller<WrappedMessage> {
 
    @Override
-   public String getFullName() {
+   public Class<? extends WrappedMessage> getJavaClass() {
+      return WrappedMessage.class;
+   }
+
+   @Override
+   public String getTypeName() {
       return "org.infinispan.protostream.WrappedMessage";
    }
 

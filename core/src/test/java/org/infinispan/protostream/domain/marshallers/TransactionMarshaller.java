@@ -12,8 +12,13 @@ import java.util.Date;
 public class TransactionMarshaller implements MessageMarshaller<Transaction> {
 
    @Override
-   public String getFullName() {
+   public String getTypeName() {
       return "sample_bank_account.Transaction";
+   }
+
+   @Override
+   public Class<? extends Transaction> getJavaClass() {
+      return Transaction.class;
    }
 
    @Override

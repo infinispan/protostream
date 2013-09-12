@@ -11,8 +11,13 @@ import java.io.IOException;
 public class LimitsMarshaller implements MessageMarshaller<Account.Limits> {
 
    @Override
-   public String getFullName() {
+   public String getTypeName() {
       return "sample_bank_account.Account.Limits";
+   }
+
+   @Override
+   public Class<? extends Account.Limits> getJavaClass() {
+      return Account.Limits.class;
    }
 
    @Override

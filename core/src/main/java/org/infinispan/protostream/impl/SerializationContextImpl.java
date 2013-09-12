@@ -10,24 +10,24 @@ import org.infinispan.protostream.WrappedMessage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author anistor@redhat.com
  */
 public final class SerializationContextImpl implements SerializationContext {
 
-   private Map<String, Descriptors.FileDescriptor> fileDescriptors = new HashMap<String, Descriptors.FileDescriptor>();
+   private Map<String, Descriptors.FileDescriptor> fileDescriptors = new ConcurrentHashMap<String, Descriptors.FileDescriptor>();
 
-   private Map<String, Descriptors.Descriptor> messageDescriptors = new HashMap<String, Descriptors.Descriptor>();
+   private Map<String, Descriptors.Descriptor> messageDescriptors = new ConcurrentHashMap<String, Descriptors.Descriptor>();
 
-   private Map<String, Descriptors.EnumDescriptor> enumDescriptors = new HashMap<String, Descriptors.EnumDescriptor>();
+   private Map<String, Descriptors.EnumDescriptor> enumDescriptors = new ConcurrentHashMap<String, Descriptors.EnumDescriptor>();
 
-   private Map<Class<?>, BaseMarshaller<?>> marshallersByClass = new HashMap<Class<?>, BaseMarshaller<?>>();
+   private Map<Class<?>, BaseMarshaller<?>> marshallersByClass = new ConcurrentHashMap<Class<?>, BaseMarshaller<?>>();
 
-   private Map<String, BaseMarshaller<?>> marshallersByName = new HashMap<String, BaseMarshaller<?>>();
+   private Map<String, BaseMarshaller<?>> marshallersByName = new ConcurrentHashMap<String, BaseMarshaller<?>>();
 
    public SerializationContextImpl() {
       try {
@@ -119,12 +119,12 @@ public final class SerializationContextImpl implements SerializationContext {
    public <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller) {
       // we try to validate first that a message descriptor exists
       if (marshaller instanceof EnumMarshaller) {
-         getEnumDescriptor(marshaller.getFullName());
+         getEnumDescriptor(marshaller.getTypeName());
       } else {
-         getMessageDescriptor(marshaller.getFullName());
+         getMessageDescriptor(marshaller.getTypeName());
       }
       marshallersByClass.put(clazz, marshaller);
-      marshallersByName.put(marshaller.getFullName(), marshaller);
+      marshallersByName.put(marshaller.getTypeName(), marshaller);
    }
 
    @Override
