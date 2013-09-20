@@ -3,7 +3,7 @@ package org.infinispan.protostream;
 import com.google.protobuf.Descriptors;
 
 /**
- * A read-only event based interface for consuming protobuf streams.
+ * An event based interface for consuming (reading) protobuf streams.
  *
  * @author anistor@redhat.com
  */

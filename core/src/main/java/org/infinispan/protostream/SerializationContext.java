@@ -8,7 +8,7 @@ import java.io.InputStream;
 /**
  * @author anistor@redhat.com
  */
-public interface SerializationContext {
+public interface SerializationContext { //todo [anistor] split this into separate immutable/mutable interfaces
 
    /**
     * The input stream is not closed when finished.
@@ -28,12 +28,14 @@ public interface SerializationContext {
    <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller);
 
    /**
-    * Checks if the message or enum type can be marshalled (a marshaller is defined for it).
+    * Checks if the message or enum type can be marshalled (a marshaller was defined for it).
     *
     * @param clazz
     * @return
     */
    boolean canMarshall(Class clazz);
+
+   boolean canMarshall(String descriptorFullName);
 
    <T> BaseMarshaller<T> getMarshaller(String descriptorFullName);
 

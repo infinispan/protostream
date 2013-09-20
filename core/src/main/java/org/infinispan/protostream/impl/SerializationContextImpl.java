@@ -32,12 +32,12 @@ public final class SerializationContextImpl implements SerializationContext {
    public SerializationContextImpl() {
       try {
          registerProtofile("/message-wrapping.protobin");
-         registerMarshaller(WrappedMessage.class, new WrappedMessageMarshaller());
       } catch (IOException e) {
-         e.printStackTrace();  // TODO: Customise this generated block
+         throw new RuntimeException(e);
       } catch (Descriptors.DescriptorValidationException e) {
-         e.printStackTrace();  // TODO: Customise this generated block
+         throw new RuntimeException(e);
       }
+      registerMarshaller(WrappedMessage.class, new WrappedMessageMarshaller());
    }
 
    private Descriptors.FileDescriptor[] resolveDeps(List<String> dependencyList, Map<String, Descriptors.FileDescriptor> map) {
@@ -130,6 +130,11 @@ public final class SerializationContextImpl implements SerializationContext {
    @Override
    public boolean canMarshall(Class clazz) {
       return marshallersByClass.containsKey(clazz);
+   }
+
+   @Override
+   public boolean canMarshall(String descriptorFullName) {
+      return messageDescriptors.containsKey(descriptorFullName) || enumDescriptors.containsKey(descriptorFullName);
    }
 
    @Override

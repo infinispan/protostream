@@ -1,27 +1,24 @@
-//import "src/test/resources/google/protobuf/descriptor.proto";
+import "options.proto";
 
 package sample_bank_account;
 
 option java_package = "com.example.generated_by_protoc";
 option java_outer_classname = "BankProtos";
 
-/*
-extend google.protobuf.FieldOptions {
-   // this is a custom proto option you can add to a field in order to mark it as indexable (much like a java annotation)
-   optional bool Indexed = 55555 [default = true];
-}
-*/
-
 message User {
+   option (IndexedEntity) = true;
+
    required int32 id = 1;
 
    repeated int32 accountIds = 2;
 
-   required string name = 3;
+   required string name = 3 [(IndexedField) = true];
 
    required string surname = 4;
 
    message Address {
+      option (IndexedEntity) = true;
+
       required string street = 1;
       required string postCode = 2;
    }
@@ -39,6 +36,8 @@ message User {
 }
 
 message Account {
+   option (IndexedEntity) = true;
+
    required int32 id = 1;
 
    optional string description = 2 [default = "Checking account"];
@@ -52,6 +51,8 @@ message Account {
 }
 
 message Transaction {
+   option (IndexedEntity) = true;
+
    required int32 id = 1;
 
    optional string description = 2;
