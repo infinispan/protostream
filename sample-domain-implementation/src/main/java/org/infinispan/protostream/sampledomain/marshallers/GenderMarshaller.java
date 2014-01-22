@@ -26,11 +26,18 @@ public class GenderMarshaller implements EnumMarshaller<User.Gender> {
          case 1:
             return User.Gender.FEMALE;
       }
-      return null;
+      return null;  // unknown value
    }
 
    @Override
    public int encode(User.Gender gender) {
-      return gender == User.Gender.MALE ? 0 : 1;
+      switch (gender) {
+         case MALE:
+            return 0;
+         case FEMALE:
+            return 1;
+         default:
+            throw new IllegalArgumentException("Unexpected User.Gender value : " + gender);
+      }
    }
 }
