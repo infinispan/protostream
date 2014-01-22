@@ -2,7 +2,7 @@ package org.infinispan.protostream.impl;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
-import org.jboss.logging.MessageLogger;
+import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * @author anistor@redhat.com

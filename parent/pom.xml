@@ -160,6 +160,7 @@
                 <artifactId>jboss-logging-processor</artifactId>
                 <version>${version.jboss.logging.processor}</version>
                 <scope>provided</scope>
+                <optional>true</optional>
             </dependency>
 
             <dependency>
