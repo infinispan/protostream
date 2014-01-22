@@ -10,7 +10,7 @@
 
     <name>Parent for all ProtoStream modules</name>
     <description>Parent for all ProtoStream modules</description>
-    <url>http://www.infinispan.org</url>
+    <url>http://infinispan.org</url>
 
     <organization>
         <name>JBoss, a division of Red Hat</name>
@@ -28,7 +28,7 @@
     <developers>
         <developer>
             <id>placeholder</id>
-            <name>See http://www.infinispan.org for a complete list of contributors</name>
+            <name>See http://infinispan.org for a complete list of contributors</name>
         </developer>
     </developers>
 
@@ -92,8 +92,8 @@
         <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots</jboss.snapshots.repo.url>
         <version.protobuf>2.5.0</version.protobuf>
         <version.junit>4.11</version.junit>
-        <version.jboss.logging>3.1.1.GA</version.jboss.logging>
-        <version.jboss.logging.processor>1.0.3.Final</version.jboss.logging.processor>
+        <version.jboss.logging>3.1.2.GA</version.jboss.logging>
+        <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
         <version.log4j>1.2.16</version.log4j>
     </properties>
 

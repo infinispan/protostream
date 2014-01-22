@@ -12,7 +12,7 @@
 
     <artifactId>sample-domain-definition</artifactId>
 
-    <name>Domain model definitions in proto file</name>
+    <name>Sample domain model definitions in proto file</name>
     <description>
         Defines entities in a protobuf file which is then compiled into a binary descriptor and both proto and
         its binary counterpart are packaged into a jar to be used by other projects.

@@ -13,7 +13,7 @@
     <artifactId>protostream</artifactId>
     <packaging>bundle</packaging>
 
-    <name>ProtoStream serializers for protobuf</name>
+    <name>ProtoStream - core</name>
     <description>
         Users need to implement a marshaller object that interacts with a field writer/reader in order to serialize
         state.

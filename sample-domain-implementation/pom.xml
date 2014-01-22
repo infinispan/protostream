@@ -12,7 +12,7 @@
 
     <artifactId>sample-domain-implementation</artifactId>
 
-    <name>Domain model implementation, including marshallers</name>
+    <name>Sample domain model implementation, including marshallers</name>
     <description>
         Defines entities in a protobuf file which is then compiled into a binary descriptor and both proto and
         its binary counterpart are packaged into a jar to be used by other projects.
