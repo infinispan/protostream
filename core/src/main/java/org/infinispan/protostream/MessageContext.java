@@ -1,22 +1,22 @@
 package org.infinispan.protostream;
 
 import com.google.protobuf.Descriptors;
+import org.infinispan.protostream.impl.FastIntegerSet;
+import org.infinispan.protostream.impl.MessageDescriptor;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.BitSet;
 import java.util.Set;
 
 /**
  * @author anistor@redhat.com
+ * @since 1.0
  */
 public abstract class MessageContext<E extends MessageContext> {
 
    /**
     * The context of the outer message or null if this is a top level message.
     */
-   protected final E parentContext;
+   private final E parentContext;
 
    /**
     * If this is a nested context this is the name of the outer field being processed. This is null for root context.
@@ -28,16 +28,19 @@ public abstract class MessageContext<E extends MessageContext> {
    /**
     * The descriptor of the current message.
     */
-   protected final Descriptors.Descriptor messageDescriptor;
+   private final MessageDescriptor messageDescriptor;
 
-   /**
-    * The map of field descriptors by name, for easier lookup (more efficient than Descriptors.Descriptor.findFieldByName()).
-    */
-   protected final Map<String, Descriptors.FieldDescriptor> fieldDescriptors;
+   private final BitSet seenFields;
+   private final FastIntegerSet seenFieldsSet;
 
-   protected final Set<Integer> seenFields;
+   private int maxSeenFieldNumber = 0;
 
+   @Deprecated
    protected MessageContext(E parentContext, String fieldName, Descriptors.Descriptor messageDescriptor) {
+      this(parentContext, fieldName, new MessageDescriptor(messageDescriptor));
+   }
+
+   protected MessageContext(E parentContext, String fieldName, MessageDescriptor messageDescriptor) {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
@@ -51,12 +54,9 @@ public abstract class MessageContext<E extends MessageContext> {
       this.parentContext = parentContext;
       this.fieldName = fieldName;
       this.messageDescriptor = messageDescriptor;
-      List<Descriptors.FieldDescriptor> fields = messageDescriptor.getFields();
-      seenFields = new HashSet<Integer>(fields.size());
-      fieldDescriptors = new HashMap<String, Descriptors.FieldDescriptor>(fields.size());
-      for (Descriptors.FieldDescriptor fd : fields) {
-         fieldDescriptors.put(fd.getName(), fd);
-      }
+
+      seenFields = new BitSet(messageDescriptor.getFieldDescriptors().length);
+      seenFieldsSet = new FastIntegerSet(seenFields);
    }
 
    public E getParentContext() {
@@ -87,15 +87,15 @@ public abstract class MessageContext<E extends MessageContext> {
    }
 
    public Descriptors.Descriptor getMessageDescriptor() {
-      return messageDescriptor;
+      return messageDescriptor.getMessageDescriptor();
    }
 
-   public Map<String, Descriptors.FieldDescriptor> getFieldDescriptors() {
-      return fieldDescriptors;
+   public Descriptors.FieldDescriptor[] getFieldDescriptors() {
+      return messageDescriptor.getFieldDescriptors();
    }
 
    public Descriptors.FieldDescriptor getFieldByName(String fieldName) {
-      Descriptors.FieldDescriptor fd = fieldDescriptors.get(fieldName);
+      Descriptors.FieldDescriptor fd = messageDescriptor.getFieldsByName().get(fieldName);
       if (fd == null) {
          throw new IllegalArgumentException("Unknown field : " + fieldName);   //todo [anistor] throw a better exception
       }
@@ -103,14 +103,40 @@ public abstract class MessageContext<E extends MessageContext> {
    }
 
    public Descriptors.FieldDescriptor getFieldByNumber(int fieldNumber) {
-      Descriptors.FieldDescriptor fd = messageDescriptor.findFieldByNumber(fieldNumber);
+      Descriptors.FieldDescriptor fd = messageDescriptor.getMessageDescriptor().findFieldByNumber(fieldNumber);
       if (fd == null) {
          throw new IllegalArgumentException("Unknown field : " + fieldName);   //todo [anistor] throw a better exception
       }
       return fd;
    }
 
+   public boolean isFieldMarked(int fieldNumber) {
+      return seenFields.get(fieldNumber);
+   }
+
+   /**
+    * Mark a field as seen.
+    *
+    * @param fieldNumber the field number
+    * @return true if it was added, false if it was already there
+    */
+   public boolean markField(int fieldNumber) {
+      if (seenFields.get(fieldNumber)) {
+         return false;
+      }
+      seenFields.set(fieldNumber);
+      if (maxSeenFieldNumber < fieldNumber) {
+         maxSeenFieldNumber = fieldNumber;
+      }
+      return true;
+   }
+
+   public int getMaxSeenFieldNumber() {
+      return maxSeenFieldNumber;
+   }
+
+   @Deprecated
    public Set<Integer> getSeenFields() {
-      return seenFields;
+      return seenFieldsSet;
    }
 }

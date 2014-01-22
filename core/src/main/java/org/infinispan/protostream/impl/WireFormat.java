@@ -1,6 +1,8 @@
 package org.infinispan.protostream.impl;
 
 /**
+ * Defines numeric constants for wire types. Also helps extracting the wire type and field number out of a tag.
+ *
  * @author anistor@redhat.com
  */
 public final class WireFormat {
@@ -12,8 +14,14 @@ public final class WireFormat {
    public static final int WIRETYPE_END_GROUP = com.google.protobuf.WireFormat.WIRETYPE_END_GROUP;
    public static final int WIRETYPE_FIXED32 = com.google.protobuf.WireFormat.WIRETYPE_FIXED32;
 
+   /**
+    * The lower 3 bits of the 32 bit tag are used for encoding the wire type.
+    */
    private static final int TAG_TYPE_BITS = 3;
 
+   /**
+    * Bit mask used for extracting the lower 3 bits which represent the wire type.
+    */
    private static final int TAG_TYPE_MASK = (1 << TAG_TYPE_BITS) - 1;
 
    /**
@@ -23,6 +31,9 @@ public final class WireFormat {
       return (fieldNumber << TAG_TYPE_BITS) | wireType;
    }
 
+   /**
+    * Given a tag value, determines the wire type (the lower 3 bits).
+    */
    public static int getTagWireType(int tag) {
       return tag & TAG_TYPE_MASK;
    }

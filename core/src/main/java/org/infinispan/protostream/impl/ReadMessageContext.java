@@ -1,7 +1,6 @@
 package org.infinispan.protostream.impl;
 
 import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.Descriptors;
 import org.infinispan.protostream.MessageContext;
 
 /**
@@ -13,7 +12,7 @@ final class ReadMessageContext extends MessageContext<ReadMessageContext> {
 
    final UnknownFieldSetImpl unknownFieldSet = new UnknownFieldSetImpl();
 
-   ReadMessageContext(ReadMessageContext parent, String fieldName, Descriptors.Descriptor messageDescriptor, CodedInputStream in) {
+   ReadMessageContext(ReadMessageContext parent, String fieldName, MessageDescriptor messageDescriptor, CodedInputStream in) {
       super(parent, fieldName, messageDescriptor);
       this.in = in;
    }

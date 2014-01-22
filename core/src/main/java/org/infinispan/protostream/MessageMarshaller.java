@@ -3,8 +3,11 @@ package org.infinispan.protostream;
 import java.io.IOException;
 import java.util.Collection;
 
+// todo [anistor] make separate Marshaller and Unmarshaller interfaces
+
 /**
  * @author anistor@redhat.com
+ * @since 1.0
  */
 public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
@@ -34,7 +37,7 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       String readString(String fieldName) throws IOException;
 
-      byte[] readBytes(String fieldName) throws IOException;    //todo [anistor] handle repeatable bytes[] fields
+      byte[] readBytes(String fieldName) throws IOException;
 
       <A> A readObject(String fieldName, Class<? extends A> clazz) throws IOException;
 

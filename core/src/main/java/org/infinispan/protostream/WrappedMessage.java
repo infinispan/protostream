@@ -2,6 +2,7 @@ package org.infinispan.protostream;
 
 /**
  * @author anistor@redhat.com
+ * @since 1.0
  */
 public final class WrappedMessage {
 
@@ -30,5 +31,12 @@ public final class WrappedMessage {
    @Override
    public int hashCode() {
       return value != null ? value.hashCode() : 0;
+   }
+
+   @Override
+   public String toString() {
+      return "WrappedMessage{" +
+            "value=" + value +
+            '}';
    }
 }

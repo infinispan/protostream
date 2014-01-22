@@ -1,6 +1,8 @@
 package org.infinispan.protostream.test;
 
 import com.google.protobuf.Descriptors;
+import org.infinispan.protostream.Configuration;
+import org.infinispan.protostream.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.domain.Address;
@@ -139,7 +141,8 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private void readWithProtoStream(byte[] bytes, long[] result) throws IOException, Descriptors.DescriptorValidationException {
-      SerializationContext ctx = createContext();
+      Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceReads(true).build();
+      SerializationContext ctx = createContext(cfg);
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 
       long tStart = System.nanoTime();
@@ -188,7 +191,8 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private byte[] writeWithProtoStream(User user, long[] result) throws IOException, Descriptors.DescriptorValidationException {
-      SerializationContext ctx = createContext();
+      Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceWrites(true).build();
+      SerializationContext ctx = createContext(cfg);
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
 
       long tStart = System.nanoTime();

@@ -1,10 +1,11 @@
 package org.infinispan.protostream;
 
 /**
- * An evolvable message with support for preserving unknown fields. Implementing this interface is only required if
- * support for unknown fields is desired.
+ * An evolvable message, with support for preserving unknown fields that result from schema evolution. This is an
+ * optional interface. Implementing it is only required if support for preserving unknown fields is desired.
  *
  * @author anistor@redhat.com
+ * @since 1.0
  */
 public interface Message {
 

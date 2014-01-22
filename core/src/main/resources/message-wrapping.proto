@@ -34,20 +34,9 @@ message WrappedMessage {
    // this is used if the wrapped value is an enum
    optional int32 wrappedEnum = 18;
 
-/*
-   // this is used if the wrapped value is an enum
-   optional group wrappedEnum = 16 {
-      required string descriptorName = 1;
-      required int32 value = 2;
-   }
-
-   // this is used if the wrapped value is a message
-   optional group wrappedMessage = 17 {
-      required string descriptorName = 1;
-      required bytes value = 2;
-   }
-*/
+   // this is used as an alternative to wrappedDescriptorFullName if a unique id was assigned to the type
+   optional int32 wrappedDescriptorId = 19;
 }
 
 
-//todo [anistor] how do we handle arrays?
+//todo [anistor] how do we handle arrays and collections?

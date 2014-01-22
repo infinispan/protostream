@@ -3,9 +3,9 @@ package org.infinispan.protostream.impl;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
 import org.infinispan.protostream.BaseMarshaller;
+import org.infinispan.protostream.Configuration;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.WrappedMessage;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,9 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class SerializationContextImpl implements SerializationContext {
 
+   private final Configuration configuration;
+
    private Map<String, Descriptors.FileDescriptor> fileDescriptors = new ConcurrentHashMap<String, Descriptors.FileDescriptor>();
 
-   private Map<String, Descriptors.Descriptor> messageDescriptors = new ConcurrentHashMap<String, Descriptors.Descriptor>();
+   private Map<String, MessageDescriptor> messageDescriptors = new ConcurrentHashMap<String, MessageDescriptor>();
 
    private Map<String, Descriptors.EnumDescriptor> enumDescriptors = new ConcurrentHashMap<String, Descriptors.EnumDescriptor>();
 
@@ -29,23 +31,21 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private Map<String, BaseMarshaller<?>> marshallersByName = new ConcurrentHashMap<String, BaseMarshaller<?>>();
 
-   public SerializationContextImpl() {
-      try {
-         registerProtofile("/message-wrapping.protobin");
-      } catch (IOException e) {
-         throw new RuntimeException(e);
-      } catch (Descriptors.DescriptorValidationException e) {
-         throw new RuntimeException(e);
-      }
-      registerMarshaller(WrappedMessage.class, new WrappedMessageMarshaller());
+   public SerializationContextImpl(Configuration configuration) {
+      this.configuration = configuration;
+   }
+
+   @Override
+   public Configuration getConfiguration() {
+      return configuration;
    }
 
    private Descriptors.FileDescriptor[] resolveDeps(List<String> dependencyList, Map<String, Descriptors.FileDescriptor> map) {
       List<Descriptors.FileDescriptor> deps = new ArrayList<Descriptors.FileDescriptor>();
-      for (String fname : dependencyList) {
-         if (map.containsKey(fname)) {
-            deps.add(map.get(fname));
-         } else if (DescriptorProtos.getDescriptor().getName().equals(fname)) {
+      for (String fileName : dependencyList) {
+         if (map.containsKey(fileName)) {
+            deps.add(map.get(fileName));
+         } else if (DescriptorProtos.getDescriptor().getName().equals(fileName)) {
             deps.add(DescriptorProtos.getDescriptor());
          }
       }
@@ -85,7 +85,7 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private void registerMessageDescriptors(List<Descriptors.Descriptor> messageTypes) {
       for (Descriptors.Descriptor d : messageTypes) {
-         messageDescriptors.put(d.getFullName(), d);
+         messageDescriptors.put(d.getFullName(), new MessageDescriptor(d));
          registerMessageDescriptors(d.getNestedTypes());
          registerEnumDescriptors(d.getEnumTypes());
       }
@@ -99,7 +99,15 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public Descriptors.Descriptor getMessageDescriptor(String fullName) {
-      Descriptors.Descriptor descriptor = messageDescriptors.get(fullName);
+      MessageDescriptor descriptor = messageDescriptors.get(fullName);
+      if (descriptor == null) {
+         throw new IllegalArgumentException("Message descriptor not found : " + fullName);
+      }
+      return descriptor.getMessageDescriptor();
+   }
+
+   public MessageDescriptor getInternalMessageDescriptor(String fullName) {
+      MessageDescriptor descriptor =  messageDescriptors.get(fullName);
       if (descriptor == null) {
          throw new IllegalArgumentException("Message descriptor not found : " + fullName);
       }
@@ -116,15 +124,25 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller) {
+   public <T> void registerMarshaller(BaseMarshaller<T> marshaller) {
+      //TODO [anistor] here we should check if marshaller.getJavaType() is a supported type. some might not be allowed by our framework
+
       // we try to validate first that a message descriptor exists
       if (marshaller instanceof EnumMarshaller) {
          getEnumDescriptor(marshaller.getTypeName());
       } else {
          getMessageDescriptor(marshaller.getTypeName());
       }
-      marshallersByClass.put(clazz, marshaller);
+      marshallersByClass.put(marshaller.getJavaClass(), marshaller);
       marshallersByName.put(marshaller.getTypeName(), marshaller);
+   }
+
+   @Override
+   public <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller) {
+      if (!marshaller.getJavaClass().equals(clazz)) {
+         throw new IllegalArgumentException("The given class must match the class reported by the marshaller.");
+      }
+      registerMarshaller(marshaller);
    }
 
    @Override
@@ -135,6 +153,7 @@ public final class SerializationContextImpl implements SerializationContext {
    @Override
    public boolean canMarshall(String descriptorFullName) {
       return messageDescriptors.containsKey(descriptorFullName) || enumDescriptors.containsKey(descriptorFullName);
+      //TODO the correct implementation should be: return marshallersByName.containsKey(descriptorFullName);
    }
 
    @Override

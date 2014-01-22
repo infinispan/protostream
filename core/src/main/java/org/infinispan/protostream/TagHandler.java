@@ -3,9 +3,10 @@ package org.infinispan.protostream;
 import com.google.protobuf.Descriptors;
 
 /**
- * An event based interface for consuming (reading) protobuf streams.
+ * An event based interface for consuming (read only) protobuf streams.
  *
  * @author anistor@redhat.com
+ * @since 1.0
  */
 public interface TagHandler {
 

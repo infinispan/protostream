@@ -4,20 +4,40 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors;
 import org.infinispan.protostream.impl.WireFormat;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * @author anistor@redhat.com
+ * @since 1.0
  */
-public class ProtobufParser {
+public final class ProtobufParser {
 
-   public void parse(TagHandler tagHandler, Descriptors.Descriptor messageDescriptor, byte[] input) throws IOException {
+   public static final ProtobufParser INSTANCE = new ProtobufParser();
+
+   public void parse(TagHandler tagHandler, Descriptors.Descriptor messageDescriptor, InputStream input) throws IOException {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
-      ByteArrayInputStream bais = new ByteArrayInputStream(input);
-      CodedInputStream in = CodedInputStream.newInstance(bais);
+      CodedInputStream in = CodedInputStream.newInstance(input);
+
+      parse(tagHandler, messageDescriptor, in);
+   }
+
+   public void parse(TagHandler tagHandler, Descriptors.Descriptor messageDescriptor, byte[] buf, int off, int len) throws IOException {
+      if (messageDescriptor == null) {
+         throw new IllegalArgumentException("messageDescriptor cannot be null");
+      }
+      CodedInputStream in = CodedInputStream.newInstance(buf, off, len);
+
+      parse(tagHandler, messageDescriptor, in);
+   }
+
+   public void parse(TagHandler tagHandler, Descriptors.Descriptor messageDescriptor, byte[] buf) throws IOException {
+      if (messageDescriptor == null) {
+         throw new IllegalArgumentException("messageDescriptor cannot be null");
+      }
+      CodedInputStream in = CodedInputStream.newInstance(buf);
 
       parse(tagHandler, messageDescriptor, in);
    }
@@ -128,7 +148,7 @@ public class ProtobufParser {
                      default:
                         throw new IOException("Unexpected field type : " + fd.getType());
                   }
-                  tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
+                  tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);     //todo all fd.getName() calls are a perf problem!
                }
                break;
             }
