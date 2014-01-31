@@ -46,10 +46,10 @@ final class UnknownFieldSetImpl implements UnknownFieldSet {
    /**
     * Parse an entire message from {@code input} and merge its fields into this set.
     */
-   public void mergeFrom(CodedInputStream input) throws IOException {
+   public void readAllFields(CodedInputStream input) throws IOException {
       while (true) {
          int tag = input.readTag();
-         if (tag == 0 || !mergeFieldFrom(tag, input)) {
+         if (tag == 0 || !readSingleField(tag, input)) {
             break;
          }
       }
@@ -61,7 +61,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet {
     * @param tag The field's tag number, which was already parsed.
     * @return {@code false} if the tag is an end group tag.
     */
-   public boolean mergeFieldFrom(int tag, CodedInputStream input) throws IOException {
+   public boolean readSingleField(int tag, CodedInputStream input) throws IOException {
       int wireType = WireFormat.getTagWireType(tag);
       switch (wireType) {
          case WireFormat.WIRETYPE_VARINT:
@@ -78,7 +78,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet {
 
          case WireFormat.WIRETYPE_START_GROUP:
             UnknownFieldSetImpl unknownFieldSet = new UnknownFieldSetImpl();
-            unknownFieldSet.mergeFrom(input);
+            unknownFieldSet.readAllFields(input);
             input.checkLastTagWas(WireFormat.makeTag(WireFormat.getTagFieldNumber(tag), WireFormat.WIRETYPE_END_GROUP));
             addField(tag).addGroup(unknownFieldSet);
             return true;
@@ -99,7 +99,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet {
     * Convenience method for merging a new field containing a single varint value. This is used in particular when an
     * unknown enum value is encountered.
     */
-   public void mergeVarintField(int tag, int value) {
+   public void putVarintField(int tag, int value) {
       if (tag == 0) {
          throw new IllegalArgumentException("Zero is not a valid tag");
       }

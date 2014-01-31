@@ -140,7 +140,7 @@ public class MarshallingWithWrappingTest {
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
       CodedInputStream codedInputStream = CodedInputStream.newInstance(bais);
       UnknownFieldSet unknownFieldSet = new UnknownFieldSetImpl();
-      unknownFieldSet.mergeFrom(codedInputStream);
+      unknownFieldSet.readAllFields(codedInputStream);
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       CodedOutputStream out = CodedOutputStream.newInstance(baos);

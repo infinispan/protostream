@@ -20,7 +20,7 @@ public interface UnknownFieldSet {
    /**
     * Parse an entire message from {@code input} and merge its fields into this set.
     */
-   void mergeFrom(CodedInputStream input) throws IOException;
+   void readAllFields(CodedInputStream input) throws IOException;
 
    /**
     * Parse a single field from {@code input} and merge it into this set.
@@ -28,13 +28,13 @@ public interface UnknownFieldSet {
     * @param tag The field's tag number, which was already parsed.
     * @return {@code false} if the tag is an end group tag.
     */
-   boolean mergeFieldFrom(int tag, CodedInputStream input) throws IOException;
+   boolean readSingleField(int tag, CodedInputStream input) throws IOException;
 
    /**
     * Convenience method for merging a new field containing a single varint value. This is used in particular when an
     * unknown enum value is encountered.
     */
-   void mergeVarintField(int tag, int value);
+   void putVarintField(int tag, int value);
 
    /**
     * Serializes the set and writes it to {@code output}.

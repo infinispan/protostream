@@ -169,7 +169,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
                   throw new IOException("Unexpected field type : " + fd.getType());
             }
          }
-         messageContext.unknownFieldSet.mergeFieldFrom(tag, messageContext.in);
+         messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
       }
 
       if (fd.isRequired()) {
@@ -250,7 +250,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
          if (tag == expectedTag) {
             return readObject(fd, clazz, messageContext.in, -1);
          }
-         messageContext.unknownFieldSet.mergeFieldFrom(tag, messageContext.in);
+         messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
       }
 
       return null;
@@ -274,7 +274,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
                enumValue = messageContext.in.readEnum();
                break;
             }
-            messageContext.unknownFieldSet.mergeFieldFrom(tag, messageContext.in);
+            messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
          }
       }
 
@@ -282,7 +282,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
       // the enum value was not recognized by the decoder so rather than discarding it we add it to the unknown
       if (decoded == null) {
-         messageContext.unknownFieldSet.mergeVarintField(expectedTag, enumValue);
+         messageContext.unknownFieldSet.putVarintField(expectedTag, enumValue);
       }
 
       return decoded;
@@ -319,7 +319,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
                enumValue = messageContext.in.readEnum();
                break;
             }
-            messageContext.unknownFieldSet.mergeFieldFrom(tag, messageContext.in);
+            messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
          }
       }
 
@@ -328,7 +328,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
       // the enum value was not recognized by the decoder so rather than discarding it we add it to the unknown
       if (decoded == null) {
-         messageContext.unknownFieldSet.mergeVarintField(expectedTag, enumValue);
+         messageContext.unknownFieldSet.putVarintField(expectedTag, enumValue);
       }
 
       return decoded;
@@ -358,7 +358,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    private <A> A unmarshall(BaseMarshaller<A> marshaller, CodedInputStream in) throws IOException {
       A a = marshaller instanceof MessageMarshaller ? ((MessageMarshaller<A>) marshaller).readFrom(this) : ((RawProtobufMarshaller<A>) marshaller).readFrom(ctx, in);
-      messageContext.unknownFieldSet.mergeFrom(messageContext.in);
+      messageContext.unknownFieldSet.readAllFields(messageContext.in);
       if (a instanceof Message && !messageContext.unknownFieldSet.isEmpty()) {
          ((Message) a).setUnknownFieldSet(messageContext.unknownFieldSet);
       }
@@ -396,7 +396,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
          if (tag == expectedTag) {
             collection.add(readObject(fd, clazz, messageContext.in, -1));
          } else {
-            messageContext.unknownFieldSet.mergeFieldFrom(tag, messageContext.in);
+            messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
          }
       }
       return collection;
@@ -469,7 +469,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
                   throw new IllegalStateException("Unexpected field type : " + fd.getType());
             }
          } else {
-            messageContext.unknownFieldSet.mergeFieldFrom(tag, messageContext.in);
+            messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
          }
       }
    }
