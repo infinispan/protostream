@@ -56,7 +56,7 @@
                     <arguments>
                         <argument>--proto_path=${project.basedir}/src/main/resources</argument>
                         <argument>--include_imports</argument>
-                        <argument>${project.basedir}/src/main/resources/bank.proto</argument>
+                        <argument>${project.basedir}/src/main/resources/sample_bank_account/bank.proto</argument>
                         <argument>--descriptor_set_out=${project.build.directory}/bank.protobin</argument>
                     </arguments>
                 </configuration>
