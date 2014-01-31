@@ -27,18 +27,15 @@ public class UserMarshaller implements MessageMarshaller<User> {
       return User.class;
    }
 
-   // todo for efficiency's sake we must recommend user to write and read in the same order (which should also be identical with order declared in proto file)
-   // todo (efficiency note) for collections we need to parse ahead, potentially until EOF
    @Override
-   public User readFrom(ProtoStreamReader reader) throws IOException {   //todo must validate a non-repeated field is not present or attempted read multiple times
+   public User readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
       List<Integer> accountIds = reader.readCollection("accountIds", new ArrayList<Integer>(), Integer.class);
 
-      // Read them out of order. It still works!
+      // Read them out of order. It still works but logs a warning!
       String surname = reader.readString("surname");
       String name = reader.readString("name");
 
-      //todo also handle readMap eventually
       List<Address> addresses = reader.readCollection("addresses", new ArrayList<Address>(), Address.class);
 
       Integer age = reader.readInt("age");

@@ -3,6 +3,7 @@ package org.infinispan.protostream.sampledomain;
 import org.infinispan.protostream.BaseMessage;
 
 import java.util.Date;
+import java.util.List;
 
 //todo move everyting to core and make a tests jar
 
@@ -14,6 +15,8 @@ public class Account extends BaseMessage {
    private int id;
    private String description;
    private Date creationDate;
+   private Limits limits;
+   private List<byte[]> blurb;
 
    public static class Limits extends BaseMessage {
 
@@ -70,12 +73,30 @@ public class Account extends BaseMessage {
       this.creationDate = creationDate;
    }
 
+   public Limits getLimits() {
+      return limits;
+   }
+
+   public void setLimits(Limits limits) {
+      this.limits = limits;
+   }
+
+   public List<byte[]> getBlurb() {
+      return blurb;
+   }
+
+   public void setBlurb(List<byte[]> blurb) {
+      this.blurb = blurb;
+   }
+
    @Override
    public String toString() {
       return "Account{" +
             "id=" + id +
             ", description='" + description + '\'' +
             ", creationDate='" + creationDate + '\'' +
+            ", limits=" + limits +
+            ", blurb=" + blurb +
             ", unknownFieldSet='" + unknownFieldSet + '\'' +
             '}';
    }

@@ -22,6 +22,7 @@ public class MarshallerRegistration {
       ctx.registerMarshaller(User.Gender.class, new GenderMarshaller());
       ctx.registerMarshaller(Address.class, new AddressMarshaller());
       ctx.registerMarshaller(Account.class, new AccountMarshaller());
+      ctx.registerMarshaller(Account.Limits.class, new LimitsMarshaller());
       ctx.registerMarshaller(Transaction.class, new TransactionMarshaller());
    }
 }

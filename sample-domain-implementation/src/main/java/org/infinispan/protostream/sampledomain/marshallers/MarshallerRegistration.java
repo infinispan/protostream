@@ -14,8 +14,10 @@ import java.io.IOException;
  */
 public class MarshallerRegistration {
 
+   public static final String PROTOBUF_RES = "/bank.protobin";
+
    public static void registerMarshallers(SerializationContext ctx) throws IOException, Descriptors.DescriptorValidationException {
-      ctx.registerProtofile("/bank.protobin");
+      ctx.registerProtofile(PROTOBUF_RES);
       ctx.registerMarshaller(User.class, new UserMarshaller());
       ctx.registerMarshaller(User.Gender.class, new GenderMarshaller());
       ctx.registerMarshaller(Address.class, new AddressMarshaller());
