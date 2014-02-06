@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>protostream</artifactId>
+    <packaging>bundle</packaging>
 
     <name>ProtoStream serializers for protobuf</name>
     <description>
@@ -111,6 +112,12 @@
 
             <plugin>
                 <artifactId>maven-surefire-report-plugin</artifactId>
+            </plugin>
+            
+            <plugin>
+               <groupId>org.apache.felix</groupId>
+               <artifactId>maven-bundle-plugin</artifactId>
+               <extensions>true</extensions>
             </plugin>
         </plugins>
     </build>
