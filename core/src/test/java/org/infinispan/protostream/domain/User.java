@@ -2,12 +2,17 @@ package org.infinispan.protostream.domain;
 
 import org.infinispan.protostream.BaseMessage;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author anistor@redhat.com
  */
-public class User extends BaseMessage {
+public class User extends BaseMessage implements Externalizable {   // implement Externalizable just for PerformanceTest
 
    public enum Gender {
       MALE, FEMALE
@@ -90,4 +95,66 @@ public class User extends BaseMessage {
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }
+
+   @Override
+   public void writeExternal(ObjectOutput out) throws IOException {
+      out.writeInt(id);
+      out.writeUTF(name);
+      out.writeUTF(surname);
+      if (accountIds == null) {
+         out.writeInt(-1);
+      } else {
+         out.writeInt(accountIds.size());
+         for (Integer accountId : accountIds) {
+            out.writeInt(accountId);
+         }
+      }
+      if (addresses == null) {
+         out.writeInt(-1);
+      } else {
+         out.writeInt(addresses.size());
+         for (Address address : addresses) {
+            out.writeObject(address);
+         }
+      }
+      if (age != null) {
+         out.writeBoolean(true);
+         out.writeInt(age);
+      } else {
+         out.writeBoolean(false);
+      }
+      out.writeInt(gender.ordinal());
+   }
+
+   @Override
+   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+      id = in.readInt();
+      name = in.readUTF();
+      surname = in.readUTF();
+      int numAccountIds = in.readInt();
+      if (numAccountIds == -1) {
+         accountIds = null;
+      } else {
+         accountIds = new ArrayList<Integer>(numAccountIds);
+         for (int i = 0; i < numAccountIds; i++) {
+            accountIds.add(in.readInt());
+         }
+      }
+      int numAddresses = in.readInt();
+      if (numAddresses == -1) {
+         addresses = null;
+      } else {
+         addresses = new ArrayList<Address>(numAddresses);
+         for (int i = 0; i < numAddresses; i++) {
+            addresses.add((Address) in.readObject());
+         }
+      }
+      if (in.readBoolean()) {
+         age = in.readInt();
+      } else {
+         age = null;
+      }
+      gender = User.Gender.values()[in.readInt()];
+   }
+
 }
