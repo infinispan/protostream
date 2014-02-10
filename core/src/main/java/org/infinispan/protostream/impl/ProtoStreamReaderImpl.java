@@ -56,7 +56,9 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       MessageDescriptor messageDescriptor = ctx.getInternalMessageDescriptor(marshaller.getTypeName());
       resetContext();
       enterContext(null, messageDescriptor, in);
-      A a = marshaller instanceof MessageMarshaller ? ((MessageMarshaller<A>) marshaller).readFrom(this) : ((RawProtobufMarshaller<A>) marshaller).readFrom(ctx, in);
+      A a = marshaller instanceof MessageMarshaller ?
+            ((MessageMarshaller<A>) marshaller).readFrom(this) :
+            ((RawProtobufMarshaller<A>) marshaller).readFrom(ctx, in);
       exitContext(a);
       return a;
    }
@@ -294,12 +296,12 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
          decoded = enumMarshaller.decode(enumValue);
       } else {
          RawProtobufMarshaller<A> rawMarshaller = (RawProtobufMarshaller<A>) marshaller;
-         decoded = rawMarshaller.readFrom(ctx, messageContext.in);
+         decoded = rawMarshaller.readFrom(ctx, messageContext.in);  //todo incorrect! what if the data is already in UnknownFieldSet?
       }
 
       // the enum value was not recognized by the decoder so rather than discarding it we add it to the unknown
       if (decoded == null) {
-         messageContext.unknownFieldSet.putVarintField(expectedTag, enumValue);
+         messageContext.unknownFieldSet.putVarintField(expectedTag, enumValue);  //todo enum value was read, but what if the RawProtobufMarshaller needs to read it now form stream?
       }
 
       return decoded;

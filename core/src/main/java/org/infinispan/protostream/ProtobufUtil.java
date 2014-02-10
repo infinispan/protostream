@@ -20,7 +20,7 @@ import java.io.OutputStream;
  */
 public final class ProtobufUtil {
 
-   private static final String WRAPPING_DEFINITIONS_RES = "/message-wrapping.protobin";
+   private static final String WRAPPING_DEFINITIONS_RES = "/org/infinispan/protostream/message-wrapping.protobin";
 
    @Deprecated
    public static SerializationContext newSerializationContext() {

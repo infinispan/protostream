@@ -80,11 +80,11 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <mkdir dir="${project.build.directory}/protobuf-descriptors/"/>
+                                <mkdir dir="${project.build.directory}/protobuf-descriptors/org/infinispan/protostream"/>
                                 <exec executable="protoc" failonerror="true">
                                     <arg value="--proto_path=${project.basedir}/src/main/resources"/>
-                                    <arg value="--descriptor_set_out=${project.build.directory}/protobuf-descriptors/message-wrapping.protobin"/>
-                                    <arg value="${project.basedir}/src/main/resources/message-wrapping.proto"/>
+                                    <arg value="--descriptor_set_out=${project.build.directory}/protobuf-descriptors/org/infinispan/protostream/message-wrapping.protobin"/>
+                                    <arg value="${project.basedir}/src/main/resources/org/infinispan/protostream/message-wrapping.proto"/>
                                 </exec>
                             </target>
                         </configuration>
