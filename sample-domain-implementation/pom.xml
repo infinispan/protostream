@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>sample-domain-implementation</artifactId>
+    <packaging>bundle</packaging>
 
     <name>Sample domain model implementation, including marshallers</name>
     <description>
@@ -38,6 +39,20 @@
 
             <plugin>
                 <artifactId>maven-surefire-report-plugin</artifactId>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Export-Package>
+                            ${project.groupId}.sampledomain;version=${project.version};-split-package:=error,
+                            ${project.groupId}.sampledomain.marshallers
+                        </Export-Package>
+                    </instructions>
+                </configuration>
             </plugin>
         </plugins>
     </build>

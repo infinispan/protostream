@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>sample-domain-definition</artifactId>
+    <packaging>bundle</packaging>
 
     <name>Sample domain model definitions in proto file</name>
     <description>
@@ -38,27 +39,39 @@
             <!-- Execute protoc to parse our proto definitions and generate the serialized descriptor set. -->
             <!-- Ideally, we should use a dedicated maven plugin for this but none of the 3-4 available plugins actually work for us. -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
                 <executions>
                     <execution>
+                        <id>compile-protoc</id>
                         <phase>generate-resources</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/sample_bank_account"/>
+                                <exec executable="protoc" failonerror="true">
+                                    <arg value="--proto_path=${project.basedir}/src/main/resources"/>
+                                    <arg value="--include_imports"/>
+                                    <arg value="--descriptor_set_out=${project.build.directory}/sample_bank_account/bank.protobin"/>
+                                    <arg value="${project.basedir}/src/main/resources/sample_bank_account/bank.proto"/>
+                                </exec>
+                            </target>
+                        </configuration>
                         <goals>
-                            <goal>exec</goal>
+                            <goal>run</goal>
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
                 <configuration>
-                    <!-- please make sure protoc is installed and available in your path -->
-                    <executable>protoc</executable>
-                    <workingDirectory>${project.build.directory}</workingDirectory>
-                    <arguments>
-                        <argument>--proto_path=${project.basedir}/src/main/resources</argument>
-                        <argument>--include_imports</argument>
-                        <argument>${project.basedir}/src/main/resources/sample_bank_account/bank.proto</argument>
-                        <argument>--descriptor_set_out=${project.build.directory}/bank.protobin</argument>
-                    </arguments>
+                  <instructions>
+                     <Export-Package>
+                         sample_bank_account;version=${project.version};-split-package:=error
+                      </Export-Package>
+                  </instructions>
                 </configuration>
             </plugin>
         </plugins>
