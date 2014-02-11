@@ -10,7 +10,7 @@ import java.io.IOException;
  */
 public class MarshallerRegistration {
 
-   public static final String PROTOBUF_RES = "/bank.protobin";
+   public static final String PROTOBUF_RES = "/sample_bank_account/bank.protobin";
 
    public static void registerMarshallers(SerializationContext ctx) throws IOException, Descriptors.DescriptorValidationException {
       ctx.registerProtofile(PROTOBUF_RES);
