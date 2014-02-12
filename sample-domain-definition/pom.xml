@@ -68,7 +68,7 @@
                 <configuration>
                     <instructions>
                         <Export-Package>
-                            sample_bank_account;version=${project.version};-split-package:=error
+                            sample_bank_account.*;version=${project.version};-split-package:=error
                         </Export-Package>
                     </instructions>
                 </configuration>

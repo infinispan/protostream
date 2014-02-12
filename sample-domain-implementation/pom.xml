@@ -48,8 +48,7 @@
                 <configuration>
                     <instructions>
                         <Export-Package>
-                            ${project.groupId}.sampledomain;version=${project.version};-split-package:=error,
-                            ${project.groupId}.sampledomain.marshallers
+                            ${project.groupId}.sampledomain.*;version=${project.version};-split-package:=error
                         </Export-Package>
                     </instructions>
                 </configuration>
