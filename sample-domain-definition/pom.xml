@@ -28,7 +28,7 @@
                 </includes>
             </resource>
             <resource>
-                <directory>target</directory>
+                <directory>${project.build.directory}/protobuf-descriptors</directory>
                 <includes>
                     <include>**/*.protobin</include>
                 </includes>
@@ -46,11 +46,11 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <mkdir dir="${project.build.directory}/sample_bank_account"/>
+                                <mkdir dir="${project.build.directory}/protobuf-descriptors/sample_bank_account"/>
                                 <exec executable="protoc" failonerror="true">
                                     <arg value="--proto_path=${project.basedir}/src/main/resources"/>
                                     <arg value="--include_imports"/>
-                                    <arg value="--descriptor_set_out=${project.build.directory}/sample_bank_account/bank.protobin"/>
+                                    <arg value="--descriptor_set_out=${project.build.directory}/protobuf-descriptors/sample_bank_account/bank.protobin"/>
                                     <arg value="${project.basedir}/src/main/resources/sample_bank_account/bank.proto"/>
                                 </exec>
                             </target>

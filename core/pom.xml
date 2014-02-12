@@ -68,6 +68,21 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.proto</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${project.build.directory}/protobuf-descriptors</directory>
+                <includes>
+                    <include>**/*.protobin</include>
+                </includes>
+            </resource>
+        </resources>
+
         <plugins>
             <!-- Execute protoc to parse our proto definitions and generate the serialized descriptor set. -->
             <!-- Ideally, we should use a dedicated maven plugin for this but none of the 3-4 available plugins actually work for us. -->
@@ -90,28 +105,6 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${basedir}/target/protobuf-descriptors</directory>
-                                    <filtering>false</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
