@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.UnknownFieldSet;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
@@ -46,17 +47,17 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       this.ctx = ctx;
    }
 
-   final ReadMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedInputStream in) {
+   ReadMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedInputStream in) {
       messageContext = new ReadMessageContext(messageContext, fieldName, marshallerDelegate, in);
       return messageContext;
    }
 
-   final void popContext() {
+   void popContext() {
       messageContext = messageContext.getParentContext();
    }
 
-   final ReadMessageContext getMessageContext() {
-      return messageContext;
+   UnknownFieldSet getUnknownFieldSet() {
+      return messageContext.unknownFieldSet;
    }
 
    public <A> A read(CodedInputStream in, Class<A> clazz) throws IOException {

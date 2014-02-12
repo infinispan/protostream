@@ -4,6 +4,7 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.Descriptors;
 import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.UnknownFieldSet;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -60,7 +61,7 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
    public T unmarshall(String fieldName, Descriptors.FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, CodedInputStream in) throws IOException {
       final int expectedTag = WireFormat.makeTag(fieldDescriptor.getNumber(), WireFormat.WIRETYPE_VARINT);
       int enumValue;
-      UnknownFieldSetImpl unknownFieldSet = reader.getMessageContext().unknownFieldSet;
+      UnknownFieldSet unknownFieldSet = reader.getUnknownFieldSet();
       Object o = unknownFieldSet.consumeTag(expectedTag);
       if (o != null) {
          enumValue = ((Long) o).intValue();

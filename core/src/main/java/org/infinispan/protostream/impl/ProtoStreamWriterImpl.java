@@ -26,17 +26,13 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       this.ctx = ctx;
    }
 
-   final WriteMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedOutputStream out) {
+   WriteMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedOutputStream out) {
       messageContext = new WriteMessageContext(messageContext, fieldName, marshallerDelegate, out);
       return messageContext;
    }
 
-   final void popContext() {
+   void popContext() {
       messageContext = messageContext.getParentContext();
-   }
-
-   final WriteMessageContext getMessageContext() {
-      return messageContext;
    }
 
    public void write(CodedOutputStream out, Object value) throws IOException {
