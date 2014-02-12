@@ -3,12 +3,7 @@ package org.infinispan.protostream.impl;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors;
-import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.RawProtobufMarshaller;
-import org.infinispan.protostream.UnknownFieldSet;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
@@ -24,8 +19,6 @@ import java.util.List;
 public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader {
 
    private static final Log log = Log.LogFactory.getLog(ProtoStreamReaderImpl.class);
-
-   private final SerializationContextImpl ctx;
 
    private static final EnumSet<Descriptors.FieldDescriptor.Type> primitiveTypes = EnumSet.of(
          Descriptors.FieldDescriptor.Type.DOUBLE,
@@ -45,59 +38,41 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
          Descriptors.FieldDescriptor.Type.SINT64
    );
 
+   private final SerializationContextImpl ctx;
+
    private ReadMessageContext messageContext;
 
    public ProtoStreamReaderImpl(SerializationContextImpl ctx) {
       this.ctx = ctx;
    }
 
-   public <A> A read(CodedInputStream in, Class<A> clazz) throws IOException {
-      BaseMarshaller<A> marshaller = ctx.getMarshaller(clazz);
-      MessageDescriptor messageDescriptor = ctx.getInternalMessageDescriptor(marshaller.getTypeName());
-      resetContext();
-      enterContext(null, messageDescriptor, in);
-      A a = marshaller instanceof MessageMarshaller ?
-            ((MessageMarshaller<A>) marshaller).readFrom(this) :
-            ((RawProtobufMarshaller<A>) marshaller).readFrom(ctx, in);
-      exitContext(a);
-      return a;
+   final ReadMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedInputStream in) {
+      messageContext = new ReadMessageContext(messageContext, fieldName, marshallerDelegate, in);
+      return messageContext;
    }
 
-   public <A> A read(CodedInputStream in, MessageMarshaller<A> marshaller) throws IOException {
-      MessageDescriptor messageDescriptor = ctx.getInternalMessageDescriptor(marshaller.getTypeName());
-      resetContext();
-      enterContext(null, messageDescriptor, in);
-      A a = marshaller.readFrom(this);
-      exitContext(a);
-      return a;
-   }
-
-   private void resetContext() {
-      messageContext = null;
-   }
-
-   private void enterContext(String fieldName, MessageDescriptor messageDescriptor, CodedInputStream in) {
-      messageContext = new ReadMessageContext(messageContext, fieldName, messageDescriptor, in);
-   }
-
-   private void exitContext(Object value) throws IOException {
-      UnknownFieldSet unknownFieldSet = value instanceof Message ? ((Message) value).getUnknownFieldSet() : null;
-
-      // check that all required fields were seen in the stream, even if not actually read
-      for (Descriptors.FieldDescriptor fd : messageContext.getFieldDescriptors()) {
-         if (fd.isRequired()) {
-            if (!messageContext.isFieldMarked(fd.getNumber())
-                  && unknownFieldSet != null
-                  && !unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getLiteType().getWireType()))) {
-               throw new IOException("Required field \"" + fd.getFullName() + "\" was not encountered in the stream");
-            }
-         }
-      }
+   final void popContext() {
       messageContext = messageContext.getParentContext();
    }
 
+   final ReadMessageContext getMessageContext() {
+      return messageContext;
+   }
+
+   public <A> A read(CodedInputStream in, Class<A> clazz) throws IOException {
+      messageContext = null;
+      BaseMarshallerDelegate<A> marshallerDelegate = ctx.getMarshallerDelegate(clazz);
+      return marshallerDelegate.unmarshall(null, null, this, in);
+   }
+
+   public <A> A read(CodedInputStream in, MessageMarshaller<A> marshaller) throws IOException {
+      messageContext = null;
+      BaseMarshallerDelegate<A> marshallerDelegate = ctx.getMarshallerDelegate(marshaller.getTypeName());
+      return marshallerDelegate.unmarshall(null, null, this, in);
+   }
+
    private Object readPrimitive(String fieldName, Descriptors.FieldDescriptor.JavaType javaType) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
       Descriptors.FieldDescriptor.Type type = fd.getType();
       if (type == Descriptors.FieldDescriptor.Type.ENUM
             || type == Descriptors.FieldDescriptor.Type.GROUP
@@ -236,11 +211,11 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <A> A readObject(String fieldName, Class<? extends A> clazz) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
       checkFieldRead(fd, false);
 
       if (fd.getType() == Descriptors.FieldDescriptor.Type.ENUM) {
-         return (A) readEnum(fd, (Class<Enum>) clazz);
+         return ctx.getMarshallerDelegate(clazz).unmarshall(fieldName, fd, this, messageContext.in);
       }
 
       //todo validate type is compatible with readObject
@@ -248,8 +223,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
       if (o != null) {
          ByteString byteString = (ByteString) o;
-         CodedInputStream codedInputStream = byteString.newCodedInput();
-         return readObject(fieldName, fd, clazz, codedInputStream, byteString.size());
+         return readNestedObject(fieldName, fd, clazz, byteString.newCodedInput(), byteString.size());
       }
 
       while (true) {
@@ -258,7 +232,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
             break;
          }
          if (tag == expectedTag) {
-            return readObject(fieldName, fd, clazz, messageContext.in, -1);
+            return readNestedObject(fieldName, fd, clazz, messageContext.in, -1);
          }
          messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
       }
@@ -266,86 +240,38 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       return null;
    }
 
-   private <A extends Enum<A>> A readEnum(Descriptors.FieldDescriptor fd, Class<A> clazz) throws IOException {
-      assert fd.getLiteType().getWireType() == WireFormat.WIRETYPE_VARINT;
-
-      int expectedTag = WireFormat.makeTag(fd.getNumber(), WireFormat.WIRETYPE_VARINT);
-      int enumValue;
-      Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
-      if (o != null) {
-         enumValue = ((Long) o).intValue();
-      } else {
-         while (true) {
-            int tag = messageContext.in.readTag();
-            if (tag == 0) {
-               return null;
-            }
-            if (tag == expectedTag) {
-               enumValue = messageContext.in.readEnum();
-               break;
-            }
-            messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
-         }
-      }
-
-      BaseMarshaller<A> marshaller = ctx.getMarshaller(clazz);
-      A decoded;
-
-      if (marshaller instanceof EnumMarshaller) {
-         EnumMarshaller<A> enumMarshaller = (EnumMarshaller<A>) marshaller;
-         decoded = enumMarshaller.decode(enumValue);
-      } else {
-         RawProtobufMarshaller<A> rawMarshaller = (RawProtobufMarshaller<A>) marshaller;
-         decoded = rawMarshaller.readFrom(ctx, messageContext.in);  //todo incorrect! what if the data is already in UnknownFieldSet?
-      }
-
-      // the enum value was not recognized by the decoder so rather than discarding it we add it to the unknown
-      if (decoded == null) {
-         messageContext.unknownFieldSet.putVarintField(expectedTag, enumValue);  //todo enum value was read, but what if the RawProtobufMarshaller needs to read it now form stream?
-      }
-
-      return decoded;
-   }
-
-   private <A> A readObject(String fieldName, Descriptors.FieldDescriptor fd, Class<A> clazz, CodedInputStream in, int length) throws IOException {
-      BaseMarshaller<A> marshaller = ctx.getMarshaller(clazz);
-      MessageDescriptor fdt = ctx.getInternalMessageDescriptor(fd.getMessageType().getFullName());
-      enterContext(fieldName, fdt, in);
+   /**
+    * Read an Object or an Enum.
+    *
+    * @param length the actual length of the nested object or -1 if the length should be read from the stream
+    */
+   private <A> A readNestedObject(String fieldName, Descriptors.FieldDescriptor fd, Class<A> clazz, CodedInputStream in, int length) throws IOException {
+      BaseMarshallerDelegate<A> marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       A a;
       if (fd.getType() == Descriptors.FieldDescriptor.Type.GROUP) {
-         a = unmarshall(marshaller, in);
+         a = marshallerDelegate.unmarshall(fieldName, fd, this, in);
          in.checkLastTagWas(WireFormat.makeTag(fd.getNumber(), WireFormat.WIRETYPE_END_GROUP));
       } else if (fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
          if (length < 0) {
             length = in.readRawVarint32();
          }
          int oldLimit = in.pushLimit(length);
-         a = unmarshall(marshaller, in);
+         a = marshallerDelegate.unmarshall(fieldName, fd, this, in);
          in.checkLastTagWas(0);
          in.popLimit(oldLimit);
       } else {
          throw new IllegalArgumentException("Declared field type is not a message or an enum : " + fd.getFullName());
       }
-      exitContext(a);
-      return a;
-   }
-
-   private <A> A unmarshall(BaseMarshaller<A> marshaller, CodedInputStream in) throws IOException {
-      A a = marshaller instanceof MessageMarshaller ? ((MessageMarshaller<A>) marshaller).readFrom(this) : ((RawProtobufMarshaller<A>) marshaller).readFrom(ctx, in);
-      messageContext.unknownFieldSet.readAllFields(messageContext.in);
-      if (a instanceof Message && !messageContext.unknownFieldSet.isEmpty()) {
-         ((Message) a).setUnknownFieldSet(messageContext.unknownFieldSet);
-      }
       return a;
    }
 
    @Override
-   public <A, C extends Collection<? super A>> C readCollection(String fieldName, C collection, Class<? extends A> clazz) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+   public <A, C extends Collection<? super A>> C readCollection(String fieldName, C collection, Class<? extends A> elementClass) throws IOException {
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
       checkFieldRead(fd, true);
 
       if (primitiveTypes.contains(fd.getType())) {
-         readPrimitiveCollection(fd, (Collection<Object>) collection, clazz);
+         readPrimitiveCollection(fd, (Collection<Object>) collection, elementClass);
          return collection;
       }
 
@@ -359,7 +285,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
          }
          ByteString byteString = (ByteString) o;
          CodedInputStream codedInputStream = byteString.newCodedInput();
-         collection.add(readObject(fieldName, fd, clazz, codedInputStream, byteString.size()));
+         collection.add(readNestedObject(fieldName, fd, elementClass, codedInputStream, byteString.size()));
       }
 
       while (true) {
@@ -368,7 +294,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
             break;
          }
          if (tag == expectedTag) {
-            collection.add(readObject(fieldName, fd, clazz, messageContext.in, -1));
+            collection.add(readNestedObject(fieldName, fd, elementClass, messageContext.in, -1));
          } else {
             messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
          }
@@ -376,7 +302,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       return collection;
    }
 
-   private void readPrimitiveCollection(Descriptors.FieldDescriptor fd, Collection<? super Object> collection, Class clazz) throws IOException {
+   private void readPrimitiveCollection(Descriptors.FieldDescriptor fd, Collection<? super Object> collection, Class elementClass) throws IOException {
       int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getLiteType().getWireType());
       Descriptors.FieldDescriptor.Type type = fd.getType();
 
@@ -385,7 +311,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
          if (o == null) {
             break;
          }
-         collection.add(convertWireTypeToJavaType(type, o));   //todo check that (o.getClass() == clazz)
+         collection.add(convertWireTypeToJavaType(type, o));   //todo check that (o.getClass() == elementClass)
       }
 
       while (true) {
@@ -452,9 +378,9 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    @Override
-   public <A> A[] readArray(String fieldName, Class<? extends A> clazz) throws IOException {
-      List<A> list = readCollection(fieldName, new ArrayList<A>(), clazz);
-      return list.toArray((A[]) Array.newInstance(clazz, list.size()));
+   public <A> A[] readArray(String fieldName, Class<? extends A> elementClass) throws IOException {
+      List<A> list = readCollection(fieldName, new ArrayList<A>(), elementClass);
+      return list.toArray((A[]) Array.newInstance(elementClass, list.size()));
    }
 
    private void checkFieldRead(Descriptors.FieldDescriptor fd, boolean expectRepeated) {

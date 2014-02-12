@@ -2,7 +2,6 @@ package org.infinispan.protostream;
 
 import com.google.protobuf.Descriptors;
 import org.infinispan.protostream.impl.FastIntegerSet;
-import org.infinispan.protostream.impl.MessageDescriptor;
 
 import java.util.BitSet;
 import java.util.Set;
@@ -28,19 +27,13 @@ public abstract class MessageContext<E extends MessageContext> {
    /**
     * The descriptor of the current message.
     */
-   private final MessageDescriptor messageDescriptor;
+   private final Descriptors.Descriptor messageDescriptor;
 
    private final BitSet seenFields;
    private final FastIntegerSet seenFieldsSet;
-
    private int maxSeenFieldNumber = 0;
 
-   @Deprecated
    protected MessageContext(E parentContext, String fieldName, Descriptors.Descriptor messageDescriptor) {
-      this(parentContext, fieldName, new MessageDescriptor(messageDescriptor));
-   }
-
-   protected MessageContext(E parentContext, String fieldName, MessageDescriptor messageDescriptor) {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
@@ -55,7 +48,7 @@ public abstract class MessageContext<E extends MessageContext> {
       this.fieldName = fieldName;
       this.messageDescriptor = messageDescriptor;
 
-      seenFields = new BitSet(messageDescriptor.getFieldDescriptors().length);
+      seenFields = new BitSet(messageDescriptor.getFields().size());
       seenFieldsSet = new FastIntegerSet(seenFields);
    }
 
@@ -87,15 +80,11 @@ public abstract class MessageContext<E extends MessageContext> {
    }
 
    public Descriptors.Descriptor getMessageDescriptor() {
-      return messageDescriptor.getMessageDescriptor();
-   }
-
-   public Descriptors.FieldDescriptor[] getFieldDescriptors() {
-      return messageDescriptor.getFieldDescriptors();
+      return messageDescriptor;
    }
 
    public Descriptors.FieldDescriptor getFieldByName(String fieldName) {
-      Descriptors.FieldDescriptor fd = messageDescriptor.getFieldsByName().get(fieldName);
+      Descriptors.FieldDescriptor fd = messageDescriptor.findFieldByName(fieldName);
       if (fd == null) {
          throw new IllegalArgumentException("Unknown field : " + fieldName);   //todo [anistor] throw a better exception
       }
@@ -103,9 +92,9 @@ public abstract class MessageContext<E extends MessageContext> {
    }
 
    public Descriptors.FieldDescriptor getFieldByNumber(int fieldNumber) {
-      Descriptors.FieldDescriptor fd = messageDescriptor.getMessageDescriptor().findFieldByNumber(fieldNumber);
+      Descriptors.FieldDescriptor fd = messageDescriptor.findFieldByNumber(fieldNumber);
       if (fd == null) {
-         throw new IllegalArgumentException("Unknown field : " + fieldName);   //todo [anistor] throw a better exception
+         throw new IllegalArgumentException("Unknown field : " + fieldNumber);   //todo [anistor] throw a better exception
       }
       return fd;
    }

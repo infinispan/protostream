@@ -22,6 +22,7 @@ import java.util.TreeMap;
 final class UnknownFieldSetImpl implements UnknownFieldSet {
 
    // elements of the Deque can be one of : varint, fixed32, fixed64, ByteString, UnknownFieldSetImpl
+   // this is created lazily
    private Map<Integer, Deque> fields;
 
    UnknownFieldSetImpl() {

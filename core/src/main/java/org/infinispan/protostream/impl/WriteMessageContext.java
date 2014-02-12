@@ -10,8 +10,11 @@ final class WriteMessageContext extends MessageContext<WriteMessageContext> {
 
    final CodedOutputStream out;
 
-   WriteMessageContext(WriteMessageContext parent, String fieldName, MessageDescriptor messageDescriptor, CodedOutputStream out) {
-      super(parent, fieldName, messageDescriptor);
+   final MessageMarshallerDelegate<?> marshallerDelegate;
+
+   WriteMessageContext(WriteMessageContext parent, String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedOutputStream out) {
+      super(parent, fieldName, marshallerDelegate.getMessageDescriptor());
       this.out = out;
+      this.marshallerDelegate = marshallerDelegate;
    }
 }

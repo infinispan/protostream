@@ -2,14 +2,8 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
-import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.RawProtobufMarshaller;
-import org.infinispan.protostream.UnknownFieldSet;
 import org.jboss.logging.Logger;
 
 import java.io.ByteArrayOutputStream;
@@ -32,65 +26,29 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       this.ctx = ctx;
    }
 
-   public void write(CodedOutputStream out, Object t) throws IOException {
-      resetContext();
-      BaseMarshaller marshaller = ctx.getMarshaller(t.getClass());
-      MessageDescriptor messageDescriptor = ctx.getInternalMessageDescriptor(marshaller.getTypeName());
-      enterContext(null, messageDescriptor, out);
-      marshall(t, marshaller, out);
-      exitContext(t);
-      out.flush();
+   final WriteMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedOutputStream out) {
+      messageContext = new WriteMessageContext(messageContext, fieldName, marshallerDelegate, out);
+      return messageContext;
    }
 
-   private void marshall(Object value, BaseMarshaller marshaller, CodedOutputStream out) throws IOException {
-      if (marshaller instanceof MessageMarshaller) {
-         ((MessageMarshaller) marshaller).writeTo(this, value);
-      } else {
-         ((RawProtobufMarshaller) marshaller).writeTo(ctx, out, value);
-      }
-      if (value instanceof Message) {
-         UnknownFieldSet unknownFieldSet = ((Message) value).getUnknownFieldSet();
-         if (unknownFieldSet != null) {
-            // check that none of the unknown fields are actually known
-            for (Descriptors.FieldDescriptor fd : messageContext.getFieldDescriptors()) {
-               if (unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getLiteType().getWireType()))) {
-                  throw new IOException("Field " + fd.getFullName() + " is a known field so it is illegal to be present in the unknown field set");
-               }
-            }
-            unknownFieldSet.writeTo(messageContext.out);
-         }
-      }
-   }
-
-   private void resetContext() {
-      messageContext = null;
-   }
-
-   private void enterContext(String fieldName, MessageDescriptor messageDescriptor, CodedOutputStream out) {
-      messageContext = new WriteMessageContext(messageContext, fieldName, messageDescriptor, out);
-   }
-
-   private void exitContext(Object value) {
-      UnknownFieldSet unknownFieldSet = value instanceof Message ? ((Message) value).getUnknownFieldSet() : null;
-
-      // validate that all the required fields were written
-      for (Descriptors.FieldDescriptor fd : messageContext.getFieldDescriptors()) {
-         if (fd.isRequired()) {
-            if (!messageContext.isFieldMarked(fd.getNumber())
-                  && unknownFieldSet != null
-                  && !unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getLiteType().getWireType()))) {
-               throw new IllegalStateException("Required field \"" + fd.getFullName()
-                                                     + "\" should have been written by a calling a suitable method from "
-                                                     + MessageMarshaller.ProtoStreamWriter.class.getName());
-            }
-         }
-      }
+   final void popContext() {
       messageContext = messageContext.getParentContext();
+   }
+
+   final WriteMessageContext getMessageContext() {
+      return messageContext;
+   }
+
+   public void write(CodedOutputStream out, Object value) throws IOException {
+      messageContext = null;
+      BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(value.getClass());
+      marshallerDelegate.marshall(null, null, value, this, out);
+      out.flush();
    }
 
    @Override
    public void writeInt(String fieldName, Integer value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -104,7 +62,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeInt(String fieldName, int value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -132,7 +90,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeLong(String fieldName, long value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -160,7 +118,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeLong(String fieldName, Long value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -174,7 +132,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeDouble(String fieldName, double value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -189,7 +147,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeDouble(String fieldName, Double value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -203,7 +161,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeFloat(String fieldName, float value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -218,7 +176,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeFloat(String fieldName, Float value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -232,7 +190,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBoolean(String fieldName, boolean value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -247,7 +205,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBoolean(String fieldName, Boolean value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -349,7 +307,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeString(String fieldName, String value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -370,7 +328,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBytes(String fieldName, byte[] value) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -392,7 +350,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeObject(String fieldName, Object value, Class clazz) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -408,66 +366,38 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       } else if (fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
          writeMessage(fieldName, fd, value, clazz);
       } else if (fd.getType() == Descriptors.FieldDescriptor.Type.ENUM) {
-         writeEnum(fd, (Enum) value);
+         writeEnum(fieldName, fd, (Enum) value);
       } else {
          throw new IllegalArgumentException("Declared field type is not a message or an enum : " + fieldName);
       }
    }
 
    private void writeMessage(String fieldName, Descriptors.FieldDescriptor fd, Object value, Class clazz) throws IOException {
-      BaseMarshaller marshaller = ctx.getMarshaller(clazz);
+      BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       CodedOutputStream out = CodedOutputStream.newInstance(baos);
-      MessageDescriptor fdt = ctx.getInternalMessageDescriptor(fd.getMessageType().getFullName());
-      enterContext(fieldName, fdt, out);
-      marshall(value, marshaller, out);
+      marshallerDelegate.marshall(fieldName, fd, value, this, out);
       out.flush();
-      exitContext(value);
       messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_LENGTH_DELIMITED);
       messageContext.out.writeRawVarint32(baos.size());
       messageContext.out.writeRawBytes(baos.toByteArray());
    }
 
    private void writeGroup(String fieldName, Descriptors.FieldDescriptor fd, Object value, Class clazz) throws IOException {
+      BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_START_GROUP);
-      MessageDescriptor fdt = ctx.getInternalMessageDescriptor(fd.getMessageType().getFullName());
-      enterContext(fieldName, fdt, messageContext.out);
-      BaseMarshaller marshaller = ctx.getMarshaller(clazz);
-      marshall(value, marshaller, messageContext.out);
-      exitContext(value);
+      marshallerDelegate.marshall(fieldName, fd, value, this, messageContext.out);
       messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_END_GROUP);
    }
 
-   private <T extends Enum<T>> void writeEnum(Descriptors.FieldDescriptor fd, T value) throws IOException {
-      Class<? extends Enum> clazz = value.getClass();
-      BaseMarshaller<? extends Enum> marshaller = ctx.getMarshaller(clazz);
-      if (marshaller == null) {
-         throw new IllegalArgumentException("No marshaller available for " + clazz);
-      }
-
-      if (marshaller instanceof EnumMarshaller) {
-         EnumMarshaller<T> enumMarshaller = (EnumMarshaller<T>) marshaller;
-         int enumValue = enumMarshaller.encode(value);
-         boolean isValidValue = false;
-         for (DescriptorProtos.EnumValueDescriptorProto evd : fd.getEnumType().toProto().getValueList()) {
-            if (evd.getNumber() == enumValue) {
-               isValidValue = true;
-               break;
-            }
-         }
-         if (!isValidValue) {
-            throw new IllegalArgumentException("Undefined enum value : " + value);
-         }
-         messageContext.out.writeEnum(fd.getNumber(), enumValue);
-      } else {
-         RawProtobufMarshaller<T> rawMarshaller = (RawProtobufMarshaller<T>) marshaller;
-         rawMarshaller.writeTo(ctx, messageContext.out, value);
-      }
+   private <T extends Enum<T>> void writeEnum(String fieldName, Descriptors.FieldDescriptor fd, T value) throws IOException {
+      BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) ctx.getMarshallerDelegate(value.getClass());
+      marshallerDelegate.marshall(fieldName, fd, value, this, messageContext.out);
    }
 
    @Override
-   public <T> void writeCollection(String fieldName, Collection<T> collection, Class<T> clazz) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+   public <T> void writeCollection(String fieldName, Collection<T> collection, Class<T> elementClass) throws IOException {
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (collection == null) {
          // a repeated field is never flagged as required
@@ -478,24 +408,24 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
       if (fd.getType() == Descriptors.FieldDescriptor.Type.GROUP) {
          for (Object t : collection) {
-            writeGroup(fieldName, fd, t, clazz);
+            writeGroup(fieldName, fd, t, elementClass);
          }
       } else if (fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
          for (Object t : collection) {
-            writeMessage(fieldName, fd, t, clazz);
+            writeMessage(fieldName, fd, t, elementClass);
          }
       } else if (fd.getType() == Descriptors.FieldDescriptor.Type.ENUM) {
          for (Object t : collection) {
-            writeEnum(fd, (Enum) t);
+            writeEnum(fieldName, fd, (Enum) t);
          }
       } else {
-         writePrimitiveCollection(fd, collection, clazz);
+         writePrimitiveCollection(fd, collection, elementClass);
       }
    }
 
    @Override
-   public <T> void writeArray(String fieldName, T[] array, Class<T> clazz) throws IOException {
-      Descriptors.FieldDescriptor fd = messageContext.getFieldByName(fieldName);
+   public <T> void writeArray(String fieldName, T[] array, Class<T> elementClass) throws IOException {
+      Descriptors.FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (array == null) {
          // a repeated field is never flagged as required
@@ -506,18 +436,18 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
       if (fd.getType() == Descriptors.FieldDescriptor.Type.GROUP) {
          for (Object t : array) {
-            writeGroup(fieldName, fd, t, clazz);
+            writeGroup(fieldName, fd, t, elementClass);
          }
       } else if (fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
          for (Object t : array) {
-            writeMessage(fieldName, fd, t, clazz);
+            writeMessage(fieldName, fd, t, elementClass);
          }
       } else if (fd.getType() == Descriptors.FieldDescriptor.Type.ENUM) {
          for (Object t : array) {
-            writeEnum(fd, (Enum) t);
+            writeEnum(fieldName, fd, (Enum) t);
          }
       } else {
-         writePrimitiveCollection(fd, Arrays.asList(array), clazz);   //todo [anistor] optimize away the Arrays.asList( )
+         writePrimitiveCollection(fd, Arrays.asList(array), elementClass);   //todo [anistor] optimize away the Arrays.asList( )
       }
    }
 

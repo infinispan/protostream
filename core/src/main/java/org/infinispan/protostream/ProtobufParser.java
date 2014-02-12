@@ -78,12 +78,12 @@ public final class ProtobufParser {
                if (fd != null) {
                   tagHandler.onStartNested(fieldNumber, null, null);
                   parse(tagHandler, null, in);
-                  in.checkLastTagWas(WireFormat.makeTag(fieldNumber, com.google.protobuf.WireFormat.WIRETYPE_END_GROUP));
+                  in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
                   tagHandler.onEndNested(fieldNumber, null, null);
                } else {
                   tagHandler.onStartNested(fieldNumber, fd.getName(), fd.getMessageType());
                   parse(tagHandler, fd.getMessageType(), in);
-                  in.checkLastTagWas(WireFormat.makeTag(fieldNumber, com.google.protobuf.WireFormat.WIRETYPE_END_GROUP));
+                  in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
                   tagHandler.onEndNested(fieldNumber, fd.getName(), fd.getMessageType());
                }
                break;

@@ -9,7 +9,6 @@ import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -78,7 +77,7 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
          out.writeBool(WRAPPED_BOOL, (Boolean) t);
       } else if (t instanceof byte[]) {
          byte[] bytes = (byte[]) t;
-         out.writeTag(WRAPPED_BYTES, com.google.protobuf.WireFormat.WIRETYPE_LENGTH_DELIMITED);
+         out.writeTag(WRAPPED_BYTES, WireFormat.WIRETYPE_LENGTH_DELIMITED);
          out.writeRawVarint32(bytes.length);
          out.writeRawBytes(bytes);
       } else if (t instanceof Enum) {
@@ -96,7 +95,7 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
          ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl((SerializationContextImpl) ctx);
          writer.write(CodedOutputStream.newInstance(buffer), t);
 
-         out.writeTag(WRAPPED_MESSAGE_BYTES, com.google.protobuf.WireFormat.WIRETYPE_LENGTH_DELIMITED);
+         out.writeTag(WRAPPED_MESSAGE_BYTES, WireFormat.WIRETYPE_LENGTH_DELIMITED);
          out.writeRawVarint32(buffer.size());
          out.writeRawBytes(buffer.toByteArray());
       }
@@ -114,58 +113,58 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
       while ((tag = in.readTag()) != 0) {
          readTags++;
          switch (tag) {
-            case WRAPPED_DESCRIPTOR_FULL_NAME << 3 | com.google.protobuf.WireFormat.WIRETYPE_LENGTH_DELIMITED:
+            case WRAPPED_DESCRIPTOR_FULL_NAME << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                descriptorFullName = in.readString();
                break;
-            case WRAPPED_ENUM << 3 | com.google.protobuf.WireFormat.WIRETYPE_VARINT:
+            case WRAPPED_ENUM << 3 | WireFormat.WIRETYPE_VARINT:
                enumValue = in.readEnum();
                break;
-            case WRAPPED_MESSAGE_BYTES << 3 | com.google.protobuf.WireFormat.WIRETYPE_LENGTH_DELIMITED:
+            case WRAPPED_MESSAGE_BYTES << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                messageBytes = in.readBytes().toByteArray();
                break;
-            case WRAPPED_STRING << 3 | com.google.protobuf.WireFormat.WIRETYPE_LENGTH_DELIMITED:
+            case WRAPPED_STRING << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                value = in.readString();
                break;
-            case WRAPPED_BYTES << 3 | com.google.protobuf.WireFormat.WIRETYPE_LENGTH_DELIMITED:
+            case WRAPPED_BYTES << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                value = in.readBytes().toByteArray();
                break;
-            case WRAPPED_BOOL << 3 | com.google.protobuf.WireFormat.WIRETYPE_VARINT:
+            case WRAPPED_BOOL << 3 | WireFormat.WIRETYPE_VARINT:
                value = in.readBool();
                break;
-            case WRAPPED_DOUBLE << 3 | com.google.protobuf.WireFormat.WIRETYPE_FIXED64:
+            case WRAPPED_DOUBLE << 3 | WireFormat.WIRETYPE_FIXED64:
                value = in.readDouble();
                break;
-            case WRAPPED_FLOAT << 3 | com.google.protobuf.WireFormat.WIRETYPE_FIXED32:
+            case WRAPPED_FLOAT << 3 | WireFormat.WIRETYPE_FIXED32:
                value = in.readFloat();
                break;
-            case WRAPPED_FIXED32 << 3 | com.google.protobuf.WireFormat.WIRETYPE_FIXED32:
+            case WRAPPED_FIXED32 << 3 | WireFormat.WIRETYPE_FIXED32:
                value = in.readFixed32();
                break;
-            case WRAPPED_SFIXED32 << 3 | com.google.protobuf.WireFormat.WIRETYPE_FIXED32:
+            case WRAPPED_SFIXED32 << 3 | WireFormat.WIRETYPE_FIXED32:
                value = in.readSFixed32();
                break;
-            case WRAPPED_FIXED64 << 3 | com.google.protobuf.WireFormat.WIRETYPE_FIXED64:
+            case WRAPPED_FIXED64 << 3 | WireFormat.WIRETYPE_FIXED64:
                value = in.readFixed64();
                break;
-            case WRAPPED_SFIXED64 << 3 | com.google.protobuf.WireFormat.WIRETYPE_FIXED64:
+            case WRAPPED_SFIXED64 << 3 | WireFormat.WIRETYPE_FIXED64:
                value = in.readSFixed64();
                break;
-            case WRAPPED_INT64 << 3 | com.google.protobuf.WireFormat.WIRETYPE_VARINT:
+            case WRAPPED_INT64 << 3 | WireFormat.WIRETYPE_VARINT:
                value = in.readInt64();
                break;
-            case WRAPPED_UINT64 << 3 | com.google.protobuf.WireFormat.WIRETYPE_VARINT:
+            case WRAPPED_UINT64 << 3 | WireFormat.WIRETYPE_VARINT:
                value = in.readUInt64();
                break;
-            case WRAPPED_SINT64 << 3 | com.google.protobuf.WireFormat.WIRETYPE_VARINT:
+            case WRAPPED_SINT64 << 3 | WireFormat.WIRETYPE_VARINT:
                value = in.readSInt64();
                break;
-            case WRAPPED_INT32 << 3 | com.google.protobuf.WireFormat.WIRETYPE_VARINT:
+            case WRAPPED_INT32 << 3 | WireFormat.WIRETYPE_VARINT:
                value = in.readInt32();
                break;
-            case WRAPPED_UINT32 << 3 | com.google.protobuf.WireFormat.WIRETYPE_VARINT:
+            case WRAPPED_UINT32 << 3 | WireFormat.WIRETYPE_VARINT:
                value = in.readUInt32();
                break;
-            case WRAPPED_SINT32 << 3 | com.google.protobuf.WireFormat.WIRETYPE_VARINT:
+            case WRAPPED_SINT32 << 3 | WireFormat.WIRETYPE_VARINT:
                value = in.readSInt32();
                break;
             default:
@@ -188,19 +187,21 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
          throw new IOException("Invalid message encoding.");
       }
 
+      SerializationContextImpl ctxImpl = (SerializationContextImpl) ctx;
       if (messageBytes != null) {
-         BaseMarshaller marshaller = ctx.getMarshaller(descriptorFullName);
-         ByteArrayInputStream bais2 = new ByteArrayInputStream(messageBytes);
-         CodedInputStream in2 = CodedInputStream.newInstance(bais2);
-         if (marshaller instanceof MessageMarshaller) {
-            ProtoStreamReaderImpl reader = new ProtoStreamReaderImpl((SerializationContextImpl) ctx);
-            return reader.read(in2, (MessageMarshaller) marshaller);
+         // it's a Message type
+         BaseMarshallerDelegate marshallerDelegate = ctxImpl.getMarshallerDelegate(descriptorFullName);
+         CodedInputStream nestedInput = CodedInputStream.newInstance(messageBytes);
+         if (marshallerDelegate instanceof MessageMarshallerDelegate) {
+            ProtoStreamReaderImpl reader = new ProtoStreamReaderImpl(ctxImpl);
+            return reader.read(nestedInput, (MessageMarshaller) marshallerDelegate.getMarshaller());
          } else {
-            return ((RawProtobufMarshaller) marshaller).readFrom(ctx, in2);
+            return ((RawProtobufMarshaller) marshallerDelegate.getMarshaller()).readFrom(ctxImpl, nestedInput);
          }
       } else {
-         EnumMarshaller enumMarshaller = (EnumMarshaller) ctx.getMarshaller(descriptorFullName);
-         return enumMarshaller.decode(enumValue);
+         // it's an Enum
+         EnumMarshallerDelegate marshallerDelegate = (EnumMarshallerDelegate) ctxImpl.getMarshallerDelegate(descriptorFullName);
+         return marshallerDelegate.getMarshaller().decode(enumValue);
       }
    }
 }

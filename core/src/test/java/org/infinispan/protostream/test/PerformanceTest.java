@@ -141,7 +141,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private void readWithProtoStream(byte[] bytes, long[] result) throws IOException, Descriptors.DescriptorValidationException {
-      Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceReads(true).build();
+      Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceReads(false).build();
       SerializationContext ctx = createContext(cfg);
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 
@@ -191,7 +191,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private byte[] writeWithProtoStream(User user, long[] result) throws IOException, Descriptors.DescriptorValidationException {
-      Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceWrites(true).build();
+      Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceWrites(false).build();
       SerializationContext ctx = createContext(cfg);
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
 

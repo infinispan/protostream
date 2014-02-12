@@ -12,8 +12,11 @@ final class ReadMessageContext extends MessageContext<ReadMessageContext> {
 
    final UnknownFieldSetImpl unknownFieldSet = new UnknownFieldSetImpl();
 
-   ReadMessageContext(ReadMessageContext parent, String fieldName, MessageDescriptor messageDescriptor, CodedInputStream in) {
-      super(parent, fieldName, messageDescriptor);
+   final MessageMarshallerDelegate<?> marshallerDelegate;
+
+   ReadMessageContext(ReadMessageContext parent, String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedInputStream in) {
+      super(parent, fieldName, marshallerDelegate.getMessageDescriptor());
       this.in = in;
+      this.marshallerDelegate = marshallerDelegate;
    }
 }

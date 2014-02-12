@@ -71,11 +71,11 @@ public final class ProtobufUtil {
    }
 
    public static <A> A fromByteArray(SerializationContext ctx, byte[] bytes, Class<A> clazz) throws IOException {
-      return readFrom(ctx, new ByteArrayInputStream(bytes), clazz);
+      return readFrom(ctx, CodedInputStream.newInstance(bytes), clazz);
    }
 
    public static <A> A fromByteArray(SerializationContext ctx, byte[] bytes, int offset, int length, Class<A> clazz) throws IOException {
-      return readFrom(ctx, new ByteArrayInputStream(bytes, offset, length), clazz);
+      return readFrom(ctx, CodedInputStream.newInstance(bytes, offset, length), clazz);
    }
 
    /**
