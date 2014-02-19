@@ -1,6 +1,6 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
 
 import java.util.BitSet;
 
@@ -25,12 +25,12 @@ public abstract class MessageContext<E extends MessageContext> {
    /**
     * The descriptor of the current message.
     */
-   private final Descriptors.Descriptor messageDescriptor;
+   private final Descriptor messageDescriptor;
 
    private final BitSet seenFields;
    private int maxSeenFieldNumber = 0;
 
-   protected MessageContext(E parentContext, String fieldName, Descriptors.Descriptor messageDescriptor) {
+   protected MessageContext(E parentContext, String fieldName, Descriptor messageDescriptor) {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
@@ -75,7 +75,7 @@ public abstract class MessageContext<E extends MessageContext> {
       return fullFieldName;
    }
 
-   public Descriptors.Descriptor getMessageDescriptor() {
+   public Descriptor getMessageDescriptor() {
       return messageDescriptor;
    }
 

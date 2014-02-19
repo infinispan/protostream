@@ -1,6 +1,9 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.EnumDescriptor;
+import com.google.protobuf.Descriptors.FileDescriptor;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,11 +26,11 @@ public interface SerializationContext { //todo [anistor] split this into separat
     *
     * @param in
     */
-   void registerProtofile(InputStream in) throws IOException, Descriptors.DescriptorValidationException;
+   void registerProtofile(InputStream in) throws IOException, DescriptorValidationException;
 
-   void registerProtofile(String classpathResource) throws IOException, Descriptors.DescriptorValidationException;
+   void registerProtofile(String classpathResource) throws IOException, DescriptorValidationException;
 
-   void registerProtofile(Descriptors.FileDescriptor fileDescriptor);
+   void registerProtofile(FileDescriptor fileDescriptor);
 
    /**
     * Register a type marshaller. The marshaller implementation must be stateless and thread-safe.
@@ -37,9 +40,9 @@ public interface SerializationContext { //todo [anistor] split this into separat
     */
    <T> void registerMarshaller(BaseMarshaller<T> marshaller);
 
-   Descriptors.Descriptor getMessageDescriptor(String fullName);
+   Descriptor getMessageDescriptor(String fullName);
 
-   Descriptors.EnumDescriptor getEnumDescriptor(String fullName);
+   EnumDescriptor getEnumDescriptor(String fullName);
 
    /**
     * Checks if the given type (message or enum) can be marshalled. This checks that a marshaller was registered for

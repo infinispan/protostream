@@ -1,6 +1,6 @@
 package org.infinispan.protostream.test;
 
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
 import org.infinispan.protostream.Configuration;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -14,13 +14,13 @@ import java.io.IOException;
  */
 public abstract class AbstractProtoStreamTest {
 
-   protected SerializationContext createContext() throws IOException, Descriptors.DescriptorValidationException {
+   protected SerializationContext createContext() throws IOException, DescriptorValidationException {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       MarshallerRegistration.registerMarshallers(ctx);
       return ctx;
    }
 
-   protected SerializationContext createContext(Configuration cfg) throws IOException, Descriptors.DescriptorValidationException {
+   protected SerializationContext createContext(Configuration cfg) throws IOException, DescriptorValidationException {
       SerializationContext ctx = ProtobufUtil.newSerializationContext(cfg);
       MarshallerRegistration.registerMarshallers(ctx);
       return ctx;

@@ -2,7 +2,7 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 import org.infinispan.protostream.RawProtobufMarshaller;
 
 import java.io.IOException;
@@ -28,12 +28,12 @@ public final class RawProtobufMarshallerDelegate<T> implements BaseMarshallerDel
    }
 
    @Override
-   public void marshall(String fieldName, Descriptors.FieldDescriptor fieldDescriptor, T value, ProtoStreamWriterImpl writer, CodedOutputStream out) throws IOException {
+   public void marshall(String fieldName, FieldDescriptor fieldDescriptor, T value, ProtoStreamWriterImpl writer, CodedOutputStream out) throws IOException {
       marshaller.writeTo(ctx, out, value);
    }
 
    @Override
-   public T unmarshall(String fieldName, Descriptors.FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, CodedInputStream in) throws IOException {
+   public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, CodedInputStream in) throws IOException {
       return marshaller.readFrom(ctx, in);
    }
 }

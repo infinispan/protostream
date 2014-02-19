@@ -1,6 +1,7 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.Log;
@@ -34,7 +35,7 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, user);
 
       TagHandler tagHandler = new TagHandler() {
-         private Descriptors.Descriptor nextDescriptor = null;
+         private Descriptor nextDescriptor = null;
 
          @Override
          public void onStart() {
@@ -42,7 +43,7 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
          }
 
          @Override
-         public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object tagValue) {
+         public void onTag(int fieldNumber, String fieldName, FieldDescriptor.Type type, FieldDescriptor.JavaType javaType, Object tagValue) {
             log.tracef("onTag %s %s", fieldName, tagValue);
 
             switch (fieldNumber) {
@@ -60,12 +61,12 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
          }
 
          @Override
-         public void onStartNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
+         public void onStartNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
             log.tracef("onStartNested %s", fieldName);
          }
 
          @Override
-         public void onEndNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
+         public void onEndNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
             log.tracef("onEndNested %s", fieldName);
          }
 
@@ -75,7 +76,7 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
          }
       };
 
-      Descriptors.Descriptor wrapperDescriptor = ctx.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
+      Descriptor wrapperDescriptor = ctx.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
 
       ProtobufParser.INSTANCE.parse(tagHandler, wrapperDescriptor, bytes);
    }

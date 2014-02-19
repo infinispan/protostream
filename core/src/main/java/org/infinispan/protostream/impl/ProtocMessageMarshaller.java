@@ -2,7 +2,7 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.GeneratedMessageLite;
 import com.google.protobuf.MessageLite;
@@ -59,7 +59,7 @@ public final class ProtocMessageMarshaller<T extends MessageLite> implements Raw
          String guessedTypeName;
          try {
             Method getDescriptorMethod = clazz.getDeclaredMethod(GET_DESCRIPTOR_METHOD_NAME);
-            Descriptors.Descriptor descriptor = (Descriptors.Descriptor) getDescriptorMethod.invoke(null);
+            Descriptor descriptor = (Descriptor) getDescriptorMethod.invoke(null);
             guessedTypeName = descriptor.getFullName();
          } catch (NoSuchMethodException e) {
             throw new IllegalArgumentException("Class " + clazz + " does not appear to be a 'protoc' generated message class (missing 'getDescriptor' method).");

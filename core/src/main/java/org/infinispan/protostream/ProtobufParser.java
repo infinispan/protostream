@@ -1,7 +1,8 @@
 package org.infinispan.protostream;
 
 import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 import org.infinispan.protostream.impl.WireFormat;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ public final class ProtobufParser {
 
    public static final ProtobufParser INSTANCE = new ProtobufParser();
 
-   public void parse(TagHandler tagHandler, Descriptors.Descriptor messageDescriptor, InputStream input) throws IOException {
+   public void parse(TagHandler tagHandler, Descriptor messageDescriptor, InputStream input) throws IOException {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
@@ -24,7 +25,7 @@ public final class ProtobufParser {
       parse(tagHandler, messageDescriptor, in);
    }
 
-   public void parse(TagHandler tagHandler, Descriptors.Descriptor messageDescriptor, byte[] buf, int off, int len) throws IOException {
+   public void parse(TagHandler tagHandler, Descriptor messageDescriptor, byte[] buf, int off, int len) throws IOException {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
@@ -33,7 +34,7 @@ public final class ProtobufParser {
       parse(tagHandler, messageDescriptor, in);
    }
 
-   public void parse(TagHandler tagHandler, Descriptors.Descriptor messageDescriptor, byte[] buf) throws IOException {
+   public void parse(TagHandler tagHandler, Descriptor messageDescriptor, byte[] buf) throws IOException {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
@@ -42,27 +43,27 @@ public final class ProtobufParser {
       parse(tagHandler, messageDescriptor, in);
    }
 
-   private void parse(TagHandler tagHandler, Descriptors.Descriptor messageDescriptor, CodedInputStream in) throws IOException {
+   private void parse(TagHandler tagHandler, Descriptor messageDescriptor, CodedInputStream in) throws IOException {
       tagHandler.onStart();
 
       int tag;
       while ((tag = in.readTag()) != 0) {
          final int fieldNumber = WireFormat.getTagFieldNumber(tag);
          final int wireType = WireFormat.getTagWireType(tag);
-         final Descriptors.FieldDescriptor fd = messageDescriptor != null ? messageDescriptor.findFieldByNumber(fieldNumber) : null;
+         final FieldDescriptor fd = messageDescriptor != null ? messageDescriptor.findFieldByNumber(fieldNumber) : null;
 
          switch (wireType) {
             case WireFormat.WIRETYPE_LENGTH_DELIMITED: {
                if (fd == null) {
                   byte[] value = in.readBytes().toByteArray();
-                  tagHandler.onTag(fieldNumber, null, Descriptors.FieldDescriptor.Type.BYTES, Descriptors.FieldDescriptor.JavaType.BYTE_STRING, value);
-               } else if (fd.getType() == Descriptors.FieldDescriptor.Type.STRING) {
+                  tagHandler.onTag(fieldNumber, null, FieldDescriptor.Type.BYTES, FieldDescriptor.JavaType.BYTE_STRING, value);
+               } else if (fd.getType() == FieldDescriptor.Type.STRING) {
                   String value = in.readString();
                   tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
-               } else if (fd.getType() == Descriptors.FieldDescriptor.Type.BYTES) {
+               } else if (fd.getType() == FieldDescriptor.Type.BYTES) {
                   byte[] value = in.readBytes().toByteArray();
                   tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
-               } else if (fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
+               } else if (fd.getType() == FieldDescriptor.Type.MESSAGE) {
                   int length = in.readRawVarint32();
                   int oldLimit = in.pushLimit(length);
                   tagHandler.onStartNested(fieldNumber, fd.getName(), fd.getMessageType());

@@ -1,6 +1,6 @@
 package org.infinispan.protostream.test;
 
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
 import org.infinispan.protostream.Configuration;
 import org.infinispan.protostream.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
@@ -140,7 +140,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
       return user;
    }
 
-   private void readWithProtoStream(byte[] bytes, long[] result) throws IOException, Descriptors.DescriptorValidationException {
+   private void readWithProtoStream(byte[] bytes, long[] result) throws IOException, DescriptorValidationException {
       Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceReads(false).build();
       SerializationContext ctx = createContext(cfg);
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
@@ -190,7 +190,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
       log.infof("Java serialization read duration    = %d ns", result[0]);
    }
 
-   private byte[] writeWithProtoStream(User user, long[] result) throws IOException, Descriptors.DescriptorValidationException {
+   private byte[] writeWithProtoStream(User user, long[] result) throws IOException, DescriptorValidationException {
       Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceWrites(false).build();
       SerializationContext ctx = createContext(cfg);
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);

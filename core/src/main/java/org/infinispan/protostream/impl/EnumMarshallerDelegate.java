@@ -2,7 +2,9 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.EnumDescriptor;
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.UnknownFieldSet;
 
@@ -19,16 +21,16 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
 
    private final EnumMarshaller<T> enumMarshaller;
 
-   private final Descriptors.EnumDescriptor enumDescriptor;
+   private final EnumDescriptor enumDescriptor;
 
    private final Set<Integer> definedValues;
 
-   public EnumMarshallerDelegate(EnumMarshaller<T> enumMarshaller, Descriptors.EnumDescriptor enumDescriptor) {
+   public EnumMarshallerDelegate(EnumMarshaller<T> enumMarshaller, EnumDescriptor enumDescriptor) {
       this.enumMarshaller = enumMarshaller;
       this.enumDescriptor = enumDescriptor;
-      List<Descriptors.EnumValueDescriptor> enumValues = enumDescriptor.getValues();
+      List<EnumValueDescriptor> enumValues = enumDescriptor.getValues();
       definedValues = new HashSet<Integer>(enumValues.size());
-      for (Descriptors.EnumValueDescriptor evd : enumValues) {
+      for (EnumValueDescriptor evd : enumValues) {
          definedValues.add(evd.getNumber());
       }
    }
@@ -38,7 +40,7 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
       return enumMarshaller;
    }
 
-   public Descriptors.EnumDescriptor getEnumDescriptor() {
+   public EnumDescriptor getEnumDescriptor() {
       return enumDescriptor;
    }
 
@@ -47,7 +49,7 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
    }
 
    @Override
-   public void marshall(String fieldName, Descriptors.FieldDescriptor fd, T value, ProtoStreamWriterImpl writer, CodedOutputStream out) throws IOException {
+   public void marshall(String fieldName, FieldDescriptor fd, T value, ProtoStreamWriterImpl writer, CodedOutputStream out) throws IOException {
       int enumValue = enumMarshaller.encode(value);
 
       if (!definedValues.contains(enumValue)) {
@@ -58,7 +60,7 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
    }
 
    @Override
-   public T unmarshall(String fieldName, Descriptors.FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, CodedInputStream in) throws IOException {
+   public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, CodedInputStream in) throws IOException {
       final int expectedTag = WireFormat.makeTag(fieldDescriptor.getNumber(), WireFormat.WIRETYPE_VARINT);
       int enumValue;
       UnknownFieldSet unknownFieldSet = reader.getUnknownFieldSet();

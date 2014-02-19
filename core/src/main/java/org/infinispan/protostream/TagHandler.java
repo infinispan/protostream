@@ -1,6 +1,7 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 
 /**
  * An event based interface for consuming (read only) protobuf streams.
@@ -12,11 +13,11 @@ public interface TagHandler {
 
    void onStart();
 
-   void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object tagValue);
+   void onTag(int fieldNumber, String fieldName, FieldDescriptor.Type type, FieldDescriptor.JavaType javaType, Object tagValue);
 
-   void onStartNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor);
+   void onStartNested(int fieldNumber, String fieldName, Descriptor messageDescriptor);
 
-   void onEndNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor);
+   void onEndNested(int fieldNumber, String fieldName, Descriptor messageDescriptor);
 
    void onEnd();
 }

@@ -1,7 +1,10 @@
 package org.infinispan.protostream.impl;
 
 import com.google.protobuf.DescriptorProtos;
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
+import com.google.protobuf.Descriptors.EnumDescriptor;
+import com.google.protobuf.Descriptors.FileDescriptor;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.Configuration;
 import org.infinispan.protostream.EnumMarshaller;
@@ -23,11 +26,11 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final Configuration configuration;
 
-   private Map<String, Descriptors.FileDescriptor> fileDescriptors = new ConcurrentHashMap<String, Descriptors.FileDescriptor>();
+   private Map<String, FileDescriptor> fileDescriptors = new ConcurrentHashMap<String, FileDescriptor>();
 
-   private Map<String, Descriptors.Descriptor> messageDescriptors = new ConcurrentHashMap<String, Descriptors.Descriptor>();
+   private Map<String, Descriptor> messageDescriptors = new ConcurrentHashMap<String, Descriptor>();
 
-   private Map<String, Descriptors.EnumDescriptor> enumDescriptors = new ConcurrentHashMap<String, Descriptors.EnumDescriptor>();
+   private Map<String, EnumDescriptor> enumDescriptors = new ConcurrentHashMap<String, EnumDescriptor>();
 
    private Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<String, BaseMarshallerDelegate<?>>();
 
@@ -42,8 +45,8 @@ public final class SerializationContextImpl implements SerializationContext {
       return configuration;
    }
 
-   private Descriptors.FileDescriptor[] resolveDeps(List<String> dependencyList, Map<String, Descriptors.FileDescriptor> map) {
-      List<Descriptors.FileDescriptor> deps = new ArrayList<Descriptors.FileDescriptor>();
+   private FileDescriptor[] resolveDeps(List<String> dependencyList, Map<String, FileDescriptor> map) {
+      List<FileDescriptor> deps = new ArrayList<FileDescriptor>();
       for (String fileName : dependencyList) {
          if (map.containsKey(fileName)) {
             deps.add(map.get(fileName));
@@ -51,22 +54,22 @@ public final class SerializationContextImpl implements SerializationContext {
             deps.add(DescriptorProtos.getDescriptor());
          }
       }
-      return deps.toArray(new Descriptors.FileDescriptor[deps.size()]);
+      return deps.toArray(new FileDescriptor[deps.size()]);
    }
 
    @Override
-   public void registerProtofile(InputStream in) throws IOException, Descriptors.DescriptorValidationException {
+   public void registerProtofile(InputStream in) throws IOException, DescriptorValidationException {
       DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(in);
 
       for (DescriptorProtos.FileDescriptorProto fdp : descriptorSet.getFileList()) {
-         Descriptors.FileDescriptor[] deps = resolveDeps(fdp.getDependencyList(), fileDescriptors);
-         Descriptors.FileDescriptor fd = Descriptors.FileDescriptor.buildFrom(fdp, deps);
+         FileDescriptor[] deps = resolveDeps(fdp.getDependencyList(), fileDescriptors);
+         FileDescriptor fd = FileDescriptor.buildFrom(fdp, deps);
          registerProtofile(fd);
       }
    }
 
    @Override
-   public void registerProtofile(String classpathResource) throws IOException, Descriptors.DescriptorValidationException {
+   public void registerProtofile(String classpathResource) throws IOException, DescriptorValidationException {
       InputStream in = getClass().getResourceAsStream(classpathResource);
       if (in == null) {
          throw new IOException("Resource \"" + classpathResource + "\" does not exist");
@@ -79,29 +82,29 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public void registerProtofile(Descriptors.FileDescriptor fileDescriptor) {
+   public void registerProtofile(FileDescriptor fileDescriptor) {
       fileDescriptors.put(fileDescriptor.getName(), fileDescriptor);
       registerMessageDescriptors(fileDescriptor.getMessageTypes());
       registerEnumDescriptors(fileDescriptor.getEnumTypes());
    }
 
-   private void registerMessageDescriptors(List<Descriptors.Descriptor> messageTypes) {
-      for (Descriptors.Descriptor d : messageTypes) {
+   private void registerMessageDescriptors(List<Descriptor> messageTypes) {
+      for (Descriptor d : messageTypes) {
          messageDescriptors.put(d.getFullName(), d);
          registerMessageDescriptors(d.getNestedTypes());
          registerEnumDescriptors(d.getEnumTypes());
       }
    }
 
-   private void registerEnumDescriptors(List<Descriptors.EnumDescriptor> enumTypes) {
-      for (Descriptors.EnumDescriptor e : enumTypes) {
+   private void registerEnumDescriptors(List<EnumDescriptor> enumTypes) {
+      for (EnumDescriptor e : enumTypes) {
          enumDescriptors.put(e.getFullName(), e);
       }
    }
 
    @Override
-   public Descriptors.Descriptor getMessageDescriptor(String fullName) {
-      Descriptors.Descriptor descriptor = messageDescriptors.get(fullName);
+   public Descriptor getMessageDescriptor(String fullName) {
+      Descriptor descriptor = messageDescriptors.get(fullName);
       if (descriptor == null) {
          throw new IllegalArgumentException("Message descriptor not found : " + fullName);
       }
@@ -109,8 +112,8 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public Descriptors.EnumDescriptor getEnumDescriptor(String fullName) {
-      Descriptors.EnumDescriptor descriptor = enumDescriptors.get(fullName);
+   public EnumDescriptor getEnumDescriptor(String fullName) {
+      EnumDescriptor descriptor = enumDescriptors.get(fullName);
       if (descriptor == null) {
          throw new IllegalArgumentException("Enum descriptor not found : " + fullName);
       }
@@ -122,12 +125,12 @@ public final class SerializationContextImpl implements SerializationContext {
       // we try to validate first that a message descriptor exists
       BaseMarshallerDelegate marshallerDelegate;
       if (marshaller instanceof EnumMarshaller) {
-         Descriptors.EnumDescriptor enumDescriptor = getEnumDescriptor(marshaller.getTypeName());
+         EnumDescriptor enumDescriptor = getEnumDescriptor(marshaller.getTypeName());
          marshallerDelegate = new EnumMarshallerDelegate((EnumMarshaller) marshaller, enumDescriptor);
       } else if (marshaller instanceof RawProtobufMarshaller) {
          marshallerDelegate = new RawProtobufMarshallerDelegate((RawProtobufMarshaller) marshaller, this);
       } else {
-         Descriptors.Descriptor messageDescriptor = getMessageDescriptor(marshaller.getTypeName());
+         Descriptor messageDescriptor = getMessageDescriptor(marshaller.getTypeName());
          marshallerDelegate = new MessageMarshallerDelegate((MessageMarshaller) marshaller, messageDescriptor);
       }
       marshallersByName.put(marshaller.getTypeName(), marshallerDelegate);

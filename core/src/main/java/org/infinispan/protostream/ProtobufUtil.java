@@ -2,7 +2,7 @@ package org.infinispan.protostream;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
 import org.infinispan.protostream.impl.ProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.ProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
@@ -34,7 +34,7 @@ public final class ProtobufUtil {
          serializationContext.registerProtofile(WRAPPING_DEFINITIONS_RES);
       } catch (IOException e) {
          throw new RuntimeException("Failed to initialize serialization context", e);
-      } catch (Descriptors.DescriptorValidationException e) {
+      } catch (DescriptorValidationException e) {
          throw new RuntimeException("Failed to initialize serialization context", e);
       }
 
