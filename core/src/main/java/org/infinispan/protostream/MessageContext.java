@@ -1,10 +1,8 @@
 package org.infinispan.protostream;
 
 import com.google.protobuf.Descriptors;
-import org.infinispan.protostream.impl.FastIntegerSet;
 
 import java.util.BitSet;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -30,7 +28,6 @@ public abstract class MessageContext<E extends MessageContext> {
    private final Descriptors.Descriptor messageDescriptor;
 
    private final BitSet seenFields;
-   private final FastIntegerSet seenFieldsSet;
    private int maxSeenFieldNumber = 0;
 
    protected MessageContext(E parentContext, String fieldName, Descriptors.Descriptor messageDescriptor) {
@@ -49,7 +46,6 @@ public abstract class MessageContext<E extends MessageContext> {
       this.messageDescriptor = messageDescriptor;
 
       seenFields = new BitSet(messageDescriptor.getFields().size());
-      seenFieldsSet = new FastIntegerSet(seenFields);
    }
 
    public E getParentContext() {
@@ -83,22 +79,6 @@ public abstract class MessageContext<E extends MessageContext> {
       return messageDescriptor;
    }
 
-   public Descriptors.FieldDescriptor getFieldByName(String fieldName) {
-      Descriptors.FieldDescriptor fd = messageDescriptor.findFieldByName(fieldName);
-      if (fd == null) {
-         throw new IllegalArgumentException("Unknown field : " + fieldName);   //todo [anistor] throw a better exception
-      }
-      return fd;
-   }
-
-   public Descriptors.FieldDescriptor getFieldByNumber(int fieldNumber) {
-      Descriptors.FieldDescriptor fd = messageDescriptor.findFieldByNumber(fieldNumber);
-      if (fd == null) {
-         throw new IllegalArgumentException("Unknown field : " + fieldNumber);   //todo [anistor] throw a better exception
-      }
-      return fd;
-   }
-
    public boolean isFieldMarked(int fieldNumber) {
       return seenFields.get(fieldNumber);
    }
@@ -122,10 +102,5 @@ public abstract class MessageContext<E extends MessageContext> {
 
    public int getMaxSeenFieldNumber() {
       return maxSeenFieldNumber;
-   }
-
-   @Deprecated
-   public Set<Integer> getSeenFields() {
-      return seenFieldsSet;
    }
 }

@@ -135,22 +135,13 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller) {
-      if (!marshaller.getJavaClass().equals(clazz)) {
-         throw new IllegalArgumentException("The given class must match the class reported by the marshaller.");
-      }
-      registerMarshaller(marshaller);
-   }
-
-   @Override
    public boolean canMarshall(Class clazz) {
       return marshallersByClass.containsKey(clazz);
    }
 
    @Override
    public boolean canMarshall(String descriptorFullName) {
-      return messageDescriptors.containsKey(descriptorFullName) || enumDescriptors.containsKey(descriptorFullName);
-      //TODO the correct implementation should be: return marshallersByName.containsKey(descriptorFullName);
+      return marshallersByName.containsKey(descriptorFullName);
    }
 
    @Override

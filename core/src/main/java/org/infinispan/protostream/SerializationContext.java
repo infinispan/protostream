@@ -37,18 +37,6 @@ public interface SerializationContext { //todo [anistor] split this into separat
     */
    <T> void registerMarshaller(BaseMarshaller<T> marshaller);
 
-   /**
-    * Register a type marshaller. The marshaller implementation must be stateless and thread-safe.
-    *
-    * @param clazz      this parameter is currently ignored, see {@link SerializationContext#registerMarshaller(BaseMarshaller<T>)}
-    * @param marshaller the marshaller instance
-    * @param <T>        the Java type of the object being handled by the marshaller
-    * @deprecated This method will be removed in a future version. Use {@link SerializationContext#registerMarshaller(BaseMarshaller<T>)}
-    *             instead.
-    */
-   @Deprecated
-   <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller);
-
    Descriptors.Descriptor getMessageDescriptor(String fullName);
 
    Descriptors.EnumDescriptor getEnumDescriptor(String fullName);
