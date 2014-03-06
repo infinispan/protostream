@@ -88,8 +88,19 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
         <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2</jboss.releases.repo.url>
         <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots</jboss.snapshots.repo.url>
+
+        <version.maven.compiler>3.0</version.maven.compiler>
+        <version.maven.source>2.2.1</version.maven.source>
+        <version.maven.resources>2.6</version.maven.resources>
+        <version.maven.genjavadoc>0.5</version.maven.genjavadoc>
+        <version.maven.antrun>1.7</version.maven.antrun>
+        <version.maven.surefire>2.16</version.maven.surefire>
+        <version.maven.bundle>2.4.0</version.maven.bundle>
+        <version.maven.buildhelper>1.8</version.maven.buildhelper>
+
         <version.protobuf>2.5.0</version.protobuf>
         <version.junit>4.11</version.junit>
         <version.jboss.logging>3.1.2.GA</version.jboss.logging>
@@ -198,32 +209,33 @@
             <plugins>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.1</version>
+                    <version>${version.maven.compiler}</version>
                     <configuration>
                         <source>1.6</source>
                         <target>1.6</target>
+                        <encoding>UTF-8</encoding>
                     </configuration>
                 </plugin>
 
                 <plugin>
                     <artifactId>maven-bundle-plugin</artifactId>
-                    <version>2.4.0</version>
+                    <version>${version.maven.bundle}</version>
                 </plugin>
 
                 <plugin>
                     <artifactId>maven-antrun-plugin</artifactId>
-                    <version>1.7</version>
+                    <version>${version.maven.antrun}</version>
                 </plugin>
 
                 <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>2.6</version>
+                    <version>${version.maven.resources}</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-report-plugin</artifactId>
-                    <version>2.15</version>
+                    <version>${version.maven.surefire}</version>
                     <executions>
                         <execution>
                             <phase>verify</phase>
@@ -232,6 +244,12 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                   <version>${version.maven.buildhelper}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -249,7 +267,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>2.2.1</version>
+                        <version>${version.maven.source}</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
