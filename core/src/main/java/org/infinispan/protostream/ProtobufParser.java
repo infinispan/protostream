@@ -22,7 +22,7 @@ public final class ProtobufParser {
       }
       CodedInputStream in = CodedInputStream.newInstance(input);
 
-      parse(tagHandler, messageDescriptor, in);
+      parseInternal(tagHandler, messageDescriptor, in);
    }
 
    public void parse(TagHandler tagHandler, Descriptor messageDescriptor, byte[] buf, int off, int len) throws IOException {
@@ -31,7 +31,7 @@ public final class ProtobufParser {
       }
       CodedInputStream in = CodedInputStream.newInstance(buf, off, len);
 
-      parse(tagHandler, messageDescriptor, in);
+      parseInternal(tagHandler, messageDescriptor, in);
    }
 
    public void parse(TagHandler tagHandler, Descriptor messageDescriptor, byte[] buf) throws IOException {
@@ -40,10 +40,18 @@ public final class ProtobufParser {
       }
       CodedInputStream in = CodedInputStream.newInstance(buf);
 
-      parse(tagHandler, messageDescriptor, in);
+      parseInternal(tagHandler, messageDescriptor, in);
    }
 
-   private void parse(TagHandler tagHandler, Descriptor messageDescriptor, CodedInputStream in) throws IOException {
+   public void parse(TagHandler tagHandler, Descriptor messageDescriptor, CodedInputStream in) throws IOException {
+      if (messageDescriptor == null) {
+         throw new IllegalArgumentException("messageDescriptor cannot be null");
+      }
+
+      parseInternal(tagHandler, messageDescriptor, in);
+   }
+
+   private void parseInternal(TagHandler tagHandler, Descriptor messageDescriptor, CodedInputStream in) throws IOException {
       tagHandler.onStart();
 
       int tag;
@@ -67,7 +75,7 @@ public final class ProtobufParser {
                   int length = in.readRawVarint32();
                   int oldLimit = in.pushLimit(length);
                   tagHandler.onStartNested(fieldNumber, fd.getName(), fd.getMessageType());
-                  parse(tagHandler, fd.getMessageType(), in);
+                  parseInternal(tagHandler, fd.getMessageType(), in);
                   tagHandler.onEndNested(fieldNumber, fd.getName(), fd.getMessageType());
                   in.checkLastTagWas(0);
                   in.popLimit(oldLimit);
@@ -78,12 +86,12 @@ public final class ProtobufParser {
             case WireFormat.WIRETYPE_START_GROUP: {
                if (fd != null) {
                   tagHandler.onStartNested(fieldNumber, null, null);
-                  parse(tagHandler, null, in);
+                  parseInternal(tagHandler, null, in);
                   in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
                   tagHandler.onEndNested(fieldNumber, null, null);
                } else {
                   tagHandler.onStartNested(fieldNumber, fd.getName(), fd.getMessageType());
-                  parse(tagHandler, fd.getMessageType(), in);
+                  parseInternal(tagHandler, fd.getMessageType(), in);
                   in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
                   tagHandler.onEndNested(fieldNumber, fd.getName(), fd.getMessageType());
                }
