@@ -10,7 +10,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 1.0
  */
-public abstract class MessageContext<E extends MessageContext> {
+public class MessageContext<E extends MessageContext> {
 
    /**
     * The context of the outer message or null if this is a top level message.
@@ -33,7 +33,7 @@ public abstract class MessageContext<E extends MessageContext> {
    private final FastIntegerSet seenFieldsSet;
    private int maxSeenFieldNumber = 0;
 
-   protected MessageContext(E parentContext, String fieldName, Descriptors.Descriptor messageDescriptor) {
+   public MessageContext(E parentContext, String fieldName, Descriptors.Descriptor messageDescriptor) {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
