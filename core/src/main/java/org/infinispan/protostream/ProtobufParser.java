@@ -53,7 +53,11 @@ public final class ProtobufParser {
 
    private void parseInternal(TagHandler tagHandler, Descriptor messageDescriptor, CodedInputStream in) throws IOException {
       tagHandler.onStart();
+      parseMessage(tagHandler, messageDescriptor, in);
+      tagHandler.onEnd();
+   }
 
+   private void parseMessage(TagHandler tagHandler, Descriptor messageDescriptor, CodedInputStream in) throws IOException {
       int tag;
       while ((tag = in.readTag()) != 0) {
          final int fieldNumber = WireFormat.getTagFieldNumber(tag);
@@ -75,7 +79,7 @@ public final class ProtobufParser {
                   int length = in.readRawVarint32();
                   int oldLimit = in.pushLimit(length);
                   tagHandler.onStartNested(fieldNumber, fd.getName(), fd.getMessageType());
-                  parseInternal(tagHandler, fd.getMessageType(), in);
+                  parseMessage(tagHandler, fd.getMessageType(), in);
                   tagHandler.onEndNested(fieldNumber, fd.getName(), fd.getMessageType());
                   in.checkLastTagWas(0);
                   in.popLimit(oldLimit);
@@ -86,12 +90,12 @@ public final class ProtobufParser {
             case WireFormat.WIRETYPE_START_GROUP: {
                if (fd != null) {
                   tagHandler.onStartNested(fieldNumber, null, null);
-                  parseInternal(tagHandler, null, in);
+                  parseMessage(tagHandler, null, in);
                   in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
                   tagHandler.onEndNested(fieldNumber, null, null);
                } else {
                   tagHandler.onStartNested(fieldNumber, fd.getName(), fd.getMessageType());
-                  parseInternal(tagHandler, fd.getMessageType(), in);
+                  parseMessage(tagHandler, fd.getMessageType(), in);
                   in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
                   tagHandler.onEndNested(fieldNumber, fd.getName(), fd.getMessageType());
                }
@@ -166,7 +170,5 @@ public final class ProtobufParser {
                throw new IOException("Found tag with invalid wire type : " + tag);
          }
       }
-
-      tagHandler.onEnd();
    }
 }
