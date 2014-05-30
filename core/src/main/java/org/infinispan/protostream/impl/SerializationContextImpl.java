@@ -122,6 +122,9 @@ public final class SerializationContextImpl implements SerializationContext {
       // we try to validate first that a message descriptor exists
       BaseMarshallerDelegate marshallerDelegate;
       if (marshaller instanceof EnumMarshaller) {
+         if (!Enum.class.isAssignableFrom(marshaller.getJavaClass())) {
+            throw new IllegalArgumentException("Invalid enum marshaller (the produced class is not an Enum) : " + marshaller);
+         }
          Descriptors.EnumDescriptor enumDescriptor = getEnumDescriptor(marshaller.getTypeName());
          marshallerDelegate = new EnumMarshallerDelegate((EnumMarshaller) marshaller, enumDescriptor);
       } else if (marshaller instanceof RawProtobufMarshaller) {
