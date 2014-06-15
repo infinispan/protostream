@@ -2,8 +2,8 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.Descriptors.FieldDescriptor;
 import org.infinispan.protostream.BaseMarshaller;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 
 import java.io.IOException;
 

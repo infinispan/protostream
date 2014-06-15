@@ -1,7 +1,8 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.Log;
@@ -43,7 +44,7 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
          }
 
          @Override
-         public void onTag(int fieldNumber, String fieldName, FieldDescriptor.Type type, FieldDescriptor.JavaType javaType, Object tagValue) {
+         public void onTag(int fieldNumber, String fieldName, Type type, JavaType javaType, Object tagValue) {
             log.tracef("onTag %s %s", fieldName, tagValue);
 
             switch (fieldNumber) {

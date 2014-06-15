@@ -1,6 +1,5 @@
 package org.infinispan.protostream.test;
 
-import com.google.protobuf.Descriptors.DescriptorValidationException;
 import org.infinispan.protostream.Configuration;
 import org.infinispan.protostream.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
@@ -8,6 +7,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.Log;
+import org.infinispan.protostream.DescriptorParserException;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.MarshallerFactory;
 import org.jboss.marshalling.Marshalling;
@@ -140,7 +140,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
       return user;
    }
 
-   private void readWithProtoStream(byte[] bytes, long[] result) throws IOException, DescriptorValidationException {
+   private void readWithProtoStream(byte[] bytes, long[] result) throws IOException, DescriptorParserException {
       Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceReads(false).build();
       SerializationContext ctx = createContext(cfg);
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
@@ -190,7 +190,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
       log.infof("Java serialization read duration    = %d ns", result[0]);
    }
 
-   private byte[] writeWithProtoStream(User user, long[] result) throws IOException, DescriptorValidationException {
+   private byte[] writeWithProtoStream(User user, long[] result) throws IOException, DescriptorParserException {
       Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceWrites(false).build();
       SerializationContext ctx = createContext(cfg);
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);

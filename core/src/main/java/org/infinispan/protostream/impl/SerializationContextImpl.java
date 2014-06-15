@@ -1,20 +1,20 @@
 package org.infinispan.protostream.impl;
 
-import com.google.protobuf.DescriptorProtos;
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.DescriptorValidationException;
-import com.google.protobuf.Descriptors.EnumDescriptor;
-import com.google.protobuf.Descriptors.FileDescriptor;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.Configuration;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.EnumDescriptor;
+import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.DescriptorParser;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.impl.parser.SquareProtoParser;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,15 +26,17 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final Configuration configuration;
 
-   private Map<String, FileDescriptor> fileDescriptors = new ConcurrentHashMap<String, FileDescriptor>();
+   private final DescriptorParser parser = new SquareProtoParser();
 
-   private Map<String, Descriptor> messageDescriptors = new ConcurrentHashMap<String, Descriptor>();
+   private Map<String, FileDescriptor> fileDescriptors = new ConcurrentHashMap<>();
 
-   private Map<String, EnumDescriptor> enumDescriptors = new ConcurrentHashMap<String, EnumDescriptor>();
+   private Map<String, Descriptor> messageDescriptors = new ConcurrentHashMap<>();
 
-   private Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<String, BaseMarshallerDelegate<?>>();
+   private Map<String, EnumDescriptor> enumDescriptors = new ConcurrentHashMap<>();
 
-   private Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<Class<?>, BaseMarshallerDelegate<?>>();
+   private Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<>();
+
+   private Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<>();
 
    public SerializationContextImpl(Configuration configuration) {
       this.configuration = configuration;
@@ -45,43 +47,21 @@ public final class SerializationContextImpl implements SerializationContext {
       return configuration;
    }
 
-   private FileDescriptor[] resolveDeps(List<String> dependencyList, Map<String, FileDescriptor> map) {
-      List<FileDescriptor> deps = new ArrayList<FileDescriptor>();
-      for (String fileName : dependencyList) {
-         if (map.containsKey(fileName)) {
-            deps.add(map.get(fileName));
-         } else if (DescriptorProtos.getDescriptor().getName().equals(fileName)) {
-            deps.add(DescriptorProtos.getDescriptor());
-         }
-      }
-      return deps.toArray(new FileDescriptor[deps.size()]);
-   }
-
    @Override
-   public void registerProtofile(InputStream in) throws IOException, DescriptorValidationException {
-      DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(in);
-
-      for (DescriptorProtos.FileDescriptorProto fdp : descriptorSet.getFileList()) {
-         FileDescriptor[] deps = resolveDeps(fdp.getDependencyList(), fileDescriptors);
-         FileDescriptor fd = FileDescriptor.buildFrom(fdp, deps);
-         registerProtofile(fd);
+   public void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException, IOException {
+      Map<String, FileDescriptor> parse = parser.parse(source);
+      for (FileDescriptor d : parse.values()) {
+         registerProtofile(d);
       }
    }
 
    @Override
-   public void registerProtofile(String classpathResource) throws IOException, DescriptorValidationException {
-      InputStream in = getClass().getResourceAsStream(classpathResource);
-      if (in == null) {
-         throw new IOException("Resource \"" + classpathResource + "\" does not exist");
-      }
-      try {
-         registerProtofile(in);
-      } finally {
-         in.close();
-      }
+   public void registerProtofiles(String... classpathResource) throws IOException, DescriptorParserException {
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFiles(classpathResource);
+      this.registerProtoFiles(fileDescriptorSource);
    }
 
-   @Override
    public void registerProtofile(FileDescriptor fileDescriptor) {
       fileDescriptors.put(fileDescriptor.getName(), fileDescriptor);
       registerMessageDescriptors(fileDescriptor.getMessageTypes());
@@ -147,7 +127,8 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public boolean canMarshall(String descriptorFullName) {
-      return marshallersByName.containsKey(descriptorFullName);
+      return messageDescriptors.containsKey(descriptorFullName) || enumDescriptors.containsKey(descriptorFullName);
+//      return marshallersByName.containsKey(descriptorFullName);
    }
 
    @Override

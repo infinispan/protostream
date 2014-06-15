@@ -43,6 +43,17 @@
         </dependency>
 
         <dependency>
+            <groupId>com.squareup</groupId>
+            <artifactId>protoparser</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.easytesting</groupId>
+            <artifactId>fest-assert-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -75,40 +86,9 @@
                     <include>**/*.proto</include>
                 </includes>
             </resource>
-            <resource>
-                <directory>${project.build.directory}/protobuf-descriptors</directory>
-                <includes>
-                    <include>**/*.protobin</include>
-                </includes>
-            </resource>
         </resources>
 
         <plugins>
-            <!-- Execute protoc to parse our proto definitions and generate the serialized descriptor set. -->
-            <!-- Ideally, we should use a dedicated maven plugin for this but none of the 3-4 available plugins actually work for us. -->
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>compile-protoc</id>
-                        <phase>generate-resources</phase>
-                        <configuration>
-                            <target>
-                                <mkdir dir="${project.build.directory}/protobuf-descriptors/org/infinispan/protostream"/>
-                                <exec executable="protoc" failonerror="true">
-                                    <arg value="--proto_path=${project.basedir}/src/main/resources"/>
-                                    <arg value="--descriptor_set_out=${project.build.directory}/protobuf-descriptors/org/infinispan/protostream/message-wrapping.protobin"/>
-                                    <arg value="${project.basedir}/src/main/resources/org/infinispan/protostream/message-wrapping.proto"/>
-                                </exec>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
             </plugin>

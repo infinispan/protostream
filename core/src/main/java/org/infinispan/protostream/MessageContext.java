@@ -1,6 +1,6 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.Descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.Descriptor;
 
 import java.util.BitSet;
 
