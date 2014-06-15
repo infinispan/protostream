@@ -1,12 +1,10 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.EnumDescriptor;
-import com.google.protobuf.Descriptors.FileDescriptor;
-import com.google.protobuf.Descriptors.DescriptorValidationException;
+
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.EnumDescriptor;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * A repository for protobuf definitions and marshallers. All marshalling operations happen in the context of a  {@code
@@ -19,18 +17,9 @@ public interface SerializationContext { //todo [anistor] split this into separat
 
    Configuration getConfiguration();
 
-   /**
-    * Registers a protobuf file descriptor given in the form of an input stream.
-    * <p/>
-    * WARNING: This method does not close the input stream when.
-    *
-    * @param in
-    */
-   void registerProtofile(InputStream in) throws IOException, DescriptorValidationException;
+   void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException, IOException;
 
-   void registerProtofile(String classpathResource) throws IOException, DescriptorValidationException;
-
-   void registerProtofile(FileDescriptor fileDescriptor);
+   void registerProtofiles(String... classpathResource) throws IOException, DescriptorParserException;
 
    /**
     * Register a type marshaller. The marshaller implementation must be stateless and thread-safe.

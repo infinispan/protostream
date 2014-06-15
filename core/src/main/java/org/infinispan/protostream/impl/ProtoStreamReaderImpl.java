@@ -2,9 +2,11 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.Descriptors.FieldDescriptor;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.UnknownFieldSet;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.protostream.descriptors.Type;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
@@ -21,22 +23,22 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    private static final Log log = Log.LogFactory.getLog(ProtoStreamReaderImpl.class);
 
-   private static final EnumSet<FieldDescriptor.Type> primitiveTypes = EnumSet.of(
-         FieldDescriptor.Type.DOUBLE,
-         FieldDescriptor.Type.FLOAT,
-         FieldDescriptor.Type.INT64,
-         FieldDescriptor.Type.UINT64,
-         FieldDescriptor.Type.INT32,
-         FieldDescriptor.Type.FIXED64,
-         FieldDescriptor.Type.FIXED32,
-         FieldDescriptor.Type.BOOL,
-         FieldDescriptor.Type.STRING,
-         FieldDescriptor.Type.BYTES,
-         FieldDescriptor.Type.UINT32,
-         FieldDescriptor.Type.SFIXED32,
-         FieldDescriptor.Type.SFIXED64,
-         FieldDescriptor.Type.SINT32,
-         FieldDescriptor.Type.SINT64
+   private static final EnumSet<Type> primitiveTypes = EnumSet.of(
+         Type.DOUBLE,
+         Type.FLOAT,
+         Type.INT64,
+         Type.UINT64,
+         Type.INT32,
+         Type.FIXED64,
+         Type.FIXED32,
+         Type.BOOL,
+         Type.STRING,
+         Type.BYTES,
+         Type.UINT32,
+         Type.SFIXED32,
+         Type.SFIXED64,
+         Type.SINT32,
+         Type.SINT64
    );
 
    private final SerializationContextImpl ctx;
@@ -72,19 +74,19 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       return marshallerDelegate.unmarshall(null, null, this, in);
    }
 
-   private Object readPrimitive(String fieldName, FieldDescriptor.JavaType javaType) throws IOException {
+   private Object readPrimitive(String fieldName, JavaType javaType) throws IOException {
       FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
-      FieldDescriptor.Type type = fd.getType();
-      if (type == FieldDescriptor.Type.ENUM
-            || type == FieldDescriptor.Type.GROUP
-            || type == FieldDescriptor.Type.MESSAGE) {
+      Type type = fd.getType();
+      if (type == Type.ENUM
+            || type == Type.GROUP
+            || type == Type.MESSAGE) {
          throw new IllegalArgumentException("Declared field type is not a primitive : " + fd.getFullName());
       }
       if (fd.getJavaType() != javaType) {
          throw new IllegalArgumentException("Declared field type is not of the expected type : " + fd.getFullName());
       }
       checkFieldRead(fd, false);
-      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getLiteType().getWireType());
+      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
 
       Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
       if (o != null) {
@@ -147,29 +149,29 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       return null;
    }
 
-   private Object convertWireTypeToJavaType(FieldDescriptor.Type type, Object o) {
-      if (type == FieldDescriptor.Type.STRING) {
+   private Object convertWireTypeToJavaType(Type type, Object o) {
+      if (type == Type.STRING) {
          o = ((ByteString) o).toStringUtf8();
-      } else if (type == FieldDescriptor.Type.BYTES) {
+      } else if (type == Type.BYTES) {
          o = ((ByteString) o).toByteArray();
-      } else if (type == FieldDescriptor.Type.INT32
-            || type == FieldDescriptor.Type.UINT32
-            || type == FieldDescriptor.Type.SINT32) {
+      } else if (type == Type.INT32
+            || type == Type.UINT32
+            || type == Type.SINT32) {
          o = ((Long) o).intValue();
-      } else if (type == FieldDescriptor.Type.FIXED32
-            || type == FieldDescriptor.Type.SFIXED32) {
+      } else if (type == Type.FIXED32
+            || type == Type.SFIXED32) {
          //o is an Integer
-      } else if (type == FieldDescriptor.Type.INT64
-            || type == FieldDescriptor.Type.UINT64
-            || type == FieldDescriptor.Type.FIXED64
-            || type == FieldDescriptor.Type.SFIXED64
-            || type == FieldDescriptor.Type.SINT64) {
+      } else if (type == Type.INT64
+            || type == Type.UINT64
+            || type == Type.FIXED64
+            || type == Type.SFIXED64
+            || type == Type.SINT64) {
          //o is a Long
-      } else if (type == FieldDescriptor.Type.BOOL) {
+      } else if (type == Type.BOOL) {
          o = ((Long) o) != 0;
-      } else if (type == FieldDescriptor.Type.FLOAT) {
+      } else if (type == Type.FLOAT) {
          o = Float.intBitsToFloat((Integer) o);
-      } else if (type == FieldDescriptor.Type.DOUBLE) {
+      } else if (type == Type.DOUBLE) {
          o = Double.longBitsToDouble((Long) o);
       }
       return o;
@@ -177,37 +179,37 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public Integer readInt(String fieldName) throws IOException {
-      return (Integer) readPrimitive(fieldName, FieldDescriptor.JavaType.INT);
+      return (Integer) readPrimitive(fieldName, JavaType.INT);
    }
 
    @Override
    public Long readLong(String fieldName) throws IOException {
-      return (Long) readPrimitive(fieldName, FieldDescriptor.JavaType.LONG);
+      return (Long) readPrimitive(fieldName, JavaType.LONG);
    }
 
    @Override
    public Float readFloat(String fieldName) throws IOException {
-      return (Float) readPrimitive(fieldName, FieldDescriptor.JavaType.FLOAT);
+      return (Float) readPrimitive(fieldName, JavaType.FLOAT);
    }
 
    @Override
    public Double readDouble(String fieldName) throws IOException {
-      return (Double) readPrimitive(fieldName, FieldDescriptor.JavaType.DOUBLE);
+      return (Double) readPrimitive(fieldName, JavaType.DOUBLE);
    }
 
    @Override
    public Boolean readBoolean(String fieldName) throws IOException {
-      return (Boolean) readPrimitive(fieldName, FieldDescriptor.JavaType.BOOLEAN);
+      return (Boolean) readPrimitive(fieldName, JavaType.BOOLEAN);
    }
 
    @Override
    public String readString(String fieldName) throws IOException {
-      return (String) readPrimitive(fieldName, FieldDescriptor.JavaType.STRING);
+      return (String) readPrimitive(fieldName, JavaType.STRING);
    }
 
    @Override
    public byte[] readBytes(String fieldName) throws IOException {
-      return (byte[]) readPrimitive(fieldName, FieldDescriptor.JavaType.BYTE_STRING);
+      return (byte[]) readPrimitive(fieldName, JavaType.BYTE_STRING);
    }
 
    @Override
@@ -215,12 +217,12 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
       checkFieldRead(fd, false);
 
-      if (fd.getType() == FieldDescriptor.Type.ENUM) {
+      if (fd.getType() == Type.ENUM) {
          return ctx.getMarshallerDelegate(clazz).unmarshall(fieldName, fd, this, messageContext.in);
       }
 
       //todo validate type is compatible with readObject
-      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getLiteType().getWireType());
+      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
       Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
       if (o != null) {
          ByteString byteString = (ByteString) o;
@@ -249,10 +251,10 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    private <A> A readNestedObject(String fieldName, FieldDescriptor fd, Class<A> clazz, CodedInputStream in, int length) throws IOException {
       BaseMarshallerDelegate<A> marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       A a;
-      if (fd.getType() == FieldDescriptor.Type.GROUP) {
+      if (fd.getType() == Type.GROUP) {
          a = marshallerDelegate.unmarshall(fieldName, fd, this, in);
          in.checkLastTagWas(WireFormat.makeTag(fd.getNumber(), WireFormat.WIRETYPE_END_GROUP));
-      } else if (fd.getType() == FieldDescriptor.Type.MESSAGE) {
+      } else if (fd.getType() == Type.MESSAGE) {
          if (length < 0) {
             length = in.readRawVarint32();
          }
@@ -277,7 +279,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       }
 
       //todo validate type is compatible with readCollection
-      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getLiteType().getWireType());
+      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
 
       while (true) {
          Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
@@ -304,8 +306,8 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    private void readPrimitiveCollection(FieldDescriptor fd, Collection<? super Object> collection, Class elementClass) throws IOException {
-      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getLiteType().getWireType());
-      FieldDescriptor.Type type = fd.getType();
+      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
+      Type type = fd.getType();
 
       while (true) {
          Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);

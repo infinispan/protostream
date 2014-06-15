@@ -103,6 +103,8 @@
 
         <version.protobuf>2.5.0</version.protobuf>
         <version.junit>4.11</version.junit>
+        <version.fest.assertions>2.0M10</version.fest.assertions>
+        <version.protoparser>3.1.4</version.protoparser>
         <version.jboss.logging>3.1.2.GA</version.jboss.logging>
         <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
         <version.log4j>1.2.16</version.log4j>
@@ -182,9 +184,22 @@
             </dependency>
 
             <dependency>
+                <groupId>com.squareup</groupId>
+                <artifactId>protoparser</artifactId>
+                <version>${version.protoparser}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${version.junit}</version>
+                <scope>test</scope>
+            </dependency>
+
+           <dependency>
+                <groupId>org.easytesting</groupId>
+                <artifactId>fest-assert-core</artifactId>
+                <version>${version.fest.assertions}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -211,8 +226,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${version.maven.compiler}</version>
                     <configuration>
-                        <source>1.6</source>
-                        <target>1.6</target>
+                        <source>1.7</source>
+                        <target>1.7</target>
                         <encoding>UTF-8</encoding>
                     </configuration>
                 </plugin>
