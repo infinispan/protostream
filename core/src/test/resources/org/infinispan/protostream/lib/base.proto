@@ -1,0 +1,6 @@
+package org.infinispan.protostream.lib;
+
+message Base {
+    
+    optional string baseString = 1;
+}

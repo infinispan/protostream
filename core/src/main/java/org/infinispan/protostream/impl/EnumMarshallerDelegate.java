@@ -2,9 +2,9 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.Descriptors.EnumDescriptor;
-import com.google.protobuf.Descriptors.EnumValueDescriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.EnumDescriptor;
+import org.infinispan.protostream.descriptors.EnumValueDescriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.UnknownFieldSet;
 

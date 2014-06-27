@@ -36,31 +36,6 @@
         </resources>
 
         <plugins>
-            <!-- Execute protoc to parse our proto definitions and generate the serialized descriptor set. -->
-            <!-- Ideally, we should use a dedicated maven plugin for this but none of the 3-4 available plugins actually work for us. -->
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>compile-protoc</id>
-                        <phase>generate-resources</phase>
-                        <configuration>
-                            <target>
-                                <mkdir dir="${project.build.directory}/protobuf-descriptors/sample_bank_account"/>
-                                <exec executable="protoc" failonerror="true">
-                                    <arg value="--proto_path=${project.basedir}/src/main/resources"/>
-                                    <arg value="--include_imports"/>
-                                    <arg value="--descriptor_set_out=${project.build.directory}/protobuf-descriptors/sample_bank_account/bank.protobin"/>
-                                    <arg value="${project.basedir}/src/main/resources/sample_bank_account/bank.proto"/>
-                                </exec>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>

@@ -1,19 +1,21 @@
 package org.infinispan.protostream.domain.marshallers;
 
-import com.google.protobuf.Descriptors.DescriptorValidationException;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.FileDescriptorSource;
 
 import java.io.IOException;
 
 /**
  * @author anistor@redhat.com
+ * @author gustavonalle
  */
 public class MarshallerRegistration {
 
-   public static final String PROTOBUF_RES = "/sample_bank_account/bank.protobin";
+   public static final String[] PROTOBUF_RES = new String[]{"/sample_bank_account/bank.proto", "/google/protobuf/descriptor.proto", "/infinispan/indexing.proto"};
 
-   public static void registerMarshallers(SerializationContext ctx) throws IOException, DescriptorValidationException {
-      ctx.registerProtofile(PROTOBUF_RES);
+   public static void registerMarshallers(SerializationContext ctx) throws IOException, DescriptorParserException {
+      ctx.registerProtoFiles(FileDescriptorSource.fromResources(PROTOBUF_RES));
       ctx.registerMarshaller(new UserMarshaller());
       ctx.registerMarshaller(new GenderMarshaller());
       ctx.registerMarshaller(new AddressMarshaller());

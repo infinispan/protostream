@@ -2,8 +2,9 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.Descriptors.FieldDescriptor;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.Type;
 import org.jboss.logging.Logger;
 
 import java.io.ByteArrayOutputStream;
@@ -216,7 +217,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
    private void writePrimitiveCollection(FieldDescriptor fd, Collection<?> collection, Class elementClass) throws IOException {
       CodedOutputStream out = messageContext.out;
       int fieldNumber = fd.getNumber();
-      FieldDescriptor.Type type = fd.getType();
+      Type type = fd.getType();
       switch (type) {
          case DOUBLE:
             for (Object value : collection) {  //todo check (value != null && value.getClass() == elementClass)
@@ -314,7 +315,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
       checkFieldWrite(fd, false);
 
-      if (fd.getType() != FieldDescriptor.Type.STRING) {
+      if (fd.getType() != Type.STRING) {
          throw new IllegalArgumentException("Declared field type is not of type String : " + fieldName);
       }
 
@@ -335,7 +336,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
       checkFieldWrite(fd, false);
 
-      if (fd.getType() != FieldDescriptor.Type.BYTES) {
+      if (fd.getType() != Type.BYTES) {
          throw new IllegalArgumentException("Declared field type is not of type byte[] : " + fieldName);
       }
 
@@ -357,11 +358,11 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
       checkFieldWrite(fd, false);
 
-      if (fd.getType() == FieldDescriptor.Type.GROUP) {
+      if (fd.getType() == Type.GROUP) {
          writeGroup(fieldName, fd, value, clazz);
-      } else if (fd.getType() == FieldDescriptor.Type.MESSAGE) {
+      } else if (fd.getType() == Type.MESSAGE) {
          writeMessage(fieldName, fd, value, clazz);
-      } else if (fd.getType() == FieldDescriptor.Type.ENUM) {
+      } else if (fd.getType() == Type.ENUM) {
          writeEnum(fieldName, fd, (Enum) value);
       } else {
          throw new IllegalArgumentException("Declared field type is not a message or an enum : " + fieldName);
@@ -402,15 +403,15 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
       checkFieldWrite(fd, true);
 
-      if (fd.getType() == FieldDescriptor.Type.GROUP) {
+      if (fd.getType() == Type.GROUP) {
          for (Object t : collection) {
             writeGroup(fieldName, fd, t, elementClass);
          }
-      } else if (fd.getType() == FieldDescriptor.Type.MESSAGE) {
+      } else if (fd.getType() == Type.MESSAGE) {
          for (Object t : collection) {
             writeMessage(fieldName, fd, t, elementClass);
          }
-      } else if (fd.getType() == FieldDescriptor.Type.ENUM) {
+      } else if (fd.getType() == Type.ENUM) {
          for (Object t : collection) {
             writeEnum(fieldName, fd, (Enum) t);
          }
@@ -430,15 +431,15 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
       checkFieldWrite(fd, true);
 
-      if (fd.getType() == FieldDescriptor.Type.GROUP) {
+      if (fd.getType() == Type.GROUP) {
          for (Object t : array) {
             writeGroup(fieldName, fd, t, elementClass);
          }
-      } else if (fd.getType() == FieldDescriptor.Type.MESSAGE) {
+      } else if (fd.getType() == Type.MESSAGE) {
          for (Object t : array) {
             writeMessage(fieldName, fd, t, elementClass);
          }
-      } else if (fd.getType() == FieldDescriptor.Type.ENUM) {
+      } else if (fd.getType() == Type.ENUM) {
          for (Object t : array) {
             writeEnum(fieldName, fd, (Enum) t);
          }

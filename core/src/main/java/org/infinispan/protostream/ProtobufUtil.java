@@ -2,7 +2,6 @@ package org.infinispan.protostream;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.Descriptors.DescriptorValidationException;
 import org.infinispan.protostream.impl.ProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.ProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
@@ -20,7 +19,7 @@ import java.io.OutputStream;
  */
 public final class ProtobufUtil {
 
-   private static final String WRAPPING_DEFINITIONS_RES = "/org/infinispan/protostream/message-wrapping.protobin";
+   private static final String WRAPPING_DEFINITIONS_RES = "/org/infinispan/protostream/message-wrapping.proto";
 
    @Deprecated
    public static SerializationContext newSerializationContext() {
@@ -31,14 +30,12 @@ public final class ProtobufUtil {
       SerializationContextImpl serializationContext = new SerializationContextImpl(configuration);
 
       try {
-         serializationContext.registerProtofile(WRAPPING_DEFINITIONS_RES);
-      } catch (IOException e) {
-         throw new RuntimeException("Failed to initialize serialization context", e);
-      } catch (DescriptorValidationException e) {
+         serializationContext.registerProtofiles(WRAPPING_DEFINITIONS_RES);
+      } catch (IOException | DescriptorParserException e) {
          throw new RuntimeException("Failed to initialize serialization context", e);
       }
 
-      serializationContext.registerMarshaller(new WrappedMessageMarshaller());
+       serializationContext.registerMarshaller(new WrappedMessageMarshaller());
 
       return serializationContext;
    }

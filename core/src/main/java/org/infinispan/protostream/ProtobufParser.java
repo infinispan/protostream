@@ -1,8 +1,10 @@
 package org.infinispan.protostream;
 
 import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.WireFormat;
 
 import java.io.IOException;
@@ -68,14 +70,14 @@ public final class ProtobufParser {
             case WireFormat.WIRETYPE_LENGTH_DELIMITED: {
                if (fd == null) {
                   byte[] value = in.readBytes().toByteArray();
-                  tagHandler.onTag(fieldNumber, null, FieldDescriptor.Type.BYTES, FieldDescriptor.JavaType.BYTE_STRING, value);
-               } else if (fd.getType() == FieldDescriptor.Type.STRING) {
+                  tagHandler.onTag(fieldNumber, null, Type.BYTES, JavaType.BYTE_STRING, value);
+               } else if (fd.getType() == Type.STRING) {
                   String value = in.readString();
                   tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
-               } else if (fd.getType() == FieldDescriptor.Type.BYTES) {
+               } else if (fd.getType() == Type.BYTES) {
                   byte[] value = in.readBytes().toByteArray();
                   tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
-               } else if (fd.getType() == FieldDescriptor.Type.MESSAGE) {
+               } else if (fd.getType() == Type.MESSAGE) {
                   int length = in.readRawVarint32();
                   int oldLimit = in.pushLimit(length);
                   tagHandler.onStartNested(fieldNumber, fd.getName(), fd.getMessageType());
