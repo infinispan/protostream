@@ -44,4 +44,3 @@ public enum Type {
       return wireType;
    }
 }
-  

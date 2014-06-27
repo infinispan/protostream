@@ -35,7 +35,7 @@ public final class ProtobufUtil {
          throw new RuntimeException("Failed to initialize serialization context", e);
       }
 
-       serializationContext.registerMarshaller(new WrappedMessageMarshaller());
+      serializationContext.registerMarshaller(new WrappedMessageMarshaller());
 
       return serializationContext;
    }

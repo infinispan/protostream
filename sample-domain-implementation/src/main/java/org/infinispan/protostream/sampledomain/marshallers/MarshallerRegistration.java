@@ -11,7 +11,7 @@ import java.io.IOException;
  */
 public class MarshallerRegistration {
 
-   public static final String[] PROTOBUF_RES = new String[]{ "/sample_bank_account/bank.proto","/google/protobuf/descriptor.proto","/infinispan/indexing.proto"};
+   public static final String[] PROTOBUF_RES = new String[]{"/sample_bank_account/bank.proto", "/google/protobuf/descriptor.proto", "/infinispan/indexing.proto"};
 
    public static void registerMarshallers(SerializationContext ctx) throws IOException, DescriptorParserException {
       ctx.registerProtoFiles(FileDescriptorSource.fromResources(PROTOBUF_RES));
