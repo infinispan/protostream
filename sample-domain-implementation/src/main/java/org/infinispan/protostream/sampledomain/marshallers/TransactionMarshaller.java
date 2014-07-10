@@ -45,7 +45,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
       writer.writeInt("id", transaction.getId());
       writer.writeString("description", transaction.getDescription());
       writer.writeInt("accountId", transaction.getAccountId());
-      writer.writeLong("date", transaction.getDate());
+      writer.writeLong("date", transaction.getDate().getTime());
       writer.writeDouble("amount", transaction.getAmount());
       writer.writeBoolean("isDebit", transaction.isDebit());
    }
