@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -28,7 +29,7 @@ public class MarshallingTest extends AbstractProtoStreamTest {
       user.setName("John");
       user.setSurname("Batman");
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(Arrays.asList(1, 3));
+      user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
       user.setAddresses(Collections.singletonList(new Address("Old Street", "XYZ42")));
 
       byte[] bytes = ProtobufUtil.toByteArray(ctx, user);
@@ -47,8 +48,8 @@ public class MarshallingTest extends AbstractProtoStreamTest {
 
       assertNotNull(decoded.getAccountIds());
       assertEquals(2, decoded.getAccountIds().size());
-      assertEquals(1, decoded.getAccountIds().get(0).intValue());
-      assertEquals(3, decoded.getAccountIds().get(1).intValue());
+      assertTrue(decoded.getAccountIds().contains(1));
+      assertTrue(decoded.getAccountIds().contains(3));
    }
 
    @Test

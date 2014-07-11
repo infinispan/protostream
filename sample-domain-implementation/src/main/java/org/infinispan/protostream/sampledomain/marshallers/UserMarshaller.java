@@ -6,7 +6,9 @@ import org.infinispan.protostream.sampledomain.User;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -26,7 +28,7 @@ public class UserMarshaller implements MessageMarshaller<User> {
    @Override
    public User readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
-      List<Integer> accountIds = reader.readCollection("accountIds", new ArrayList<Integer>(), Integer.class);
+      Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<Integer>(), Integer.class);
 
       String surname = reader.readString("surname");
       String name = reader.readString("name");

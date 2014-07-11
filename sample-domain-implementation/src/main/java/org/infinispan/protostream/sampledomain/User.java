@@ -3,6 +3,7 @@ package org.infinispan.protostream.sampledomain;
 import org.infinispan.protostream.BaseMessage;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -16,7 +17,7 @@ public class User extends BaseMessage {
    private int id;
    private String name;
    private String surname;
-   private List<Integer> accountIds;
+   private Set<Integer> accountIds;
    private List<Address> addresses;
    private Integer age;
    private Gender gender;
@@ -29,11 +30,11 @@ public class User extends BaseMessage {
       this.id = id;
    }
 
-   public List<Integer> getAccountIds() {
+   public Set<Integer> getAccountIds() {
       return accountIds;
    }
 
-   public void setAccountIds(List<Integer> accountIds) {
+   public void setAccountIds(Set<Integer> accountIds) {
       this.accountIds = accountIds;
    }
 

@@ -6,7 +6,9 @@ import org.infinispan.protostream.domain.User;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 //todo write a code generator to generate this kind of boilerplate to provide a starting point for our users
 
@@ -30,7 +32,7 @@ public class UserMarshaller implements MessageMarshaller<User> {
    @Override
    public User readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
-      List<Integer> accountIds = reader.readCollection("accountIds", new ArrayList<Integer>(), Integer.class);
+      Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<Integer>(), Integer.class);
 
       // Read them out of order. It still works but logs a warning!
       String surname = reader.readString("surname");

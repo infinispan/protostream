@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -21,7 +23,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
    private int id;
    private String name;
    private String surname;
-   private List<Integer> accountIds;
+   private Set<Integer> accountIds;
    private List<Address> addresses;
    private Integer age;
    private Gender gender;
@@ -34,11 +36,11 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.id = id;
    }
 
-   public List<Integer> getAccountIds() {
+   public Set<Integer> getAccountIds() {
       return accountIds;
    }
 
-   public void setAccountIds(List<Integer> accountIds) {
+   public void setAccountIds(Set<Integer> accountIds) {
       this.accountIds = accountIds;
    }
 
@@ -135,7 +137,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       if (numAccountIds == -1) {
          accountIds = null;
       } else {
-         accountIds = new ArrayList<Integer>(numAccountIds);
+         accountIds = new HashSet<Integer>(numAccountIds);
          for (int i = 0; i < numAccountIds; i++) {
             accountIds.add(in.readInt());
          }
@@ -156,5 +158,4 @@ public class User extends BaseMessage implements Externalizable {   // implement
       }
       gender = User.Gender.values()[in.readInt()];
    }
-
 }

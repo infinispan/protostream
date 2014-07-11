@@ -163,7 +163,7 @@ public final class ProtobufParser {
                      default:
                         throw new IOException("Unexpected field type : " + fd.getType());
                   }
-                  tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);     //todo all fd.getName() calls are a perf problem!
+                  tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
                }
                break;
             }

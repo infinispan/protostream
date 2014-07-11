@@ -2,12 +2,12 @@ package org.infinispan.protostream.test;
 
 import org.infinispan.protostream.Configuration;
 import org.infinispan.protostream.ConfigurationBuilder;
+import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.Log;
-import org.infinispan.protostream.DescriptorParserException;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.MarshallerFactory;
 import org.jboss.marshalling.Marshalling;
@@ -23,6 +23,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
@@ -132,7 +133,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
       user.setName("John");
       user.setSurname("Batman");
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(Arrays.asList(1, 3));
+      user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
       List<Address> addresses = new ArrayList<Address>();
       addresses.add(new Address("Old Street", "XYZ42"));
       addresses.add(new Address("Bond Street", "QQ42"));

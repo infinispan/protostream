@@ -14,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -31,7 +32,7 @@ public class UnknownFieldSetImplTest extends AbstractProtoStreamTest {
       user.setName("John");
       user.setSurname("Batman");
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(Arrays.asList(1, 3));
+      user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
       user.setAddresses(Collections.singletonList(new Address("Old Street", "XYZ42")));
 
       byte[] bytes = ProtobufUtil.toByteArray(ctx, user);
