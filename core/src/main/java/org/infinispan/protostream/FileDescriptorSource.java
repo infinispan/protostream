@@ -19,10 +19,10 @@ import static java.util.Collections.unmodifiableMap;
  * @author gustavonalle
  * @since 2.0
  */
-public class FileDescriptorSource {
+public final class FileDescriptorSource {
 
-   public static final String ENCODING = "UTF-8";
-   public static final int BUFFER_SIZE = 1024;
+   private static final String ENCODING = "UTF-8";
+   private static final int BUFFER_SIZE = 1024;
 
    private final Map<String, char[]> descriptors = new ConcurrentHashMap<>();
 
@@ -30,8 +30,11 @@ public class FileDescriptorSource {
       for (String classpathResource : classpathResources) {
          String absPath = classpathResource.startsWith("/") ? classpathResource : "/" + classpathResource;
          InputStream resourceAsStream = this.getClass().getResourceAsStream(absPath);
+         if (resourceAsStream == null) {
+            throw new IOException("Resource not found in class path : " + classpathResource);
+         }
          String name = Paths.get(classpathResource).getFileName().toString();
-         descriptors.put(name, (toCharArray(resourceAsStream)));
+         addProtoFile(name, resourceAsStream);
       }
    }
 
@@ -42,7 +45,11 @@ public class FileDescriptorSource {
    public void addProtoFile(String name, InputStream contents) throws IOException {
       descriptors.put(name, toCharArray(contents));
    }
-   
+
+   public void addProtoFile(String name, Reader contents) throws IOException {
+      descriptors.put(name, toCharArray(contents));
+   }
+
    public void addProtoFiles(File... protofiles) throws IOException {
       for (File protofile : protofiles) {
          descriptors.put(protofile.getName(), toCharArray(protofile));
@@ -78,17 +85,22 @@ public class FileDescriptorSource {
    }
 
    private char[] toCharArray(InputStream is) throws IOException {
-      return toCharArray(new InputStreamReader(is, ENCODING));
+      try (Reader reader = new InputStreamReader(is, ENCODING)) {
+         return toCharArray(reader);
+      }
    }
 
    private char[] toCharArray(Reader reader) throws IOException {
-      CharArrayWriter writer = new CharArrayWriter();
-      char[] buffer = new char[BUFFER_SIZE];
-      int count;
-      while ((count = reader.read(buffer)) != -1) {
-         writer.write(buffer, 0, count);
+      try {
+         CharArrayWriter writer = new CharArrayWriter();
+         char[] buffer = new char[BUFFER_SIZE];
+         int count;
+         while ((count = reader.read(buffer)) != -1) {
+            writer.write(buffer, 0, count);
+         }
+         return writer.toCharArray();
+      } finally {
+         reader.close();
       }
-      return writer.toCharArray();
    }
-
 }
