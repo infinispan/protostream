@@ -213,7 +213,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    @Override
-   public <A> A readObject(String fieldName, Class<? extends A> clazz) throws IOException {
+   public <E> E readObject(String fieldName, Class<E> clazz) throws IOException {
       FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
       checkFieldRead(fd, false);
 
@@ -269,7 +269,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    @Override
-   public <A, C extends Collection<? super A>> C readCollection(String fieldName, C collection, Class<? extends A> elementClass) throws IOException {
+   public <E, C extends Collection<? super E>> C readCollection(String fieldName, C collection, Class<E> elementClass) throws IOException {
       FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
       checkFieldRead(fd, true);
 
@@ -381,9 +381,9 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    @Override
-   public <A> A[] readArray(String fieldName, Class<? extends A> elementClass) throws IOException {
-      List<A> list = readCollection(fieldName, new ArrayList<A>(), elementClass);
-      return list.toArray((A[]) Array.newInstance(elementClass, list.size()));
+   public <E> E[] readArray(String fieldName, Class<? extends E> elementClass) throws IOException {
+      List<E> list = readCollection(fieldName, new ArrayList<E>(), elementClass);
+      return list.toArray((E[]) Array.newInstance(elementClass, list.size()));
    }
 
    private void checkFieldRead(FieldDescriptor fd, boolean expectRepeated) {

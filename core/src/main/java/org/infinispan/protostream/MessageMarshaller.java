@@ -39,11 +39,11 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       byte[] readBytes(String fieldName) throws IOException;
 
-      <A> A readObject(String fieldName, Class<? extends A> clazz) throws IOException;
+      <E> E readObject(String fieldName, Class<E> clazz) throws IOException;
 
-      <A, C extends Collection<? super A>> C readCollection(String fieldName, C collection, Class<? extends A> elementClass) throws IOException;
+      <E, C extends Collection<? super E>> C readCollection(String fieldName, C collection, Class<E> elementClass) throws IOException;
 
-      <A> A[] readArray(String fieldName, Class<? extends A> elementClass) throws IOException;
+      <E> E[] readArray(String fieldName, Class<? extends E> elementClass) throws IOException;
    }
 
    interface ProtoStreamWriter {
@@ -72,10 +72,10 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       void writeBytes(String fieldName, byte[] value) throws IOException;
 
-      <T> void writeObject(String fieldName, T value, Class<T> clazz) throws IOException;
+      <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException;
 
-      <T> void writeCollection(String fieldName, Collection<T> collection, Class<T> elementClass) throws IOException;
+      <E> void writeCollection(String fieldName, Collection<? super E> collection, Class<E> elementClass) throws IOException;
 
-      <T> void writeArray(String fieldName, T[] array, Class<T> elementClass) throws IOException;
+      <E> void writeArray(String fieldName, E[] array, Class<? extends E> elementClass) throws IOException;
    }
 }

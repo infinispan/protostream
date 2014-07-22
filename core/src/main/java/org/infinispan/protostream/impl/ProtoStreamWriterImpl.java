@@ -346,7 +346,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
    }
 
    @Override
-   public void writeObject(String fieldName, Object value, Class clazz) throws IOException {
+   public <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException {
       FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (value == null) {
@@ -393,7 +393,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
    }
 
    @Override
-   public <T> void writeCollection(String fieldName, Collection<T> collection, Class<T> elementClass) throws IOException {
+   public <E> void writeCollection(String fieldName, Collection<? super E> collection, Class<E> elementClass) throws IOException {
       FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (collection == null) {
@@ -421,7 +421,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
    }
 
    @Override
-   public <T> void writeArray(String fieldName, T[] array, Class<T> elementClass) throws IOException {
+   public <E> void writeArray(String fieldName, E[] array, Class<? extends E> elementClass) throws IOException {
       FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
 
       if (array == null) {
