@@ -38,7 +38,7 @@ public final class FileDescriptor {
       this.messageTypes = unmodifiableList(builder.messageTypes);
       this.extensions = builder.extensions;
       this.extendTypes = unmodifiableList(builder.extendDescriptors);
-      this.fullName = getScopedName(name);
+      this.fullName = packageName != null ? packageName.replace('.', '/').concat("/").concat(name) : name;
 
       for (FileDescriptor dep : dependencies) {
          typeRegistry.putAll(dep.typeRegistry);

@@ -48,10 +48,6 @@ public final class SquareProtoParser implements DescriptorParser {
    private String getFullName(ProtoFile protoFile) {
       String fileName = protoFile.getFileName();
       String packageName = protoFile.getPackageName();
-      if (packageName == null || packageName.isEmpty()) {
-         return fileName;
-      }
-      return packageName.replaceAll("\\.", "/").concat("/").concat(fileName);
+      return packageName != null ? packageName.replace('.', '/').concat("/").concat(fileName) : fileName;
    }
-
 }

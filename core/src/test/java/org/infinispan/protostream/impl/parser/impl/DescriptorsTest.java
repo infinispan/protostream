@@ -99,6 +99,55 @@ public class DescriptorsTest {
 
    }
 
+   @Test
+   public void testEmptyPackageName() throws Exception {
+      // package name cannot be empty
+      exception.expect(IllegalStateException.class);
+      exception.expectMessage("Syntax error in file1.proto at 1:9: expected a word");
+
+      String file1 = "package ;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testDefinitionNameWithDots1() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Definition names should not be qualified : somePackage.M1");
+
+      String file1 = "package test;\n" +
+            "message somePackage.M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testDefinitionNameWithDots2() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Definition names should not be qualified : somePackage.E1");
+
+      String file1 = "package testPackage;\n" +
+            "enum somePackage.E1 {\n" +
+            "  VAL = 1;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
    private void assertResult(Descriptor descriptor) {
       assertThat(descriptor.getFields()).hasSize(4);
       assertThat(descriptor.findFieldByName("url").getJavaType()).isEqualTo(JavaType.STRING);
