@@ -17,6 +17,7 @@ import static java.util.Collections.unmodifiableMap;
  * Aggregator for source protofiles
  *
  * @author gustavonalle
+ * @author anistor@redhat.com
  * @since 2.0
  */
 public final class FileDescriptorSource {
@@ -28,6 +29,9 @@ public final class FileDescriptorSource {
 
    public void addProtoFiles(String... classpathResources) throws IOException {
       for (String classpathResource : classpathResources) {
+         if (classpathResource == null) {
+            throw new IllegalArgumentException("classpathResource cannot be null");
+         }
          String absPath = classpathResource.startsWith("/") ? classpathResource : "/" + classpathResource;
          InputStream resourceAsStream = this.getClass().getResourceAsStream(absPath);
          if (resourceAsStream == null) {
@@ -39,19 +43,40 @@ public final class FileDescriptorSource {
    }
 
    public void addProtoFile(String name, String contents) {
+      if (name == null) {
+         throw new IllegalArgumentException("name cannot be null");
+      }
+      if (contents == null) {
+         throw new IllegalArgumentException("contents cannot be null");
+      }
       descriptors.put(name, contents.toCharArray());
    }
 
    public void addProtoFile(String name, InputStream contents) throws IOException {
+      if (name == null) {
+         throw new IllegalArgumentException("name cannot be null");
+      }
+      if (contents == null) {
+         throw new IllegalArgumentException("contents cannot be null");
+      }
       descriptors.put(name, toCharArray(contents));
    }
 
    public void addProtoFile(String name, Reader contents) throws IOException {
+      if (name == null) {
+         throw new IllegalArgumentException("name cannot be null");
+      }
+      if (contents == null) {
+         throw new IllegalArgumentException("contents cannot be null");
+      }
       descriptors.put(name, toCharArray(contents));
    }
 
    public void addProtoFiles(File... protofiles) throws IOException {
       for (File protofile : protofiles) {
+         if (protofile == null) {
+            throw new IllegalArgumentException("protofile cannot be null");
+         }
          descriptors.put(protofile.getName(), toCharArray(protofile));
       }
    }
@@ -80,7 +105,7 @@ public final class FileDescriptorSource {
 
    private char[] toCharArray(File file) throws IOException {
       try (FileInputStream is = new FileInputStream(file)) {
-         return toCharArray(new InputStreamReader(is, ENCODING));
+         return toCharArray(is);
       }
    }
 
