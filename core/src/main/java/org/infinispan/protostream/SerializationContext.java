@@ -17,7 +17,7 @@ public interface SerializationContext { //todo [anistor] split this into separat
 
    Configuration getConfiguration();
 
-   void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException, IOException;
+   void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException;
 
    void registerProtofiles(String... classpathResource) throws IOException, DescriptorParserException;
 

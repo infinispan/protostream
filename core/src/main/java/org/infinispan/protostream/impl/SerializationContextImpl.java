@@ -48,7 +48,7 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException, IOException {
+   public void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException {
       Map<String, FileDescriptor> parse = parser.parse(source);
       for (FileDescriptor d : parse.values()) {
          registerProtofile(d);

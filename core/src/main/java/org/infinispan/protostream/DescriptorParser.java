@@ -20,6 +20,4 @@ public interface DescriptorParser {
     * @return map of FileDescriptor objects keyed by with their names
     */
    public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws IOException, DescriptorParserException;
-
-
 }

@@ -20,7 +20,7 @@ import java.util.Map;
  * @author gustavonalle
  * @since 2.0
  */
-public class SquareProtoParser implements DescriptorParser {
+public final class SquareProtoParser implements DescriptorParser {
 
    @Override
    public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws IOException, DescriptorParserException {
