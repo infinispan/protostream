@@ -21,12 +21,12 @@ import java.util.Map;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class DescriptorsTest {
 
    @org.junit.Rule
    public ExpectedException exception = ExpectedException.none();
-
 
    @Test
    public void testInputFromFile() throws Exception {
@@ -49,7 +49,6 @@ public class DescriptorsTest {
                       "}";
 
       new SquareProtoParser().parse(FileDescriptorSource.fromString("dummy.proto", file));
-
    }
 
    @Test
@@ -72,7 +71,6 @@ public class DescriptorsTest {
       source.addProtoFile("test2.proto", file2);
 
       new SquareProtoParser().parse(source);
-
    }
 
    @Test
@@ -96,7 +94,186 @@ public class DescriptorsTest {
       assertSearchResponse(descriptor.getMessageTypes().get(1));
       assertResult(descriptor.getMessageTypes().get(2));
       assertExtensions(descriptor.getExtensionsTypes());
+   }
 
+   @Test
+   public void testDuplicateTypeInFile1() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("test.M1 is already defined in test/file1.proto");
+
+      String file1 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}\n\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testDuplicateTypeInFile2() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("test.M1 is already defined in test/file1.proto");
+
+      String file1 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}\n\n" +
+            "enum M1 {\n" +
+            "  VAL = 1;\n" +
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testNestedMessageWithSameName() throws Exception {
+      String file1 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "  message M1 { required string a = 1; }\n"+
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+
+      Map<String, FileDescriptor> descriptors = new SquareProtoParser().parse(fileDescriptorSource);
+      assertEquals(1, descriptors.size());
+      assertTrue(descriptors.containsKey("test/file1.proto"));
+      FileDescriptor fd = descriptors.get("test/file1.proto");
+      assertEquals(1, fd.getMessageTypes().size());
+   }
+
+   @Test
+   public void testDuplicateTypeInMessage1() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("test.M1.M2 is already defined in test/file1.proto");
+
+      String file1 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "  message M2 { required string a = 1; }\n"+
+            "  message M2 { required string a = 1; }\n"+
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testDuplicateTypeInMessage2() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("test.M1.E1 is already defined in test/file1.proto");
+
+      String file1 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "  enum E1 { VAL1 = 1; }\n"+
+            "  enum E1 { VAL2 = 2; }\n"+
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testDuplicateTypeInPackage1() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Duplicate definition of test.M1 in test/file1.proto and test/file2.proto");
+
+      String file1 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      String file2 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string b = 2;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("file2.proto", file2);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testDuplicateTypeInPackage2() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Duplicate definition of test.M1 in test/file1.proto and test/file2.proto");
+
+      String file1 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      String file2 = "package test;\n" +
+            "enum M1 {\n" +
+            "  VAL1 = 1;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("file2.proto", file2);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testNotImportedInSamePackage() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Field type M1 not found");
+
+      String file1 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      String file2 = "package test;\n" +
+            "message M2 {\n" +
+            "  required M1 b = 2;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("file2.proto", file2);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testNotImportedInAnotherPackage() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Field type test1.M1 not found");
+
+      String file1 = "package test1;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      String file2 = "package test2;\n" +
+            "message M2 {\n" +
+            "  required test1.M1 b = 2;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("file2.proto", file2);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
    }
 
    @Test
@@ -159,17 +336,16 @@ public class DescriptorsTest {
 
    private void assertExtensions(List<ExtendDescriptor> extensions) {
       assertThat(extensions).hasSize(1);
-     
+
       ExtendDescriptor resultExtension = extensions.get(0);
       assertThat(resultExtension.getExtendedMessage().getName()).isEqualTo("MoreInner");
       assertThat(resultExtension.getFileDescriptor()).isNotNull();
-     
+
       FieldDescriptor barField = resultExtension.getFields().get(0);
       assertThat(barField.getRule()).isEqualTo(Rule.OPTIONAL);
       assertThat(barField.getJavaType()).isEqualTo(JavaType.FLOAT);
       assertThat(barField.getNumber()).isEqualTo(101);
       assertThat(barField.isPacked()).isTrue();
-
    }
 
    private void assertSearchResponse(Descriptor descriptor) {
@@ -207,7 +383,7 @@ public class DescriptorsTest {
       assertThat(queryField.getNumber()).isEqualTo(1);
       assertThat(queryField.getMessageType()).isNull();
       assertThat(queryField.getContainingMessage().getName()).isEqualTo("SearchRequest");
-      
+
 
       FieldDescriptor pageNumberField = fields.get(1);
       assertThat(pageNumberField.getRule()).isEqualTo(Rule.OPTIONAL);
@@ -251,7 +427,7 @@ public class DescriptorsTest {
       Descriptor messageType = typedField.getMessageType();
       assertThat(messageType.getFullName()).isEqualTo("org.infinispan.protostream.test.SearchRequest.Inner");
       assertThat(messageType.getContainingType().getName()).isEqualTo("SearchRequest");
-      
+
       assertThat(typedField.getType()).isEqualTo(Type.MESSAGE);
       assertThat(typedField.getFullName()).isEqualTo("org.infinispan.protostream.test.SearchRequest.typed");
 

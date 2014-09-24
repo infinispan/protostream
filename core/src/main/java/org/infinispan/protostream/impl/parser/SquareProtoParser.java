@@ -15,21 +15,30 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Parser for proto files based on the Protoparser
+ * Parser for proto files based on the Protoparser.
  *
  * @author gustavonalle
+ * @author anistor@redhat.com
  * @since 2.0
  */
 public final class SquareProtoParser implements DescriptorParser {
 
    @Override
    public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws IOException, DescriptorParserException {
-      Map<String, ProtoFile> fileMap = parseInternal(fileDescriptorSource.getFileDescriptors());
-      Map<String, FileDescriptor> fileDescriptorMap = new HashMap<>(fileMap.size());
-      for (String fileName : fileMap.keySet()) {
-         if (!fileDescriptorMap.containsKey(fileName)) {
-            FileDescriptor mapped = new ProtofileMapper(fileMap).map(fileMap.get(fileName));
-            fileDescriptorMap.put(fileName, mapped);
+      Map<String, ProtoFile> protoFileMap = parseInternal(fileDescriptorSource.getFileDescriptors());
+      Map<String, FileDescriptor> fileDescriptorMap = new HashMap<>(protoFileMap.size());
+      Map<String, FileDescriptor> types = new HashMap<>();
+      for (String fileName : protoFileMap.keySet()) {
+         ProtoFile protoFile = protoFileMap.get(fileName);
+         FileDescriptor mapped = new ProtofileMapper(protoFileMap).map(protoFile);
+         fileDescriptorMap.put(fileName, mapped);
+         for (String typeName : mapped.getTypes().keySet()) {
+            FileDescriptor fd = types.get(typeName);
+            if (fd == null) {
+               types.put(typeName, mapped);
+            } else {
+               throw new DescriptorParserException("Duplicate definition of " + typeName + " in " + mapped.getFullName() + " and " + fd.getFullName());
+            }
          }
       }
       return fileDescriptorMap;
@@ -38,8 +47,7 @@ public final class SquareProtoParser implements DescriptorParser {
    private Map<String, ProtoFile> parseInternal(Map<String, char[]> input) throws IOException, DescriptorParserException {
       Map<String, ProtoFile> fileMap = new LinkedHashMap<>();
       for (Map.Entry<String, char[]> entry : input.entrySet()) {
-         CharArrayReader reader = new CharArrayReader(entry.getValue());
-         ProtoFile protoFile = ProtoSchemaParser.parse(entry.getKey(), reader);
+         ProtoFile protoFile = ProtoSchemaParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));
          fileMap.put(getFullName(protoFile), protoFile);
       }
       return fileMap;

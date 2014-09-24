@@ -7,12 +7,13 @@ import java.util.Map;
 import static java.util.Collections.unmodifiableList;
 
 /**
- * Represents an enum in a proto file
+ * Represents an enum in a proto file.
  *
  * @author gustavonalle
+ * @author anistor@redhat.com
  * @since 2.0
  */
-public final class EnumDescriptor {
+public final class EnumDescriptor implements GenericDescriptor {
 
    private final String name, fullName;
    private final List<Option> options;
@@ -32,14 +33,17 @@ public final class EnumDescriptor {
       }
    }
 
+   @Override
    public String getName() {
       return name;
    }
 
+   @Override
    public String getFullName() {
       return fullName;
    }
 
+   @Override
    public FileDescriptor getFileDescriptor() {
       return fileDescriptor;
    }
@@ -62,8 +66,9 @@ public final class EnumDescriptor {
 
    void setFileDescriptor(FileDescriptor fileDescriptor) {
       this.fileDescriptor = fileDescriptor;
-      for (EnumValueDescriptor valueDescriptor : values)
+      for (EnumValueDescriptor valueDescriptor : values) {
          valueDescriptor.setFileDescriptor(fileDescriptor);
+      }
    }
 
    public static class Builder {
@@ -96,6 +101,4 @@ public final class EnumDescriptor {
          return new EnumDescriptor(this);
       }
    }
-
-
 }

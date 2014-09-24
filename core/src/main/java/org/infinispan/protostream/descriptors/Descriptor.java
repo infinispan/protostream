@@ -8,12 +8,13 @@ import java.util.Map;
 import static java.util.Collections.unmodifiableList;
 
 /**
- * Represents a message declaration in a proto file
+ * Represents a message declaration in a proto file.
  *
  * @author gustavonalle
+ * @author anistor@redhat.com
  * @since 2.0
  */
-public final class Descriptor {
+public final class Descriptor implements GenericDescriptor {
 
    private final String name;
    private final String fullName;
@@ -40,15 +41,18 @@ public final class Descriptor {
       this.enumTypes = unmodifiableList(builder.enumTypes);
    }
 
+   @Override
    public String getName() {
       return name;
    }
 
+   @Override
    public String getFullName() {
       return fullName;
    }
 
-   public FileDescriptor getFile() {
+   @Override
+   public FileDescriptor getFileDescriptor() {
       return fileDescriptor;
    }
 
@@ -92,7 +96,6 @@ public final class Descriptor {
       Descriptor that = (Descriptor) o;
 
       return fullName.equals(that.fullName);
-
    }
 
    @Override

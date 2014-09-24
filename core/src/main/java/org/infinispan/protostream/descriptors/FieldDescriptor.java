@@ -7,9 +7,10 @@ import java.util.Map;
 import static java.util.Collections.unmodifiableList;
 
 /**
- * Represents a field in a proto file
+ * Represents a field in a proto file.
  *
  * @author gustavonalle
+ * @author anistor@redhat.com
  * @since 2.0
  */
 public final class FieldDescriptor {
@@ -144,22 +145,16 @@ public final class FieldDescriptor {
 
    void setFileDescriptor(FileDescriptor fileDescriptor) {
       this.fileDescriptor = fileDescriptor;
-      if (enumDescriptor != null) {
-         enumDescriptor.setFileDescriptor(fileDescriptor);
-      }
-      if (messageType != null) {
-         messageType.setFileDescriptor(fileDescriptor);
-      }
    }
 
    public static class Builder {
-      public String typeName;
+      private String typeName;
       private int number;
       private String name;
       private Rule rule;
       private List<Option> options;
       private String defaultValue;
-      public boolean isExtension;
+      private boolean isExtension;
 
       public Builder withNumber(int number) {
          this.number = number;
@@ -191,21 +186,19 @@ public final class FieldDescriptor {
          return this;
       }
 
-      public Builder withIsExtensions(boolean isExtension) {
+      public Builder withIsExtension(boolean isExtension) {
          this.isExtension = isExtension;
          return this;
       }
 
       public FieldDescriptor build() {
          FieldDescriptor fieldDescriptor = new FieldDescriptor(this);
-         Type fieldType;
          try {
-            fieldType = Type.valueOf(typeName.toUpperCase());
+            Type fieldType = Type.valueOf(typeName.toUpperCase());
             fieldDescriptor.setType(fieldType);
          } catch (IllegalArgumentException ignored) {
          }
          return fieldDescriptor;
       }
    }
-
 }
