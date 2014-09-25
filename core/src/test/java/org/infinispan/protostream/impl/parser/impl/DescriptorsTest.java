@@ -325,6 +325,58 @@ public class DescriptorsTest {
       new SquareProtoParser().parse(fileDescriptorSource);
    }
 
+   @Test
+   public void testPublicImport() throws Exception {
+      String file1 = "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      String file2 = "import public \"file1.proto\";";
+
+      String file3 = "import \"file2.proto\";\n" +
+            "message M3 {\n" +
+            "  required M1 a = 1;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("file2.proto", file2);
+      fileDescriptorSource.addProtoFile("file3.proto", file3);
+
+      Map<String, FileDescriptor> descriptors = new SquareProtoParser().parse(fileDescriptorSource);
+      assertEquals(3, descriptors.size());
+      assertTrue(descriptors.containsKey("file1.proto"));
+      assertTrue(descriptors.containsKey("file2.proto"));
+      assertTrue(descriptors.containsKey("file3.proto"));
+      assertTrue(descriptors.get("file1.proto").getTypes().containsKey("M1"));
+      assertTrue(descriptors.get("file2.proto").getTypes().isEmpty());
+      assertTrue(descriptors.get("file3.proto").getTypes().containsKey("M3"));
+   }
+
+   @Test
+   public void testPrivateImport() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Field type M1 not found");
+
+      String file1 = "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      String file2 = "import \"file1.proto\";";
+
+      String file3 = "import \"file2.proto\";\n" +
+            "message M3 {\n" +
+            "  required M1 a = 1;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("file2.proto", file2);
+      fileDescriptorSource.addProtoFile("file3.proto", file3);
+
+      new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
    private void assertResult(Descriptor descriptor) {
       assertThat(descriptor.getFields()).hasSize(4);
       assertThat(descriptor.findFieldByName("url").getJavaType()).isEqualTo(JavaType.STRING);

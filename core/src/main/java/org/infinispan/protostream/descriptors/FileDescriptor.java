@@ -22,6 +22,7 @@ public final class FileDescriptor {
    private final String packageName;
    private final String fullName;
    private final List<FileDescriptor> dependencies;
+   private final List<FileDescriptor> publicDependencies;
    private final List<Option> options;
    private final List<Descriptor> messageTypes;
    private final List<FieldDescriptor> extensions;
@@ -35,6 +36,11 @@ public final class FileDescriptor {
    private final Map<String, GenericDescriptor> typeRegistry = new HashMap<>();
 
    /**
+    * Types defined in this file or defined in publicly imported files.
+    */
+   private final Map<String, GenericDescriptor> exportedTypes = new HashMap<>();
+
+   /**
     * Types defined in this file.
     */
    private final Map<String, GenericDescriptor> types = new HashMap<>();
@@ -43,6 +49,7 @@ public final class FileDescriptor {
       this.name = builder.name;
       this.packageName = builder.packageName;
       this.dependencies = builder.dependencies;
+      this.publicDependencies = builder.publicDependencies;
       this.options = unmodifiableList(builder.options);
       this.enumTypes = unmodifiableList(builder.enumTypes);
       this.messageTypes = unmodifiableList(builder.messageTypes);
@@ -50,8 +57,12 @@ public final class FileDescriptor {
       this.extendTypes = unmodifiableList(builder.extendDescriptors);
       this.fullName = packageName != null ? packageName.replace('.', '/').concat("/").concat(name) : name;
 
+      for (FileDescriptor dep : publicDependencies) {
+         typeRegistry.putAll(dep.exportedTypes);
+         exportedTypes.putAll(dep.exportedTypes);
+      }
       for (FileDescriptor dep : dependencies) {
-         typeRegistry.putAll(dep.typeRegistry);
+         typeRegistry.putAll(dep.exportedTypes);
       }
 
       for (Descriptor desc : messageTypes) {
@@ -83,6 +94,7 @@ public final class FileDescriptor {
       descriptor.setFileDescriptor(this);
       typeRegistry.put(descriptor.getFullName(), descriptor);
       types.put(descriptor.getFullName(), descriptor);
+      exportedTypes.put(descriptor.getFullName(), descriptor);
       for (EnumDescriptor enumDescriptor : descriptor.getEnumTypes()) {
          collectEnumDescriptors(enumDescriptor);
       }
@@ -97,6 +109,7 @@ public final class FileDescriptor {
       enumDescriptor.setFileDescriptor(this);
       typeRegistry.put(enumDescriptor.getFullName(), enumDescriptor);
       types.put(enumDescriptor.getFullName(), enumDescriptor);
+      exportedTypes.put(enumDescriptor.getFullName(), enumDescriptor);
    }
 
    private void checkValidDefinition(GenericDescriptor descriptor) {
@@ -212,6 +225,7 @@ public final class FileDescriptor {
       private String name;
       private String packageName;
       private List<FileDescriptor> dependencies = new ArrayList<>();
+      private List<FileDescriptor> publicDependencies = new ArrayList<>();
       private List<FieldDescriptor> extensions;
       private List<Option> options;
       private List<EnumDescriptor> enumTypes;
@@ -233,6 +247,11 @@ public final class FileDescriptor {
          return this;
       }
 
+      public Builder withPublicDependencies(List<FileDescriptor> publicDependencies) {
+         this.publicDependencies = publicDependencies;
+         return this;
+      }
+
       public Builder withExtendDescriptors(List<ExtendDescriptor> extendDescriptors) {
          this.extendDescriptors = extendDescriptors;
          return this;
@@ -240,6 +259,11 @@ public final class FileDescriptor {
 
       public Builder withOptions(List<Option> options) {
          this.options = options;
+         return this;
+      }
+
+      public Builder withExtensions(List<FieldDescriptor> extensions) {
+         this.extensions = extensions;
          return this;
       }
 
