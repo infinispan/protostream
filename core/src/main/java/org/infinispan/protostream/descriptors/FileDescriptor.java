@@ -20,7 +20,6 @@ public final class FileDescriptor {
 
    private final String name;
    private final String packageName;
-   private final String fullName;
    private final List<FileDescriptor> dependencies;
    private final List<FileDescriptor> publicDependencies;
    private final List<Option> options;
@@ -55,7 +54,6 @@ public final class FileDescriptor {
       this.messageTypes = unmodifiableList(builder.messageTypes);
       this.extensions = builder.extensions;
       this.extendTypes = unmodifiableList(builder.extendDescriptors);
-      this.fullName = packageName != null ? packageName.replace('.', '/').concat("/").concat(name) : name;
 
       for (FileDescriptor dep : publicDependencies) {
          typeRegistry.putAll(dep.exportedTypes);
@@ -118,9 +116,9 @@ public final class FileDescriptor {
       }
       GenericDescriptor existing = types.get(descriptor.getFullName());
       if (existing != null) {
-         String location = existing.getFileDescriptor().getFullName();
-         if (!location.equals(getFullName())) {
-            location = location + ", " + getFullName();
+         String location = existing.getFileDescriptor().getName();
+         if (!location.equals(getName())) {
+            location = location + ", " + getName();
          }
          throw new DescriptorParserException(descriptor.getFullName() + " is already defined in " + location);
       }
@@ -214,10 +212,6 @@ public final class FileDescriptor {
 
    public Map<String, GenericDescriptor> getTypes() {
       return types;
-   }
-
-   public String getFullName() {
-      return fullName;
    }
 
    public static final class Builder {

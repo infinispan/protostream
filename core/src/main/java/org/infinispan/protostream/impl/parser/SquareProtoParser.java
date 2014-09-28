@@ -37,7 +37,7 @@ public final class SquareProtoParser implements DescriptorParser {
             if (fd == null) {
                types.put(typeName, mapped);
             } else {
-               throw new DescriptorParserException("Duplicate definition of " + typeName + " in " + mapped.getFullName() + " and " + fd.getFullName());
+               throw new DescriptorParserException("Duplicate definition of " + typeName + " in " + mapped.getName() + " and " + fd.getName());
             }
          }
       }
@@ -48,14 +48,8 @@ public final class SquareProtoParser implements DescriptorParser {
       Map<String, ProtoFile> fileMap = new LinkedHashMap<>();
       for (Map.Entry<String, char[]> entry : input.entrySet()) {
          ProtoFile protoFile = ProtoSchemaParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));
-         fileMap.put(getFullName(protoFile), protoFile);
+         fileMap.put(protoFile.getFileName(), protoFile);
       }
       return fileMap;
-   }
-
-   private String getFullName(ProtoFile protoFile) {
-      String fileName = protoFile.getFileName();
-      String packageName = protoFile.getPackageName();
-      return packageName != null ? packageName.replace('.', '/').concat("/").concat(fileName) : fileName;
    }
 }

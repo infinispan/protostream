@@ -30,9 +30,11 @@ public class DescriptorsTest {
 
    @Test
    public void testInputFromFile() throws Exception {
-      File f1 = asFile("org/infinispan/protostream/lib/base.proto");
-      File f2 = asFile("org/infinispan/protostream/lib/base2.proto");
-      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromFiles(f1, f2);
+      String f1 = "org/infinispan/protostream/lib/base.proto";
+      String f2 = "org/infinispan/protostream/lib/base2.proto";
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile(f1, asFile(f1));
+      fileDescriptorSource.addProtoFile(f2, asFile(f2));
       Map<String, FileDescriptor> parseResult = new SquareProtoParser().parse(fileDescriptorSource);
       assertThat(parseResult).isNotEmpty();
    }
@@ -99,7 +101,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInFile1() throws Exception {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("test.M1 is already defined in test/file1.proto");
+      exception.expectMessage("test.M1 is already defined in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -110,7 +112,7 @@ public class DescriptorsTest {
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
       new SquareProtoParser().parse(fileDescriptorSource);
    }
@@ -118,7 +120,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInFile2() throws Exception {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("test.M1 is already defined in test/file1.proto");
+      exception.expectMessage("test.M1 is already defined in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -129,7 +131,7 @@ public class DescriptorsTest {
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
       new SquareProtoParser().parse(fileDescriptorSource);
    }
@@ -147,15 +149,15 @@ public class DescriptorsTest {
 
       Map<String, FileDescriptor> descriptors = new SquareProtoParser().parse(fileDescriptorSource);
       assertEquals(1, descriptors.size());
-      assertTrue(descriptors.containsKey("test/file1.proto"));
-      FileDescriptor fd = descriptors.get("test/file1.proto");
+      assertTrue(descriptors.containsKey("file1.proto"));
+      FileDescriptor fd = descriptors.get("file1.proto");
       assertEquals(1, fd.getMessageTypes().size());
    }
 
    @Test
    public void testDuplicateTypeInMessage1() throws Exception {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("test.M1.M2 is already defined in test/file1.proto");
+      exception.expectMessage("test.M1.M2 is already defined in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -165,7 +167,7 @@ public class DescriptorsTest {
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
       new SquareProtoParser().parse(fileDescriptorSource);
    }
@@ -173,7 +175,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInMessage2() throws Exception {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("test.M1.E1 is already defined in test/file1.proto");
+      exception.expectMessage("test.M1.E1 is already defined in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -183,7 +185,7 @@ public class DescriptorsTest {
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
       new SquareProtoParser().parse(fileDescriptorSource);
    }
@@ -191,7 +193,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInPackage1() throws Exception {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.M1 in test/file1.proto and test/file2.proto");
+      exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file2.proto and test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -204,8 +206,8 @@ public class DescriptorsTest {
             "}";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFile("file1.proto", file1);
-      fileDescriptorSource.addProtoFile("file2.proto", file2);
+      fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
+      fileDescriptorSource.addProtoFile("test_proto_path/file2.proto", file2);
 
       new SquareProtoParser().parse(fileDescriptorSource);
    }
@@ -213,7 +215,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInPackage2() throws Exception {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.M1 in test/file1.proto and test/file2.proto");
+      exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file2.proto and test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -226,8 +228,8 @@ public class DescriptorsTest {
             "}";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFile("file1.proto", file1);
-      fileDescriptorSource.addProtoFile("file2.proto", file2);
+      fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
+      fileDescriptorSource.addProtoFile("test_proto_path/file2.proto", file2);
 
       new SquareProtoParser().parse(fileDescriptorSource);
    }
@@ -375,6 +377,31 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("file3.proto", file3);
 
       new SquareProtoParser().parse(fileDescriptorSource);
+   }
+
+   @Test
+   public void testImportAndPackage() throws Exception {
+      String file1 = "package p;\n" +
+            "message A {\n" +
+            "   optional int32 f1 = 1;\n" +
+            "}";
+
+      String file2 = "package org.infinispan;\n" +
+            "import \"file1.proto\";\n" +
+            "message B {\n" +
+            "   required p.A ma = 1;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      fileDescriptorSource.addProtoFile("file2.proto", file2);
+
+      Map<String, FileDescriptor> descriptors = new SquareProtoParser().parse(fileDescriptorSource);
+      assertEquals(2, descriptors.size());
+      assertTrue(descriptors.containsKey("file1.proto"));
+      assertTrue(descriptors.containsKey("file2.proto"));
+      assertTrue(descriptors.get("file1.proto").getTypes().containsKey("p.A"));
+      assertTrue(descriptors.get("file2.proto").getTypes().containsKey("org.infinispan.B"));
    }
 
    private void assertResult(Descriptor descriptor) {

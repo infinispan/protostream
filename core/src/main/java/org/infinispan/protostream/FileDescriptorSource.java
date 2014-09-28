@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,13 +31,15 @@ public final class FileDescriptorSource {
          if (classpathResource == null) {
             throw new IllegalArgumentException("classpathResource cannot be null");
          }
+         // enforce absolute resource path
          String absPath = classpathResource.startsWith("/") ? classpathResource : "/" + classpathResource;
-         InputStream resourceAsStream = this.getClass().getResourceAsStream(absPath);
+         InputStream resourceAsStream = getClass().getResourceAsStream(absPath);
          if (resourceAsStream == null) {
             throw new IOException("Resource not found in class path : " + classpathResource);
          }
-         String name = Paths.get(classpathResource).getFileName().toString();
-         addProtoFile(name, resourceAsStream);
+         // discard the leading slash
+         String path = classpathResource.startsWith("/") ? classpathResource.substring(1) : classpathResource;
+         addProtoFile(path, resourceAsStream);
       }
    }
 
@@ -49,7 +50,9 @@ public final class FileDescriptorSource {
       if (contents == null) {
          throw new IllegalArgumentException("contents cannot be null");
       }
-      descriptors.put(name, contents.toCharArray());
+      // discard the leading slash
+      String path = name.startsWith("/") ? name.substring(1) : name;
+      descriptors.put(path, contents.toCharArray());
    }
 
    public void addProtoFile(String name, InputStream contents) throws IOException {
@@ -59,7 +62,9 @@ public final class FileDescriptorSource {
       if (contents == null) {
          throw new IllegalArgumentException("contents cannot be null");
       }
-      descriptors.put(name, toCharArray(contents));
+      // discard the leading slash
+      String path = name.startsWith("/") ? name.substring(1) : name;
+      descriptors.put(path, toCharArray(contents));
    }
 
    public void addProtoFile(String name, Reader contents) throws IOException {
@@ -69,27 +74,26 @@ public final class FileDescriptorSource {
       if (contents == null) {
          throw new IllegalArgumentException("contents cannot be null");
       }
-      descriptors.put(name, toCharArray(contents));
+      // discard the leading slash
+      String path = name.startsWith("/") ? name.substring(1) : name;
+      descriptors.put(path, toCharArray(contents));
    }
 
-   public void addProtoFiles(File... protofiles) throws IOException {
-      for (File protofile : protofiles) {
-         if (protofile == null) {
-            throw new IllegalArgumentException("protofile cannot be null");
-         }
-         descriptors.put(protofile.getName(), toCharArray(protofile));
+   public void addProtoFile(String name, File protofile) throws IOException {
+      if (name == null) {
+         throw new IllegalArgumentException("name cannot be null");
       }
+      if (protofile == null) {
+         throw new IllegalArgumentException("protofile cannot be null");
+      }
+      // discard the leading slash
+      String path = name.startsWith("/") ? name.substring(1) : name;
+      descriptors.put(path, toCharArray(protofile));
    }
 
    public static FileDescriptorSource fromResources(String... classPathResources) throws IOException {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFiles(classPathResources);
-      return fileDescriptorSource;
-   }
-
-   public static FileDescriptorSource fromFiles(File... files) throws IOException {
-      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFiles(files);
       return fileDescriptorSource;
    }
 
