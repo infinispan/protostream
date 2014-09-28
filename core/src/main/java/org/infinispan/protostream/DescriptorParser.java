@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Main parser interface
+ * Main parser interface.
  *
  * @author gustavonalle
  * @since 2.0
@@ -14,7 +14,7 @@ import java.util.Map;
 public interface DescriptorParser {
 
    /**
-    * Parses a set of protofiles
+    * Parses a set of protofiles.
     *
     * @param fileDescriptorSource the set of descriptors to parse
     * @return map of FileDescriptor objects keyed by with their names

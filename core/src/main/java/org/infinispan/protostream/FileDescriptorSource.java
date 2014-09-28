@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.util.Collections.unmodifiableMap;
 
 /**
- * Aggregator for source protofiles
+ * Aggregator for source protofiles.
  *
  * @author gustavonalle
  * @author anistor@redhat.com

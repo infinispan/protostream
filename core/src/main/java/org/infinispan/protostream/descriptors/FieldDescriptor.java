@@ -197,6 +197,7 @@ public final class FieldDescriptor {
             Type fieldType = Type.valueOf(typeName.toUpperCase());
             fieldDescriptor.setType(fieldType);
          } catch (IllegalArgumentException ignored) {
+            // TODO [anistor] This (harmless exception) happens because typeName is not a primitive but a user defined type. A nicer validation would be better.
          }
          return fieldDescriptor;
       }

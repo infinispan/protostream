@@ -1,7 +1,7 @@
 package org.infinispan.protostream.impl.parser.mappers;
 
 /**
- * Converter for objects
+ * Converter for objects.
  *
  * @param <S> Source type
  * @param <T> converted type

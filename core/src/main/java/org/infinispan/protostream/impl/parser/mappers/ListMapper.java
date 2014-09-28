@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Converts the content of a list, given a mapper to convert its elements
+ * Converts the content of a list, given a mapper to convert its elements.
  *
  * @param <S> Type of the source list
  * @param <T> Type of the converted list
@@ -31,6 +31,4 @@ class ListMapper<S, T> implements Mapper<List<S>, List<T>> {
    public static <S, T> ListMapper<S, T> forMapper(Mapper<S, T> elementMapper) {
       return new ListMapper<>(elementMapper);
    }
-
-
 }
