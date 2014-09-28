@@ -21,6 +21,7 @@ public final class EnumDescriptor implements GenericDescriptor {
    private final Map<Integer, EnumValueDescriptor> valueByNumber = new HashMap<>();
    private final Map<String, EnumValueDescriptor> valueByName = new HashMap<>();
    private FileDescriptor fileDescriptor;
+   private Descriptor containingType;
 
    private EnumDescriptor(Builder builder) {
       this.name = builder.name;
@@ -28,6 +29,7 @@ public final class EnumDescriptor implements GenericDescriptor {
       this.options = unmodifiableList(builder.options);
       this.values = unmodifiableList(builder.values);
       for (EnumValueDescriptor value : values) {
+         value.setContainingEnum(this);
          valueByNumber.put(value.getNumber(), value);
          valueByName.put(value.getName(), value);
       }
@@ -46,6 +48,15 @@ public final class EnumDescriptor implements GenericDescriptor {
    @Override
    public FileDescriptor getFileDescriptor() {
       return fileDescriptor;
+   }
+
+   @Override
+   public Descriptor getContainingType() {
+      return containingType;
+   }
+
+   void setContainingType(Descriptor containingType) {
+      this.containingType = containingType;
    }
 
    public List<Option> getOptions() {

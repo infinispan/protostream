@@ -122,10 +122,6 @@ public final class FieldDescriptor {
       return typeName;
    }
 
-   public void setEnumDescriptor(EnumDescriptor enumDescriptor) {
-      this.enumDescriptor = enumDescriptor;
-   }
-
    public FileDescriptor getFileDescriptor() {
       return fileDescriptor;
    }
@@ -141,6 +137,12 @@ public final class FieldDescriptor {
 
    void setMessageType(Descriptor descriptor) {
       this.messageType = descriptor;
+      type = Type.MESSAGE;
+   }
+
+   void setEnumType(EnumDescriptor enumDescriptor) {
+      this.enumDescriptor = enumDescriptor;
+      type = Type.ENUM;
    }
 
    void setFileDescriptor(FileDescriptor fileDescriptor) {

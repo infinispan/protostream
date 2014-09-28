@@ -5,7 +5,7 @@ import java.util.List;
 import static java.util.Collections.unmodifiableList;
 
 /**
- * Represents each value of a enumeration in a .proto file
+ * Represents each value of a enumeration in a .proto file.
  *
  * @author gustavonalle
  * @since 2.0
@@ -15,9 +15,10 @@ public final class EnumValueDescriptor {
    private final String name;
    private final int number;
    private final List<Option> options;
+   private EnumDescriptor enumDescriptor;
    private FileDescriptor fileDescriptor;
 
-   private EnumValueDescriptor(final Builder builder) {
+   private EnumValueDescriptor(Builder builder) {
       this.name = builder.name;
       this.number = builder.number;
       this.options = unmodifiableList(builder.options);
@@ -33,6 +34,14 @@ public final class EnumValueDescriptor {
 
    public List<Option> getOptions() {
       return options;
+   }
+
+   public EnumDescriptor getContainingEnum() {
+      return enumDescriptor;
+   }
+
+   void setContainingEnum(EnumDescriptor enumDescriptor) {
+      this.enumDescriptor = enumDescriptor;
    }
 
    public FileDescriptor getFileDescriptor() {

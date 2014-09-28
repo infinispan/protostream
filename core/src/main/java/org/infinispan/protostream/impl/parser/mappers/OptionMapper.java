@@ -6,7 +6,7 @@ import com.squareup.protoparser.Option;
  * @author gustavonalle
  * @since 2.0
  */
-public class OptionMapper implements Mapper<Option, org.infinispan.protostream.descriptors.Option> {
+class OptionMapper implements Mapper<Option, org.infinispan.protostream.descriptors.Option> {
    @Override
    public org.infinispan.protostream.descriptors.Option map(Option input) {
       String name = input.getName();

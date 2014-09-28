@@ -3,12 +3,12 @@ package org.infinispan.protostream.descriptors;
 import java.util.List;
 
 /**
- * Represents a extend in a proto file
+ * Represents a extend in a proto file.
  *
  * @author gustavonalle
  * @since 2.0
  */
-public class ExtendDescriptor {
+public final class ExtendDescriptor {
 
    private final String name;
    private final String fullName;

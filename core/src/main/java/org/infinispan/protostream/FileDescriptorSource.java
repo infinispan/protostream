@@ -26,7 +26,21 @@ public final class FileDescriptorSource {
 
    private final Map<String, char[]> descriptors = new ConcurrentHashMap<>();
 
-   public void addProtoFiles(String... classpathResources) throws IOException {
+   private ProgressCallback progressCallback;
+
+   public interface ProgressCallback {
+
+      void handleError(String fileName, DescriptorParserException exception);
+
+      void handleSuccess(String fileName);
+   }
+
+   public FileDescriptorSource withProgressCallback(ProgressCallback progressCallback) throws IOException {
+      this.progressCallback = progressCallback;
+      return this;
+   }
+
+   public FileDescriptorSource addProtoFiles(String... classpathResources) throws IOException {
       for (String classpathResource : classpathResources) {
          if (classpathResource == null) {
             throw new IllegalArgumentException("classpathResource cannot be null");
@@ -41,9 +55,10 @@ public final class FileDescriptorSource {
          String path = classpathResource.startsWith("/") ? classpathResource.substring(1) : classpathResource;
          addProtoFile(path, resourceAsStream);
       }
+      return this;
    }
 
-   public void addProtoFile(String name, String contents) {
+   public FileDescriptorSource addProtoFile(String name, String contents) {
       if (name == null) {
          throw new IllegalArgumentException("name cannot be null");
       }
@@ -53,9 +68,10 @@ public final class FileDescriptorSource {
       // discard the leading slash
       String path = name.startsWith("/") ? name.substring(1) : name;
       descriptors.put(path, contents.toCharArray());
+      return this;
    }
 
-   public void addProtoFile(String name, InputStream contents) throws IOException {
+   public FileDescriptorSource addProtoFile(String name, InputStream contents) throws IOException {
       if (name == null) {
          throw new IllegalArgumentException("name cannot be null");
       }
@@ -65,9 +81,10 @@ public final class FileDescriptorSource {
       // discard the leading slash
       String path = name.startsWith("/") ? name.substring(1) : name;
       descriptors.put(path, toCharArray(contents));
+      return this;
    }
 
-   public void addProtoFile(String name, Reader contents) throws IOException {
+   public FileDescriptorSource addProtoFile(String name, Reader contents) throws IOException {
       if (name == null) {
          throw new IllegalArgumentException("name cannot be null");
       }
@@ -77,9 +94,10 @@ public final class FileDescriptorSource {
       // discard the leading slash
       String path = name.startsWith("/") ? name.substring(1) : name;
       descriptors.put(path, toCharArray(contents));
+      return this;
    }
 
-   public void addProtoFile(String name, File protofile) throws IOException {
+   public FileDescriptorSource addProtoFile(String name, File protofile) throws IOException {
       if (name == null) {
          throw new IllegalArgumentException("name cannot be null");
       }
@@ -89,22 +107,23 @@ public final class FileDescriptorSource {
       // discard the leading slash
       String path = name.startsWith("/") ? name.substring(1) : name;
       descriptors.put(path, toCharArray(protofile));
+      return this;
    }
 
    public static FileDescriptorSource fromResources(String... classPathResources) throws IOException {
-      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFiles(classPathResources);
-      return fileDescriptorSource;
+      return new FileDescriptorSource().addProtoFiles(classPathResources);
    }
 
    public static FileDescriptorSource fromString(String name, String protoSource) {
-      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFile(name, protoSource);
-      return fileDescriptorSource;
+      return new FileDescriptorSource().addProtoFile(name, protoSource);
    }
 
    public Map<String, char[]> getFileDescriptors() {
       return unmodifiableMap(descriptors);
+   }
+
+   public ProgressCallback getProgressCallback() {
+      return progressCallback;
    }
 
    private char[] toCharArray(File file) throws IOException {

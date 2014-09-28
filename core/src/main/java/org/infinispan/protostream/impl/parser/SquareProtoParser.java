@@ -2,10 +2,11 @@ package org.infinispan.protostream.impl.parser;
 
 import com.squareup.protoparser.ProtoFile;
 import com.squareup.protoparser.ProtoSchemaParser;
-import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.impl.parser.mappers.ProtofileMapper;
 
 import java.io.CharArrayReader;
@@ -23,33 +24,39 @@ import java.util.Map;
  */
 public final class SquareProtoParser implements DescriptorParser {
 
+   private static final ProtofileMapper PROTOFILE_MAPPER = new ProtofileMapper();
+
    @Override
-   public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws IOException, DescriptorParserException {
-      Map<String, ProtoFile> protoFileMap = parseInternal(fileDescriptorSource.getFileDescriptors());
-      Map<String, FileDescriptor> fileDescriptorMap = new HashMap<>(protoFileMap.size());
-      Map<String, FileDescriptor> types = new HashMap<>();
-      for (String fileName : protoFileMap.keySet()) {
-         ProtoFile protoFile = protoFileMap.get(fileName);
-         FileDescriptor mapped = new ProtofileMapper(protoFileMap).map(protoFile);
-         fileDescriptorMap.put(fileName, mapped);
-         for (String typeName : mapped.getTypes().keySet()) {
-            FileDescriptor fd = types.get(typeName);
-            if (fd == null) {
-               types.put(typeName, mapped);
-            } else {
-               throw new DescriptorParserException("Duplicate definition of " + typeName + " in " + mapped.getName() + " and " + fd.getName());
-            }
-         }
+   public Map<String, FileDescriptor> parseAndResolve(FileDescriptorSource fileDescriptorSource) throws DescriptorParserException {
+      // parse the input
+      Map<String, FileDescriptor> fileDescriptorMap = parse(fileDescriptorSource);
+
+      // resolve imports and types
+      Map<String, GenericDescriptor> types = new HashMap<>();
+      for (FileDescriptor fileDescriptor : fileDescriptorMap.values()) {
+         fileDescriptor.resolveDependencies(null, fileDescriptorMap, types);
+         types.putAll(fileDescriptor.getTypes());
       }
       return fileDescriptorMap;
    }
 
-   private Map<String, ProtoFile> parseInternal(Map<String, char[]> input) throws IOException, DescriptorParserException {
-      Map<String, ProtoFile> fileMap = new LinkedHashMap<>();
+   @Override
+   public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws DescriptorParserException {
+      Map<String, char[]> input = fileDescriptorSource.getFileDescriptors();
+      Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<>(input.size());
       for (Map.Entry<String, char[]> entry : input.entrySet()) {
-         ProtoFile protoFile = ProtoSchemaParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));
-         fileMap.put(protoFile.getFileName(), protoFile);
+         try {
+            ProtoFile protoFile = ProtoSchemaParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));
+            FileDescriptor fileDescriptor = PROTOFILE_MAPPER.map(protoFile);
+            fileDescriptorMap.put(entry.getKey(), fileDescriptor);
+         } catch (IOException e) {
+            throw new DescriptorParserException("Internal parsing error : " + e.getMessage());
+         } catch (DescriptorParserException e) {
+            throw e;
+         } catch (RuntimeException e) {
+            throw new DescriptorParserException(e);
+         }
       }
-      return fileMap;
+      return fileDescriptorMap;
    }
 }

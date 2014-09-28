@@ -3,8 +3,10 @@ package org.infinispan.protostream;
 
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
+import org.infinispan.protostream.descriptors.FileDescriptor;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * A repository for protobuf definitions and marshallers. All marshalling operations happen in the context of a  {@code
@@ -20,6 +22,18 @@ public interface SerializationContext { //todo [anistor] split this into separat
    void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException;
 
    void registerProtoFiles(String... classpathResource) throws IOException, DescriptorParserException;
+
+   /**
+    * Unregisters a file. Types from dependant files are removed too.
+    */
+   void unregisterProtoFile(String name);
+
+   /**
+    * Obtain the registered file descriptors.
+    *
+    * @return a copy of the internal map of descriptors
+    */
+   Map<String, FileDescriptor> getFileDescriptors();
 
    /**
     * Register a type marshaller. The marshaller implementation must be stateless and thread-safe.

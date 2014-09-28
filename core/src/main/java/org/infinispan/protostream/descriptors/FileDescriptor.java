@@ -1,11 +1,17 @@
 package org.infinispan.protostream.descriptors;
 
 import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.impl.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static java.util.Collections.unmodifiableList;
 
@@ -18,16 +24,26 @@ import static java.util.Collections.unmodifiableList;
  */
 public final class FileDescriptor {
 
+   private static final Log log = Log.LogFactory.getLog(FileDescriptor.class);
+
    private final String name;
    private final String packageName;
-   private final List<FileDescriptor> dependencies;
-   private final List<FileDescriptor> publicDependencies;
+   private final List<String> dependencies;
+   private final List<String> publicDependencies;
    private final List<Option> options;
    private final List<Descriptor> messageTypes;
    private final List<FieldDescriptor> extensions;
    private final List<EnumDescriptor> enumTypes;
    private final List<ExtendDescriptor> extendTypes;
    private final Map<String, ExtendDescriptor> extendDescriptors = new HashMap<>();
+
+   private final Map<String, FileDescriptor> dependants = new HashMap<>();
+
+   private enum Status {
+      UNRESOLVED, RESOLVED, ERROR
+   }
+
+   private Status status = Status.UNRESOLVED;
 
    /**
     * All types defined in this file or visible from imported files.
@@ -47,64 +63,180 @@ public final class FileDescriptor {
    private FileDescriptor(Builder builder) {
       this.name = builder.name;
       this.packageName = builder.packageName;
-      this.dependencies = builder.dependencies;
-      this.publicDependencies = builder.publicDependencies;
+      this.dependencies = unmodifiableList(builder.dependencies);
+      this.publicDependencies = unmodifiableList(builder.publicDependencies);
       this.options = unmodifiableList(builder.options);
       this.enumTypes = unmodifiableList(builder.enumTypes);
       this.messageTypes = unmodifiableList(builder.messageTypes);
       this.extensions = builder.extensions;
       this.extendTypes = unmodifiableList(builder.extendDescriptors);
+   }
 
-      for (FileDescriptor dep : publicDependencies) {
-         typeRegistry.putAll(dep.exportedTypes);
-         exportedTypes.putAll(dep.exportedTypes);
-      }
-      for (FileDescriptor dep : dependencies) {
-         typeRegistry.putAll(dep.exportedTypes);
-      }
+   public Map<String, FileDescriptor> getDependants() {
+      return dependants;
+   }
 
-      for (Descriptor desc : messageTypes) {
-         collectDescriptors(desc);
-      }
-      for (EnumDescriptor enumDesc : enumTypes) {
-         collectEnumDescriptors(enumDesc);
-      }
-      for (ExtendDescriptor extendDescriptor : extendTypes) {
-         collectExtensions(extendDescriptor);
-      }
+   public boolean isResolved() {
+      return status == Status.RESOLVED;
+   }
 
-      for (Descriptor descriptor : messageTypes) {
-         wireDescriptor(descriptor);
-      }
+   public void markUnresolved() {
+      status = Status.UNRESOLVED;
+   }
 
-      for (ExtendDescriptor extendDescriptor : extendTypes) {
-         GenericDescriptor res = searchType(extendDescriptor.getName(), null);
-         if (res == null) {
-            throw new DescriptorParserException("Extension error: type " + extendDescriptor.getName() + " not found");
+   public void clearErrors() {
+      if (status == Status.ERROR) {
+         status = Status.UNRESOLVED;
+         typeRegistry.clear();
+         exportedTypes.clear();
+         types.clear();
+         extendDescriptors.clear();
+
+         for (FileDescriptor fd : dependants.values()) {
+            fd.clearErrors();
          }
-         extendDescriptor.setExtendedMessage((Descriptor) res);  //todo [anistor] is it possible to extend an enum?
+         dependants.clear();
       }
    }
 
+   public boolean resolveDependencies(FileDescriptorSource.ProgressCallback progressCallback,
+                                      Map<String, FileDescriptor> fileDescriptorMap,
+                                      Map<String, GenericDescriptor> allTypes) throws DescriptorParserException {
+      if (status == Status.UNRESOLVED) {
+         resolveDependencies(progressCallback, fileDescriptorMap, allTypes, new HashSet<String>());
+      }
+      return status == Status.RESOLVED;
+   }
+
+   private void resolveDependencies(FileDescriptorSource.ProgressCallback progressCallback,
+                                    Map<String, FileDescriptor> fileDescriptorMap,
+                                    Map<String, GenericDescriptor> allTypes,
+                                    Set<String> processedFiles) throws DescriptorParserException {
+      if (status != Status.UNRESOLVED) {
+         return;
+      }
+
+      try {
+         List<FileDescriptor> pubDeps = resolveImports(progressCallback, fileDescriptorMap, allTypes, processedFiles, publicDependencies);
+         if (pubDeps == null) {
+            return;
+         }
+         List<FileDescriptor> deps = resolveImports(progressCallback, fileDescriptorMap, allTypes, processedFiles, dependencies);
+         if (deps == null) {
+            return;
+         }
+
+         for (FileDescriptor dep : pubDeps) {
+            typeRegistry.putAll(dep.exportedTypes);
+            exportedTypes.putAll(dep.exportedTypes);
+         }
+         for (FileDescriptor dep : deps) {
+            typeRegistry.putAll(dep.exportedTypes);
+         }
+
+         for (Descriptor desc : messageTypes) {
+            collectDescriptors(desc);
+         }
+         for (EnumDescriptor enumDesc : enumTypes) {
+            collectEnumDescriptors(enumDesc);
+         }
+         for (ExtendDescriptor extendDescriptor : extendTypes) {
+            collectExtensions(extendDescriptor);
+         }
+
+         for (Descriptor descriptor : messageTypes) {
+            resolveTypes(descriptor);
+         }
+
+         for (ExtendDescriptor extendDescriptor : extendTypes) {
+            GenericDescriptor res = searchType(extendDescriptor.getName(), null);
+            if (res == null) {
+               throw new DescriptorParserException("Extension error: type " + extendDescriptor.getName() + " not found");
+            }
+            extendDescriptor.setExtendedMessage((Descriptor) res);  //todo [anistor] is it possible to extend an enum?
+         }
+
+         // check duplicate type definitions
+         for (String typeName : types.keySet()) {
+            GenericDescriptor existing = allTypes.get(typeName);
+            if (existing != null) {
+               List<String> locations = Arrays.asList(name, existing.getFileDescriptor().getName());
+               Collections.sort(locations);
+               throw new DescriptorParserException("Duplicate definition of " + typeName + " in " + locations.get(0) + " and " + locations.get(1));
+            }
+         }
+
+         for (FileDescriptor fd : pubDeps) {
+            fd.dependants.put(name, this);
+         }
+         for (FileDescriptor fd : deps) {
+            fd.dependants.put(name, this);
+         }
+      } catch (DescriptorParserException dpe) {
+         status = Status.ERROR;
+         if (progressCallback != null) {
+            log.debugf("File has errors : %s", name);
+            progressCallback.handleError(name, dpe);
+            return;
+         } else {
+            throw dpe;
+         }
+      }
+
+      status = Status.RESOLVED;
+      if (progressCallback != null) {
+         log.debugf("File resolved successfully : %s", name);
+         progressCallback.handleSuccess(name);
+      }
+   }
+
+   private List<FileDescriptor> resolveImports(FileDescriptorSource.ProgressCallback progressCallback,
+                                               Map<String, FileDescriptor> fileDescriptorMap,
+                                               Map<String, GenericDescriptor> allTypes,
+                                               Set<String> processedFiles,
+                                               List<String> dependencies) throws DescriptorParserException {
+      List<FileDescriptor> fileDescriptors = new ArrayList<>(dependencies.size());
+      Set<String> dependencySet = new HashSet<>(dependencies);
+      for (String dependency : dependencySet) {
+         FileDescriptor fd = fileDescriptorMap.get(dependency);
+         if (fd == null) {
+            throw new DescriptorParserException("Import '" + dependency + "' not found");
+         }
+         if (!processedFiles.add(dependency)) {
+            throw new DescriptorParserException("Possible cyclic import detected at " + name + ", import " + dependency);
+         }
+         fd.resolveDependencies(progressCallback, fileDescriptorMap, allTypes, processedFiles);
+         if (fd.status == Status.ERROR) {
+            status = Status.ERROR;
+            return null;
+         }
+         fileDescriptors.add(fd);
+      }
+      return fileDescriptors;
+   }
+
    private void collectDescriptors(Descriptor descriptor) {
+      descriptor.setFileDescriptor(this);
       checkValidDefinition(descriptor);
 
-      descriptor.setFileDescriptor(this);
       typeRegistry.put(descriptor.getFullName(), descriptor);
       types.put(descriptor.getFullName(), descriptor);
       exportedTypes.put(descriptor.getFullName(), descriptor);
+
       for (EnumDescriptor enumDescriptor : descriptor.getEnumTypes()) {
+         enumDescriptor.setContainingType(descriptor);
          collectEnumDescriptors(enumDescriptor);
       }
+
       for (Descriptor nested : descriptor.getNestedTypes()) {
          collectDescriptors(nested);
       }
    }
 
    private void collectEnumDescriptors(EnumDescriptor enumDescriptor) {
+      enumDescriptor.setFileDescriptor(this);
       checkValidDefinition(enumDescriptor);
 
-      enumDescriptor.setFileDescriptor(this);
       typeRegistry.put(enumDescriptor.getFullName(), enumDescriptor);
       types.put(enumDescriptor.getFullName(), enumDescriptor);
       exportedTypes.put(enumDescriptor.getFullName(), enumDescriptor);
@@ -112,6 +244,7 @@ public final class FileDescriptor {
 
    private void checkValidDefinition(GenericDescriptor descriptor) {
       if (descriptor.getName().indexOf('.') != -1) {
+         //TODO This validation should be reported earlier, during parsing, to avoid needless resolving of an already broken file.
          throw new DescriptorParserException("Definition names should not be qualified : " + descriptor.getName());
       }
       GenericDescriptor existing = types.get(descriptor.getFullName());
@@ -129,17 +262,13 @@ public final class FileDescriptor {
       extendDescriptors.put(extendDescriptor.getFullName(), extendDescriptor);
    }
 
-   private void wireDescriptor(Descriptor descriptor) {
+   private void resolveTypes(Descriptor descriptor) {
       for (FieldDescriptor fieldDescriptor : descriptor.getFields()) {
-         fieldDescriptor.setContainingMessage(descriptor);
-         fieldDescriptor.setFileDescriptor(this);
          if (fieldDescriptor.getType() == null) {
             GenericDescriptor res = searchType(fieldDescriptor.getTypeName(), descriptor);
             if (res instanceof EnumDescriptor) {
-               fieldDescriptor.setType(Type.ENUM);
-               fieldDescriptor.setEnumDescriptor((EnumDescriptor) res);
+               fieldDescriptor.setEnumType((EnumDescriptor) res);
             } else if (res instanceof Descriptor) {
-               fieldDescriptor.setType(Type.MESSAGE);
                fieldDescriptor.setMessageType((Descriptor) res);
             } else {
                throw new DescriptorParserException("Field type " + fieldDescriptor.getTypeName() + " not found");
@@ -148,7 +277,7 @@ public final class FileDescriptor {
       }
 
       for (Descriptor nested : descriptor.getNestedTypes()) {
-         wireDescriptor(nested);
+         resolveTypes(nested);
       }
    }
 
@@ -202,6 +331,9 @@ public final class FileDescriptor {
       return enumTypes;
    }
 
+   /**
+    * Top level message types defined in this file.
+    */
    public List<Descriptor> getMessageTypes() {
       return messageTypes;
    }
@@ -210,6 +342,9 @@ public final class FileDescriptor {
       return extendTypes;
    }
 
+   /**
+    * All types defined in this file (both message and enum).
+    */
    public Map<String, GenericDescriptor> getTypes() {
       return types;
    }
@@ -218,8 +353,8 @@ public final class FileDescriptor {
 
       private String name;
       private String packageName;
-      private List<FileDescriptor> dependencies = new ArrayList<>();
-      private List<FileDescriptor> publicDependencies = new ArrayList<>();
+      private List<String> dependencies = new ArrayList<>();
+      private List<String> publicDependencies = new ArrayList<>();
       private List<FieldDescriptor> extensions;
       private List<Option> options;
       private List<EnumDescriptor> enumTypes;
@@ -236,12 +371,12 @@ public final class FileDescriptor {
          return this;
       }
 
-      public Builder withDependencies(List<FileDescriptor> dependencies) {
+      public Builder withDependencies(List<String> dependencies) {
          this.dependencies = dependencies;
          return this;
       }
 
-      public Builder withPublicDependencies(List<FileDescriptor> publicDependencies) {
+      public Builder withPublicDependencies(List<String> publicDependencies) {
          this.publicDependencies = publicDependencies;
          return this;
       }

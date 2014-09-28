@@ -39,6 +39,12 @@ public final class Descriptor implements GenericDescriptor {
       }
       this.nestedTypes = unmodifiableList(builder.nestedTypes);
       this.enumTypes = unmodifiableList(builder.enumTypes);
+      for (Descriptor nested : nestedTypes) {
+         nested.setContainingType(this);
+      }
+      for (EnumDescriptor nested : enumTypes) {
+         nested.setContainingType(this);
+      }
    }
 
    @Override
@@ -82,9 +88,14 @@ public final class Descriptor implements GenericDescriptor {
 
    void setFileDescriptor(FileDescriptor fileDescriptor) {
       this.fileDescriptor = fileDescriptor;
+      for (FieldDescriptor fieldDescriptor : fields) {
+         fieldDescriptor.setFileDescriptor(fileDescriptor);
+      }
       for (Descriptor nested : nestedTypes) {
          nested.setFileDescriptor(fileDescriptor);
-         nested.setContainingType(this);
+      }
+      for (EnumDescriptor nested : enumTypes) {
+         nested.setFileDescriptor(fileDescriptor);
       }
    }
 
@@ -103,12 +114,19 @@ public final class Descriptor implements GenericDescriptor {
       return fullName.hashCode();
    }
 
+   @Override
    public Descriptor getContainingType() {
       return containingType;
    }
 
-   void setContainingType(Descriptor containingType) {
+   private void setContainingType(Descriptor containingType) {
       this.containingType = containingType;
+      for (Descriptor nested : nestedTypes) {
+         nested.setContainingType(this);
+      }
+      for (EnumDescriptor nested : enumTypes) {
+         nested.setContainingType(this);
+      }
    }
 
    public static class Builder {
