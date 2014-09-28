@@ -60,6 +60,12 @@
         </dependency>
 
         <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>sample-domain-definition</artifactId>
             <scope>test</scope>

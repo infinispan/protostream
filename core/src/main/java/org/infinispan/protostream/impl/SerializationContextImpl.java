@@ -1,42 +1,52 @@
 package org.infinispan.protostream.impl;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.Configuration;
+import org.infinispan.protostream.DescriptorParser;
+import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
-import org.infinispan.protostream.DescriptorParser;
-import org.infinispan.protostream.DescriptorParserException;
-import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author anistor@redhat.com
  */
 public final class SerializationContextImpl implements SerializationContext {
 
+   private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+
+   private final Lock readLock = readWriteLock.readLock();
+
+   private final Lock writeLock = readWriteLock.writeLock();
+
    private final Configuration configuration;
 
    private final DescriptorParser parser = new SquareProtoParser();
 
-   private Map<String, FileDescriptor> fileDescriptors = new ConcurrentHashMap<>();
+   private final Map<String, FileDescriptor> fileDescriptors = new HashMap<>();
 
-   private Map<String, Descriptor> messageDescriptors = new ConcurrentHashMap<>();
+   private final Map<String, Descriptor> messageDescriptors = new HashMap<>();
 
-   private Map<String, EnumDescriptor> enumDescriptors = new ConcurrentHashMap<>();
+   private final Map<String, EnumDescriptor> enumDescriptors = new HashMap<>();
 
-   private Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<>();
+   private final Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<>();
 
-   private Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<>();
+   private final Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<>();
 
    public SerializationContextImpl(Configuration configuration) {
       this.configuration = configuration;
@@ -50,24 +60,26 @@ public final class SerializationContextImpl implements SerializationContext {
    @Override
    public void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException {
       Map<String, FileDescriptor> parse = parser.parse(source);
-      for (FileDescriptor d : parse.values()) {
-         registerProtofile(d);
+      writeLock.lock();
+      try {
+         for (FileDescriptor fileDescriptor : parse.values()) {
+            fileDescriptors.put(fileDescriptor.getName(), fileDescriptor);
+            registerMessageDescriptors(fileDescriptor.getMessageTypes());
+            registerEnumDescriptors(fileDescriptor.getEnumTypes());
+         }
+      } finally {
+         writeLock.unlock();
       }
    }
 
    @Override
-   public void registerProtofiles(String... classpathResource) throws IOException, DescriptorParserException {
+   public void registerProtoFiles(String... classpathResource) throws IOException, DescriptorParserException {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFiles(classpathResource);
-      this.registerProtoFiles(fileDescriptorSource);
+      registerProtoFiles(fileDescriptorSource);
    }
 
-   public void registerProtofile(FileDescriptor fileDescriptor) {
-      fileDescriptors.put(fileDescriptor.getName(), fileDescriptor);
-      registerMessageDescriptors(fileDescriptor.getMessageTypes());
-      registerEnumDescriptors(fileDescriptor.getEnumTypes());
-   }
-
+   @GuardedBy("writeLock")
    private void registerMessageDescriptors(List<Descriptor> messageTypes) {
       for (Descriptor d : messageTypes) {
          messageDescriptors.put(d.getFullName(), d);
@@ -76,6 +88,7 @@ public final class SerializationContextImpl implements SerializationContext {
       }
    }
 
+   @GuardedBy("writeLock")
    private void registerEnumDescriptors(List<EnumDescriptor> enumTypes) {
       for (EnumDescriptor e : enumTypes) {
          enumDescriptors.put(e.getFullName(), e);
@@ -84,20 +97,30 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public Descriptor getMessageDescriptor(String fullName) {
-      Descriptor descriptor = messageDescriptors.get(fullName);
-      if (descriptor == null) {
-         throw new IllegalArgumentException("Message descriptor not found : " + fullName);
+      readLock.lock();
+      try {
+         Descriptor descriptor = messageDescriptors.get(fullName);
+         if (descriptor == null) {
+            throw new IllegalArgumentException("Message descriptor not found : " + fullName);
+         }
+         return descriptor;
+      } finally {
+         readLock.unlock();
       }
-      return descriptor;
    }
 
    @Override
    public EnumDescriptor getEnumDescriptor(String fullName) {
-      EnumDescriptor descriptor = enumDescriptors.get(fullName);
-      if (descriptor == null) {
-         throw new IllegalArgumentException("Enum descriptor not found : " + fullName);
+      readLock.lock();
+      try {
+         EnumDescriptor descriptor = enumDescriptors.get(fullName);
+         if (descriptor == null) {
+            throw new IllegalArgumentException("Enum descriptor not found : " + fullName);
+         }
+         return descriptor;
+      } finally {
+         readLock.unlock();
       }
-      return descriptor;
    }
 
    @Override
@@ -127,8 +150,13 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public boolean canMarshall(String descriptorFullName) {
-      return messageDescriptors.containsKey(descriptorFullName) || enumDescriptors.containsKey(descriptorFullName);
-      //TODO the correct implementation should be: return marshallersByName.containsKey(descriptorFullName);
+      readLock.lock();
+      try {
+         return messageDescriptors.containsKey(descriptorFullName) || enumDescriptors.containsKey(descriptorFullName);
+         //TODO the correct implementation should be: return marshallersByName.containsKey(descriptorFullName);
+      } finally {
+         readLock.unlock();
+      }
    }
 
    @Override

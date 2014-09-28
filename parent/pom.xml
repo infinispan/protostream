@@ -103,6 +103,7 @@
 
         <version.protobuf>2.6.0</version.protobuf>
         <version.junit>4.11</version.junit>
+        <version.jcipannotations>1.0</version.jcipannotations>
         <version.fest.assertions>2.0M10</version.fest.assertions>
         <version.protoparser>3.1.4</version.protoparser>
         <version.jboss.logging>3.1.2.GA</version.jboss.logging>
@@ -196,19 +197,26 @@
                 <scope>test</scope>
             </dependency>
 
-           <dependency>
+            <dependency>
+                <groupId>net.jcip</groupId>
+                <artifactId>jcip-annotations</artifactId>
+                <version>${version.jcipannotations}</version>
+                <optional>true</optional>
+            </dependency>
+
+            <dependency>
                 <groupId>org.easytesting</groupId>
                 <artifactId>fest-assert-core</artifactId>
                 <version>${version.fest.assertions}</version>
                 <scope>test</scope>
             </dependency>
 
-           <dependency>
-              <groupId>org.jboss.marshalling</groupId>
-              <artifactId>jboss-marshalling</artifactId>
-              <version>${version.jboss.marshalling}</version>
-              <scope>test</scope>
-           </dependency>
+            <dependency>
+                <groupId>org.jboss.marshalling</groupId>
+                <artifactId>jboss-marshalling</artifactId>
+                <version>${version.jboss.marshalling}</version>
+                <scope>test</scope>
+            </dependency>
 
            <dependency>
               <groupId>org.jboss.marshalling</groupId>

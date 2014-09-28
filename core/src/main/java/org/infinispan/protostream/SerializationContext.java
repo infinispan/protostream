@@ -19,7 +19,7 @@ public interface SerializationContext { //todo [anistor] split this into separat
 
    void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException;
 
-   void registerProtofiles(String... classpathResource) throws IOException, DescriptorParserException;
+   void registerProtoFiles(String... classpathResource) throws IOException, DescriptorParserException;
 
    /**
     * Register a type marshaller. The marshaller implementation must be stateless and thread-safe.
