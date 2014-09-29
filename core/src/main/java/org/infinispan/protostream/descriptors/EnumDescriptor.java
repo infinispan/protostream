@@ -20,6 +20,7 @@ public final class EnumDescriptor implements GenericDescriptor {
    private final List<EnumValueDescriptor> values;
    private final Map<Integer, EnumValueDescriptor> valueByNumber = new HashMap<>();
    private final Map<String, EnumValueDescriptor> valueByName = new HashMap<>();
+   private final String documentation;
    private FileDescriptor fileDescriptor;
    private Descriptor containingType;
 
@@ -33,6 +34,7 @@ public final class EnumDescriptor implements GenericDescriptor {
          valueByNumber.put(value.getNumber(), value);
          valueByName.put(value.getName(), value);
       }
+      this.documentation = builder.documentation;
    }
 
    @Override
@@ -82,11 +84,16 @@ public final class EnumDescriptor implements GenericDescriptor {
       }
    }
 
+   public String getDocumentation() {
+      return documentation;
+   }
+
    public static class Builder {
       private String name;
       private String fullName;
       private List<Option> options;
       private List<EnumValueDescriptor> values;
+      private String documentation;
 
       public Builder withName(String name) {
          this.name = name;
@@ -105,6 +112,11 @@ public final class EnumDescriptor implements GenericDescriptor {
 
       public Builder withValues(List<EnumValueDescriptor> values) {
          this.values = values;
+         return this;
+      }
+
+      public Builder withDocumentation(String documentation) {
+         this.documentation = documentation;
          return this;
       }
 

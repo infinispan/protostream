@@ -29,7 +29,7 @@ class FieldMapper implements Mapper<MessageType.Field, FieldDescriptor> {
               .withDefaultValue(defaultValue)
               .withRule(rule)
               .withOptions(OPTION_LIST_MAPPER.map(options))
+              .withDocumentation(am.getDocumentation())
               .build();
-
    }
 }

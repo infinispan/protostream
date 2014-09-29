@@ -13,12 +13,13 @@ import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST
 class EnumTypeMapper implements Mapper<EnumType, EnumDescriptor> {
 
    @Override
-   public EnumDescriptor map(EnumType am) {
+   public EnumDescriptor map(EnumType enumType) {
       return new EnumDescriptor.Builder()
-              .withName(am.getName())
-              .withFullName(am.getFullyQualifiedName())
-              .withValues(ENUM_VALUE_LIST_MAPPER.map(am.getValues()))
-              .withOptions(OPTION_LIST_MAPPER.map(am.getOptions()))
+              .withName(enumType.getName())
+              .withFullName(enumType.getFullyQualifiedName())
+              .withValues(ENUM_VALUE_LIST_MAPPER.map(enumType.getValues()))
+              .withOptions(OPTION_LIST_MAPPER.map(enumType.getOptions()))
+              .withDocumentation(enumType.getDocumentation())
               .build();
    }
 }

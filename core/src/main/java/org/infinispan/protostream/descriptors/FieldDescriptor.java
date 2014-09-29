@@ -24,6 +24,7 @@ public final class FieldDescriptor {
    private final String defaultValue;
    private final Map<String, Object> optionByName = new HashMap<>();
    private final boolean isExtension;
+   private final String documentation;
    private String fullName;
    private Type type;
    private FileDescriptor fileDescriptor;
@@ -42,6 +43,7 @@ public final class FieldDescriptor {
       this.typeName = builder.typeName;
       this.defaultValue = builder.defaultValue;
       this.isExtension = builder.isExtension;
+      this.documentation = builder.documentation;
    }
 
    public int getNumber() {
@@ -149,6 +151,10 @@ public final class FieldDescriptor {
       this.fileDescriptor = fileDescriptor;
    }
 
+   public String getDocumentation() {
+      return documentation;
+   }
+
    public static class Builder {
       private String typeName;
       private int number;
@@ -157,6 +163,7 @@ public final class FieldDescriptor {
       private List<Option> options;
       private String defaultValue;
       private boolean isExtension;
+      private String documentation;
 
       public Builder withNumber(int number) {
          this.number = number;
@@ -190,6 +197,11 @@ public final class FieldDescriptor {
 
       public Builder withIsExtension(boolean isExtension) {
          this.isExtension = isExtension;
+         return this;
+      }
+
+      public Builder withDocumentation(String documentation) {
+         this.documentation = documentation;
          return this;
       }
 

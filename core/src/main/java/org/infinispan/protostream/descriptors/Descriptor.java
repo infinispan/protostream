@@ -24,6 +24,7 @@ public final class Descriptor implements GenericDescriptor {
    private final List<EnumDescriptor> enumTypes;
    private final Map<Integer, FieldDescriptor> fieldsByNumber = new HashMap<>();
    private final Map<String, FieldDescriptor> fieldsByName = new HashMap<>();
+   private final String documentation;
    private FileDescriptor fileDescriptor;
    private Descriptor containingType;
 
@@ -45,6 +46,7 @@ public final class Descriptor implements GenericDescriptor {
       for (EnumDescriptor nested : enumTypes) {
          nested.setContainingType(this);
       }
+      this.documentation = builder.documentation;
    }
 
    @Override
@@ -129,12 +131,17 @@ public final class Descriptor implements GenericDescriptor {
       }
    }
 
+   public String getDocumentation() {
+      return documentation;
+   }
+
    public static class Builder {
       private String name, fullName;
       private List<Option> options;
       private List<FieldDescriptor> fields;
       private List<Descriptor> nestedTypes = new LinkedList<>();
       private List<EnumDescriptor> enumTypes;
+      private String documentation;
 
       public Builder withName(String name) {
          this.name = name;
@@ -163,6 +170,11 @@ public final class Descriptor implements GenericDescriptor {
 
       public Builder withEnumTypes(List<EnumDescriptor> enumTypes) {
          this.enumTypes = enumTypes;
+         return this;
+      }
+
+      public Builder withDocumentation(String documentation) {
+         this.documentation = documentation;
          return this;
       }
 
