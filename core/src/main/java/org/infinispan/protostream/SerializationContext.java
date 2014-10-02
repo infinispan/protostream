@@ -21,8 +21,6 @@ public interface SerializationContext { //todo [anistor] split this into separat
 
    void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException;
 
-   void registerProtoFiles(String... classpathResource) throws IOException, DescriptorParserException;
-
    /**
     * Unregisters a file. Types from dependant files are removed too.
     */

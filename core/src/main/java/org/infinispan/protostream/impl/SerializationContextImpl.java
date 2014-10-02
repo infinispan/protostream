@@ -49,6 +49,9 @@ public final class SerializationContextImpl implements SerializationContext {
    private final Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<>();
 
    public SerializationContextImpl(Configuration configuration) {
+      if (configuration == null) {
+         throw new IllegalArgumentException("configuration cannot be null");
+      }
       this.configuration = configuration;
    }
 
@@ -95,13 +98,6 @@ public final class SerializationContextImpl implements SerializationContext {
       } finally {
          writeLock.unlock();
       }
-   }
-
-   @Override
-   public void registerProtoFiles(String... classpathResource) throws IOException, DescriptorParserException {
-      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFiles(classpathResource);
-      registerProtoFiles(fileDescriptorSource);
    }
 
    @Override
