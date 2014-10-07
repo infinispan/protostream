@@ -2,7 +2,7 @@ package org.infinispan.protostream.impl;
 
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.Configuration;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.EnumMarshaller;
@@ -38,7 +38,7 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final Configuration configuration;
 
-   private final DescriptorParser parser = new SquareProtoParser();
+   private final DescriptorParser parser;
 
    private final Map<String, FileDescriptor> fileDescriptors = new HashMap<>();
 
@@ -53,6 +53,7 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("configuration cannot be null");
       }
       this.configuration = configuration;
+      parser = new SquareProtoParser(configuration);
    }
 
    @Override

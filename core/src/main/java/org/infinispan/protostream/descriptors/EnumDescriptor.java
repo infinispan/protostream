@@ -1,5 +1,8 @@
 package org.infinispan.protostream.descriptors;
 
+import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,20 +16,17 @@ import static java.util.Collections.unmodifiableList;
  * @author anistor@redhat.com
  * @since 2.0
  */
-public final class EnumDescriptor implements GenericDescriptor {
+public final class EnumDescriptor extends AnnotatedDescriptorImpl implements GenericDescriptor {
 
-   private final String name, fullName;
    private final List<Option> options;
    private final List<EnumValueDescriptor> values;
    private final Map<Integer, EnumValueDescriptor> valueByNumber = new HashMap<>();
    private final Map<String, EnumValueDescriptor> valueByName = new HashMap<>();
-   private final String documentation;
    private FileDescriptor fileDescriptor;
    private Descriptor containingType;
 
    private EnumDescriptor(Builder builder) {
-      this.name = builder.name;
-      this.fullName = builder.fullName;
+      super(builder.name, builder.fullName, builder.documentation);
       this.options = unmodifiableList(builder.options);
       this.values = unmodifiableList(builder.values);
       for (EnumValueDescriptor value : values) {
@@ -34,17 +34,11 @@ public final class EnumDescriptor implements GenericDescriptor {
          valueByNumber.put(value.getNumber(), value);
          valueByName.put(value.getName(), value);
       }
-      this.documentation = builder.documentation;
    }
 
    @Override
-   public String getName() {
-      return name;
-   }
-
-   @Override
-   public String getFullName() {
-      return fullName;
+   protected AnnotationConfig<EnumDescriptor> getAnnotationConfig(String annotationName) {
+      return fileDescriptor.configuration.enumAnnotations().get(annotationName);
    }
 
    @Override
@@ -82,10 +76,6 @@ public final class EnumDescriptor implements GenericDescriptor {
       for (EnumValueDescriptor valueDescriptor : values) {
          valueDescriptor.setFileDescriptor(fileDescriptor);
       }
-   }
-
-   public String getDocumentation() {
-      return documentation;
    }
 
    public static class Builder {

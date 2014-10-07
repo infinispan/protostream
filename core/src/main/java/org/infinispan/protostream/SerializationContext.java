@@ -1,6 +1,7 @@
 package org.infinispan.protostream;
 
 
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;

@@ -11,7 +11,7 @@ import java.util.List;
  * @author gustavonalle
  * @since 2.0
  */
-class ListMapper<S, T> implements Mapper<List<S>, List<T>> {
+final class ListMapper<S, T> implements Mapper<List<S>, List<T>> {
 
    private final Mapper<S, T> mapper;
 

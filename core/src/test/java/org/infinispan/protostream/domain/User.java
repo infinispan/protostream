@@ -27,6 +27,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
    private List<Address> addresses;
    private Integer age;
    private Gender gender;
+   private String notes;
 
    public int getId() {
       return id;
@@ -84,6 +85,14 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.gender = gender;
    }
 
+   public String getNotes() {
+      return notes;
+   }
+
+   public void setNotes(String notes) {
+      this.notes = notes;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -94,6 +103,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
             ", addresses=" + addresses +
             ", age=" + age +
             ", gender=" + gender +
+            ", notes=" + notes +
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }
@@ -126,6 +136,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
          out.writeBoolean(false);
       }
       out.writeInt(gender.ordinal());
+      out.writeUTF(notes);
    }
 
    @Override
@@ -157,5 +168,6 @@ public class User extends BaseMessage implements Externalizable {   // implement
          age = null;
       }
       gender = User.Gender.values()[in.readInt()];
+      notes = in.readUTF();
    }
 }

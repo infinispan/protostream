@@ -13,7 +13,7 @@ import static org.infinispan.protostream.impl.parser.mappers.Mappers.*;
  * @author gustavonalle
  * @since 2.0
  */
-class MessageTypeMapper implements Mapper<MessageType, Descriptor> {
+final class MessageTypeMapper implements Mapper<MessageType, Descriptor> {
 
    @Override
    public Descriptor map(MessageType type) {

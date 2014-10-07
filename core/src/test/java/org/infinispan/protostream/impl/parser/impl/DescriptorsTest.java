@@ -1,10 +1,15 @@
 package org.infinispan.protostream.impl.parser.impl;
 
+import org.infinispan.protostream.AnnotationMetadataCreator;
+import org.infinispan.protostream.AnnotationParserException;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.ExtendDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Rule;
 import org.infinispan.protostream.descriptors.Type;
@@ -21,9 +26,12 @@ import java.util.Map;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class DescriptorsTest {
+
+   private final Configuration config = new Configuration.Builder().build();
 
    @org.junit.Rule
    public ExpectedException exception = ExpectedException.none();
@@ -418,8 +426,131 @@ public class DescriptorsTest {
       assertTrue(descriptors.get("file2.proto").getTypes().containsKey("org.infinispan.B"));
    }
 
+   @Test
+   public void testDocComment() throws Exception {
+      String file1 = "package test1;\n" +
+            "/**  \n" +
+            " *    some doc text \n" +
+            "  *    some more doc text \n" +
+            "      **/\n\n" +
+            "message X {\n" +
+            " /**\n" +
+            "  * field doc text  \n\n" +
+            "  */\n" +
+            "  optional int32 field1 = 1;\n" +
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource);
+
+      assertEquals(1, descriptors.size());
+      assertTrue(descriptors.containsKey("file1.proto"));
+      Map<String, GenericDescriptor> types = descriptors.get("file1.proto").getTypes();
+      Descriptor typeX = (Descriptor) types.get("test1.X");
+      assertNotNull(typeX);
+      assertEquals(1, typeX.getFields().size());
+      FieldDescriptor field1 = typeX.getFields().get(0);
+      assertEquals("some doc text \n   some more doc text", typeX.getDocumentation());
+      assertEquals("field doc text", field1.getDocumentation());
+   }
+
+   @Test
+   public void testDocAnnotations() throws Exception {
+      String file1 = "package test1;\n" +
+            "/**  \n" +
+            " *  @Foo(fooValue) \n" +
+            "  *    some more doc text \n" +
+            "      **/\n\n" +
+            "message X {\n" +
+            " /**\n" +
+            "  * @Bar(barValue)  \n\n" +
+            "  */\n" +
+            "  optional int32 field1 = 1;\n" +
+            "}\n";
+
+      Configuration config = new Configuration.Builder()
+            .messageAnnotation("Foo")
+               .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
+               .identifierType()
+            .annotationMetadataCreator(new AnnotationMetadataCreator<Object, Descriptor>() {
+               @Override
+               public Object create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
+                  AnnotationElement.Value value = annotation.getDefaultAttributeValue();
+                  return value == null ? null : value.getValue();
+               }
+            })
+            .fieldAnnotation("Bar")
+               .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
+               .identifierType()
+            .annotationMetadataCreator(new AnnotationMetadataCreator<Object, FieldDescriptor>() {
+               @Override
+               public Object create(FieldDescriptor fieldDescriptor, AnnotationElement.Annotation annotation) {
+                  AnnotationElement.Value value = annotation.getDefaultAttributeValue();
+                  return value == null ? null : value.getValue();
+               }
+            })
+            .build();
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("file1.proto", file1);
+      Map<String, FileDescriptor> descriptors = new SquareProtoParser(config).parseAndResolve(fileDescriptorSource);
+
+      assertEquals(1, descriptors.size());
+      assertTrue(descriptors.containsKey("file1.proto"));
+      Map<String, GenericDescriptor> types = descriptors.get("file1.proto").getTypes();
+      Descriptor typeX = (Descriptor) types.get("test1.X");
+      assertNotNull(typeX);
+      assertEquals(1, typeX.getFields().size());
+      FieldDescriptor field1 = typeX.getFields().get(0);
+      assertEquals("@Foo(fooValue) \n   some more doc text", typeX.getDocumentation());
+      Map<String, AnnotationElement.Annotation> typeAnnotations = typeX.getAnnotations();
+      assertEquals("fooValue", typeAnnotations.get("Foo").getDefaultAttributeValue().getValue());
+      assertEquals("fooValue", typeX.getParsedAnnotation("Foo"));
+      assertEquals("@Bar(barValue)", field1.getDocumentation());
+      Map<String, AnnotationElement.Annotation> fieldAnnotations = field1.getAnnotations();
+      assertEquals("barValue", fieldAnnotations.get("Bar").getDefaultAttributeValue().getValue());
+      assertEquals("barValue", field1.getParsedAnnotation("Bar"));
+   }
+
+   @Test
+   public void testAnnotationParser() throws Exception {
+      Configuration config = new Configuration.Builder()
+            .messageAnnotation("Indexed")
+            .annotationMetadataCreator(new AnnotationMetadataCreator<Object, Descriptor>() {
+               @Override
+               public Object create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
+                  AnnotationElement.Value value = annotation.getDefaultAttributeValue();
+                  if (value == null) {
+                     return Boolean.TRUE;
+                  }
+                  if (Boolean.TRUE.equals(value.getValue())) {
+                     return Boolean.TRUE;
+                  } else if (Boolean.FALSE.equals(value.getValue())) {
+                     return Boolean.FALSE;
+                  }
+                  throw new AnnotationParserException("Invalid value " + value.getValue());
+               }
+            })
+            .build();
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromResources("/sample_bank_account/bank.proto");
+      Map<String, FileDescriptor> descriptors = new SquareProtoParser(config).parseAndResolve(fileDescriptorSource);
+
+      FileDescriptor fileDescriptor = descriptors.get("sample_bank_account/bank.proto");
+      List<Descriptor> messageTypes = fileDescriptor.getMessageTypes();
+
+      Descriptor userMessageType = messageTypes.get(0);
+      assertEquals("sample_bank_account.User", userMessageType.getFullName());
+      assertEquals(Boolean.TRUE, userMessageType.getParsedAnnotation("Indexed"));
+
+      Descriptor accountMessageType = messageTypes.get(1);
+      assertEquals("sample_bank_account.Account", accountMessageType.getFullName());
+      assertEquals(Boolean.TRUE, accountMessageType.getParsedAnnotation("Indexed"));
+   }
+
    private Map<String, FileDescriptor> parseAndResolve(FileDescriptorSource fileDescriptorSource) {
-      return new SquareProtoParser().parseAndResolve(fileDescriptorSource);
+      return new SquareProtoParser(config).parseAndResolve(fileDescriptorSource);
    }
 
    private void assertResult(Descriptor descriptor) {

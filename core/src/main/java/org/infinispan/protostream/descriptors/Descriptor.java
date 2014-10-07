@@ -1,5 +1,8 @@
 package org.infinispan.protostream.descriptors;
 
+import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,23 +17,19 @@ import static java.util.Collections.unmodifiableList;
  * @author anistor@redhat.com
  * @since 2.0
  */
-public final class Descriptor implements GenericDescriptor {
+public final class Descriptor extends AnnotatedDescriptorImpl implements GenericDescriptor {
 
-   private final String name;
-   private final String fullName;
    private final List<Option> options;
    private final List<FieldDescriptor> fields;
    private final List<Descriptor> nestedTypes;
    private final List<EnumDescriptor> enumTypes;
    private final Map<Integer, FieldDescriptor> fieldsByNumber = new HashMap<>();
    private final Map<String, FieldDescriptor> fieldsByName = new HashMap<>();
-   private final String documentation;
    private FileDescriptor fileDescriptor;
    private Descriptor containingType;
 
    private Descriptor(Builder builder) {
-      this.name = builder.name;
-      this.fullName = builder.fullName;
+      super(builder.name, builder.fullName, builder.documentation);
       this.options = unmodifiableList(builder.options);
       this.fields = unmodifiableList(builder.fields);
       for (FieldDescriptor fieldDescriptor : fields) {
@@ -46,17 +45,6 @@ public final class Descriptor implements GenericDescriptor {
       for (EnumDescriptor nested : enumTypes) {
          nested.setContainingType(this);
       }
-      this.documentation = builder.documentation;
-   }
-
-   @Override
-   public String getName() {
-      return name;
-   }
-
-   @Override
-   public String getFullName() {
-      return fullName;
    }
 
    @Override
@@ -131,8 +119,9 @@ public final class Descriptor implements GenericDescriptor {
       }
    }
 
-   public String getDocumentation() {
-      return documentation;
+   @Override
+   protected AnnotationConfig<Descriptor> getAnnotationConfig(String annotationName) {
+      return fileDescriptor.configuration.messageAnnotations().get(annotationName);
    }
 
    public static class Builder {

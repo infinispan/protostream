@@ -10,7 +10,7 @@ import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST
  * @author gustavonalle
  * @since 2.0
  */
-class EnumTypeMapper implements Mapper<EnumType, EnumDescriptor> {
+final class EnumTypeMapper implements Mapper<EnumType, EnumDescriptor> {
 
    @Override
    public EnumDescriptor map(EnumType enumType) {

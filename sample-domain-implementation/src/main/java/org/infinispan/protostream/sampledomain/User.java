@@ -21,6 +21,7 @@ public class User extends BaseMessage {
    private List<Address> addresses;
    private Integer age;
    private Gender gender;
+   private String notes;
 
    public int getId() {
       return id;
@@ -78,6 +79,14 @@ public class User extends BaseMessage {
       this.gender = gender;
    }
 
+   public String getNotes() {
+      return notes;
+   }
+
+   public void setNotes(String notes) {
+      this.notes = notes;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -88,6 +97,7 @@ public class User extends BaseMessage {
             ", addresses=" + addresses +
             ", age=" + age +
             ", gender=" + gender +
+            ", notes=" + notes +
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }

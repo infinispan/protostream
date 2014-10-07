@@ -1,6 +1,6 @@
 package org.infinispan.protostream.impl;
 
-import org.infinispan.protostream.ConfigurationBuilder;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
 public class SerializationContextImplTest {
 
    private SerializationContextImpl createContext() {
-      return (SerializationContextImpl) ProtobufUtil.newSerializationContext(new ConfigurationBuilder().build());
+      return (SerializationContextImpl) ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
    }
 
    @Test

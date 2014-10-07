@@ -1,5 +1,6 @@
 package org.infinispan.protostream.descriptors;
 
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.impl.Log;
@@ -26,6 +27,8 @@ public final class FileDescriptor {
 
    private static final Log log = Log.LogFactory.getLog(FileDescriptor.class);
 
+   protected Configuration configuration;
+
    private final String name;
    private final String packageName;
    private final List<String> dependencies;
@@ -38,6 +41,10 @@ public final class FileDescriptor {
    private final Map<String, ExtendDescriptor> extendDescriptors = new HashMap<>();
 
    private final Map<String, FileDescriptor> dependants = new HashMap<>();
+
+   public void setConfiguration(Configuration configuration) {
+      this.configuration = configuration;
+   }
 
    private enum Status {
       UNRESOLVED, RESOLVED, ERROR

@@ -1,27 +1,31 @@
 package sample_bank_account;
 
-import "infinispan/indexing.proto";
-
 option java_package = "com.example.generated_by_protoc";
 option java_outer_classname = "BankProtos";
 
+/**
+ * @Indexed()
+ */
 message User {
-   option (infinispan.Entity) = {
-      a : [111, 222, 333],
-      indexed : true
-   };
 
+   /**
+    * @IndexedField()
+    */
    required int32 id = 1;
 
+   /**
+    * @IndexedField()
+    */
    repeated int32 accountIds = 2;
 
-   required string name = 3 [
-      (infinispan.Field) = {
-         a : [111, 222, 333],
-         analyzed : true
-      }
-   ];
+   /**
+    * @IndexedField()
+    */
+   required string name = 3;
 
+   /**
+    * @IndexedField()
+    */
    required string surname = 4;
 
    message Address {
@@ -29,8 +33,14 @@ message User {
       required string postCode = 2;
    }
 
-   repeated Address addresses = 5;     //can a repeated field be marked required? it appears no
+   /**
+    * @IndexedField()
+    */
+   repeated Address addresses = 5;     //a repeated field cannot be marked required
 
+   /**
+    * @IndexedField()
+    */
    optional int32 age = 6;   // persisting age instead of birth date is not ideal but is ok for our sample code
 
    enum Gender {
@@ -38,43 +48,96 @@ message User {
       FEMALE = 1;
    }
 
+   /**
+    * @IndexedField()
+    */
    optional Gender gender = 7;
+
+   optional string notes = 8;
 }
 
+/**
+ * @Indexed()
+ */
 message Account {
+
+   /**
+    * @IndexedField()
+    */
    required int32 id = 1;
 
+   /**
+    * @IndexedField()
+    */
    optional string description = 2 [default = "Checking account"];
 
+   /**
+    * @IndexedField()
+    */
    required fixed64 creationDate = 3;
 
    message Limits {
        optional double maxDailyLimit = 1;
        optional double maxTransactionLimit = 2; 
    }
+
+   /**
+    * @IndexedField()
+    */
    optional Limits limits = 4;
 
+   /**
+    * @IndexedField()
+    */
    repeated bytes blurb = 5;
 }
 
+/**
+ * @Indexed()
+ */
 message Transaction {
+
+   /**
+    * @IndexedField()
+    */
    required int32 id = 1;
 
+   /**
+    * @IndexedField()
+    */
    optional string description = 2;
 
+   /**
+    * @IndexedField()
+    */
    required int32 accountId = 3;
 
+   /**
+    * @IndexedField()
+    */
    required fixed64 date = 4;  // there is no native Date type in protobuf so we have to store it as a long
 
+   /**
+    * @IndexedField()
+    */
    required double amount = 5; // how do I store a BigDecimal? maybe as a byte array ..
 
+   /**
+    * @IndexedField()
+    */
    required bool isDebit = 6;
 }
 
+/**
+ *
+ */
 message int_array {
    repeated int32 theArray = 1;
 }
 
+/**
+ *
+ */
 message user_list {
    repeated User theList = 1;
 }

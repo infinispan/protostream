@@ -13,7 +13,8 @@ import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST
  * @author gustavonalle
  * @since 2.0
  */
-class FieldMapper implements Mapper<MessageType.Field, FieldDescriptor> {
+final class FieldMapper implements Mapper<MessageType.Field, FieldDescriptor> {
+
    @Override
    public FieldDescriptor map(MessageType.Field am) {
       String defaultValue = am.getDefault();

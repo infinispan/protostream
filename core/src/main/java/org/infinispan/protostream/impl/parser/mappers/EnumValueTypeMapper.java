@@ -10,7 +10,8 @@ import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST
  * @author gustavonalle
  * @since 2.0
  */
-class EnumValueTypeMapper implements Mapper<EnumType.Value, EnumValueDescriptor> {
+final class EnumValueTypeMapper implements Mapper<EnumType.Value, EnumValueDescriptor> {
+
    @Override
    public EnumValueDescriptor map(EnumType.Value input) {
       return new EnumValueDescriptor.Builder()

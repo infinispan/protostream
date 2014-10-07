@@ -8,6 +8,8 @@ package org.infinispan.protostream;
    to have knowledge of the structure once it knows the type.
 */
 message WrappedMessage {
+   //TODO [anistor] use 'oneof' introduced in protobuf 2.6.0
+
    // only one of these fields is used if the wrapped value is a scalar type
    optional double wrappedDouble = 1;
    optional float wrappedFloat = 2;

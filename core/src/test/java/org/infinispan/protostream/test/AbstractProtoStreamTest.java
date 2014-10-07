@@ -1,7 +1,6 @@
 package org.infinispan.protostream.test;
 
-import org.infinispan.protostream.Configuration;
-import org.infinispan.protostream.ConfigurationBuilder;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -16,7 +15,7 @@ import java.io.IOException;
 public abstract class AbstractProtoStreamTest {
 
    protected SerializationContext createContext() throws IOException, DescriptorParserException {
-      return createContext(new ConfigurationBuilder().build());
+      return createContext(new Configuration.Builder().build());
    }
 
    protected SerializationContext createContext(Configuration cfg) throws IOException, DescriptorParserException {

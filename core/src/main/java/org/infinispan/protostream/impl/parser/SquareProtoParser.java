@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl.parser;
 
 import com.squareup.protoparser.ProtoFile;
 import com.squareup.protoparser.ProtoSchemaParser;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -26,6 +27,12 @@ public final class SquareProtoParser implements DescriptorParser {
 
    private static final ProtofileMapper PROTOFILE_MAPPER = new ProtofileMapper();
 
+   private final Configuration configuration;
+
+   public SquareProtoParser(Configuration configuration) {
+      this.configuration = configuration;
+   }
+
    @Override
    public Map<String, FileDescriptor> parseAndResolve(FileDescriptorSource fileDescriptorSource) throws DescriptorParserException {
       // parse the input
@@ -48,6 +55,7 @@ public final class SquareProtoParser implements DescriptorParser {
          try {
             ProtoFile protoFile = ProtoSchemaParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));
             FileDescriptor fileDescriptor = PROTOFILE_MAPPER.map(protoFile);
+            fileDescriptor.setConfiguration(configuration);
             fileDescriptorMap.put(entry.getKey(), fileDescriptor);
          } catch (IOException e) {
             throw new DescriptorParserException("Internal parsing error : " + e.getMessage());

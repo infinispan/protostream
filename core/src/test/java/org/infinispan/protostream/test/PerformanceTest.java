@@ -1,7 +1,6 @@
 package org.infinispan.protostream.test;
 
-import org.infinispan.protostream.Configuration;
-import org.infinispan.protostream.ConfigurationBuilder;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -142,7 +141,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private void readWithProtoStream(byte[] bytes, long[] result) throws IOException, DescriptorParserException {
-      Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceReads(false).build();
+      Configuration cfg = new Configuration.Builder().setLogOutOfSequenceReads(false).build();
       SerializationContext ctx = createContext(cfg);
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 
@@ -192,7 +191,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private byte[] writeWithProtoStream(User user, long[] result) throws IOException, DescriptorParserException {
-      Configuration cfg = new ConfigurationBuilder().setLogOutOfSequenceWrites(false).build();
+      Configuration cfg = new Configuration.Builder().setLogOutOfSequenceWrites(false).build();
       SerializationContext ctx = createContext(cfg);
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
 

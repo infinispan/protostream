@@ -2,6 +2,7 @@ package org.infinispan.protostream;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.ProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.ProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
@@ -20,11 +21,6 @@ import java.io.OutputStream;
 public final class ProtobufUtil {
 
    private static final String WRAPPING_DEFINITIONS_RES = "/org/infinispan/protostream/message-wrapping.proto";
-
-   @Deprecated
-   public static SerializationContext newSerializationContext() {
-      return newSerializationContext(new ConfigurationBuilder().build());
-   }
 
    public static SerializationContext newSerializationContext(Configuration configuration) {
       SerializationContextImpl serializationContext = new SerializationContextImpl(configuration);

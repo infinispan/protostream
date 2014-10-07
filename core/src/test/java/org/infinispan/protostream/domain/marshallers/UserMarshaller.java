@@ -42,6 +42,7 @@ public class UserMarshaller implements MessageMarshaller<User> {
 
       Integer age = reader.readInt("age");
       User.Gender gender = reader.readObject("gender", User.Gender.class);
+      String notes = reader.readString("notes");
 
       User user = new User();
       user.setId(id);
@@ -51,6 +52,7 @@ public class UserMarshaller implements MessageMarshaller<User> {
       user.setAge(age);
       user.setGender(gender);
       user.setAddresses(addresses);
+      user.setNotes(notes);
       return user;
    }
 
@@ -63,5 +65,6 @@ public class UserMarshaller implements MessageMarshaller<User> {
       writer.writeCollection("addresses", user.getAddresses(), Address.class);
       writer.writeInt("age", user.getAge());
       writer.writeObject("gender", user.getGender(), User.Gender.class);
+      writer.writeString("notes", user.getNotes());
    }
 }

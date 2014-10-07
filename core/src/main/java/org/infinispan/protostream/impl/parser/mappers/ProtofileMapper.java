@@ -16,7 +16,7 @@ import static org.infinispan.protostream.impl.parser.mappers.Mappers.*;
  * @author anistor@redhat.com
  * @since 2.0
  */
-public class ProtofileMapper implements Mapper<ProtoFile, FileDescriptor> {
+public final class ProtofileMapper implements Mapper<ProtoFile, FileDescriptor> {
 
    @Override
    public FileDescriptor map(ProtoFile protoFile) {

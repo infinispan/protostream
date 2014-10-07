@@ -9,7 +9,8 @@ import static org.infinispan.protostream.impl.parser.mappers.Mappers.FIELD_LIST_
  * @author gustavonalle
  * @since 2.0
  */
-class ExtendMapper implements Mapper<ExtendDeclaration, ExtendDescriptor> {
+final class ExtendMapper implements Mapper<ExtendDeclaration, ExtendDescriptor> {
+
    @Override
    public ExtendDescriptor map(ExtendDeclaration input) {
       return new ExtendDescriptor.Builder()

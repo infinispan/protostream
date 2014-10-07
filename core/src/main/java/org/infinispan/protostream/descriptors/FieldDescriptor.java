@@ -1,5 +1,8 @@
 package org.infinispan.protostream.descriptors;
 
+import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,19 +16,16 @@ import static java.util.Collections.unmodifiableList;
  * @author anistor@redhat.com
  * @since 2.0
  */
-public final class FieldDescriptor {
+public final class FieldDescriptor extends AnnotatedDescriptorImpl implements AnnotatedDescriptor {
 
    private static final String PACKED = "packed";
    private final int number;
-   private final String name;
    private final Rule rule;
    private final List<Option> options;
    private final String typeName;
    private final String defaultValue;
    private final Map<String, Object> optionByName = new HashMap<>();
    private final boolean isExtension;
-   private final String documentation;
-   private String fullName;
    private Type type;
    private FileDescriptor fileDescriptor;
    private Descriptor messageType;
@@ -33,8 +33,8 @@ public final class FieldDescriptor {
    private EnumDescriptor enumDescriptor;
 
    private FieldDescriptor(Builder builder) {
+      super(builder.name, null, builder.documentation);
       this.number = builder.number;
-      this.name = builder.name;
       this.rule = builder.rule;
       this.options = unmodifiableList(builder.options);
       for (Option opt : options) {
@@ -43,19 +43,10 @@ public final class FieldDescriptor {
       this.typeName = builder.typeName;
       this.defaultValue = builder.defaultValue;
       this.isExtension = builder.isExtension;
-      this.documentation = builder.documentation;
    }
 
    public int getNumber() {
       return number;
-   }
-
-   public String getName() {
-      return name;
-   }
-
-   public String getFullName() {
-      return fullName;
    }
 
    public Type getType() {
@@ -151,8 +142,9 @@ public final class FieldDescriptor {
       this.fileDescriptor = fileDescriptor;
    }
 
-   public String getDocumentation() {
-      return documentation;
+   @Override
+   protected AnnotationConfig<FieldDescriptor> getAnnotationConfig(String annotationName) {
+      return fileDescriptor.configuration.fieldAnnotations().get(annotationName);
    }
 
    public static class Builder {
