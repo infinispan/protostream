@@ -122,7 +122,7 @@ public final class SerializationContextImpl implements SerializationContext {
    @GuardedBy("writeLock")
    private void registerFileDescriptor(FileDescriptor fileDescriptor) {
       if (log.isDebugEnabled()) {
-         log.debugf("Registering file descriptor : fileName=%s types=%", fileDescriptor.getName(), fileDescriptor.getTypes().keySet());
+         log.debugf("Registering file descriptor : fileName=%s types=%s", fileDescriptor.getName(), fileDescriptor.getTypes().keySet());
       }
       fileDescriptors.put(fileDescriptor.getName(), fileDescriptor);
       genericDescriptors.putAll(fileDescriptor.getTypes());
