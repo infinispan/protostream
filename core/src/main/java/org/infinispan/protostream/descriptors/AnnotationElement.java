@@ -10,6 +10,8 @@ import java.util.Map;
  */
 public abstract class AnnotationElement {
 
+   public static final long UNKNOWN_POSITION = 0;
+
    private static final long LINESHIFT = 32;
 
    private static final long COLUMNMASK = (1L << LINESHIFT) - 1;
@@ -47,16 +49,27 @@ public abstract class AnnotationElement {
 
    public static final class Annotation extends Value {
 
+      /**
+       * Name of default attribute.
+       */
       public static final String DEFAULT_ATTRIBUTE = "value";
 
-      public final String name;
+      private final String name;
 
-      public final Map<String, Attribute> attributes;
+      private final Map<String, Attribute> attributes;
 
       public Annotation(long pos, String name, Map<String, Attribute> attributes) {
          super(pos);
          this.name = name;
          this.attributes = attributes;
+      }
+
+      public String getName() {
+         return name;
+      }
+
+      public Map<String, Attribute> getAttributes() {
+         return attributes;
       }
 
       @Override
@@ -80,15 +93,22 @@ public abstract class AnnotationElement {
 
    public static final class Attribute extends AnnotationElement {
 
-      public final String name;
+      private final String name;
 
-      // this can be an Identifier, a Literal, an Array or an Annotation
-      public final Value value;
+      private final Value value;
 
       public Attribute(long pos, String name, Value value) {
          super(pos);
          this.name = name;
          this.value = value;
+      }
+
+      public String getName() {
+         return name;
+      }
+
+      public Value getValue() {
+         return value;
       }
 
       public void acceptVisitor(Visitor visitor) {
@@ -98,11 +118,15 @@ public abstract class AnnotationElement {
 
    public static final class Identifier extends Value {
 
-      public final String identifier;
+      private final String identifier;
 
       public Identifier(long pos, String identifier) {
          super(pos);
          this.identifier = identifier;
+      }
+
+      public String getIdentifier() {
+         return identifier;
       }
 
       @Override
@@ -117,11 +141,15 @@ public abstract class AnnotationElement {
 
    public static final class Array extends Value {
 
-      public final List<Value> values;
+      private final List<Value> values;
 
       public Array(long pos, List<Value> values) {
          super(pos);
          this.values = values;
+      }
+
+      public List<Value> getValues() {
+         return values;
       }
 
       @Override
@@ -139,11 +167,11 @@ public abstract class AnnotationElement {
    }
 
    /**
-    * A String, Character or a Number.
+    * A String, Character, Boolean or a Number.
     */
    public static final class Literal extends Value {
 
-      public final Object value;
+      private final Object value;
 
       public Literal(long pos, Object value) {
          super(pos);

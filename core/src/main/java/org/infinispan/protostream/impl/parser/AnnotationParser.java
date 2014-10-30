@@ -25,10 +25,10 @@ public final class AnnotationParser {
       Map<String, AnnotationElement.Annotation> annotations = new LinkedHashMap<>();
       while (lexer.token != AnnotationTokens.EOF) {
          AnnotationElement.Annotation annotation = parseAnnotation();
-         if (annotations.containsKey(annotation.name)) {
-            throw syntaxError(annotation.position, "duplicate annotation definition \"{0}\"", annotation.name);
+         if (annotations.containsKey(annotation.getName())) {
+            throw syntaxError(annotation.position, "duplicate annotation definition \"{0}\"", annotation.getName());
          }
-         annotations.put(annotation.name, annotation);
+         annotations.put(annotation.getName(), annotation);
          lexer.skipNoise();
       }
       return annotations;
@@ -85,7 +85,7 @@ public final class AnnotationParser {
                AnnotationElement.Annotation annotation = parseAnnotation();
                expect(AnnotationTokens.RPAREN);
                AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.DEFAULT_ATTRIBUTE, annotation);
-               members.put(attribute.name, attribute);
+               members.put(attribute.getName(), attribute);
                return members;
             }
             case IDENTIFIER: {
@@ -95,13 +95,13 @@ public final class AnnotationParser {
                   start = lexer.mark();
                   expect(AnnotationTokens.EQ);
                   AnnotationElement.Value value = parseValue(start);
-                  AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, identifier.identifier, value);
-                  members.put(attribute.name, attribute);
+                  AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, identifier.getIdentifier(), value);
+                  members.put(attribute.getName(), attribute);
                   break;
                } else {
                   expect(AnnotationTokens.RPAREN);
                   AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.DEFAULT_ATTRIBUTE, identifier);
-                  members.put(attribute.name, attribute);
+                  members.put(attribute.getName(), attribute);
                   return members;
                }
             }
@@ -118,7 +118,7 @@ public final class AnnotationParser {
                AnnotationElement.Value literal = parseValue(start);
                expect(AnnotationTokens.RPAREN);
                AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.DEFAULT_ATTRIBUTE, literal);
-               members.put(attribute.name, attribute);
+               members.put(attribute.getName(), attribute);
                return members;
             }
          }
@@ -127,10 +127,10 @@ public final class AnnotationParser {
             expect(AnnotationTokens.COMMA);
             while (lexer.token != AnnotationTokens.RPAREN && lexer.token != AnnotationTokens.EOF) {
                AnnotationElement.Attribute attribute = parseAttribute();
-               if (members.containsKey(attribute.name)) {
-                  throw syntaxError(attribute.position, "duplicate annotation member definition \"{0}\"", attribute.name);
+               if (members.containsKey(attribute.getName())) {
+                  throw syntaxError(attribute.position, "duplicate annotation member definition \"{0}\"", attribute.getName());
                }
-               members.put(attribute.name, attribute);
+               members.put(attribute.getName(), attribute);
                if (lexer.token != AnnotationTokens.RPAREN && lexer.token != AnnotationTokens.EOF) {
                   expect(AnnotationTokens.COMMA);
                }

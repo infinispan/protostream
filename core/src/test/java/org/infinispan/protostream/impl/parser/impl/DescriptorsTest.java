@@ -506,17 +506,20 @@ public class DescriptorsTest {
       assertEquals("@Foo(fooValue) \n   some more doc text", typeX.getDocumentation());
       Map<String, AnnotationElement.Annotation> typeAnnotations = typeX.getAnnotations();
       assertEquals("fooValue", typeAnnotations.get("Foo").getDefaultAttributeValue().getValue());
-      assertEquals("fooValue", typeX.getParsedAnnotation("Foo"));
+      assertEquals("fooValue", typeX.getProcessedAnnotation("Foo"));
       assertEquals("@Bar(barValue)", field1.getDocumentation());
       Map<String, AnnotationElement.Annotation> fieldAnnotations = field1.getAnnotations();
       assertEquals("barValue", fieldAnnotations.get("Bar").getDefaultAttributeValue().getValue());
-      assertEquals("barValue", field1.getParsedAnnotation("Bar"));
+      assertEquals("barValue", field1.getProcessedAnnotation("Bar"));
    }
 
    @Test
    public void testAnnotationParser() throws Exception {
       Configuration config = new Configuration.Builder()
             .messageAnnotation("Indexed")
+            .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
+               .booleanType()
+               .defaultValue(true)
             .annotationMetadataCreator(new AnnotationMetadataCreator<Object, Descriptor>() {
                @Override
                public Object create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
@@ -542,11 +545,11 @@ public class DescriptorsTest {
 
       Descriptor userMessageType = messageTypes.get(0);
       assertEquals("sample_bank_account.User", userMessageType.getFullName());
-      assertEquals(Boolean.TRUE, userMessageType.getParsedAnnotation("Indexed"));
+      assertEquals(Boolean.TRUE, userMessageType.getProcessedAnnotation("Indexed"));
 
       Descriptor accountMessageType = messageTypes.get(1);
       assertEquals("sample_bank_account.Account", accountMessageType.getFullName());
-      assertEquals(Boolean.TRUE, accountMessageType.getParsedAnnotation("Indexed"));
+      assertEquals(Boolean.TRUE, accountMessageType.getProcessedAnnotation("Indexed"));
    }
 
    private Map<String, FileDescriptor> parseAndResolve(FileDescriptorSource fileDescriptorSource) {

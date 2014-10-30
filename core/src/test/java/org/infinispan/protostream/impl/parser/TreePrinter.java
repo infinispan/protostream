@@ -57,11 +57,11 @@ public class TreePrinter extends AnnotationElement.Visitor {
    @Override
    public void visit(AnnotationElement.Annotation annotation) {
       out.write('@');
-      out.write(annotation.name);
+      out.write(annotation.getName());
       out.write('(');
       out.write('\n');
       indent();
-      for (Iterator<AnnotationElement.Attribute> it = annotation.attributes.values().iterator(); it.hasNext(); ) {
+      for (Iterator<AnnotationElement.Attribute> it = annotation.getAttributes().values().iterator(); it.hasNext(); ) {
          align();
          printTree(it.next());
          if (it.hasNext()) {
@@ -79,7 +79,7 @@ public class TreePrinter extends AnnotationElement.Visitor {
       out.write('{');
       out.write('\n');
       indent();
-      for (Iterator<AnnotationElement.Value> it = array.values.iterator(); it.hasNext(); ) {
+      for (Iterator<AnnotationElement.Value> it = array.getValues().iterator(); it.hasNext(); ) {
          align();
          printTree(it.next());
          if (it.hasNext()) {
@@ -94,18 +94,18 @@ public class TreePrinter extends AnnotationElement.Visitor {
 
    @Override
    public void visit(AnnotationElement.Identifier identifier) {
-      out.write(identifier.identifier);
+      out.write(identifier.getIdentifier());
    }
 
    @Override
    public void visit(AnnotationElement.Attribute attribute) {
-      out.write(attribute.name);
+      out.write(attribute.getName());
       out.write('=');
-      printTree(attribute.value);
+      printTree(attribute.getValue());
    }
 
    @Override
    public void visit(AnnotationElement.Literal literal) {
-      out.write(String.valueOf(literal.value));
+      out.write(String.valueOf(literal.getValue()));
    }
 }

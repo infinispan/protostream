@@ -4,12 +4,12 @@ option java_package = "com.example.generated_by_protoc";
 option java_outer_classname = "BankProtos";
 
 /**
- * @Indexed()
+ * @Indexed(true)
  */
 message User {
 
    /**
-    * @IndexedField()
+    * @IndexedField(index=true, store=true)
     */
    required int32 id = 1;
 

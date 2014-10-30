@@ -6,6 +6,8 @@ import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import java.util.HashSet;
 import java.util.Set;
 
+// todo [anistor] implement check for mandatory attributes
+
 /**
  * @author anistor@redhat.com
  * @since 2.0
@@ -20,13 +22,16 @@ public final class AnnotationAttributeConfig {
 
    private final boolean isMultiple;
 
+   private final Object defaultValue;
+
    private final AttributeType type;
 
    private final Set<String> allowedValues;
 
-   private AnnotationAttributeConfig(String name, boolean isMultiple, AttributeType type, Set<String> allowedValues) {
+   private AnnotationAttributeConfig(String name, boolean isMultiple, Object defaultValue, AttributeType type, Set<String> allowedValues) {
       this.name = name;
       this.isMultiple = isMultiple;
+      this.defaultValue = defaultValue;
       this.type = type;
       this.allowedValues = allowedValues;
    }
@@ -34,10 +39,13 @@ public final class AnnotationAttributeConfig {
    public String name() {
       return name;
    }
-   // todo [anistor] implement required attributes and default value
 
    public boolean multiple() {
       return isMultiple;
+   }
+
+   public Object defaultValue() {
+      return defaultValue;
    }
 
    public AttributeType type() {
@@ -56,6 +64,8 @@ public final class AnnotationAttributeConfig {
 
       private boolean isMultiple;
 
+      private Object defaultValue;
+
       private AttributeType type = AttributeType.STRING;
 
       private String[] allowedValues;
@@ -67,6 +77,12 @@ public final class AnnotationAttributeConfig {
 
       public Builder<DescriptorType> multiple(boolean isMultiple) {
          this.isMultiple = isMultiple;
+         return this;
+      }
+
+      // todo [anistor] check default value is compatible with type
+      public Builder<DescriptorType> defaultValue(Object defaultValue) {
+         this.defaultValue = defaultValue;
          return this;
       }
 
@@ -140,7 +156,7 @@ public final class AnnotationAttributeConfig {
                _allowedValues.add(v);
             }
          }
-         return new AnnotationAttributeConfig(name, isMultiple, type, _allowedValues);
+         return new AnnotationAttributeConfig(name, isMultiple, defaultValue, type, _allowedValues);
       }
 
       public Configuration build() {

@@ -110,8 +110,6 @@ public final class Configuration {
 
       public AnnotationConfig.Builder<FieldDescriptor> fieldAnnotation(String annotationName) {
          AnnotationConfig.Builder<FieldDescriptor> builder = new AnnotationConfig.Builder<>(this, annotationName);
-         // define the default attribute
-         builder.attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE).stringType();
          fieldAnnotationBuilders.put(annotationName, builder);
          return builder;
       }
