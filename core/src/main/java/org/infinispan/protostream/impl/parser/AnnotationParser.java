@@ -29,7 +29,7 @@ public final class AnnotationParser {
             throw syntaxError(annotation.position, "duplicate annotation definition \"{0}\"", annotation.getName());
          }
          annotations.put(annotation.getName(), annotation);
-         lexer.skipNoise();
+         lexer.skipDocNoise();
       }
       return annotations;
    }
@@ -64,14 +64,14 @@ public final class AnnotationParser {
    }
 
    private AnnotationElement.Annotation parseAnnotation() {
-      if (lexer.token == AnnotationTokens.AT) {
-         long pos = lexer.pos;
-         expect(AnnotationTokens.AT);
-         String name = qualifiedIdentifier();
-         Map<String, AnnotationElement.Attribute> attributes = parseAttributes();
-         return new AnnotationElement.Annotation(pos, name, attributes);
+      if (lexer.token != AnnotationTokens.AT) {
+         throw syntaxError("annotation expected");
       }
-      throw syntaxError("annotation expected");
+      long pos = lexer.pos;
+      expect(AnnotationTokens.AT);
+      String name = qualifiedIdentifier();
+      Map<String, AnnotationElement.Attribute> attributes = parseAttributes();
+      return new AnnotationElement.Annotation(pos, name, attributes);
    }
 
    private Map<String, AnnotationElement.Attribute> parseAttributes() {

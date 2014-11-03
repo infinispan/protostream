@@ -17,9 +17,10 @@ public class AnnotationParserTest {
    private static final Log log = Log.LogFactory.getLog(AnnotationParserTest.class);
 
    private static final String testDoc = "\n" +
-         "some garbage\n" +
+         "some garbage  \n" +
          "\n" +
-         "garb#$#$#$#4age @XXX.yyy.zzzz(false)@ABC(x = some.class.or.enum, y=45, z = \"333333\")  \"dd\"\n" +
+         "more garb#$#$#$#4age\n" +
+         "   @XXX.yyy.zzzz(false)@ABC(x = some.class.or.enum, y=45, z = \"333333\")  \"dd\"\n" +
          "\n" +
          "@IndexedField2  ccc\n" +
          "\n" +
@@ -28,7 +29,8 @@ public class AnnotationParserTest {
          "@IndexedField5(store = Store.YES, quickAndDirty = true)   VVV\n" +
          "\n" +
          "sd sfds fdsf df sdf sdf\n" +
-         " junk sfdsf sd junk @Test (\n" +
+         " junk sfdsf sd junk\n" +
+         "@Test (\n" +
          "\n" +
          "   x=9, cc = { 34, 0 , {34 ,44}},\n" +
          "   y = true,\n" +
@@ -45,7 +47,8 @@ public class AnnotationParserTest {
          "\n" +
          "@XXX.yyy.zz(false)@ABCd\n" +
          "\n" +
-         "sss sdsds dew32432432 432   ;'  @ XXX () abcd fdfd f\n" +
+         "sss sdsds dew32432432 432   ;'  \n" +
+         " @ XXX () abcd fdfd f\n" +
          "\n" +
          "@ XXX2          dfdsf\n";
 
