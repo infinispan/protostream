@@ -24,18 +24,19 @@ final class AnnotationLexer {
    private final int buflen;
    private int bp = -1;
 
-   private char ch;
+   private char ch = 0;
    private int line = 1;
    private int col = 0;
+   private boolean leadingWhitespace = true;
 
    public AnnotationLexer(char[] input) {
       buf = input;
       buflen = input.length;
       scanNextChar();
-      skipNoise();
+      skipDocNoise();
    }
 
-   public void skipNoise() {
+   public void skipDocNoise() {
       if (token == AnnotationTokens.AT || token == AnnotationTokens.EOF) {
          return;
       }
@@ -49,24 +50,32 @@ final class AnnotationLexer {
                continue;
             case '\f':
                col = 0;
+               leadingWhitespace = true;
                scanNextChar();
                continue;
             case '\r':
                line++;
                col = 0;
+               leadingWhitespace = true;
                scanNextChar();
                if (ch == '\n') {
                   col = 0;
+                  leadingWhitespace = true;
                   scanNextChar();
                }
                continue;
             case '\n':
                line++;
                col = 0;
+               leadingWhitespace = true;
                scanNextChar();
                continue;
-            case 0:
             case '@':
+               if (!leadingWhitespace) {
+                  throw lexerError(AnnotationElement.makePosition(line, col), "Annotations must start on an empty line");
+               }
+               // intentional fall-through
+            case 0:
                nextToken();
                return;
             default:
@@ -78,6 +87,9 @@ final class AnnotationLexer {
    }
 
    private void scanNextChar() {
+      if (ch != 0 && !Character.isWhitespace(ch)) {
+         leadingWhitespace = false;
+      }
       bp++;
       if (bp == buflen) {
          ch = 0;
@@ -195,12 +207,14 @@ final class AnnotationLexer {
    private void scanIdentifier() {
       do {
          putChar(ch);
+         if (bp == buflen - 1) {
+             break;
+         }
          ch = buf[++bp];
          col++;
       }
-      while (bp < buflen - 1 && (ch == '_' || ch == '$' || ch >= '0' && ch <= '9'
-                                       || ch >= 'A' && ch <= 'Z' || ch >= 'a' && ch <= 'z'
-                                       || ch > 128 && Character.isJavaIdentifierPart(ch)));
+      while (ch == '_' || ch == '$' || ch >= '0' && ch <= '9' || ch >= 'A' && ch <= 'Z' || ch >= 'a' && ch <= 'z'
+             || ch > 128 && Character.isJavaIdentifierPart(ch));
       name = new String(sbuf, 0, sp);
       AnnotationTokens tok = AnnotationTokens.byName(name);
       token = tok == null ? AnnotationTokens.IDENTIFIER : tok;
@@ -360,20 +374,24 @@ final class AnnotationLexer {
                continue;
             case '\f':
                col = 0;
+               leadingWhitespace = true;
                scanNextChar();
                continue;
             case '\r':
                line++;
                col = 0;
+               leadingWhitespace = true;
                scanNextChar();
                if (ch == '\n') {
                   col = 0;
+                  leadingWhitespace = true;
                   scanNextChar();
                }
                continue;
             case '\n':
                line++;
                col = 0;
+               leadingWhitespace = true;
                scanNextChar();
                continue;
             default:

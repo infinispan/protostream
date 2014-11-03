@@ -19,12 +19,12 @@ message User {
    repeated int32 accountIds = 2;
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    required string name = 3;
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    required string surname = 4;
 
@@ -34,12 +34,12 @@ message User {
    }
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    repeated Address addresses = 5;     //a repeated field cannot be marked required
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    optional int32 age = 6;   // persisting age instead of birth date is not ideal but is ok for our sample code
 
@@ -49,7 +49,7 @@ message User {
    }
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    optional Gender gender = 7;
 
@@ -57,22 +57,22 @@ message User {
 }
 
 /**
- * @Indexed()
+ * @Indexed
  */
 message Account {
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    required int32 id = 1;
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    optional string description = 2 [default = "Checking account"];
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    required fixed64 creationDate = 3;
 
@@ -82,48 +82,48 @@ message Account {
    }
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    optional Limits limits = 4;
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    repeated bytes blurb = 5;
 }
 
 /**
- * @Indexed()
+ * @Indexed
  */
 message Transaction {
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    required int32 id = 1;
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    optional string description = 2;
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    required int32 accountId = 3;
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    required fixed64 date = 4;  // there is no native Date type in protobuf so we have to store it as a long
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    required double amount = 5; // how do I store a BigDecimal? maybe as a byte array ..
 
    /**
-    * @IndexedField()
+    * @IndexedField
     */
    required bool isDebit = 6;
 }
