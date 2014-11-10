@@ -1,8 +1,8 @@
 package org.infinispan.protostream.descriptors;
 
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
 
 import java.util.ArrayList;
@@ -250,10 +250,6 @@ public final class FileDescriptor {
    }
 
    private void checkValidDefinition(GenericDescriptor descriptor) {
-      if (descriptor.getName().indexOf('.') != -1) {
-         //TODO This validation should be reported earlier, during parsing, to avoid needless resolving of an already broken file.
-         throw new DescriptorParserException("Definition names should not be qualified : " + descriptor.getName());
-      }
       GenericDescriptor existing = types.get(descriptor.getFullName());
       if (existing != null) {
          String location = existing.getFileDescriptor().getName();
