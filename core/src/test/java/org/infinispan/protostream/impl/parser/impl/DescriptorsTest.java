@@ -2,19 +2,10 @@ package org.infinispan.protostream.impl.parser.impl;
 
 import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.AnnotationParserException;
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.descriptors.AnnotationElement;
-import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.protostream.descriptors.EnumDescriptor;
-import org.infinispan.protostream.descriptors.ExtendDescriptor;
-import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.protostream.descriptors.FileDescriptor;
-import org.infinispan.protostream.descriptors.GenericDescriptor;
-import org.infinispan.protostream.descriptors.JavaType;
-import org.infinispan.protostream.descriptors.Rule;
-import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.*;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -25,9 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class DescriptorsTest {
 
@@ -550,6 +539,74 @@ public class DescriptorsTest {
       Descriptor accountMessageType = messageTypes.get(1);
       assertEquals("sample_bank_account.Account", accountMessageType.getFullName());
       assertEquals(Boolean.TRUE, accountMessageType.getProcessedAnnotation("Indexed"));
+   }
+
+   @Test
+   public void testMultipleAnnotationAttribute() throws Exception {
+      Configuration config = new Configuration.Builder()
+            .messageAnnotation("Xyz")
+            .attribute("attr")
+            .booleanType()
+            .defaultValue(true)
+            .multiple(true)
+            .build();
+
+      String testProto = "/** @Xyz(attr = {true, false, true}) */\n" +
+            "message M {\n" +
+            "  optional int32 field1 = 1; \n" +
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
+      Map<String, FileDescriptor> descriptors = new SquareProtoParser(config).parseAndResolve(fileDescriptorSource);
+
+      FileDescriptor fileDescriptor = descriptors.get("test.proto");
+      List<Descriptor> messageTypes = fileDescriptor.getMessageTypes();
+
+      Descriptor messageType = messageTypes.get(0);
+      assertEquals("M", messageType.getFullName());
+      AnnotationElement.Annotation annotation = messageType.getAnnotations().get("Xyz");
+      assertNotNull(annotation);
+      AnnotationElement.Value attr = annotation.getAttributeValue("attr");
+      assertTrue(attr instanceof AnnotationElement.Array);
+      assertTrue(attr.getValue() instanceof List);
+      List values = (List) attr.getValue();
+      assertEquals(3, values.size());
+      assertEquals(true, values.get(0));
+      assertEquals(false, values.get(1));
+      assertEquals(true, values.get(2));
+   }
+
+   @Test
+   public void testArrayAnnotationAttributeNormalizing() throws Exception {
+      Configuration config = new Configuration.Builder()
+            .messageAnnotation("Xyz")
+            .attribute("attr")
+            .booleanType()
+            .defaultValue(true)
+            .multiple(true)
+            .build();
+
+      String testProto = "/** @Xyz(attr = true) */\n" +
+            "message M {\n" +
+            "  optional int32 field1 = 1; \n" +
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
+      Map<String, FileDescriptor> descriptors = new SquareProtoParser(config).parseAndResolve(fileDescriptorSource);
+
+      FileDescriptor fileDescriptor = descriptors.get("test.proto");
+      List<Descriptor> messageTypes = fileDescriptor.getMessageTypes();
+
+      Descriptor messageType = messageTypes.get(0);
+      assertEquals("M", messageType.getFullName());
+      AnnotationElement.Annotation annotation = messageType.getAnnotations().get("Xyz");
+      assertNotNull(annotation);
+      AnnotationElement.Value attr = annotation.getAttributeValue("attr");
+      assertTrue(attr instanceof AnnotationElement.Array);
+      assertTrue(attr.getValue() instanceof List);
+      List values = (List) attr.getValue();
+      assertEquals(1, values.size());
+      assertEquals(true, values.get(0));
    }
 
    private Map<String, FileDescriptor> parseAndResolve(FileDescriptorSource fileDescriptorSource) {
