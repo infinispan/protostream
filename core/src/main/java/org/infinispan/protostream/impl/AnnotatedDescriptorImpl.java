@@ -1,6 +1,7 @@
 package org.infinispan.protostream.impl;
 
 import org.infinispan.protostream.AnnotationParserException;
+import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.config.AnnotationAttributeConfig;
 import org.infinispan.protostream.config.AnnotationConfig;
 import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
@@ -24,6 +25,9 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
    protected Map<String, Object> parsedAnnotations = null;
 
    protected AnnotatedDescriptorImpl(String name, String fullName, String documentation) {
+      if (name.indexOf('.') != -1) {
+         throw new DescriptorParserException("Definition names should not be qualified : " + name);
+      }
       this.name = name;
       this.fullName = fullName;
       this.documentation = documentation;
