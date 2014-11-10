@@ -6,7 +6,6 @@ import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import java.util.HashSet;
 import java.util.Set;
 
-// todo [anistor] implement check for mandatory attributes
 
 /**
  * @author anistor@redhat.com
@@ -80,7 +79,6 @@ public final class AnnotationAttributeConfig {
          return this;
       }
 
-      // todo [anistor] check default value is compatible with type
       public Builder<DescriptorType> defaultValue(Object defaultValue) {
          this.defaultValue = defaultValue;
          return this;
@@ -149,14 +147,68 @@ public final class AnnotationAttributeConfig {
       }
 
       AnnotationAttributeConfig buildAnnotationAttributeConfig() {
-         Set<String> _allowedValues = null;
+         Set<String> allowedValuesSet = null;
+
          if (allowedValues != null && allowedValues.length != 0) {
-            _allowedValues = new HashSet<>(allowedValues.length);
-            for (String v : allowedValues) {
-               _allowedValues.add(v);
+            switch (type) {
+               case ANNOTATION:
+               case IDENTIFIER:
+               case STRING:
+                  allowedValuesSet = new HashSet<>(allowedValues.length);
+                  for (String v : allowedValues) {
+                     allowedValuesSet.add(v);
+                  }
+                  break;
+
+               default:
+                  throw new IllegalArgumentException("The type of attribute '" + name + "' does not support a set of allowed values");
             }
          }
-         return new AnnotationAttributeConfig(name, isMultiple, defaultValue, type, _allowedValues);
+
+         if (defaultValue != null) {
+            switch (type) {
+               case ANNOTATION:
+                  throw new IllegalArgumentException("The type of attribute '" + name + "' does not allow a default value.");
+               case STRING:
+               case IDENTIFIER:
+                  if (!(defaultValue instanceof String)) {
+                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. String expected.");
+                  }
+                  break;
+               case CHARACTER:
+                  if (!(defaultValue instanceof Character)) {
+                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Character expected.");
+                  }
+                  break;
+               case BOOLEAN:
+                  if (!(defaultValue instanceof Boolean)) {
+                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Boolean expected.");
+                  }
+                  break;
+               case INT:
+                  if (!(defaultValue instanceof Integer)) {
+                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Integer expected.");
+                  }
+                  break;
+               case LONG:
+                  if (!(defaultValue instanceof Long)) {
+                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Long expected.");
+                  }
+                  break;
+               case FLOAT:
+                  if (!(defaultValue instanceof Float)) {
+                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Float expected.");
+                  }
+                  break;
+               case DOUBLE:
+                  if (!(defaultValue instanceof Double)) {
+                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Double expected.");
+                  }
+                  break;
+            }
+         }
+
+         return new AnnotationAttributeConfig(name, isMultiple, defaultValue, type, allowedValuesSet);
       }
 
       public Configuration build() {
