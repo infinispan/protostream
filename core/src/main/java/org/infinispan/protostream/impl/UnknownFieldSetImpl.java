@@ -6,7 +6,11 @@ import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.infinispan.protostream.UnknownFieldSet;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -15,34 +19,35 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
- * {@code UnknownFieldSet} implementation.
+ * {@code UnknownFieldSet} implementation. This class should never be directly instantiated by users.
  *
  * @author anistor@redhat.com
+ * @since 1.0
  */
-final class UnknownFieldSetImpl implements UnknownFieldSet {
+final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
 
    // elements of the Deque can be one of : varint, fixed32, fixed64, ByteString, UnknownFieldSetImpl
    // this is created lazily
-   private Map<Integer, Deque> fields;
+   private Map<Integer, Deque<Object>> fields;
 
-   UnknownFieldSetImpl() {
+   public UnknownFieldSetImpl() {
    }
 
    /**
-    * Get an UnknownField for the given field number. A new one is created and added if it does not exist already.
+    * Get an Deque of values for the given field number. A new one is created and added if it does not exist already.
     */
-   private Deque getField(int tag) {
+   private Deque<Object> getField(int tag) {
       if (tag == 0) {
          throw new IllegalArgumentException("Zero is not a valid tag number");
       }
-      Deque field = null;
+      Deque<Object> field = null;
       if (fields == null) {
-         fields = new HashMap<Integer, Deque>();
+         fields = new HashMap<Integer, Deque<Object>>();
       } else {
          field = fields.get(tag);
       }
       if (field == null) {
-         field = new ArrayDeque();
+         field = new ArrayDeque<Object>();
          fields.put(tag, field);
       }
       return field;
@@ -120,7 +125,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet {
    /**
     * Serializes a field, including field number, and writes it to {@code output}.
     */
-   private void writeField(int tag, Deque values, CodedOutputStream output) throws IOException {
+   private void writeField(int tag, Deque<?> values, CodedOutputStream output) throws IOException {
       int wireType = WireFormat.getTagWireType(tag);
       switch (wireType) {
          case WireFormat.WIRETYPE_VARINT:
@@ -165,7 +170,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet {
    public int getSerializedSize() {
       int result = 0;
       if (fields != null) {
-         for (Map.Entry<Integer, Deque> entry : fields.entrySet()) {
+         for (Map.Entry<Integer, Deque<Object>> entry : fields.entrySet()) {
             result += computeSerializedFieldSize(entry.getKey(), entry.getValue());
          }
       }
@@ -175,7 +180,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet {
    /**
     * Get the number of bytes required to encode a field, including field number.
     */
-   private static int computeSerializedFieldSize(int tag, Deque values) {
+   private static int computeSerializedFieldSize(int tag, Deque<?> values) {
       //todo extract constants outside the loop
       int result = 0;
       int wireType = WireFormat.getTagWireType(tag);
@@ -229,7 +234,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet {
       if (fields == null) {
          return null;
       }
-      Deque<A> values = fields.get(tag);
+      Deque<A> values = (Deque<A>) fields.get(tag);
       if (values == null) {
          return null;
       }
@@ -246,5 +251,24 @@ final class UnknownFieldSetImpl implements UnknownFieldSet {
          throw new IllegalArgumentException("Zero is not a valid tag number");
       }
       return fields != null && fields.containsKey(tag);
+   }
+
+   @Override
+   public void writeExternal(ObjectOutput out) throws IOException {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      CodedOutputStream output = CodedOutputStream.newInstance(baos);
+      writeTo(output);
+      output.flush();
+      byte[] bytes = baos.toByteArray();
+      out.writeInt(bytes.length);
+      out.write(bytes);
+   }
+
+   @Override
+   public void readExternal(ObjectInput in) throws IOException {
+      int len = in.readInt();
+      byte[] bytes = new byte[len];
+      in.readFully(bytes);
+      readAllFields(CodedInputStream.newInstance(bytes));
    }
 }

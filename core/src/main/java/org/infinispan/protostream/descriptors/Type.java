@@ -28,6 +28,7 @@ public enum Type {
    SFIXED64(JavaType.LONG, WIRETYPE_FIXED64),
    SINT32(JavaType.INT, WIRETYPE_VARINT),
    SINT64(JavaType.LONG, WIRETYPE_VARINT);
+
    private final JavaType javaType;
    private final int wireType;
 
