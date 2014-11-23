@@ -110,6 +110,7 @@
         <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
         <version.log4j>1.2.16</version.log4j>
         <version.jboss.marshalling>1.4.2.Final</version.jboss.marshalling>
+        <version.javassist>3.18.0-GA</version.javassist>
     </properties>
 
     <repositories>
@@ -188,6 +189,12 @@
                 <groupId>com.squareup</groupId>
                 <artifactId>protoparser</artifactId>
                 <version>${version.protoparser}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.javassist</groupId>
+                <artifactId>javassist</artifactId>
+                <version>${version.javassist}</version>
             </dependency>
 
             <dependency>

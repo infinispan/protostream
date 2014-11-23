@@ -50,9 +50,9 @@ public final class ProtocMessageMarshaller<T extends MessageLite> implements Raw
 
          parser = (Parser<T>) parserField.get(null);
       } catch (NoSuchFieldException e) {
-         throw new IllegalArgumentException("Class " + clazz + " does not appear to be a 'protoc' generated message class (missing 'PARSER' field).");
+         throw new IllegalArgumentException("Class " + clazz.getName() + " does not appear to be a 'protoc' generated message class (missing 'PARSER' field).");
       } catch (IllegalAccessException e) {
-         throw new IllegalArgumentException("Class " + clazz + " does not appear to be a 'protoc' generated message class (missing 'PARSER' field).");
+         throw new IllegalArgumentException("Class " + clazz.getName() + " does not appear to be a 'protoc' generated message class (missing 'PARSER' field).");
       }
 
       if (GeneratedMessage.class.isAssignableFrom(clazz)) {
@@ -62,11 +62,11 @@ public final class ProtocMessageMarshaller<T extends MessageLite> implements Raw
             Descriptor descriptor = (Descriptor) getDescriptorMethod.invoke(null);
             guessedTypeName = descriptor.getFullName();
          } catch (NoSuchMethodException e) {
-            throw new IllegalArgumentException("Class " + clazz + " does not appear to be a 'protoc' generated message class (missing 'getDescriptor' method).");
+            throw new IllegalArgumentException("Class " + clazz.getName() + " does not appear to be a 'protoc' generated message class (missing 'getDescriptor' method).");
          } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException("Class " + clazz + " does not appear to be a 'protoc' generated message class (missing 'getDescriptor' method).");
+            throw new IllegalArgumentException("Class " + clazz.getName() + " does not appear to be a 'protoc' generated message class (missing 'getDescriptor' method).");
          } catch (InvocationTargetException e) {
-            throw new IllegalArgumentException("Class " + clazz + " does not appear to be a 'protoc' generated message class (missing 'getDescriptor' method).");
+            throw new IllegalArgumentException("Class " + clazz.getName() + " does not appear to be a 'protoc' generated message class (missing 'getDescriptor' method).");
          }
 
          if (typeName != null && !guessedTypeName.equals(typeName)) {
