@@ -509,9 +509,9 @@ public class DescriptorsTest {
             .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
                .booleanType()
                .defaultValue(true)
-            .annotationMetadataCreator(new AnnotationMetadataCreator<Object, Descriptor>() {
+            .annotationMetadataCreator(new AnnotationMetadataCreator<Boolean, Descriptor>() {
                @Override
-               public Object create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
+               public Boolean create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
                   AnnotationElement.Value value = annotation.getDefaultAttributeValue();
                   if (value == null) {
                      return Boolean.TRUE;

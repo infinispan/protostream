@@ -6,7 +6,9 @@ package org.infinispan.protostream;
  *
  * @author anistor@redhat.com
  * @since 1.0
+ * @deprecated this mechanism was replaced by {@link UnknownFieldSetHandler} interface
  */
+@Deprecated
 public interface Message {
 
    UnknownFieldSet getUnknownFieldSet();

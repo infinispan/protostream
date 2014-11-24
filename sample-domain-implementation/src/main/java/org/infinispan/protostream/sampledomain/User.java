@@ -1,6 +1,6 @@
 package org.infinispan.protostream.sampledomain;
 
-import org.infinispan.protostream.BaseMessage;
+import org.infinispan.protostream.UnknownFieldSet;
 
 import java.util.List;
 import java.util.Set;
@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * @author anistor@redhat.com
  */
-public class User extends BaseMessage {
+public class User {
 
    public enum Gender {
       MALE, FEMALE
@@ -22,6 +22,8 @@ public class User extends BaseMessage {
    private Integer age;
    private Gender gender;
    private String notes;
+
+   private UnknownFieldSet unknownFieldSet;
 
    public int getId() {
       return id;
@@ -85,6 +87,14 @@ public class User extends BaseMessage {
 
    public void setNotes(String notes) {
       this.notes = notes;
+   }
+
+   public UnknownFieldSet getUnknownFieldSet() {
+      return unknownFieldSet;
+   }
+
+   public void setUnknownFieldSet(UnknownFieldSet unknownFieldSet) {
+      this.unknownFieldSet = unknownFieldSet;
    }
 
    @Override

@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import org.infinispan.protostream.UnknownFieldSetHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.Message;
@@ -56,26 +57,28 @@ public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegat
    }
 
    @Override
-   public void marshall(String fieldName, FieldDescriptor fieldDescriptor, T value, ProtoStreamWriterImpl writer, CodedOutputStream out) throws IOException {
+   public void marshall(String fieldName, FieldDescriptor fieldDescriptor, T message, ProtoStreamWriterImpl writer, CodedOutputStream out) throws IOException {
       WriteMessageContext messageContext = writer.pushContext(fieldName, this, out);
 
-      marshaller.writeTo(writer, value);
+      marshaller.writeTo(writer, message);
 
-      if (value instanceof Message) {
-         UnknownFieldSet unknownFieldSet = ((Message) value).getUnknownFieldSet();
-         if (unknownFieldSet != null) {
-            // validate that none of the unknown fields are also declared by the known descriptor
-            for (FieldDescriptor fd : getFieldDescriptors()) {
-               if (unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType()))) {
-                  throw new IOException("Field " + fd.getFullName() + " is a known field so it is illegal to be present in the unknown field set");
-               }
-            }
-            // write the unknown fields
-            unknownFieldSet.writeTo(messageContext.out);
-         }
+      UnknownFieldSet unknownFieldSet = null;
+      if (marshaller instanceof UnknownFieldSetHandler) {
+         unknownFieldSet = ((UnknownFieldSetHandler<T>) marshaller).getUnknownFieldSet(message);
+      } else if (message instanceof Message) {
+         unknownFieldSet = ((Message) message).getUnknownFieldSet();
       }
 
-      UnknownFieldSet unknownFieldSet = value instanceof Message ? ((Message) value).getUnknownFieldSet() : null;
+      if (unknownFieldSet != null) {
+         // validate that none of the unknown fields are actually declared by the known descriptor
+         for (FieldDescriptor fd : getFieldDescriptors()) {
+            if (unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType()))) {
+               throw new IOException("Field " + fd.getFullName() + " is a known field so it is illegal to be present in the unknown field set");
+            }
+         }
+         // write the unknown fields
+         unknownFieldSet.writeTo(messageContext.out);
+      }
 
       // validate that all the required fields were written either by the marshaller or by the UnknownFieldSet
       for (FieldDescriptor fd : getFieldDescriptors()) {
@@ -94,12 +97,16 @@ public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegat
    public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, CodedInputStream in) throws IOException {
       ReadMessageContext messageContext = reader.pushContext(fieldName, this, in);
 
-      T a = marshaller.readFrom(reader);
+      T message = marshaller.readFrom(reader);
 
       messageContext.unknownFieldSet.readAllFields(in);
 
-      if (a instanceof Message && !messageContext.unknownFieldSet.isEmpty()) {
-         ((Message) a).setUnknownFieldSet(messageContext.unknownFieldSet);
+      if (!messageContext.unknownFieldSet.isEmpty()) {
+         if (marshaller instanceof UnknownFieldSetHandler) {
+            ((UnknownFieldSetHandler<T>) marshaller).setUnknownFieldSet(message, messageContext.unknownFieldSet);
+         } else if (message instanceof Message) {
+            ((Message) message).setUnknownFieldSet(messageContext.unknownFieldSet);
+         }
       }
 
       // check that all required fields were seen in the stream, even if not actually read (because are unknown)
@@ -112,6 +119,6 @@ public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegat
       }
 
       reader.popContext();
-      return a;
+      return message;
    }
 }

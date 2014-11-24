@@ -37,7 +37,7 @@ public enum Type {
       this.wireType = wireType;
    }
 
-   JavaType getJavaType() {
+   public JavaType getJavaType() {
       return javaType;
    }
 

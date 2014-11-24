@@ -57,7 +57,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       this.type = type;
    }
 
-   public Descriptor getMessageType() {
+   public Descriptor getMessageType() { //todo [anistor] rename to getMessageDescriptor for consistency with getEnumDescriptor
       return messageType;
    }
 

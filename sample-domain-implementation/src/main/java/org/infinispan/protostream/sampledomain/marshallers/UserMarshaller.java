@@ -1,6 +1,8 @@
 package org.infinispan.protostream.sampledomain.marshallers;
 
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.UnknownFieldSet;
+import org.infinispan.protostream.UnknownFieldSetHandler;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 
@@ -13,7 +15,7 @@ import java.util.Set;
 /**
  * @author anistor@redhat.com
  */
-public class UserMarshaller implements MessageMarshaller<User> {
+public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetHandler<User> {
 
    @Override
    public String getTypeName() {
@@ -61,5 +63,15 @@ public class UserMarshaller implements MessageMarshaller<User> {
       writer.writeInt("age", user.getAge());
       writer.writeObject("gender", user.getGender(), User.Gender.class);
       writer.writeString("notes", user.getNotes());
+   }
+
+   @Override
+   public UnknownFieldSet getUnknownFieldSet(User user) {
+      return user.getUnknownFieldSet();
+   }
+
+   @Override
+   public void setUnknownFieldSet(User user, UnknownFieldSet unknownFieldSet) {
+      user.setUnknownFieldSet(unknownFieldSet);
    }
 }

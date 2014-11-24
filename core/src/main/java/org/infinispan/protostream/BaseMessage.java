@@ -6,7 +6,9 @@ package org.infinispan.protostream;
  *
  * @author anistor@redhat.com
  * @since 1.0
+ * @deprecated see {@link UnknownFieldSetHandler}
  */
+@Deprecated
 public abstract class BaseMessage implements Message {
 
    protected UnknownFieldSet unknownFieldSet;
