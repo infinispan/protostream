@@ -21,7 +21,7 @@ final class ListMapper<S, T> implements Mapper<List<S>, List<T>> {
 
    @Override
    public List<T> map(List<S> input) {
-      List<T> mapped = new LinkedList<>();
+      List<T> mapped = new LinkedList<T>();
       for (S elem : input) {
          mapped.add(mapper.map(elem));
       }
@@ -29,6 +29,6 @@ final class ListMapper<S, T> implements Mapper<List<S>, List<T>> {
    }
 
    public static <S, T> ListMapper<S, T> forMapper(Mapper<S, T> elementMapper) {
-      return new ListMapper<>(elementMapper);
+      return new ListMapper<S, T>(elementMapper);
    }
 }

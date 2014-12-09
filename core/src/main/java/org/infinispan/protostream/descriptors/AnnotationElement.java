@@ -154,7 +154,7 @@ public abstract class AnnotationElement {
 
       @Override
       public List<Object> getValue() {
-         List<Object> valueList = new ArrayList<>(values.size());
+         List<Object> valueList = new ArrayList<Object>(values.size());
          for (Value val : values) {
             valueList.add(val.getValue());
          }

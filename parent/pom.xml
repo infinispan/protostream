@@ -100,6 +100,7 @@
         <version.maven.surefire>2.16</version.maven.surefire>
         <version.maven.bundle>2.4.0</version.maven.bundle>
         <version.maven.buildhelper>1.8</version.maven.buildhelper>
+        <version.maven.animalsniffer>1.9</version.maven.animalsniffer>
 
         <version.protobuf>2.6.0</version.protobuf>
         <version.junit>4.11</version.junit>
@@ -234,8 +235,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${version.maven.compiler}</version>
                     <configuration>
-                        <source>1.7</source>
-                        <target>1.7</target>
+                        <source>1.6</source>
+                        <target>1.6</target>
                         <encoding>UTF-8</encoding>
                     </configuration>
                 </plugin>
@@ -272,7 +273,31 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
-                   <version>${version.maven.buildhelper}</version>
+                    <version>${version.maven.buildhelper}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>animal-sniffer-maven-plugin</artifactId>
+                    <version>${version.maven.animalsniffer}</version>
+                    <configuration>
+                        <signature>
+                            <groupId>org.codehaus.mojo.signature</groupId>
+                            <artifactId>java16</artifactId>
+                            <version>1.0</version>
+                        </signature>
+                        <ignores>
+                            <ignore>sun.misc.Unsafe</ignore>
+                        </ignores>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <phase>process-classes</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>

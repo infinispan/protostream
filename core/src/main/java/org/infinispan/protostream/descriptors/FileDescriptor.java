@@ -38,9 +38,9 @@ public final class FileDescriptor {
    private final List<FieldDescriptor> extensions;
    private final List<EnumDescriptor> enumTypes;
    private final List<ExtendDescriptor> extendTypes;
-   private final Map<String, ExtendDescriptor> extendDescriptors = new HashMap<>();
+   private final Map<String, ExtendDescriptor> extendDescriptors = new HashMap<String, ExtendDescriptor>();
 
-   private final Map<String, FileDescriptor> dependants = new HashMap<>();
+   private final Map<String, FileDescriptor> dependants = new HashMap<String, FileDescriptor>();
 
    public void setConfiguration(Configuration configuration) {
       this.configuration = configuration;
@@ -55,17 +55,17 @@ public final class FileDescriptor {
    /**
     * All types defined in this file or visible from imported files.
     */
-   private final Map<String, GenericDescriptor> typeRegistry = new HashMap<>();
+   private final Map<String, GenericDescriptor> typeRegistry = new HashMap<String, GenericDescriptor>();
 
    /**
     * Types defined in this file or defined in publicly imported files.
     */
-   private final Map<String, GenericDescriptor> exportedTypes = new HashMap<>();
+   private final Map<String, GenericDescriptor> exportedTypes = new HashMap<String, GenericDescriptor>();
 
    /**
     * Types defined in this file.
     */
-   private final Map<String, GenericDescriptor> types = new HashMap<>();
+   private final Map<String, GenericDescriptor> types = new HashMap<String, GenericDescriptor>();
 
    private FileDescriptor(Builder builder) {
       this.name = builder.name;
@@ -202,8 +202,8 @@ public final class FileDescriptor {
                                                Map<String, GenericDescriptor> allTypes,
                                                Set<String> processedFiles,
                                                List<String> dependencies) throws DescriptorParserException {
-      List<FileDescriptor> fileDescriptors = new ArrayList<>(dependencies.size());
-      Set<String> dependencySet = new HashSet<>(dependencies);
+      List<FileDescriptor> fileDescriptors = new ArrayList<FileDescriptor>(dependencies.size());
+      Set<String> dependencySet = new HashSet<String>(dependencies);
       for (String dependency : dependencySet) {
          FileDescriptor fd = fileDescriptorMap.get(dependency);
          if (fd == null) {
@@ -356,8 +356,8 @@ public final class FileDescriptor {
 
       private String name;
       private String packageName;
-      private List<String> dependencies = new ArrayList<>();
-      private List<String> publicDependencies = new ArrayList<>();
+      private List<String> dependencies = new ArrayList<String>();
+      private List<String> publicDependencies = new ArrayList<String>();
       private List<FieldDescriptor> extensions;
       private List<Option> options;
       private List<EnumDescriptor> enumTypes;

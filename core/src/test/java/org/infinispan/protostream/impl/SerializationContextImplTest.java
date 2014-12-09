@@ -39,8 +39,8 @@ public class SerializationContextImplTest {
             "   required b.A ma = 1;\n" +
             "}";
 
-      final Map<String, DescriptorParserException> failed = new HashMap<>();
-      final Set<String> successful = new HashSet<>();
+      final Map<String, DescriptorParserException> failed = new HashMap<String, DescriptorParserException>();
+      final Set<String> successful = new HashSet<String>();
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource()
             .addProtoFile("file1.proto", file1)
             .addProtoFile("file2.proto", file2)

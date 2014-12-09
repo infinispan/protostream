@@ -40,13 +40,13 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final DescriptorParser parser;
 
-   private final Map<String, FileDescriptor> fileDescriptors = new HashMap<>();
+   private final Map<String, FileDescriptor> fileDescriptors = new HashMap<String, FileDescriptor>();
 
-   private final Map<String, GenericDescriptor> genericDescriptors = new HashMap<>();
+   private final Map<String, GenericDescriptor> genericDescriptors = new HashMap<String, GenericDescriptor>();
 
-   private final Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<>();
+   private final Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<String, BaseMarshallerDelegate<?>>();
 
-   private final Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<>();
+   private final Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<Class<?>, BaseMarshallerDelegate<?>>();
 
    public SerializationContextImpl(Configuration configuration) {
       if (configuration == null) {
@@ -64,7 +64,7 @@ public final class SerializationContextImpl implements SerializationContext {
    public Map<String, FileDescriptor> getFileDescriptors() {
       readLock.lock();
       try {
-         return new HashMap<>(fileDescriptors);
+         return new HashMap<String, FileDescriptor>(fileDescriptors);
       } finally {
          readLock.unlock();
       }

@@ -70,9 +70,9 @@ public final class Configuration {
 
       private boolean logOutOfSequenceWrites = true;
 
-      private final Map<String, AnnotationConfig.Builder<Descriptor>> messageAnnotationBuilders = new HashMap<>();
-      private final Map<String, AnnotationConfig.Builder<FieldDescriptor>> fieldAnnotationBuilders = new HashMap<>();
-      private final Map<String, AnnotationConfig.Builder<EnumDescriptor>> enumAnnotationBuilders = new HashMap<>();
+      private final Map<String, AnnotationConfig.Builder<Descriptor>> messageAnnotationBuilders = new HashMap<String, AnnotationConfig.Builder<Descriptor>>();
+      private final Map<String, AnnotationConfig.Builder<FieldDescriptor>> fieldAnnotationBuilders = new HashMap<String, AnnotationConfig.Builder<FieldDescriptor>>();
+      private final Map<String, AnnotationConfig.Builder<EnumDescriptor>> enumAnnotationBuilders = new HashMap<String, AnnotationConfig.Builder<EnumDescriptor>>();
 
       public Builder() {
       }
@@ -96,37 +96,37 @@ public final class Configuration {
       }
 
       public AnnotationConfig.Builder<Descriptor> messageAnnotation(String annotationName) {
-         AnnotationConfig.Builder<Descriptor> builder = new AnnotationConfig.Builder<>(this, annotationName);
+         AnnotationConfig.Builder<Descriptor> builder = new AnnotationConfig.Builder<Descriptor>(this, annotationName);
          messageAnnotationBuilders.put(annotationName, builder);
          return builder;
       }
 
       public AnnotationConfig.Builder<EnumDescriptor> enumAnnotation(String annotationName) {
-         AnnotationConfig.Builder<EnumDescriptor> builder = new AnnotationConfig.Builder<>(this, annotationName);
+         AnnotationConfig.Builder<EnumDescriptor> builder = new AnnotationConfig.Builder<EnumDescriptor>(this, annotationName);
          enumAnnotationBuilders.put(annotationName, builder);
          return builder;
       }
 
       public AnnotationConfig.Builder<FieldDescriptor> fieldAnnotation(String annotationName) {
-         AnnotationConfig.Builder<FieldDescriptor> builder = new AnnotationConfig.Builder<>(this, annotationName);
+         AnnotationConfig.Builder<FieldDescriptor> builder = new AnnotationConfig.Builder<FieldDescriptor>(this, annotationName);
          fieldAnnotationBuilders.put(annotationName, builder);
          return builder;
       }
 
       public Configuration build() {
-         Map<String, AnnotationConfig<Descriptor>> messageAnnotations = new HashMap<>(messageAnnotationBuilders.size());
+         Map<String, AnnotationConfig<Descriptor>> messageAnnotations = new HashMap<String, AnnotationConfig<Descriptor>>(messageAnnotationBuilders.size());
          for (AnnotationConfig.Builder<Descriptor> annotationBuilder : messageAnnotationBuilders.values()) {
             AnnotationConfig<Descriptor> annotationConfig = annotationBuilder.buildAnnotationConfig();
             messageAnnotations.put(annotationConfig.name(), annotationConfig);
          }
 
-         Map<String, AnnotationConfig<FieldDescriptor>> fieldAnnotations = new HashMap<>(fieldAnnotationBuilders.size());
+         Map<String, AnnotationConfig<FieldDescriptor>> fieldAnnotations = new HashMap<String, AnnotationConfig<FieldDescriptor>>(fieldAnnotationBuilders.size());
          for (AnnotationConfig.Builder<FieldDescriptor> annotationBuilder : fieldAnnotationBuilders.values()) {
             AnnotationConfig<FieldDescriptor> annotationConfig = annotationBuilder.buildAnnotationConfig();
             fieldAnnotations.put(annotationConfig.name(), annotationConfig);
          }
 
-         Map<String, AnnotationConfig<EnumDescriptor>> enumAnnotations = new HashMap<>(enumAnnotationBuilders.size());
+         Map<String, AnnotationConfig<EnumDescriptor>> enumAnnotations = new HashMap<String, AnnotationConfig<EnumDescriptor>>(enumAnnotationBuilders.size());
          for (AnnotationConfig.Builder<EnumDescriptor> annotationBuilder : enumAnnotationBuilders.values()) {
             AnnotationConfig<EnumDescriptor> annotationConfig = annotationBuilder.buildAnnotationConfig();
             enumAnnotations.put(annotationConfig.name(), annotationConfig);

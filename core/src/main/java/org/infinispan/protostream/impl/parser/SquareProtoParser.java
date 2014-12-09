@@ -39,7 +39,7 @@ public final class SquareProtoParser implements DescriptorParser {
       Map<String, FileDescriptor> fileDescriptorMap = parse(fileDescriptorSource);
 
       // resolve imports and types
-      Map<String, GenericDescriptor> types = new HashMap<>();
+      Map<String, GenericDescriptor> types = new HashMap<String, GenericDescriptor>();
       for (FileDescriptor fileDescriptor : fileDescriptorMap.values()) {
          fileDescriptor.resolveDependencies(null, fileDescriptorMap, types);
          types.putAll(fileDescriptor.getTypes());
@@ -50,7 +50,7 @@ public final class SquareProtoParser implements DescriptorParser {
    @Override
    public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws DescriptorParserException {
       Map<String, char[]> input = fileDescriptorSource.getFileDescriptors();
-      Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<>(input.size());
+      Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<String, FileDescriptor>(input.size());
       for (Map.Entry<String, char[]> entry : input.entrySet()) {
          try {
             ProtoFile protoFile = ProtoSchemaParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));

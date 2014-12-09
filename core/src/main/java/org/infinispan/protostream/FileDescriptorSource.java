@@ -24,7 +24,7 @@ public final class FileDescriptorSource {
    private static final String ENCODING = "UTF-8";
    private static final int BUFFER_SIZE = 1024;
 
-   private final Map<String, char[]> descriptors = new ConcurrentHashMap<>();
+   private final Map<String, char[]> descriptors = new ConcurrentHashMap<String, char[]>();
 
    private ProgressCallback progressCallback;
 
@@ -127,14 +127,20 @@ public final class FileDescriptorSource {
    }
 
    private char[] toCharArray(File file) throws IOException {
-      try (FileInputStream is = new FileInputStream(file)) {
+      FileInputStream is = new FileInputStream(file);
+      try {
          return toCharArray(is);
+      } finally {
+         is.close();
       }
    }
 
    private char[] toCharArray(InputStream is) throws IOException {
-      try (Reader reader = new InputStreamReader(is, ENCODING)) {
+      Reader reader = new InputStreamReader(is, ENCODING);
+      try {
          return toCharArray(reader);
+      } finally {
+         reader.close();
       }
    }
 
