@@ -24,7 +24,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    private final List<Option> options;
    private final String typeName;
    private final String defaultValue;
-   private final Map<String, Object> optionByName = new HashMap<>();
+   private final Map<String, Object> optionByName = new HashMap<String, Object>();
    private final boolean isExtension;
    private Type type;
    private FileDescriptor fileDescriptor;

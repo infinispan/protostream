@@ -39,7 +39,7 @@ final class Mappers {
 
    @SuppressWarnings(value = "unchecked")
    static <T> List<T> filter(List<? super T> input, Class<T> ofType) {
-      List<T> ts = new LinkedList<>();
+      List<T> ts = new LinkedList<T>();
       for (Object elem : input) {
          if (ofType.isAssignableFrom(elem.getClass())) {
             ts.add((T) elem);

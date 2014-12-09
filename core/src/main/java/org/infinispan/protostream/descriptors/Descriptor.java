@@ -23,8 +23,8 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
    private final List<FieldDescriptor> fields;
    private final List<Descriptor> nestedTypes;
    private final List<EnumDescriptor> enumTypes;
-   private final Map<Integer, FieldDescriptor> fieldsByNumber = new HashMap<>();
-   private final Map<String, FieldDescriptor> fieldsByName = new HashMap<>();
+   private final Map<Integer, FieldDescriptor> fieldsByNumber = new HashMap<Integer, FieldDescriptor>();
+   private final Map<String, FieldDescriptor> fieldsByName = new HashMap<String, FieldDescriptor>();
    private FileDescriptor fileDescriptor;
    private Descriptor containingType;
 
@@ -128,7 +128,7 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       private String name, fullName;
       private List<Option> options;
       private List<FieldDescriptor> fields;
-      private List<Descriptor> nestedTypes = new LinkedList<>();
+      private List<Descriptor> nestedTypes = new LinkedList<Descriptor>();
       private List<EnumDescriptor> enumTypes;
       private String documentation;
 

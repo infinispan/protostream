@@ -27,7 +27,9 @@ public final class ProtobufUtil {
 
       try {
          serializationContext.registerProtoFiles(FileDescriptorSource.fromResources(WRAPPING_DEFINITIONS_RES));
-      } catch (IOException | DescriptorParserException e) {
+      } catch (IOException e) {
+         throw new RuntimeException("Failed to initialize serialization context", e);
+      } catch (DescriptorParserException e) {
          throw new RuntimeException("Failed to initialize serialization context", e);
       }
 

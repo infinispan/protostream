@@ -154,7 +154,7 @@ public final class AnnotationAttributeConfig {
                case ANNOTATION:
                case IDENTIFIER:
                case STRING:
-                  allowedValuesSet = new HashSet<>(allowedValues.length);
+                  allowedValuesSet = new HashSet<String>(allowedValues.length);
                   for (String v : allowedValues) {
                      allowedValuesSet.add(v);
                   }

@@ -22,7 +22,7 @@ public final class AnnotationParser {
    }
 
    public Map<String, AnnotationElement.Annotation> parse() throws AnnotationParserException {
-      Map<String, AnnotationElement.Annotation> annotations = new LinkedHashMap<>();
+      Map<String, AnnotationElement.Annotation> annotations = new LinkedHashMap<String, AnnotationElement.Annotation>();
       while (lexer.token != AnnotationTokens.EOF) {
          AnnotationElement.Annotation annotation = parseAnnotation();
          if (annotations.containsKey(annotation.getName())) {
@@ -75,7 +75,7 @@ public final class AnnotationParser {
    }
 
    private Map<String, AnnotationElement.Attribute> parseAttributes() {
-      LinkedHashMap<String, AnnotationElement.Attribute> members = new LinkedHashMap<>();
+      LinkedHashMap<String, AnnotationElement.Attribute> members = new LinkedHashMap<String, AnnotationElement.Attribute>();
       if (lexer.token == AnnotationTokens.LPAREN) {
          int start = lexer.mark();
          expect(AnnotationTokens.LPAREN);
@@ -226,7 +226,7 @@ public final class AnnotationParser {
       int start = lexer.mark();
       long pos = lexer.pos;
       expect(AnnotationTokens.LBRACE);
-      List<AnnotationElement.Value> values = new LinkedList<>();
+      List<AnnotationElement.Value> values = new LinkedList<AnnotationElement.Value>();
       while (lexer.token != AnnotationTokens.RBRACE && lexer.token != AnnotationTokens.EOF) {
          values.add(parseValue(start));
          start = lexer.mark();

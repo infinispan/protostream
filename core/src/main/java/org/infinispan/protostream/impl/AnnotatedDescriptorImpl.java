@@ -53,7 +53,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
          if (documentation != null) {
             AnnotationParser parser = new AnnotationParser(documentation);
             Map<String, AnnotationElement.Annotation> _annotations = parser.parse();
-            Map<String, Object> _parsedAnnotations = new LinkedHashMap<>();
+            Map<String, Object> _parsedAnnotations = new LinkedHashMap<String, Object>();
             for (AnnotationElement.Annotation annotation : _annotations.values()) {
                AnnotationConfig annotationConfig = getAnnotationConfig(annotation.getName());
                if (annotationConfig == null) {
