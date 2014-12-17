@@ -2,7 +2,6 @@ package org.infinispan.protostream.impl;
 
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.EnumMarshaller;
@@ -10,6 +9,7 @@ import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author anistor@redhat.com
+ * @since 1.0
  */
 public final class SerializationContextImpl implements SerializationContext {
 
@@ -173,7 +174,7 @@ public final class SerializationContextImpl implements SerializationContext {
       // we try to validate first that a message descriptor exists
       BaseMarshallerDelegate marshallerDelegate;
       if (marshaller instanceof EnumMarshaller) {
-         if (!Enum.class.isAssignableFrom(marshaller.getJavaClass())) {
+         if (!marshaller.getJavaClass().isEnum()) {
             throw new IllegalArgumentException("Invalid enum marshaller (the produced class is not an Enum) : " + marshaller);
          }
          EnumDescriptor enumDescriptor = getEnumDescriptor(marshaller.getTypeName());
