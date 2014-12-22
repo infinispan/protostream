@@ -10,16 +10,12 @@ import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.impl.Log;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-//todo [anistor] revise all exception messages to better indicate the cause AND location (class +field/method)
-
-//todo [anistor] need to detect type definition cycles?
-
-//todo [anistor] generate debug comments in proto schema (list of initial classes and extra detected classes
 
 /**
  * @author anistor@redhat.com
@@ -51,35 +47,45 @@ public final class ProtoSchemaGenerator {
    }
 
    public String generateAndRegister() throws ProtoSchemaBuilderException, IOException {
+      // scan initial classes
       for (Class<?> c : classes) {
-         ProtoTypeMetadata protoTypeMetadata;
-         if (c.isEnum()) {
-            ProtoEnumMetadataScanner enumScanner = new ProtoEnumMetadataScanner((Class<? extends Enum>) c);
-            protoTypeMetadata = enumScanner.getProtoEnumMetadata();
-         } else {
-            ProtoMessageMetadataScanner messageScanner = new ProtoMessageMetadataScanner(this, serializationContext, c);
-            protoTypeMetadata = messageScanner.getProtoMessageMetadata();
-         }
-         defineType(c, protoTypeMetadata);
+         ProtoTypeMetadata protoTypeMetadata = c.isEnum() ? new ProtoEnumTypeMetadata((Class<? extends Enum>) c) : new ProtoMessageTypeMetadata(this, c);
+         defineType(protoTypeMetadata);
       }
 
-      IndentWriter iw = new IndentWriter();
-      iw.append("// ").append(fileName).append("\n");
-      if (packageName != null) {
-         iw.append("package ").append(packageName).append(";\n\n");
-      }
-      for (String dependency : imports) {
-         iw.append("import \"").append(dependency).append("\";\n");
+      while (true) {
+         List<ProtoTypeMetadata> meta = new ArrayList<ProtoTypeMetadata>(metadataByClass.values());
+         for (ProtoTypeMetadata m : meta) {
+            m.scanMemberAnnotations();
+         }
+         if (metadataByClass.size() == meta.size()) {
+            break;
+         }
       }
 
       // establish the outer-inner relationship between definitions
       for (Class<?> c : metadataByClass.keySet()) {
-         ProtoTypeMetadata m = metadataByClass.get(c);
          ProtoMessageTypeMetadata outer = findOuterType(c);
          if (outer != null) {
+            ProtoTypeMetadata m = metadataByClass.get(c);
             m.setOuterType(outer);
             outer.addInnerType(m);
          }
+      }
+
+      IndentWriter iw = new IndentWriter();
+      iw.append("// File name: ").append(fileName).append('\n');
+      iw.append("// Scanned classes:\n");
+      for (ProtoTypeMetadata ptm : metadataByClass.values()) {
+         if (ptm instanceof ProtoEnumTypeMetadata || ptm instanceof ProtoMessageTypeMetadata) {
+            iw.append("//   ").append(ptm.getJavaClass().getCanonicalName()).append('\n');
+         }
+      }
+      if (packageName != null) {
+         iw.append("\npackage ").append(packageName).append(";\n\n");
+      }
+      for (String dependency : imports) {
+         iw.append("import \"").append(dependency).append("\";\n");
       }
 
       // generate type definitions
@@ -108,13 +114,16 @@ public final class ProtoSchemaGenerator {
       ProtoTypeMetadata outer = null;
       Class<?> ec = c.getEnclosingClass();
       while (ec != null) {
+         if (ec.isEnum()) {
+            throw new ProtoSchemaBuilderException("Classes defined inside an Enum are not allowed : " + c.getCanonicalName());
+         }
          outer = metadataByClass.get(ec);
          if (outer != null) {
             break;
          }
          ec = ec.getEnclosingClass();
       }
-      return (ProtoMessageTypeMetadata) outer; //todo [anistor] a class defined inside an enum could lead to a CCE here. this is not a valid case anyway, but the error should be presented to the user more gracefully
+      return (ProtoMessageTypeMetadata) outer;
    }
 
    private void generateMarshallers() throws Exception {
@@ -134,7 +143,7 @@ public final class ProtoSchemaGenerator {
       }
    }
 
-   ProtoTypeMetadata scanAnnotations(Class<?> javaType) {
+   protected ProtoTypeMetadata scanAnnotations(Class<?> javaType) {
       ProtoTypeMetadata protoTypeMetadata = metadataByClass.get(javaType);
       if (protoTypeMetadata != null) {
          // already seen
@@ -151,24 +160,22 @@ public final class ProtoSchemaGenerator {
             imports.add(serializationContext.getMessageDescriptor(m.getTypeName()).getFileDescriptor().getName());
          }
       } else if (javaType.isEnum()) {
-         ProtoEnumMetadataScanner enumScanner = new ProtoEnumMetadataScanner((Class<? extends Enum>) javaType);
-         protoTypeMetadata = enumScanner.getProtoEnumMetadata();
+         protoTypeMetadata = new ProtoEnumTypeMetadata((Class<? extends Enum>) javaType);
       } else {
-         ProtoMessageMetadataScanner messageScanner = new ProtoMessageMetadataScanner(this, serializationContext, javaType);
-         protoTypeMetadata = messageScanner.getProtoMessageMetadata();
+         protoTypeMetadata = new ProtoMessageTypeMetadata(this, javaType);
       }
 
-      defineType(javaType, protoTypeMetadata);
+      defineType(protoTypeMetadata);
       return protoTypeMetadata;
    }
 
-   private void defineType(Class<?> javaType, ProtoTypeMetadata protoTypeMetadata) {
+   private void defineType(ProtoTypeMetadata protoTypeMetadata) {
       String fullName = protoTypeMetadata.getFullName();
       ProtoTypeMetadata existing = metadataByTypeName.get(fullName);
       if (existing != null) {
-         throw new ProtoSchemaBuilderException("Duplicate type definition. Type '" + fullName + "' is defined by " + javaType + " and by " + existing.getJavaClass());
+         throw new ProtoSchemaBuilderException("Duplicate type definition. Type '" + fullName + "' is defined by " + protoTypeMetadata.getJavaClass() + " and by " + existing.getJavaClass());
       }
       metadataByTypeName.put(fullName, protoTypeMetadata);
-      metadataByClass.put(javaType, protoTypeMetadata);
+      metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);
    }
 }

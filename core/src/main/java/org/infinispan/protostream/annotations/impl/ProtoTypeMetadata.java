@@ -18,12 +18,12 @@ class ProtoTypeMetadata {
    protected ProtoMessageTypeMetadata outerType;
 
    public ProtoTypeMetadata(BaseMarshaller marshaller) {
-      this(null, marshaller, marshaller.getTypeName(), marshaller.getJavaClass());
+      this.marshaller = marshaller;
+      this.name = marshaller.getTypeName();
+      this.javaClass = marshaller.getJavaClass();
    }
 
-   protected ProtoTypeMetadata(ProtoMessageTypeMetadata outerType, BaseMarshaller marshaller, String name, Class<?> javaClass) {
-      this.outerType = outerType;
-      this.marshaller = marshaller;
+   protected ProtoTypeMetadata(String name, Class<?> javaClass) {
       this.name = name;
       this.javaClass = javaClass;
    }
@@ -63,7 +63,7 @@ class ProtoTypeMetadata {
       return outerType;
    }
 
-   public void setOuterType(ProtoMessageTypeMetadata outerType) {
+   protected void setOuterType(ProtoMessageTypeMetadata outerType) {
       this.outerType = outerType;
    }
 
@@ -72,5 +72,10 @@ class ProtoTypeMetadata {
    }
 
    public void generateProto(IndentWriter iw) {
+      // subclasses must override this
+   }
+
+   public void scanMemberAnnotations() {
+      // subclasses must override this
    }
 }

@@ -18,8 +18,6 @@ import static org.junit.Assert.assertTrue;
 
 //todo [anistor] replace IllegalStateException with a real exception and revise all exception message to better indicate the cause (class, field)
 
-//todo [anistor] detect type definition cycles
-
 //todo [anistor] generate debug comments in proto schema (list of initial classes and extra detected classes, source class for each proto definition, source field (+class) and eventual get/set for each proto field)
 
 /**

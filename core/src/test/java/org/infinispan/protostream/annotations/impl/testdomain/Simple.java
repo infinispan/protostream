@@ -10,13 +10,16 @@ import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
  */
 public class Simple {
 
+   @ProtoField(number = 1111)
+   public Simple Simple;
+
    @ProtoField(number = 1, required = true) //todo [anistor] should be possible not to require required in this case?
    public float afloat;
 
    @ProtoField(number = 2)
    public Integer anInteger;
 
-   @ProtoField(number = 314, name = "my_enum_field")
+   @ProtoField(number = 314, name = "my_enum_field", defaultValue = "AX")
    public TestEnum myEnumField;
 
    @ProtoUnknownFieldSet

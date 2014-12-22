@@ -1,6 +1,14 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.annotations.ProtoEnum;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.impl.Log;
+
+import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author anistor@redhat.com
@@ -8,21 +16,72 @@ import java.util.Map;
  */
 final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
-   private final Map<Integer, ProtoEnumValueMetadata> members;
+   private static final Log log = Log.LogFactory.getLog(ProtoEnumTypeMetadata.class);
 
-   public ProtoEnumTypeMetadata(ProtoMessageTypeMetadata outerType, Class<? extends Enum> enumClass, String name, Map<Integer, ProtoEnumValueMetadata> members) {
-      super(outerType, null, name, enumClass);
-      this.members = members;
+   private Map<Integer, ProtoEnumValueMetadata> membersByNumber;
+
+   private Map<String, ProtoEnumValueMetadata> membersByName;
+
+   public ProtoEnumTypeMetadata(Class<? extends Enum> enumClass) {
+      super(getProtoName(enumClass), enumClass);
+   }
+
+   private static String getProtoName(Class<? extends Enum> enumClass) {
+      ProtoEnum annotation = enumClass.getAnnotation(ProtoEnum.class);
+      return annotation == null || annotation.name().isEmpty() ? enumClass.getSimpleName() : annotation.name();
+   }
+
+   @Override
+   public void scanMemberAnnotations() {
+      if (membersByNumber == null) {
+         membersByNumber = new TreeMap<Integer, ProtoEnumValueMetadata>();
+         for (Field f : javaClass.getDeclaredFields()) {
+            if (f.isEnumConstant()) {
+               ProtoEnumValue annotation = f.getAnnotation(ProtoEnumValue.class);
+               if (annotation == null) {
+                  throw new ProtoSchemaBuilderException("Enum members must have the @ProtoEnumValue annotation: " + javaClass.getName() + "." + f.getName());
+               }
+               if (membersByNumber.containsKey(annotation.number())) {
+                  throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + annotation.number() + " on annotation member: " + javaClass.getName() + "." + f.getName());
+               }
+               String name = annotation.name();
+               if (name.isEmpty()) {
+                  name = f.getName();
+               }
+               Enum e = null;
+               try {
+                  e = (Enum) f.get(javaClass);
+               } catch (IllegalAccessException iae) {
+                  // not really possible
+               }
+               membersByNumber.put(annotation.number(), new ProtoEnumValueMetadata(annotation.number(), name, e));
+            }
+         }
+         if (membersByNumber.isEmpty()) {
+            throw new ProtoSchemaBuilderException("Members of enum " + javaClass.getCanonicalName() + " must be @ProtoEnum annotated");
+         }
+         membersByName = new HashMap<String, ProtoEnumValueMetadata>(membersByNumber.size());
+         for (ProtoEnumValueMetadata enumVal : membersByNumber.values()) {
+            membersByName.put(enumVal.getProtoName(), enumVal);
+         }
+      }
    }
 
    public Map<Integer, ProtoEnumValueMetadata> getMembers() {
-      return members;
+      scanMemberAnnotations();
+      return membersByNumber;
+   }
+
+   public ProtoEnumValueMetadata getMemberByName(String name) {
+      scanMemberAnnotations();
+      return membersByName.get(name);
    }
 
    @Override
    public void generateProto(IndentWriter iw) {
+      scanMemberAnnotations();
       iw.append("\nenum ").append(name).append(" {\n");
-      for (ProtoEnumValueMetadata m : members.values()) {
+      for (ProtoEnumValueMetadata m : membersByNumber.values()) {
          iw.append("   ").append(m.getProtoName()).append(" = ").append(String.valueOf(m.getNumber())).append(";\n");
       }
       iw.append("}\n");

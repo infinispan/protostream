@@ -19,14 +19,10 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-// TODO check which java classfile limits impose limits on the supported protobuf schema
-// TODO ensure fields are written in ascending order
-// TODO what do we do with non-repeated fields that come repeated from stream?
-
-// TODO bounded streams should be checked to be exactly as the size indicated
-
-// TODO implement extensions registry?, MessageSet support?, packed fields?
-// TODO implement default values on reading. can a required field have a default value?
+// TODO [anistor] check which java classfile limits impose limits on the size of the supported protobuf schema
+// TODO [anistor] what do we do with non-repeated fields that come repeated from stream?
+// TODO [anistor] bounded streams should be checked to be exactly as the size indicated
+// TODO [anistor] implement extensions registry?, MessageSet support?, packed fields?
 
 /**
  * @author anistor@readhat.com
@@ -344,7 +340,13 @@ final class MarshallerCodeGenerator {
          if (fieldMetadata.getDefaultValue() != null) {
             iw.append("if (!").append(fieldMetadata.getName()).append("WasSet) {\n");
             iw.inc();
-            String v = fieldMetadata.getDefaultValue().toString();
+            String v;
+            if (fieldMetadata.getDefaultValue() instanceof ProtoEnumValueMetadata) {
+               Enum enumValue = ((ProtoEnumValueMetadata) fieldMetadata.getDefaultValue()).getEnumValue();
+               v = enumValue.getDeclaringClass().getName() + "." + enumValue.name();
+            } else {
+               v = fieldMetadata.getDefaultValue().toString();
+            }
             if (fieldMetadata.isRepeated()) {
                iw.append("java.util.List c = o.").append(createGetter(fieldMetadata)).append(";\n");
                iw.append("if (c == null) { c = new ").append(fieldMetadata.getCollectionImplementation().getName()).append("(); o.").append(createSetter(fieldMetadata, "c")).append("; }\n");
