@@ -1,344 +1,346 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.infinispan.protostream</groupId>
-    <artifactId>parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+   <groupId>org.infinispan.protostream</groupId>
+   <artifactId>parent</artifactId>
+   <version>3.0.0-SNAPSHOT</version>
+   <packaging>pom</packaging>
 
-    <name>Parent for all ProtoStream modules</name>
-    <description>Parent for all ProtoStream modules</description>
-    <url>http://infinispan.org</url>
+   <name>Parent for all ProtoStream modules</name>
+   <description>Parent for all ProtoStream modules</description>
+   <url>http://infinispan.org</url>
 
-    <organization>
-        <name>JBoss, a division of Red Hat</name>
-        <url>http://www.jboss.org</url>
-    </organization>
+   <organization>
+      <name>JBoss, a division of Red Hat</name>
+      <url>http://www.jboss.org</url>
+   </organization>
 
-    <licenses>
-        <license>
-            <name>Apache License</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+   <licenses>
+      <license>
+         <name>Apache License</name>
+         <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+         <distribution>repo</distribution>
+      </license>
+   </licenses>
 
-    <developers>
-        <developer>
-            <id>placeholder</id>
-            <name>See http://infinispan.org for a complete list of contributors</name>
-        </developer>
-    </developers>
+   <developers>
+      <developer>
+         <id>placeholder</id>
+         <name>See http://infinispan.org for a complete list of contributors</name>
+      </developer>
+   </developers>
 
-    <mailingLists>
-        <mailingList>
-            <name>Infinispan Issues</name>
-            <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</subscribe>
-            <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</unsubscribe>
-            <post>infinispan-issues@lists.jboss.org</post>
-            <archive>http://lists.jboss.org/pipermail/infinispan-issues/</archive>
-        </mailingList>
-        <mailingList>
-            <name>Infinispan Developers</name>
-            <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
-            <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
-            <post>infinispan-dev@lists.jboss.org</post>
-            <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
-        </mailingList>
-    </mailingLists>
+   <mailingLists>
+      <mailingList>
+         <name>Infinispan Issues</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</unsubscribe>
+         <post>infinispan-issues@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-issues/</archive>
+      </mailingList>
+      <mailingList>
+         <name>Infinispan Developers</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
+         <post>infinispan-dev@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
+      </mailingList>
+   </mailingLists>
 
-    <scm>
-        <connection>scm:git:git@github.com:infinispan/protostream.git</connection>
-        <developerConnection>scm:git:git@github.com:infinispan/protostream.git</developerConnection>
-        <url>https://github.com/infinispan/protostream</url>
-    </scm>
+   <scm>
+      <connection>scm:git:git@github.com:infinispan/protostream.git</connection>
+      <developerConnection>scm:git:git@github.com:infinispan/protostream.git</developerConnection>
+      <url>https://github.com/infinispan/protostream</url>
+   </scm>
 
-    <issueManagement>
-        <system>jira</system>
-        <url>https://issues.jboss.org/browse/ISPN</url>
-    </issueManagement>
+   <issueManagement>
+      <system>jira</system>
+      <url>https://issues.jboss.org/browse/ISPN</url>
+   </issueManagement>
 
-    <ciManagement>
-        <system>TeamCity</system>
-        <url>http://ci.infinispan.org</url>
-        <notifiers>
-            <notifier>
-                <type>mail</type>
-                <address>infinispan-commits@lists.jboss.org</address>
-            </notifier>
-        </notifiers>
-    </ciManagement>
+   <ciManagement>
+      <system>TeamCity</system>
+      <url>http://ci.infinispan.org</url>
+      <notifiers>
+         <notifier>
+            <type>mail</type>
+            <address>infinispan-commits@lists.jboss.org</address>
+         </notifier>
+      </notifiers>
+   </ciManagement>
 
-    <distributionManagement>
-        <repository>
-            <id>jboss-releases-repository</id>
-            <name>JBoss Release Repository</name>
-            <url>${jboss.releases.repo.url}</url>
-        </repository>
+   <distributionManagement>
+      <repository>
+         <id>jboss-releases-repository</id>
+         <name>JBoss Release Repository</name>
+         <url>${jboss.releases.repo.url}</url>
+      </repository>
 
-        <snapshotRepository>
-            <id>jboss-snapshots-repository</id>
-            <name>JBoss Snapshot Repository</name>
-            <url>${jboss.snapshots.repo.url}</url>
-        </snapshotRepository>
-    </distributionManagement>
+      <snapshotRepository>
+         <id>jboss-snapshots-repository</id>
+         <name>JBoss Snapshot Repository</name>
+         <url>${jboss.snapshots.repo.url}</url>
+      </snapshotRepository>
+   </distributionManagement>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+   <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2</jboss.releases.repo.url>
-        <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots</jboss.snapshots.repo.url>
+      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2
+      </jboss.releases.repo.url>
+      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots
+      </jboss.snapshots.repo.url>
 
-        <version.maven.compiler>3.0</version.maven.compiler>
-        <version.maven.source>2.2.1</version.maven.source>
-        <version.maven.resources>2.6</version.maven.resources>
-        <version.maven.genjavadoc>0.5</version.maven.genjavadoc>
-        <version.maven.antrun>1.7</version.maven.antrun>
-        <version.maven.surefire>2.16</version.maven.surefire>
-        <version.maven.bundle>2.4.0</version.maven.bundle>
-        <version.maven.buildhelper>1.8</version.maven.buildhelper>
+      <version.maven.compiler>3.0</version.maven.compiler>
+      <version.maven.source>2.2.1</version.maven.source>
+      <version.maven.resources>2.6</version.maven.resources>
+      <version.maven.genjavadoc>0.5</version.maven.genjavadoc>
+      <version.maven.antrun>1.7</version.maven.antrun>
+      <version.maven.surefire>2.16</version.maven.surefire>
+      <version.maven.bundle>2.4.0</version.maven.bundle>
+      <version.maven.buildhelper>1.8</version.maven.buildhelper>
 
-        <version.protobuf>2.6.0</version.protobuf>
-        <version.junit>4.11</version.junit>
-        <version.jcipannotations>1.0</version.jcipannotations>
-        <version.fest.assertions>2.0M10</version.fest.assertions>
-        <version.protoparser>3.1.4</version.protoparser>
-        <version.jboss.logging>3.1.2.GA</version.jboss.logging>
-        <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
-        <version.log4j>1.2.16</version.log4j>
-        <version.jboss.marshalling>1.4.2.Final</version.jboss.marshalling>
-        <version.javassist>3.18.0-GA</version.javassist>
-    </properties>
+      <version.protobuf>2.6.0</version.protobuf>
+      <version.junit>4.11</version.junit>
+      <version.jcipannotations>1.0</version.jcipannotations>
+      <version.fest.assertions>2.0M10</version.fest.assertions>
+      <version.protoparser>3.1.4</version.protoparser>
+      <version.jboss.logging>3.1.2.GA</version.jboss.logging>
+      <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
+      <version.log4j>1.2.16</version.log4j>
+      <version.jboss.marshalling>1.4.2.Final</version.jboss.marshalling>
+      <version.javassist>3.18.1-GA</version.javassist>
+   </properties>
 
-    <repositories>
-        <repository>
-            <id>jboss-public-repository-group</id>
-            <name>JBoss Public Maven Repository Group</name>
-            <url>http://repository.jboss.org/nexus/content/groups/public</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </snapshots>
-        </repository>
-    </repositories>
+   <repositories>
+      <repository>
+         <id>jboss-public-repository-group</id>
+         <name>JBoss Public Maven Repository Group</name>
+         <url>http://repository.jboss.org/nexus/content/groups/public</url>
+         <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+         </releases>
+         <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+         </snapshots>
+      </repository>
+   </repositories>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>jboss-public-repository-group</id>
-            <name>JBoss Public Maven Repository Group</name>
-            <url>http://repository.jboss.org/nexus/content/groups/public</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-                <updatePolicy>never</updatePolicy>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
+   <pluginRepositories>
+      <pluginRepository>
+         <id>jboss-public-repository-group</id>
+         <name>JBoss Public Maven Repository Group</name>
+         <url>http://repository.jboss.org/nexus/content/groups/public</url>
+         <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+         </releases>
+         <snapshots>
+            <enabled>false</enabled>
+            <updatePolicy>never</updatePolicy>
+         </snapshots>
+      </pluginRepository>
+   </pluginRepositories>
 
-    <dependencyManagement>
-        <dependencies>
-           <dependency>
-              <groupId>${project.groupId}</groupId>
-              <artifactId>protostream</artifactId>
-              <version>${project.version}</version>
-           </dependency>
+   <dependencyManagement>
+      <dependencies>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>protostream</artifactId>
+            <version>${project.version}</version>
+         </dependency>
 
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>sample-domain-definition</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>sample-domain-definition</artifactId>
+            <version>${project.version}</version>
+         </dependency>
 
-            <dependency>
-                <groupId>log4j</groupId>
-                <artifactId>log4j</artifactId>
-                <version>${version.log4j}</version>
-            </dependency>
+         <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${version.log4j}</version>
+         </dependency>
 
-            <dependency>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging</artifactId>
-                <version>${version.jboss.logging}</version>
-            </dependency>
+         <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>${version.jboss.logging}</version>
+         </dependency>
 
-            <dependency>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging-processor</artifactId>
-                <version>${version.jboss.logging.processor}</version>
-                <scope>provided</scope>
-                <optional>true</optional>
-            </dependency>
+         <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
+            <version>${version.jboss.logging.processor}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
+         </dependency>
 
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>${version.protobuf}</version>
-            </dependency>
+         <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${version.protobuf}</version>
+         </dependency>
 
-            <dependency>
-                <groupId>com.squareup</groupId>
-                <artifactId>protoparser</artifactId>
-                <version>${version.protoparser}</version>
-            </dependency>
+         <dependency>
+            <groupId>com.squareup</groupId>
+            <artifactId>protoparser</artifactId>
+            <version>${version.protoparser}</version>
+         </dependency>
 
-            <dependency>
-                <groupId>org.javassist</groupId>
-                <artifactId>javassist</artifactId>
-                <version>${version.javassist}</version>
-            </dependency>
+         <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>${version.javassist}</version>
+         </dependency>
 
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>${version.junit}</version>
-                <scope>test</scope>
-            </dependency>
+         <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${version.junit}</version>
+            <scope>test</scope>
+         </dependency>
 
-            <dependency>
-                <groupId>net.jcip</groupId>
-                <artifactId>jcip-annotations</artifactId>
-                <version>${version.jcipannotations}</version>
-                <optional>true</optional>
-            </dependency>
+         <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <version>${version.jcipannotations}</version>
+            <optional>true</optional>
+         </dependency>
 
-            <dependency>
-                <groupId>org.easytesting</groupId>
-                <artifactId>fest-assert-core</artifactId>
-                <version>${version.fest.assertions}</version>
-                <scope>test</scope>
-            </dependency>
+         <dependency>
+            <groupId>org.easytesting</groupId>
+            <artifactId>fest-assert-core</artifactId>
+            <version>${version.fest.assertions}</version>
+            <scope>test</scope>
+         </dependency>
 
-            <dependency>
-                <groupId>org.jboss.marshalling</groupId>
-                <artifactId>jboss-marshalling</artifactId>
-                <version>${version.jboss.marshalling}</version>
-                <scope>test</scope>
-            </dependency>
+         <dependency>
+            <groupId>org.jboss.marshalling</groupId>
+            <artifactId>jboss-marshalling</artifactId>
+            <version>${version.jboss.marshalling}</version>
+            <scope>test</scope>
+         </dependency>
 
-           <dependency>
-              <groupId>org.jboss.marshalling</groupId>
-              <artifactId>jboss-marshalling-river</artifactId>
-              <version>${version.jboss.marshalling}</version>
-              <scope>test</scope>
-           </dependency>
-        </dependencies>
-    </dependencyManagement>
+         <dependency>
+            <groupId>org.jboss.marshalling</groupId>
+            <artifactId>jboss-marshalling-river</artifactId>
+            <version>${version.jboss.marshalling}</version>
+            <scope>test</scope>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
 
-    <build>
-        <pluginManagement>
+   <build>
+      <pluginManagement>
+         <plugins>
+            <plugin>
+               <artifactId>maven-compiler-plugin</artifactId>
+               <version>${version.maven.compiler}</version>
+               <configuration>
+                  <source>1.6</source>
+                  <target>1.6</target>
+                  <encoding>UTF-8</encoding>
+               </configuration>
+            </plugin>
+
+            <plugin>
+               <artifactId>maven-bundle-plugin</artifactId>
+               <version>${version.maven.bundle}</version>
+            </plugin>
+
+            <plugin>
+               <artifactId>maven-antrun-plugin</artifactId>
+               <version>${version.maven.antrun}</version>
+            </plugin>
+
+            <plugin>
+               <artifactId>maven-resources-plugin</artifactId>
+               <version>${version.maven.resources}</version>
+            </plugin>
+
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-surefire-report-plugin</artifactId>
+               <version>${version.maven.surefire}</version>
+               <executions>
+                  <execution>
+                     <phase>verify</phase>
+                     <goals>
+                        <goal>report</goal>
+                     </goals>
+                  </execution>
+               </executions>
+            </plugin>
+
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>build-helper-maven-plugin</artifactId>
+               <version>${version.maven.buildhelper}</version>
+            </plugin>
+
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>animal-sniffer-maven-plugin</artifactId>
+               <version>1.9</version>
+               <configuration>
+                  <signature>
+                     <groupId>org.codehaus.mojo.signature</groupId>
+                     <artifactId>java16</artifactId>
+                     <version>1.0</version>
+                  </signature>
+                  <ignores>
+                     <ignore>sun.misc.Unsafe</ignore>
+                  </ignores>
+               </configuration>
+               <executions>
+                  <execution>
+                     <phase>process-classes</phase>
+                     <goals>
+                        <goal>check</goal>
+                     </goals>
+                  </execution>
+               </executions>
+            </plugin>
+         </plugins>
+      </pluginManagement>
+   </build>
+
+   <profiles>
+      <profile>
+         <id>extras</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <build>
             <plugins>
-                <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${version.maven.compiler}</version>
-                    <configuration>
-                        <source>1.6</source>
-                        <target>1.6</target>
-                        <encoding>UTF-8</encoding>
-                    </configuration>
-                </plugin>
-
-                <plugin>
-                    <artifactId>maven-bundle-plugin</artifactId>
-                    <version>${version.maven.bundle}</version>
-                </plugin>
-
-                <plugin>
-                    <artifactId>maven-antrun-plugin</artifactId>
-                    <version>${version.maven.antrun}</version>
-                </plugin>
-
-                <plugin>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>${version.maven.resources}</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-report-plugin</artifactId>
-                    <version>${version.maven.surefire}</version>
-                    <executions>
-                        <execution>
-                            <phase>verify</phase>
-                            <goals>
-                                <goal>report</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>${version.maven.buildhelper}</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>animal-sniffer-maven-plugin</artifactId>
-                    <version>1.9</version>
-                    <configuration>
-                        <signature>
-                            <groupId>org.codehaus.mojo.signature</groupId>
-                            <artifactId>java16</artifactId>
-                            <version>1.0</version>
-                        </signature>
-                        <ignores>
-                            <ignore>sun.misc.Unsafe</ignore>
-                        </ignores>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <phase>process-classes</phase>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
+               <!-- Make sure we generate src jars too -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-source-plugin</artifactId>
+                  <version>${version.maven.source}</version>
+                  <executions>
+                     <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                           <goal>jar</goal>
+                           <goal>test-jar</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+                  <inherited>true</inherited>
+               </plugin>
             </plugins>
-        </pluginManagement>
-    </build>
-
-    <profiles>
-        <profile>
-            <id>extras</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <!-- Make sure we generate src jars too -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>${version.maven.source}</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                    <goal>test-jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <inherited>true</inherited>
-                    </plugin>
-                </plugins>
-            </build>
-            <properties>
-                <!-- By default create OSGI bundles -->
-                <packaging>bundle</packaging>
-            </properties>
-        </profile>
-    </profiles>
+         </build>
+         <properties>
+            <!-- By default create OSGI bundles -->
+            <packaging>bundle</packaging>
+         </properties>
+      </profile>
+   </profiles>
 </project>

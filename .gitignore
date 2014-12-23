@@ -1,6 +1,5 @@
 # ignore Maven generated target folders
 target
-*.protobin
 # ignore eclipse files
 .project
 .classpath
