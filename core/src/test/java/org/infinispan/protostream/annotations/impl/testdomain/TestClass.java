@@ -1,6 +1,7 @@
 package org.infinispan.protostream.annotations.impl.testdomain;
 
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2;
 
@@ -8,6 +9,7 @@ import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestCla
  * @author anistor@redhat.com
  * @since 3.0
  */
+@ProtoDoc("@Indexed()\nbla bla bla\nand some more bla")
 public class TestClass extends TestBaseClass implements TestBaseInterface /*, TestBaseInterface2 */, TestBaseInterface3 {
 
    //@ProtoField(number = 315)
@@ -53,8 +55,10 @@ public class TestClass extends TestBaseClass implements TestBaseInterface /*, Te
       this.height = height;
    }
 
+   @ProtoDoc("InnerClass documentation")
    public static class InnerClass {
 
+      @ProtoDoc("some field documentation")
       @ProtoField(number = 42, required = true)
       public int innerAttribute;
    }

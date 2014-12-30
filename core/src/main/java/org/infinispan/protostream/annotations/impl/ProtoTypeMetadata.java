@@ -13,6 +13,8 @@ class ProtoTypeMetadata {
 
    protected final Class<?> javaClass;
 
+   protected final String documentation;
+
    protected BaseMarshaller marshaller;
 
    protected ProtoMessageTypeMetadata outerType;
@@ -21,11 +23,13 @@ class ProtoTypeMetadata {
       this.marshaller = marshaller;
       this.name = marshaller.getTypeName();
       this.javaClass = marshaller.getJavaClass();
+      this.documentation = null;
    }
 
    protected ProtoTypeMetadata(String name, Class<?> javaClass) {
       this.name = name;
       this.javaClass = javaClass;
+      this.documentation = DocumentationExtractor.getDocumentation(javaClass);
    }
 
    public String getName() {
@@ -41,6 +45,10 @@ class ProtoTypeMetadata {
       }
       sb.append(name);
       return sb.toString();
+   }
+
+   public String getDocumentation() {
+      return documentation;
    }
 
    public Class<?> getJavaClass() {

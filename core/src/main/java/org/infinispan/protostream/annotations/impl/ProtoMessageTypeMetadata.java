@@ -23,26 +23,6 @@ import java.util.TreeMap;
  */
 final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
-   private static final Map<Type, String> typeNames = new HashMap<Type, String>();
-
-   static {
-      typeNames.put(Type.DOUBLE, "double");
-      typeNames.put(Type.FLOAT, "float");
-      typeNames.put(Type.INT32, "int32");
-      typeNames.put(Type.INT64, "int64");
-      typeNames.put(Type.FIXED32, "fixed32");
-      typeNames.put(Type.FIXED64, "fixed64");
-      typeNames.put(Type.BOOL, "bool");
-      typeNames.put(Type.STRING, "string");
-      typeNames.put(Type.BYTES, "bytes");
-      typeNames.put(Type.UINT32, "uint32");
-      typeNames.put(Type.UINT64, "uint64");
-      typeNames.put(Type.SFIXED32, "sfixed32");
-      typeNames.put(Type.SFIXED64, "sfixed64");
-      typeNames.put(Type.SINT32, "sint32");
-      typeNames.put(Type.SINT64, "sint64");
-   }
-
    private final ProtoSchemaGenerator protoSchemaGenerator;
 
    private Map<Integer, ProtoFieldMetadata> fields = null;
@@ -103,7 +83,12 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    public void generateProto(IndentWriter iw) {
       scanMemberAnnotations();
 
-      iw.append("\n// ").append(javaClass.getCanonicalName()).append("\n");
+      iw.append("\n// ").append(javaClass.getCanonicalName()).append('\n');
+      if (documentation != null) {
+         iw.append("/*\n");
+         iw.append(documentation).append('\n');
+         iw.append("*/\n");
+      }
       iw.append("message ").append(name).append(" {\n");
 
       if (!innerTypes.isEmpty()) {
@@ -116,40 +101,11 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
       iw.inc();
       for (ProtoFieldMetadata f : fields.values()) {
-         iw.append("// ");
-         if (f.getField() != null) {
-            iw.append("field = ").append(f.getField().getName());
-         } else {
-            iw.append("getter = ").append(f.getGetter().getName()).append(", setter = ").append(f.getSetter().getName());
-         }
-         iw.append("\n");
-         if (f.isRepeated()) {
-            iw.append("repeated ");
-         } else {
-            iw.append(f.isRequired() ? "required " : "optional ");
-         }
-         iw.append(getTypeName(f));
-         iw.append(' ').append(f.getName()).append(" = ").append(String.valueOf(f.getNumber()));
-         Object defaultValue = f.getDefaultValue();
-         if (defaultValue != null) {
-            String v = defaultValue instanceof ProtoEnumValueMetadata ?
-                  ((ProtoEnumValueMetadata) defaultValue).getProtoName() : defaultValue.toString();
-            iw.append(" [default = ").append(v).append(']');
-         }
-         iw.append(";\n");
+         f.generateProto(iw);
       }
       iw.dec();
 
       iw.append("}\n");
-   }
-
-   private String getTypeName(ProtoFieldMetadata fieldMetadata) {
-      if (fieldMetadata.getProtobufType() == Type.ENUM
-            || fieldMetadata.getProtobufType() == Type.MESSAGE
-            || fieldMetadata.getProtobufType() == Type.GROUP) {
-         return fieldMetadata.getProtoTypeMetadata().getFullName();
-      }
-      return typeNames.get(fieldMetadata.getProtobufType());
    }
 
    @Override

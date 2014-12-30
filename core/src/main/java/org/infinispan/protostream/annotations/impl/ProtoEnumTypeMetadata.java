@@ -54,7 +54,7 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
                } catch (IllegalAccessException iae) {
                   // not really possible
                }
-               membersByNumber.put(annotation.number(), new ProtoEnumValueMetadata(annotation.number(), name, e));
+               membersByNumber.put(annotation.number(), new ProtoEnumValueMetadata(annotation.number(), name, f, e));
             }
          }
          if (membersByNumber.isEmpty()) {
@@ -80,9 +80,16 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
    @Override
    public void generateProto(IndentWriter iw) {
       scanMemberAnnotations();
-      iw.append("\nenum ").append(name).append(" {\n");
+
+      iw.append("\n// ").append(javaClass.getCanonicalName()).append('\n');
+      if (documentation != null) {
+         iw.append("/*\n");
+         iw.append(documentation).append('\n');
+         iw.append("*/\n");
+      }
+      iw.append("enum ").append(name).append(" {\n");
       for (ProtoEnumValueMetadata m : membersByNumber.values()) {
-         iw.append("   ").append(m.getProtoName()).append(" = ").append(String.valueOf(m.getNumber())).append(";\n");
+         m.generateProto(iw);
       }
       iw.append("}\n");
    }
