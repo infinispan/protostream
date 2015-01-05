@@ -10,12 +10,11 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public class Note {
 
-   @ProtoField(number = 1)
    private String text;
 
-   @ProtoField(number = 2)
    private User author;
 
+   @ProtoField(number = 1)
    public String getText() {
       return text;
    }
@@ -24,6 +23,7 @@ public class Note {
       this.text = text;
    }
 
+   @ProtoField(number = 2)
    public User getAuthor() {
       return author;
    }
