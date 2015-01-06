@@ -97,6 +97,15 @@
                     <include>**/*.proto</include>
                 </includes>
             </resource>
+
+            <!-- [anistor] TODO do not include features.xml in jar artifact, Karaf does not actually use it from there, it uses the attached features.xml -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                   <include>features.xml</include>
+                </includes>
+            </resource>
         </resources>
 
         <plugins>
@@ -113,6 +122,29 @@
                <artifactId>maven-bundle-plugin</artifactId>
                <extensions>true</extensions>
             </plugin>
+
+           <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>build-helper-maven-plugin</artifactId>
+              <executions>
+                 <execution>
+                    <id>attach-artifacts</id>
+                    <phase>package</phase>
+                    <goals>
+                       <goal>attach-artifact</goal>
+                    </goals>
+                    <configuration>
+                       <artifacts>
+                          <artifact>
+                             <file>target/classes/features.xml</file>
+                             <type>xml</type>
+                             <classifier>features</classifier>
+                          </artifact>
+                       </artifacts>
+                    </configuration>
+                 </execution>
+              </executions>
+           </plugin>
         </plugins>
     </build>
 </project>
