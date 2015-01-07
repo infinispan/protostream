@@ -1,6 +1,7 @@
 package org.infinispan.protostream.annotations.impl;
 
 import javassist.ClassPool;
+import javassist.LoaderClassPath;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -127,7 +128,9 @@ public final class ProtoSchemaGenerator {
    }
 
    private void generateMarshallers() throws Exception {
-      ClassPool cp = ClassPool.getDefault();
+      ClassPool cp = new ClassPool(ClassPool.getDefault());
+      cp.appendClassPath(new LoaderClassPath(getClass().getClassLoader()));
+
       MarshallerCodeGenerator marshallerCodeGenerator = new MarshallerCodeGenerator(packageName, cp);
       for (Class<?> c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
