@@ -10,6 +10,7 @@ import javassist.NotFoundException;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.RawProtobufMarshaller;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.Log;
@@ -32,7 +33,7 @@ final class MarshallerCodeGenerator {
 
    private static final Log log = Log.LogFactory.getLog(MarshallerCodeGenerator.class);
 
-   private static final String PROTOSTREAM_PACKAGE = "org.infinispan.protostream";
+   private static final String PROTOSTREAM_PACKAGE = SerializationContext.class.getPackage().getName();
 
    private static final String MARSHALLER_CLASS_NAME = "___ProtostreamGeneratedMarshaller";
 
@@ -81,10 +82,11 @@ final class MarshallerCodeGenerator {
       generatedMarshallerBaseClass = cp.getCtClass(GeneratedMarshallerBase.class.getName());
       getJavaClassMethod = rawProtobufMarshallerInterface.getMethod("getJavaClass", "()Ljava/lang/Class;");
       getTypeNameMethod = rawProtobufMarshallerInterface.getMethod("getTypeName", "()Ljava/lang/String;");
-      String codedInputStream = CodedInputStream.class.getName().replace('.', '/');
-      readFromMethod = rawProtobufMarshallerInterface.getMethod("readFrom", "(Lorg/infinispan/protostream/SerializationContext;L" + codedInputStream + ";)Ljava/lang/Object;");
-      String codedOutputStream = CodedOutputStream.class.getName().replace('.', '/');
-      writeToMethod = rawProtobufMarshallerInterface.getMethod("writeTo", "(Lorg/infinispan/protostream/SerializationContext;L" + codedOutputStream + ";Ljava/lang/Object;)V");
+      String codedInputStreamName = CodedInputStream.class.getName().replace('.', '/');
+      String codedOutputStreamName = CodedOutputStream.class.getName().replace('.', '/');
+      String serializationContextName = SerializationContext.class.getName().replace('.', '/');
+      readFromMethod = rawProtobufMarshallerInterface.getMethod("readFrom", "(L" + serializationContextName + ";L" + codedInputStreamName + ";)Ljava/lang/Object;");
+      writeToMethod = rawProtobufMarshallerInterface.getMethod("writeTo", "(L" + serializationContextName + ";L" + codedOutputStreamName + ";Ljava/lang/Object;)V");
       decodeMethod = enumMarshallerInterface.getMethod("decode", "(I)Ljava/lang/Enum;");
       encodeMethod = enumMarshallerInterface.getMethod("encode", "(Ljava/lang/Enum;)I");
    }
@@ -294,12 +296,12 @@ final class MarshallerCodeGenerator {
                iw.append("{\n");
                iw.inc();
                iw.append("int enumVal = $2.readEnum();\n");
-               iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") ((" + PROTOSTREAM_PACKAGE + ".EnumMarshaller) $1.getMarshaller(").append(fieldMetadata.getJavaType().getName()).append(".class)).decode(enumVal);\n");
+               iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") ((").append(PROTOSTREAM_PACKAGE).append(".EnumMarshaller) $1.getMarshaller(").append(fieldMetadata.getJavaType().getName()).append(".class)).decode(enumVal);\n");
                iw.append("if (v == null) {\n");
                if (getUnknownFieldSetFieldStatement != null) {
                   iw.inc();
-                  iw.append(PROTOSTREAM_PACKAGE + ".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\n");
-                  iw.append("if (u == null) { u = new " + PROTOSTREAM_PACKAGE + ".impl.UnknownFieldSetImpl(); ").append(setUnknownFieldSetFieldStatement).append("; }\n");
+                  iw.append(PROTOSTREAM_PACKAGE).append(".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\n");
+                  iw.append("if (u == null) { u = new ").append(PROTOSTREAM_PACKAGE).append(".impl.UnknownFieldSetImpl(); ").append(setUnknownFieldSetFieldStatement).append("; }\n");
                   iw.append("u.putVarintField(").append(String.valueOf(fieldMetadata.getNumber())).append(", enumVal);\n");
                   iw.dec();
                }
@@ -322,8 +324,8 @@ final class MarshallerCodeGenerator {
       iw.append("{\n");
       iw.inc();
       if (getUnknownFieldSetFieldStatement != null) {
-         iw.append(PROTOSTREAM_PACKAGE + ".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\n");
-         iw.append("if (u == null) u = new " + PROTOSTREAM_PACKAGE + ".impl.UnknownFieldSetImpl();\n");
+         iw.append(PROTOSTREAM_PACKAGE).append(".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\n");
+         iw.append("if (u == null) u = new ").append(PROTOSTREAM_PACKAGE).append(".impl.UnknownFieldSetImpl();\n");
          iw.append("if (!u.readSingleField(tag, $2)) done = true;\n");
          iw.append("if (!u.isEmpty()) ").append(setUnknownFieldSetFieldStatement).append(";\n");
       } else {
@@ -468,22 +470,22 @@ final class MarshallerCodeGenerator {
             case GROUP:
                iw.append("{\n");
                iw.inc();
-               iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", org.infinispan.protostream.impl.WireFormat.WIRETYPE_START_GROUP);\n");
+               iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_START_GROUP);\n");
                iw.append("writeMessage($1, $2, ").append(fieldMetadata.getJavaType().getName()).append(".class, v);\n");
-               iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", org.infinispan.protostream.impl.WireFormat.WIRETYPE_END_GROUP);\n");
+               iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_END_GROUP);\n");
                iw.dec();
                iw.append("}\n");
                break;
             case MESSAGE:
                iw.append("{\n");
                iw.inc();
-               iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", org.infinispan.protostream.impl.WireFormat.WIRETYPE_LENGTH_DELIMITED);\n");
+               iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_LENGTH_DELIMITED);\n");
                iw.append("writeNestedMessage($1, $2, ").append(fieldMetadata.getJavaType().getName()).append(".class, v);\n");
                iw.dec();
                iw.append("}\n");
                break;
             case ENUM:
-               iw.append("$2.writeEnum(").append(String.valueOf(fieldMetadata.getNumber())).append(", ((" + PROTOSTREAM_PACKAGE + ".EnumMarshaller) $1.getMarshaller(").append(fieldMetadata.getJavaType().getName()).append(".class)).encode(v));\n");
+               iw.append("$2.writeEnum(").append(String.valueOf(fieldMetadata.getNumber())).append(", ((").append(PROTOSTREAM_PACKAGE).append(".EnumMarshaller) $1.getMarshaller(").append(fieldMetadata.getJavaType().getName()).append(".class)).encode(v));\n");
                break;
             default:
                throw new IllegalStateException("Unknown field type " + fieldMetadata.getProtobufType());
@@ -499,7 +501,7 @@ final class MarshallerCodeGenerator {
       if (getUnknownFieldSetFieldStatement != null) {
          iw.append("{\n");
          iw.inc();
-         iw.append(PROTOSTREAM_PACKAGE + ".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\nif (u != null && !u.isEmpty()) u.writeTo($2);\n");
+         iw.append(PROTOSTREAM_PACKAGE).append(".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\nif (u != null && !u.isEmpty()) u.writeTo($2);\n");
          iw.dec();
          iw.append("}\n");
       }
