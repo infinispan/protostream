@@ -1,10 +1,10 @@
 package org.infinispan.protostream.impl;
 
-import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.CodedOutputStream;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
@@ -48,17 +48,17 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
    }
 
    @Override
-   public WrappedMessage readFrom(SerializationContext ctx, CodedInputStream in) throws IOException {
+   public WrappedMessage readFrom(SerializationContext ctx, RawProtoStreamReader in) throws IOException {
       Object o = readWrappedMessage(ctx, in);
       return new WrappedMessage(o);
    }
 
    @Override
-   public void writeTo(SerializationContext ctx, CodedOutputStream out, WrappedMessage wrappedMessage) throws IOException {
+   public void writeTo(SerializationContext ctx, RawProtoStreamWriter out, WrappedMessage wrappedMessage) throws IOException {
       writeWrappedMessage(ctx, out, wrappedMessage.getValue());
    }
 
-   public static void writeWrappedMessage(SerializationContext ctx, CodedOutputStream out, Object t) throws IOException {
+   public static void writeWrappedMessage(SerializationContext ctx, RawProtoStreamWriter out, Object t) throws IOException {
       if (t == null) {
          return;
       }
@@ -77,9 +77,7 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
          out.writeBool(WRAPPED_BOOL, (Boolean) t);
       } else if (t instanceof byte[]) {
          byte[] bytes = (byte[]) t;
-         out.writeTag(WRAPPED_BYTES, WireFormat.WIRETYPE_LENGTH_DELIMITED);
-         out.writeRawVarint32(bytes.length);
-         out.writeRawBytes(bytes);
+         out.writeBytes(WRAPPED_BYTES, bytes);
       } else if (t instanceof Enum) {
          // use an enum encoder
          EnumMarshaller enumMarshaller = (EnumMarshaller) ctx.getMarshaller((Class<Enum>) t.getClass());
@@ -93,16 +91,14 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
 
          ByteArrayOutputStream buffer = new ByteArrayOutputStream();
          ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl((SerializationContextImpl) ctx);
-         writer.write(CodedOutputStream.newInstance(buffer), t);
+         writer.write(RawProtoStreamWriterImpl.newInstance(buffer), t);
 
-         out.writeTag(WRAPPED_MESSAGE_BYTES, WireFormat.WIRETYPE_LENGTH_DELIMITED);
-         out.writeRawVarint32(buffer.size());
-         out.writeRawBytes(buffer.toByteArray());
+         out.writeBytes(WRAPPED_MESSAGE_BYTES, buffer.toByteArray());
       }
       out.flush();
    }
 
-   public static Object readWrappedMessage(SerializationContext ctx, CodedInputStream in) throws IOException {
+   public static Object readWrappedMessage(SerializationContext ctx, RawProtoStreamReader in) throws IOException {
       String descriptorFullName = null;
       int enumValue = -1;
       byte[] messageBytes = null;
@@ -120,13 +116,13 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
                enumValue = in.readEnum();
                break;
             case WRAPPED_MESSAGE_BYTES << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
-               messageBytes = in.readBytes().toByteArray();
+               messageBytes = in.readByteArray();
                break;
             case WRAPPED_STRING << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                value = in.readString();
                break;
             case WRAPPED_BYTES << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
-               value = in.readBytes().toByteArray();
+               value = in.readByteArray();
                break;
             case WRAPPED_BOOL << 3 | WireFormat.WIRETYPE_VARINT:
                value = in.readBool();
@@ -191,7 +187,7 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
       if (messageBytes != null) {
          // it's a Message type
          BaseMarshallerDelegate marshallerDelegate = ctxImpl.getMarshallerDelegate(descriptorFullName);
-         CodedInputStream nestedInput = CodedInputStream.newInstance(messageBytes);
+         RawProtoStreamReader nestedInput = RawProtoStreamReaderImpl.newInstance(messageBytes);
          if (marshallerDelegate instanceof MessageMarshallerDelegate) {
             ProtoStreamReaderImpl reader = new ProtoStreamReaderImpl(ctxImpl);
             return reader.read(nestedInput, (MessageMarshaller) marshallerDelegate.getMarshaller());

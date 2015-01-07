@@ -1,8 +1,7 @@
 package org.infinispan.protostream.impl;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.CodedOutputStream;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.jboss.logging.Logger;
@@ -27,7 +26,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       this.ctx = ctx;
    }
 
-   WriteMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedOutputStream out) {
+   WriteMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, RawProtoStreamWriter out) {
       messageContext = new WriteMessageContext(messageContext, fieldName, marshallerDelegate, out);
       return messageContext;
    }
@@ -36,7 +35,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       messageContext = messageContext.getParentContext();
    }
 
-   public void write(CodedOutputStream out, Object value) throws IOException {
+   public void write(RawProtoStreamWriter out, Object value) throws IOException {
       messageContext = null;
       BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(value.getClass());
       marshallerDelegate.marshall(null, null, value, this, out);
@@ -215,7 +214,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
    }
 
    private void writePrimitiveCollection(FieldDescriptor fd, Collection<?> collection, Class elementClass) throws IOException {
-      CodedOutputStream out = messageContext.out;
+      RawProtoStreamWriter out = messageContext.out;
       int fieldNumber = fd.getNumber();
       Type type = fd.getType();
       switch (type) {
@@ -241,10 +240,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
             break;
          case BYTES:
             for (Object value : collection) {
-               if (value instanceof byte[]) {
-                  value = ByteString.copyFrom((byte[]) value);
-               }
-               out.writeBytes(fieldNumber, (ByteString) value);
+               out.writeBytes(fieldNumber, (byte[]) value);
             }
             break;
          case INT64:
@@ -340,9 +336,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
          throw new IllegalArgumentException("Declared field type is not of type byte[] : " + fieldName);
       }
 
-      messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_LENGTH_DELIMITED);
-      messageContext.out.writeRawVarint32(value.length);
-      messageContext.out.writeRawBytes(value);
+      messageContext.out.writeBytes(fd.getNumber(), value);
    }
 
    @Override
@@ -372,12 +366,10 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
    private void writeMessage(String fieldName, FieldDescriptor fd, Object value, Class clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      CodedOutputStream out = CodedOutputStream.newInstance(baos);
+      RawProtoStreamWriter out = RawProtoStreamWriterImpl.newInstance(baos);
       marshallerDelegate.marshall(fieldName, fd, value, this, out);
       out.flush();
-      messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_LENGTH_DELIMITED);
-      messageContext.out.writeRawVarint32(baos.size());
-      messageContext.out.writeRawBytes(baos.toByteArray());
+      messageContext.out.writeBytes(fd.getNumber(), baos.toByteArray());
    }
 
    private void writeGroup(String fieldName, FieldDescriptor fd, Object value, Class clazz) throws IOException {

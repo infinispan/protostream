@@ -1,8 +1,5 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.CodedOutputStream;
-
 import java.io.IOException;
 
 /**
@@ -15,7 +12,6 @@ import java.io.IOException;
  * stream (lowers performance but still works). In this case all fields that are encountered while parsing the stream up
  * to the point where the requested field is finally encountered are cached in this data structure.
  * <p/>
- * This interface is loosely based on com.google.protobuf.UnknownFieldSet.
  *
  * @author anistor@redhat.com
  * @since 1.0
@@ -30,7 +26,7 @@ public interface UnknownFieldSet {
    /**
     * Parse an entire message from {@code input} and merge its fields into this set.
     */
-   void readAllFields(CodedInputStream input) throws IOException;
+   void readAllFields(RawProtoStreamReader input) throws IOException;
 
    /**
     * Parse a single field from {@code input} and merge it into this set.
@@ -38,7 +34,7 @@ public interface UnknownFieldSet {
     * @param tag The field's tag number, which was already parsed (tag contains both field id and wire type).
     * @return {@code false} if the tag is an end group tag.
     */
-   boolean readSingleField(int tag, CodedInputStream input) throws IOException;
+   boolean readSingleField(int tag, RawProtoStreamReader input) throws IOException;
 
    /**
     * Convenience method for merging a new field containing a single varint value. This is used in particular when an
@@ -51,7 +47,7 @@ public interface UnknownFieldSet {
    /**
     * Writes all fields from this set to the {@code output} stream.
     */
-   void writeTo(CodedOutputStream output) throws IOException;
+   void writeTo(RawProtoStreamWriter output) throws IOException;
 
    /**
     * Reads and removes a field value from the set. The field is specified as a tag value composed of the numeric id of

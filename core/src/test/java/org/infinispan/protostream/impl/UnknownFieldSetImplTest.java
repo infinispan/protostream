@@ -1,8 +1,8 @@
 package org.infinispan.protostream.impl;
 
-import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.CodedOutputStream;
 import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
@@ -39,14 +39,14 @@ public class UnknownFieldSetImplTest extends AbstractProtoStreamTest {
 
    private byte[] marshall(UnknownFieldSetImpl unknownFieldSet) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      CodedOutputStream out = CodedOutputStream.newInstance(baos);
+      RawProtoStreamWriter out = RawProtoStreamWriterImpl.newInstance(baos);
       unknownFieldSet.writeTo(out);
       out.flush();
       return baos.toByteArray();
    }
 
    private UnknownFieldSetImpl unmarshall(byte[] bytes) throws IOException {
-      CodedInputStream codedInputStream = CodedInputStream.newInstance(new ByteArrayInputStream(bytes));
+      RawProtoStreamReader codedInputStream = RawProtoStreamReaderImpl.newInstance(new ByteArrayInputStream(bytes));
       UnknownFieldSetImpl unknownFieldSet = new UnknownFieldSetImpl();
       unknownFieldSet.readAllFields(codedInputStream);
       return unknownFieldSet;

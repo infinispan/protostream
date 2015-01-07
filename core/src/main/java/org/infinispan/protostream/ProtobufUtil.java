@@ -1,10 +1,10 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.CodedOutputStream;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.ProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.ProtoStreamWriterImpl;
+import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
+import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.WrappedMessageMarshaller;
 
@@ -38,7 +38,7 @@ public final class ProtobufUtil {
       return serializationContext;
    }
 
-   public static <A> void writeTo(SerializationContext ctx, CodedOutputStream out, A t) throws IOException {
+   public static <A> void writeTo(SerializationContext ctx, RawProtoStreamWriter out, A t) throws IOException {
       if (t == null) {
          throw new IllegalArgumentException("Object to marshall cannot be null");
       }
@@ -47,7 +47,7 @@ public final class ProtobufUtil {
    }
 
    public static void writeTo(SerializationContext ctx, OutputStream out, Object t) throws IOException {
-      writeTo(ctx, CodedOutputStream.newInstance(out), t);
+      writeTo(ctx, RawProtoStreamWriterImpl.newInstance(out), t);
    }
 
    public static byte[] toByteArray(SerializationContext ctx, Object t) throws IOException {
@@ -56,21 +56,21 @@ public final class ProtobufUtil {
       return baos.toByteArray();
    }
 
-   public static <A> A readFrom(SerializationContext ctx, CodedInputStream in, Class<A> clazz) throws IOException {
+   public static <A> A readFrom(SerializationContext ctx, RawProtoStreamReader in, Class<A> clazz) throws IOException {
       ProtoStreamReaderImpl reader = new ProtoStreamReaderImpl((SerializationContextImpl) ctx);
       return reader.read(in, clazz);
    }
 
    public static <A> A readFrom(SerializationContext ctx, InputStream in, Class<A> clazz) throws IOException {
-      return readFrom(ctx, CodedInputStream.newInstance(in), clazz);
+      return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(in), clazz);
    }
 
    public static <A> A fromByteArray(SerializationContext ctx, byte[] bytes, Class<A> clazz) throws IOException {
-      return readFrom(ctx, CodedInputStream.newInstance(bytes), clazz);
+      return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(bytes), clazz);
    }
 
    public static <A> A fromByteArray(SerializationContext ctx, byte[] bytes, int offset, int length, Class<A> clazz) throws IOException {
-      return readFrom(ctx, CodedInputStream.newInstance(bytes, offset, length), clazz);
+      return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(bytes, offset, length), clazz);
    }
 
    /**
@@ -88,12 +88,12 @@ public final class ProtobufUtil {
 
    public static Object fromWrappedByteArray(SerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes, offset, length);
-      return WrappedMessageMarshaller.readWrappedMessage(ctx, CodedInputStream.newInstance(bais));
+      return WrappedMessageMarshaller.readWrappedMessage(ctx, RawProtoStreamReaderImpl.newInstance(bais));
    }
 
    public static byte[] toWrappedByteArray(SerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      WrappedMessageMarshaller.writeWrappedMessage(ctx, CodedOutputStream.newInstance(baos), t);
+      WrappedMessageMarshaller.writeWrappedMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.toByteArray();
    }
 }

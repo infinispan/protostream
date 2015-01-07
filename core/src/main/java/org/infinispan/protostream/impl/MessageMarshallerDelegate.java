@@ -1,13 +1,13 @@
 package org.infinispan.protostream.impl;
 
-import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.CodedOutputStream;
+import org.infinispan.protostream.Message;
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.UnknownFieldSetHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.protostream.Message;
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.UnknownFieldSet;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -57,7 +57,7 @@ public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegat
    }
 
    @Override
-   public void marshall(String fieldName, FieldDescriptor fieldDescriptor, T message, ProtoStreamWriterImpl writer, CodedOutputStream out) throws IOException {
+   public void marshall(String fieldName, FieldDescriptor fieldDescriptor, T message, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
       WriteMessageContext messageContext = writer.pushContext(fieldName, this, out);
 
       marshaller.writeTo(writer, message);
@@ -94,7 +94,7 @@ public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegat
    }
 
    @Override
-   public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, CodedInputStream in) throws IOException {
+   public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
       ReadMessageContext messageContext = reader.pushContext(fieldName, this, in);
 
       T message = marshaller.readFrom(reader);

@@ -1,10 +1,10 @@
 package org.infinispan.protostream;
 
-import com.google.protobuf.CodedInputStream;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.WireFormat;
 
 import java.io.IOException;
@@ -22,7 +22,7 @@ public final class ProtobufParser {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
-      CodedInputStream in = CodedInputStream.newInstance(input);
+      RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(input);
 
       parseInternal(tagHandler, messageDescriptor, in);
    }
@@ -31,7 +31,7 @@ public final class ProtobufParser {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
-      CodedInputStream in = CodedInputStream.newInstance(buf, off, len);
+      RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(buf, off, len);
 
       parseInternal(tagHandler, messageDescriptor, in);
    }
@@ -40,12 +40,12 @@ public final class ProtobufParser {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
-      CodedInputStream in = CodedInputStream.newInstance(buf);
+      RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(buf);
 
       parseInternal(tagHandler, messageDescriptor, in);
    }
 
-   public void parse(TagHandler tagHandler, Descriptor messageDescriptor, CodedInputStream in) throws IOException {
+   public void parse(TagHandler tagHandler, Descriptor messageDescriptor, RawProtoStreamReader in) throws IOException {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
@@ -53,13 +53,13 @@ public final class ProtobufParser {
       parseInternal(tagHandler, messageDescriptor, in);
    }
 
-   private void parseInternal(TagHandler tagHandler, Descriptor messageDescriptor, CodedInputStream in) throws IOException {
+   private void parseInternal(TagHandler tagHandler, Descriptor messageDescriptor, RawProtoStreamReader in) throws IOException {
       tagHandler.onStart();
       parseMessage(tagHandler, messageDescriptor, in);
       tagHandler.onEnd();
    }
 
-   private void parseMessage(TagHandler tagHandler, Descriptor messageDescriptor, CodedInputStream in) throws IOException {
+   private void parseMessage(TagHandler tagHandler, Descriptor messageDescriptor, RawProtoStreamReader in) throws IOException {
       int tag;
       while ((tag = in.readTag()) != 0) {
          final int fieldNumber = WireFormat.getTagFieldNumber(tag);
@@ -69,13 +69,13 @@ public final class ProtobufParser {
          switch (wireType) {
             case WireFormat.WIRETYPE_LENGTH_DELIMITED: {
                if (fd == null) {
-                  byte[] value = in.readBytes().toByteArray();
+                  byte[] value = in.readByteArray();
                   tagHandler.onTag(fieldNumber, null, Type.BYTES, JavaType.BYTE_STRING, value);
                } else if (fd.getType() == Type.STRING) {
                   String value = in.readString();
                   tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
                } else if (fd.getType() == Type.BYTES) {
-                  byte[] value = in.readBytes().toByteArray();
+                  byte[] value = in.readByteArray();
                   tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
                } else if (fd.getType() == Type.MESSAGE) {
                   int length = in.readRawVarint32();

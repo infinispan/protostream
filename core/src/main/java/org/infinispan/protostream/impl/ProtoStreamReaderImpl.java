@@ -1,8 +1,7 @@
 package org.infinispan.protostream.impl;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.CodedInputStream;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
@@ -10,6 +9,7 @@ import org.infinispan.protostream.descriptors.Type;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +49,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       this.ctx = ctx;
    }
 
-   ReadMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, CodedInputStream in) {
+   ReadMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, RawProtoStreamReader in) {
       messageContext = new ReadMessageContext(messageContext, fieldName, marshallerDelegate, in);
       return messageContext;
    }
@@ -62,13 +62,13 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       return messageContext.unknownFieldSet;
    }
 
-   public <A> A read(CodedInputStream in, Class<A> clazz) throws IOException {
+   public <A> A read(RawProtoStreamReader in, Class<A> clazz) throws IOException {
       messageContext = null;
       BaseMarshallerDelegate<A> marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       return marshallerDelegate.unmarshall(null, null, this, in);
    }
 
-   public <A> A read(CodedInputStream in, MessageMarshaller<A> marshaller) throws IOException {
+   public <A> A read(RawProtoStreamReader in, MessageMarshaller<A> marshaller) throws IOException {
       messageContext = null;
       BaseMarshallerDelegate<A> marshallerDelegate = ctx.getMarshallerDelegate(marshaller.getTypeName());
       return marshallerDelegate.unmarshall(null, null, this, in);
@@ -93,7 +93,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
          return convertWireTypeToJavaType(type, o);
       }
 
-      CodedInputStream in = messageContext.in;
+      RawProtoStreamReader in = messageContext.in;
       while (true) {
          int tag = in.readTag();
          if (tag == 0) {
@@ -110,7 +110,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
                case STRING:
                   return in.readString();
                case BYTES:
-                  return in.readBytes().toByteArray();
+                  return in.readByteArray();
                case INT32:
                   return in.readInt32();
                case SFIXED32:
@@ -151,9 +151,14 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    private Object convertWireTypeToJavaType(Type type, Object o) {
       if (type == Type.STRING) {
-         o = ((ByteString) o).toStringUtf8();
+         try {
+            o = new String((byte[]) o, "UTF-8");
+         } catch (UnsupportedEncodingException e) {
+            // Hell is freezing
+            throw new RuntimeException("UTF-8 not supported", e);
+         }
       } else if (type == Type.BYTES) {
-         o = ((ByteString) o).toByteArray();
+         o = (byte[]) o;
       } else if (type == Type.INT32
             || type == Type.UINT32
             || type == Type.SINT32) {
@@ -225,8 +230,8 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
       Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
       if (o != null) {
-         ByteString byteString = (ByteString) o;
-         return readNestedObject(fieldName, fd, clazz, byteString.newCodedInput(), byteString.size());
+         byte[] byteArray = (byte[]) o;
+         return readNestedObject(fieldName, fd, clazz, RawProtoStreamReaderImpl.newInstance(byteArray), byteArray.length);
       }
 
       while (true) {
@@ -248,7 +253,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
     *
     * @param length the actual length of the nested object or -1 if the length should be read from the stream
     */
-   private <A> A readNestedObject(String fieldName, FieldDescriptor fd, Class<A> clazz, CodedInputStream in, int length) throws IOException {
+   private <A> A readNestedObject(String fieldName, FieldDescriptor fd, Class<A> clazz, RawProtoStreamReader in, int length) throws IOException {
       BaseMarshallerDelegate<A> marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       A a;
       if (fd.getType() == Type.GROUP) {
@@ -286,9 +291,9 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
          if (o == null) {
             break;
          }
-         ByteString byteString = (ByteString) o;
-         CodedInputStream codedInputStream = byteString.newCodedInput();
-         collection.add(readNestedObject(fieldName, fd, elementClass, codedInputStream, byteString.size()));
+         byte[] byteArray = (byte[]) o;
+         RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(byteArray);
+         collection.add(readNestedObject(fieldName, fd, elementClass, in, byteArray.length));
       }
 
       while (true) {
@@ -338,7 +343,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
                   value = messageContext.in.readString();
                   break;
                case BYTES:
-                  value = messageContext.in.readBytes().toByteArray();
+                  value = messageContext.in.readByteArray();
                   break;
                case INT64:
                   value = messageContext.in.readInt64();

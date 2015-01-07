@@ -1,12 +1,12 @@
 package org.infinispan.protostream.impl;
 
-import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.CodedOutputStream;
+import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.UnknownFieldSet;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -49,7 +49,7 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
    }
 
    @Override
-   public void marshall(String fieldName, FieldDescriptor fd, T value, ProtoStreamWriterImpl writer, CodedOutputStream out) throws IOException {
+   public void marshall(String fieldName, FieldDescriptor fd, T value, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
       int enumValue = enumMarshaller.encode(value);
 
       if (!definedValues.contains(enumValue)) {
@@ -60,7 +60,7 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
    }
 
    @Override
-   public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, CodedInputStream in) throws IOException {
+   public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
       final int expectedTag = WireFormat.makeTag(fieldDescriptor.getNumber(), WireFormat.WIRETYPE_VARINT);
       int enumValue;
       UnknownFieldSet unknownFieldSet = reader.getUnknownFieldSet();

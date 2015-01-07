@@ -1,7 +1,5 @@
 package org.infinispan.protostream.annotations.impl;
 
-import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.CodedOutputStream;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -9,6 +7,8 @@ import javassist.CtMethod;
 import javassist.NotFoundException;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.Message;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.JavaType;
@@ -82,11 +82,11 @@ final class MarshallerCodeGenerator {
       generatedMarshallerBaseClass = cp.getCtClass(GeneratedMarshallerBase.class.getName());
       getJavaClassMethod = rawProtobufMarshallerInterface.getMethod("getJavaClass", "()Ljava/lang/Class;");
       getTypeNameMethod = rawProtobufMarshallerInterface.getMethod("getTypeName", "()Ljava/lang/String;");
-      String codedInputStreamName = CodedInputStream.class.getName().replace('.', '/');
-      String codedOutputStreamName = CodedOutputStream.class.getName().replace('.', '/');
+      String rawProtobufInputStreamName = RawProtoStreamReader.class.getName().replace('.', '/');
+      String rawProtobufOutputStreamName = RawProtoStreamWriter.class.getName().replace('.', '/');
       String serializationContextName = SerializationContext.class.getName().replace('.', '/');
-      readFromMethod = rawProtobufMarshallerInterface.getMethod("readFrom", "(L" + serializationContextName + ";L" + codedInputStreamName + ";)Ljava/lang/Object;");
-      writeToMethod = rawProtobufMarshallerInterface.getMethod("writeTo", "(L" + serializationContextName + ";L" + codedOutputStreamName + ";Ljava/lang/Object;)V");
+      readFromMethod = rawProtobufMarshallerInterface.getMethod("readFrom", "(L" + serializationContextName + ";L" + rawProtobufInputStreamName + ";)Ljava/lang/Object;");
+      writeToMethod = rawProtobufMarshallerInterface.getMethod("writeTo", "(L" + serializationContextName + ";L" + rawProtobufOutputStreamName + ";Ljava/lang/Object;)V");
       decodeMethod = enumMarshallerInterface.getMethod("decode", "(I)Ljava/lang/Enum;");
       encodeMethod = enumMarshallerInterface.getMethod("encode", "(Ljava/lang/Enum;)I");
    }
@@ -479,8 +479,7 @@ final class MarshallerCodeGenerator {
             case MESSAGE:
                iw.append("{\n");
                iw.inc();
-               iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_LENGTH_DELIMITED);\n");
-               iw.append("writeNestedMessage($1, $2, ").append(fieldMetadata.getJavaType().getName()).append(".class, v);\n");
+               iw.append("writeNestedMessage($1, $2, ").append(fieldMetadata.getJavaType().getName()).append(".class, ").append(String.valueOf(fieldMetadata.getNumber())).append(", v);\n");
                iw.dec();
                iw.append("}\n");
                break;

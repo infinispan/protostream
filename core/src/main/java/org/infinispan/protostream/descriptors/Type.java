@@ -1,6 +1,6 @@
 package org.infinispan.protostream.descriptors;
 
-import static com.google.protobuf.WireFormat.*;
+import static org.infinispan.protostream.impl.WireFormat.*;
 
 /**
  * Type of a field in protobuf, can be any value defined in <a href="https://developers.google.com/protocol-buffers/docs/proto#scalar">https://developers.google.com/protocol-buffers/docs/proto#scalar</a>

@@ -1,12 +1,12 @@
 package org.infinispan.protostream.impl;
 
-import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.GeneratedMessageLite;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 
@@ -97,12 +97,12 @@ public final class ProtocMessageMarshaller<T extends MessageLite> implements Raw
    }
 
    @Override
-   public T readFrom(SerializationContext ctx, CodedInputStream in) throws IOException {
-      return parser.parseFrom(in);
+   public T readFrom(SerializationContext ctx, RawProtoStreamReader in) throws IOException {
+      return parser.parseFrom(((RawProtoStreamReaderImpl) in).getDelegate());
    }
 
    @Override
-   public void writeTo(SerializationContext ctx, CodedOutputStream out, T o) throws IOException {
-      o.writeTo(out);
+   public void writeTo(SerializationContext ctx, RawProtoStreamWriter out, T o) throws IOException {
+      o.writeTo(((RawProtoStreamWriterImpl) out).getDelegate());
    }
 }
