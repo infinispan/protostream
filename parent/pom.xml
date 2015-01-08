@@ -94,7 +94,7 @@
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots
       </jboss.snapshots.repo.url>
 
-      <version.maven.compiler>3.0</version.maven.compiler>
+      <version.maven.compiler>3.1</version.maven.compiler>
       <version.maven.source>2.2.1</version.maven.source>
       <version.maven.resources>2.6</version.maven.resources>
       <version.maven.genjavadoc>0.5</version.maven.genjavadoc>
@@ -102,6 +102,8 @@
       <version.maven.surefire>2.16</version.maven.surefire>
       <version.maven.bundle>2.4.0</version.maven.bundle>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
+      <version.maven.animalsniffer>1.9</version.maven.animalsniffer>
+      <version.maven.shade>2.3</version.maven.shade>
 
       <version.protobuf>2.6.0</version.protobuf>
       <version.junit>4.11</version.junit>
@@ -287,7 +289,7 @@
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>animal-sniffer-maven-plugin</artifactId>
-               <version>1.9</version>
+               <version>${version.maven.animalsniffer}</version>
                <configuration>
                   <signature>
                      <groupId>org.codehaus.mojo.signature</groupId>
@@ -306,6 +308,12 @@
                      </goals>
                   </execution>
                </executions>
+            </plugin>
+
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-shade-plugin</artifactId>
+               <version>${version.maven.shade}</version>
             </plugin>
          </plugins>
       </pluginManagement>
