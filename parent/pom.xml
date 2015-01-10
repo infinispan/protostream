@@ -97,7 +97,7 @@
       <version.maven.compiler>3.1</version.maven.compiler>
       <version.maven.source>2.2.1</version.maven.source>
       <version.maven.resources>2.6</version.maven.resources>
-      <version.maven.genjavadoc>0.5</version.maven.genjavadoc>
+      <version.maven.genjavadoc>0.8</version.maven.genjavadoc>
       <version.maven.antrun>1.7</version.maven.antrun>
       <version.maven.surefire>2.16</version.maven.surefire>
       <version.maven.bundle>2.4.0</version.maven.bundle>
@@ -110,10 +110,10 @@
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.fest.assertions>2.0M10</version.fest.assertions>
       <version.protoparser>3.1.4</version.protoparser>
-      <version.jboss.logging>3.1.2.GA</version.jboss.logging>
+      <version.jboss.logging>3.1.4.GA</version.jboss.logging>
       <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
       <version.log4j>1.2.16</version.log4j>
-      <version.jboss.marshalling>1.4.2.Final</version.jboss.marshalling>
+      <version.jboss.marshalling>1.4.8.Final</version.jboss.marshalling>
       <version.javassist>3.18.1-GA</version.javassist>
    </properties>
 
