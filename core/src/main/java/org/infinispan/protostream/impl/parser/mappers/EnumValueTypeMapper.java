@@ -17,6 +17,7 @@ final class EnumValueTypeMapper implements Mapper<EnumType.Value, EnumValueDescr
       return new EnumValueDescriptor.Builder()
               .withName(input.getName())
               .withTag(input.getTag())
+              .withDocumentation(input.getDocumentation())
               .withOptions(OPTION_LIST_MAPPER.map(input.getOptions()))
               .build();
    }

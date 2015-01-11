@@ -14,6 +14,7 @@ public final class EnumValueDescriptor {
 
    private final String name;
    private final int number;
+   private final String documentation;
    private final List<Option> options;
    private EnumDescriptor enumDescriptor;
    private FileDescriptor fileDescriptor;
@@ -21,6 +22,7 @@ public final class EnumValueDescriptor {
    private EnumValueDescriptor(Builder builder) {
       this.name = builder.name;
       this.number = builder.number;
+      this.documentation = builder.documentation;
       this.options = unmodifiableList(builder.options);
    }
 
@@ -30,6 +32,10 @@ public final class EnumValueDescriptor {
 
    public int getNumber() {
       return number;
+   }
+
+   public String getDocumentation() {
+      return documentation;
    }
 
    public List<Option> getOptions() {
@@ -55,6 +61,7 @@ public final class EnumValueDescriptor {
    public static class Builder {
       private String name;
       private int number;
+      private String documentation;
       private List<Option> options;
 
       public Builder withName(String name) {
@@ -64,6 +71,11 @@ public final class EnumValueDescriptor {
 
       public Builder withTag(int tag) {
          this.number = tag;
+         return this;
+      }
+
+      public Builder withDocumentation(String documentation) {
+         this.documentation = documentation;
          return this;
       }
 

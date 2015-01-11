@@ -153,13 +153,6 @@ final class ProtoFieldMetadata {
    }
 
    public void generateProto(IndentWriter iw) {
-      iw.append("// ");
-      if (field != null) {
-         iw.append("field = ").append(field.getName());
-      } else {
-         iw.append("getter = ").append(getter.getName()).append(", setter = ").append(setter.getName());
-      }
-      iw.append('\n');
       if (documentation != null) {
          iw.append("/*\n");
          iw.append(documentation).append('\n');
@@ -184,6 +177,12 @@ final class ProtoFieldMetadata {
                ((ProtoEnumValueMetadata) defaultValue).getProtoName() : defaultValue.toString();
          iw.append(" [default = ").append(v).append(']');
       }
-      iw.append(";\n");
+      iw.append(" /* ");
+      if (field != null) {
+         iw.append("field = ").append(field.getName());
+      } else {
+         iw.append("getter = ").append(getter.getName()).append(", setter = ").append(setter.getName());
+      }
+      iw.append(" */;\n");
    }
 }

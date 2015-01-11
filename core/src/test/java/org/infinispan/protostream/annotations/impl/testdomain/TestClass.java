@@ -2,6 +2,7 @@ package org.infinispan.protostream.annotations.impl.testdomain;
 
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2;
 
@@ -20,6 +21,7 @@ public class TestClass extends TestBaseClass implements TestBaseInterface /*, Te
    private Integer height;
 
    @ProtoField(number = 4, required = true)
+   @ProtoDoc("The surname, of course")
    public String surname;
 
    @ProtoField(number = 66)

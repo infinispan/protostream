@@ -47,12 +47,12 @@ final class ProtoEnumValueMetadata {
    }
 
    public void generateProto(IndentWriter iw) {
-      iw.append("// field = ").append(enumField.getName()).append('\n');
+      iw.append('\n');
       if (documentation != null) {
          iw.append("/*\n");
          iw.append(documentation).append('\n');
          iw.append("*/\n");
       }
-      iw.append("   ").append(protoName).append(" = ").append(String.valueOf(number)).append(";\n");
+      iw.append("   ").append(protoName).append(" = ").append(String.valueOf(number)).append(" /* field = ").append(enumField.getName()).append(" */;\n");
    }
 }

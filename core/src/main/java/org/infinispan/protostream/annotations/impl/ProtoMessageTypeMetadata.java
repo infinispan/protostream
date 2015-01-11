@@ -83,13 +83,13 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    public void generateProto(IndentWriter iw) {
       scanMemberAnnotations();
 
-      iw.append("\n// ").append(javaClass.getCanonicalName()).append('\n');
+      iw.append('\n');
       if (documentation != null) {
          iw.append("/*\n");
          iw.append(documentation).append('\n');
          iw.append("*/\n");
       }
-      iw.append("message ").append(name).append(" {\n");
+      iw.append("message ").append(name).append(" /* ").append(javaClass.getCanonicalName()).append(" */ {\n");
 
       if (!innerTypes.isEmpty()) {
          iw.inc();

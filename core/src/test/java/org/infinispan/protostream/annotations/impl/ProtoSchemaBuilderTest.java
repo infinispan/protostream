@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
@@ -10,11 +11,17 @@ import org.infinispan.protostream.annotations.impl.testdomain.TestClass3;
 import org.infinispan.protostream.annotations.impl.testdomain.TestEnum;
 import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2;
 import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.EnumDescriptor;
+import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 
 //todo [anistor] replace IllegalStateException with a real exception and revise all exception message to better indicate the cause (class, field)
 
@@ -98,5 +105,73 @@ public class ProtoSchemaBuilderTest {
       assertTrue(unmarshalled instanceof TestClass);
       assertEquals("test", ((TestClass) unmarshalled).surname);
       assertEquals("test address", ((TestClass) unmarshalled).testClass2.address);
+   }
+
+   @Test
+   public void testTwoFilesGeneration() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+
+      ProtoSchemaBuilder protoSchemaBuilder1 = new ProtoSchemaBuilder();
+      protoSchemaBuilder1
+            .fileName("test1.proto")
+            .packageName("test_package1")
+            .addClass(TestEnum.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall(TestEnum.class));
+      assertTrue(ctx.canMarshall("test_package1.TestEnumABC"));
+
+      ProtoSchemaBuilder protoSchemaBuilder2 = new ProtoSchemaBuilder();
+      protoSchemaBuilder2
+            .fileName("test2.proto")
+            .packageName("test_package2")
+            .addClass(TestClass.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall(TestClass.class));
+      assertTrue(ctx.canMarshall("test_package2.TestClass"));
+      assertFalse(ctx.canMarshall("test_package2.TestEnumABC"));
+   }
+
+   @Test
+   public void testDocumentation() throws Exception {
+      Configuration config = new Configuration.Builder().build();
+      SerializationContext ctx = ProtobufUtil.newSerializationContext(config);
+
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      String schemaFile = protoSchemaBuilder
+            .fileName("test1.proto")
+            .packageName("test_package1")
+            .addClass(TestEnum.class)
+            .addClass(TestClass.class)
+            .build(ctx);
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test1.proto", schemaFile);
+      Map<String, FileDescriptor> fileDescriptors = new SquareProtoParser(config).parse(fileDescriptorSource);
+
+      FileDescriptor fd = fileDescriptors.get("test1.proto");
+      assertNotNull(fd);
+
+      Map<String, EnumDescriptor> enums = new HashMap<String, EnumDescriptor>();
+      for (EnumDescriptor e : fd.getEnumTypes()) {
+         enums.put(e.getFullName(), e);
+      }
+
+      Map<String, Descriptor> messages = new HashMap<String, Descriptor>();
+      for (Descriptor m : fd.getMessageTypes()) {
+         messages.put(m.getFullName(), m);
+      }
+
+      EnumDescriptor testEnum = enums.get("test_package1.TestEnumABC");
+      assertNotNull(testEnum);
+
+      assertEquals("bla bla bla\nand some more bla", testEnum.getDocumentation());
+      assertEquals("This should never be read.", testEnum.getValues().get(0).getDocumentation());
+
+      Descriptor testClass = messages.get("test_package1.TestClass");
+      assertNotNull(testClass);
+
+      assertEquals("@Indexed()\nbla bla bla\nand some more bla", testClass.getDocumentation());
+      assertEquals("The surname, of course", testClass.getFields().get(0).getDocumentation());
    }
 }
