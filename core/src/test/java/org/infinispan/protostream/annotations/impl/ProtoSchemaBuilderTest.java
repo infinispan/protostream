@@ -23,10 +23,6 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
-//todo [anistor] replace IllegalStateException with a real exception and revise all exception message to better indicate the cause (class, field)
-
-//todo [anistor] generate debug comments in proto schema (list of initial classes and extra detected classes, source class for each proto definition, source field (+class) and eventual get/set for each proto field)
-
 /**
  * @author anistor@redhat.com
  * @since 3.0
