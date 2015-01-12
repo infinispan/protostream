@@ -37,6 +37,8 @@ final class MarshallerCodeGenerator {
 
    private static final String MARSHALLER_CLASS_NAME = "___ProtostreamGeneratedMarshaller";
 
+   private static long nextId = 0;
+
    private static final Map<Type, String> protoTypeToFriendlyName = new HashMap<Type, String>();
 
    static {
@@ -91,9 +93,13 @@ final class MarshallerCodeGenerator {
       encodeMethod = enumMarshallerInterface.getMethod("encode", "(Ljava/lang/Enum;)I");
    }
 
+   private static synchronized long nextMarshallerClassId() {
+      return nextId++;
+   }
+
    public EnumMarshaller generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws NotFoundException, CannotCompileException, IllegalAccessException, InstantiationException {
-      CtClass entityClass = cp.get(petm.getJavaClass().getName());
-      CtClass marshallerImpl = entityClass.makeNestedClass(MARSHALLER_CLASS_NAME, true);
+      CtClass enumClass = cp.get(petm.getJavaClass().getName());
+      CtClass marshallerImpl = enumClass.makeNestedClass(MARSHALLER_CLASS_NAME + nextMarshallerClassId(), true);
       marshallerImpl.addInterface(enumMarshallerInterface);
 
       CtMethod ctGetJavaClassMethod = new CtMethod(getJavaClassMethod, marshallerImpl, null);
@@ -170,7 +176,7 @@ final class MarshallerCodeGenerator {
 
    public RawProtobufMarshaller generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException, IllegalAccessException, InstantiationException {
       CtClass entityClass = cp.get(messageTypeMetadata.getJavaClass().getName());
-      CtClass marshallerImpl = entityClass.makeNestedClass(MARSHALLER_CLASS_NAME, true);
+      CtClass marshallerImpl = entityClass.makeNestedClass(MARSHALLER_CLASS_NAME + nextMarshallerClassId(), true);
       marshallerImpl.addInterface(rawProtobufMarshallerInterface);
       marshallerImpl.setSuperclass(generatedMarshallerBaseClass);
 
