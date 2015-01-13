@@ -692,9 +692,9 @@ public class DescriptorsTest {
       FieldDescriptor dntField = fields.get(4);
       assertThat(dntField.getRule()).isEqualTo(Rule.OPTIONAL);
       assertThat(dntField.getType()).isEqualTo(Type.ENUM);
-      assertThat(dntField.getEnumDescriptor().findValueByName("DONT_CARE").getNumber()).isEqualTo(2);
-      assertThat(dntField.getEnumDescriptor().findValueByNumber(1).getName()).isEqualTo("TRACK_FOR_SURE");
-      assertThat(dntField.getEnumDescriptor().getFileDescriptor()).isNotNull();
+      assertThat(dntField.getEnumType().findValueByName("DONT_CARE").getNumber()).isEqualTo(2);
+      assertThat(dntField.getEnumType().findValueByNumber(1).getName()).isEqualTo("TRACK_FOR_SURE");
+      assertThat(dntField.getEnumType().getFileDescriptor()).isNotNull();
       assertThat(dntField.getFileDescriptor()).isNotNull();
       assertThat(dntField.getJavaType()).isEqualTo(JavaType.ENUM);
 
@@ -703,8 +703,8 @@ public class DescriptorsTest {
       assertThat(reqEnumField.getType()).isEqualTo(Type.ENUM);
       assertThat(reqEnumField.getJavaType()).isEqualTo(JavaType.ENUM);
       assertThat(reqEnumField.hasDefaultValue()).isFalse();
-      assertThat(reqEnumField.getEnumDescriptor()).isNotNull();
-      assertThat(reqEnumField.getEnumDescriptor().findValueByNumber(0).getFileDescriptor()).isNotNull();
+      assertThat(reqEnumField.getEnumType()).isNotNull();
+      assertThat(reqEnumField.getEnumType().findValueByNumber(0).getFileDescriptor()).isNotNull();
       assertThat(reqEnumField.getOptionByName("deprecated")).isEqualTo("true");
 
       FieldDescriptor labelField = fields.get(6);

@@ -28,9 +28,9 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    private final boolean isExtension;
    private Type type;
    private FileDescriptor fileDescriptor;
-   private Descriptor messageType;
    private Descriptor containingMessage;
-   private EnumDescriptor enumDescriptor;
+   private Descriptor messageType;
+   private EnumDescriptor enumType;
 
    private FieldDescriptor(Builder builder) {
       super(builder.name, null, builder.documentation);
@@ -57,7 +57,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       this.type = type;
    }
 
-   public Descriptor getMessageType() { //todo [anistor] rename to getMessageDescriptor for consistency with getEnumDescriptor
+   public Descriptor getMessageType() {
       return messageType;
    }
 
@@ -107,8 +107,8 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       return getType().getJavaType();
    }
 
-   public EnumDescriptor getEnumDescriptor() {
-      return enumDescriptor;
+   public EnumDescriptor getEnumType() {
+      return enumType;
    }
 
    public String getTypeName() {
@@ -134,7 +134,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    }
 
    void setEnumType(EnumDescriptor enumDescriptor) {
-      this.enumDescriptor = enumDescriptor;
+      this.enumType = enumDescriptor;
       type = Type.ENUM;
    }
 
