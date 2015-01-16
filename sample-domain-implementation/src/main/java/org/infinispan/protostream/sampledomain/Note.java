@@ -1,5 +1,6 @@
 package org.infinispan.protostream.sampledomain;
 
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -8,12 +9,14 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author anistor@redhat.com
  * @since 3.0
  */
+@ProtoDoc("@Indexed")
 public class Note {
 
    private String text;
 
    private User author;
 
+   @ProtoDoc("@IndexedField")
    @ProtoField(number = 1)
    public String getText() {
       return text;
@@ -23,6 +26,7 @@ public class Note {
       this.text = text;
    }
 
+   @ProtoDoc("@IndexedField")
    @ProtoField(number = 2)
    public User getAuthor() {
       return author;
