@@ -345,15 +345,22 @@ final class MarshallerCodeGenerator {
       iw.dec();
       iw.append("}\n");
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
-         if (fieldMetadata.getDefaultValue() != null) {
+         Object defaultValue = fieldMetadata.getDefaultValue();
+         if (defaultValue != null) {
             iw.append("if (!").append(fieldMetadata.getName()).append("WasSet) {\n");
             iw.inc();
             String v;
-            if (fieldMetadata.getDefaultValue() instanceof ProtoEnumValueMetadata) {
-               Enum enumValue = ((ProtoEnumValueMetadata) fieldMetadata.getDefaultValue()).getEnumValue();
+            if (defaultValue instanceof ProtoEnumValueMetadata) {
+               Enum enumValue = ((ProtoEnumValueMetadata) defaultValue).getEnumValue();
                v = enumValue.getDeclaringClass().getName() + "." + enumValue.name();
+            } else if (defaultValue instanceof Long) {
+               v = defaultValue + "L";
+            } else if (defaultValue instanceof Double) {
+               v = defaultValue + "D";
+            } else if (defaultValue instanceof Float) {
+               v = defaultValue + "F";
             } else {
-               v = fieldMetadata.getDefaultValue().toString();
+               v = defaultValue.toString();
             }
             if (fieldMetadata.isRepeated()) {
                iw.append("java.util.List c = o.").append(createGetter(fieldMetadata)).append(";\n");

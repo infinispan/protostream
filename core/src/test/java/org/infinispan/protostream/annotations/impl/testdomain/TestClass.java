@@ -36,6 +36,15 @@ public class TestClass extends TestBaseClass implements TestBaseInterface /*, Te
    @ProtoField(number = 88)
    public WrappedMessage wm;
 
+   @ProtoField(number = 1000, defaultValue = "23")
+   public double longField;
+
+   @ProtoField(number = 1001, defaultValue = "3.14")
+   public double doubleField;
+
+   @ProtoField(number = 1002, defaultValue = "3.14")
+   public double floatField;
+
    public TestClass() {
    }
 
