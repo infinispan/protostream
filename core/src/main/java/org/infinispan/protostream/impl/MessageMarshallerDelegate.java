@@ -52,8 +52,12 @@ public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegat
       return fieldDescriptors;
    }
 
-   public Map<String, FieldDescriptor> getFieldsByName() {
-      return fieldsByName;
+   public FieldDescriptor getFieldByName(String fieldName) throws IOException {
+      FieldDescriptor fd = fieldsByName.get(fieldName);
+      if (fd == null) {
+         throw new IOException("Unknown field name : " + fieldName);
+      }
+      return fd;
    }
 
    @Override

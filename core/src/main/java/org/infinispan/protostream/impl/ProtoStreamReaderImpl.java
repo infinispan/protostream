@@ -75,7 +75,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    private Object readPrimitive(String fieldName, JavaType javaType) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       Type type = fd.getType();
       if (type == Type.ENUM
             || type == Type.GROUP
@@ -219,7 +219,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <E> E readObject(String fieldName, Class<E> clazz) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       checkFieldRead(fd, false);
 
       if (fd.getType() == Type.ENUM) {
@@ -275,7 +275,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <E, C extends Collection<? super E>> C readCollection(String fieldName, C collection, Class<E> elementClass) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       checkFieldRead(fd, true);
 
       if (primitiveTypes.contains(fd.getType())) {

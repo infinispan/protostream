@@ -44,7 +44,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeInt(String fieldName, Integer value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -58,7 +58,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeInt(String fieldName, int value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -86,7 +86,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeLong(String fieldName, long value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -114,7 +114,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeLong(String fieldName, Long value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -128,7 +128,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeDouble(String fieldName, double value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -143,7 +143,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeDouble(String fieldName, Double value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -157,7 +157,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeFloat(String fieldName, float value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -172,7 +172,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeFloat(String fieldName, Float value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -186,7 +186,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBoolean(String fieldName, boolean value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -201,7 +201,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBoolean(String fieldName, Boolean value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -300,7 +300,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeString(String fieldName, String value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -321,7 +321,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBytes(String fieldName, byte[] value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -341,7 +341,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -386,7 +386,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <E> void writeCollection(String fieldName, Collection<? super E> collection, Class<E> elementClass) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (collection == null) {
          // a repeated field is never flagged as required
@@ -414,7 +414,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <E> void writeArray(String fieldName, E[] array, Class<? extends E> elementClass) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldsByName().get(fieldName);
+      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (array == null) {
          // a repeated field is never flagged as required
