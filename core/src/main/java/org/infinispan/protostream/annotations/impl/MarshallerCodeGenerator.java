@@ -17,6 +17,7 @@ import org.infinispan.protostream.impl.Log;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -388,13 +389,13 @@ final class MarshallerCodeGenerator {
          }
          iw.append("))\n{\n");
          iw.inc();
-         iw.append("java.util.List missingFields = new java.util.ArrayList(").append(String.valueOf(requiredFields)).append(");\n");
+         iw.append("StringBuilder missingFields = null;\n");
          for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
             if (fieldMetadata.isRequired()) {
-               iw.append("if (!").append(fieldMetadata.getName()).append("WasSet) missingFields.add(\"").append(fieldMetadata.getName()).append("\");\n");
+               iw.append("if (!").append(fieldMetadata.getName()).append("WasSet) { if (missingFields == null) missingFields = new StringBuilder(); else missingFields.append(\", \"); missingFields.append(\"").append(fieldMetadata.getName()).append("\"); }\n");
             }
          }
-         iw.append("if (!missingFields.isEmpty()) throw new java.io.IOException(\"Required field(s) missing : \" + missingFields);\n");
+         iw.append("if (missingFields != null) throw new java.io.IOException(\"Required field(s) missing from input stream : \" + missingFields);\n");
          iw.dec();
          iw.append("}\n");
       }
@@ -524,7 +525,9 @@ final class MarshallerCodeGenerator {
    }
 
    private String box(String v, Class<?> clazz) {
-      if (clazz == Float.class) {
+      if (Date.class.isAssignableFrom(clazz)) {
+         return "new java.util.Date(" + v + ")";
+      } else if (clazz == Float.class) {
          return "new java.lang.Float(" + v + ")";
       } else if (clazz == Double.class) {
          return "new java.lang.Double(" + v + ")";
@@ -543,7 +546,9 @@ final class MarshallerCodeGenerator {
    }
 
    private String unbox(String v, Class<?> clazz) {
-      if (clazz == Float.class) {
+      if (Date.class.isAssignableFrom(clazz)) {
+         return v + ".getTime()";
+      } else if (clazz == Float.class) {
          return v + ".floatValue()";
       } else if (clazz == Double.class) {
          return v + ".doubleValue()";

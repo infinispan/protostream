@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -440,6 +441,8 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                return Type.INT32;
             } else if (javaType == Boolean.class || javaType == Boolean.TYPE) {
                return Type.BOOL;
+            } else if (Date.class.isAssignableFrom(javaType)) {
+               return Type.FIXED64;
             } else {
                ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
                if (m.isEnum()) {
@@ -491,7 +494,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case FIXED64:
          case SFIXED64:
          case SINT64:
-            if (javaType != Long.class && javaType != Long.TYPE)
+            if (javaType != Long.class && javaType != Long.TYPE && !Date.class.isAssignableFrom(javaType))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getName() + " vs " + type);
             break;
       }
