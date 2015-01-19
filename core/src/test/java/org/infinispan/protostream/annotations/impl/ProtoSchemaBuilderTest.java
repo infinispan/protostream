@@ -15,6 +15,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -33,6 +34,20 @@ public class ProtoSchemaBuilderTest {
    public ExpectedException exception = ExpectedException.none();
 
    @Test
+   @Ignore
+   public void testMain() throws Exception {
+      String[] args = {
+            "-s", "sample_bank_account/bank.proto=sample-domain-definition/src/main/resources/sample_bank_account/bank.proto",
+            "-m", "org.infinispan.protostream.domain.marshallers.UserMarshaller",
+            "-m", "org.infinispan.protostream.domain.marshallers.GenderMarshaller",
+            "-f", "test.proto",
+            "-p", "my_package",
+            "org.infinispan.protostream.domain.Note"
+      };
+      ProtoSchemaBuilder.main(args);
+   }
+
+   @Test
    public void testNullFileName() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
       exception.expectMessage("fileName cannot be null");
@@ -45,7 +60,7 @@ public class ProtoSchemaBuilderTest {
    @Test
    public void testNoAnnotations() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
-      exception.expectMessage("Class java.lang.Object does not have any @ProtoField annotated fields");
+      exception.expectMessage("Class java.lang.Object does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller");
 
       SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();

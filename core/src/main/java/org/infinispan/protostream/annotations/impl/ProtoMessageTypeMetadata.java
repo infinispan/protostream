@@ -123,7 +123,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          Set<Class<?>> examinedClasses = new HashSet<Class<?>>();
          discoverFields(javaClass, examinedClasses, fields, fieldByName);
          if (fields.isEmpty()) {
-            throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated fields.");
+            throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller.");
          }
       }
    }
