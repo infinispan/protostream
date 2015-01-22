@@ -39,9 +39,6 @@ public final class ProtobufUtil {
    }
 
    public static <A> void writeTo(SerializationContext ctx, RawProtoStreamWriter out, A t) throws IOException {
-      if (t == null) {
-         throw new IllegalArgumentException("Object to marshall cannot be null");
-      }
       ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl((SerializationContextImpl) ctx);
       writer.write(out, t);
    }

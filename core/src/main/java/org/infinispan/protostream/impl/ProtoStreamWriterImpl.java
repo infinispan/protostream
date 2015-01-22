@@ -8,7 +8,6 @@ import org.jboss.logging.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -36,6 +35,9 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
    }
 
    public void write(RawProtoStreamWriter out, Object value) throws IOException {
+      if (value == null) {
+         throw new IllegalArgumentException("Object to marshall cannot be null");
+      }
       messageContext = null;
       BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(value.getClass());
       marshallerDelegate.marshall(null, null, value, this, out);
@@ -44,7 +46,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeInt(String fieldName, Integer value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -58,7 +60,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeInt(String fieldName, int value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -86,7 +88,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeLong(String fieldName, long value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
@@ -114,7 +116,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeLong(String fieldName, Long value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -128,22 +130,20 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeDouble(String fieldName, double value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
-      switch (fd.getType()) {
-         case DOUBLE:
-            messageContext.out.writeDouble(fd.getNumber(), value);
-            break;
-         default:
-            throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
+      if (fd.getType() != Type.DOUBLE) {
+         throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
       }
+
+      messageContext.out.writeDouble(fd.getNumber(), value);
    }
 
    @Override
    public void writeDouble(String fieldName, Double value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -157,22 +157,20 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeFloat(String fieldName, float value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
-      switch (fd.getType()) {
-         case FLOAT:
-            messageContext.out.writeFloat(fd.getNumber(), value);
-            break;
-         default:
-            throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
+      if (fd.getType() != Type.FLOAT) {
+         throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
       }
+
+      messageContext.out.writeFloat(fd.getNumber(), value);
    }
 
    @Override
    public void writeFloat(String fieldName, Float value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -186,22 +184,20 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBoolean(String fieldName, boolean value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       checkFieldWrite(fd, false);
 
-      switch (fd.getType()) {
-         case BOOL:
-            messageContext.out.writeBool(fd.getNumber(), value);
-            break;
-         default:
-            throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
+      if (fd.getType() != Type.BOOL) {
+         throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
       }
+
+      messageContext.out.writeBool(fd.getNumber(), value);
    }
 
    @Override
    public void writeBoolean(String fieldName, Boolean value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -213,94 +209,9 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       writeBoolean(fieldName, value.booleanValue());
    }
 
-   private void writePrimitiveCollection(FieldDescriptor fd, Collection<?> collection, Class elementClass) throws IOException {
-      RawProtoStreamWriter out = messageContext.out;
-      int fieldNumber = fd.getNumber();
-      Type type = fd.getType();
-      switch (type) {
-         case DOUBLE:
-            for (Object value : collection) {  //todo check (value != null && value.getClass() == elementClass)
-               out.writeDouble(fieldNumber, (Double) value);
-            }
-            break;
-         case FLOAT:
-            for (Object value : collection) {
-               out.writeFloat(fieldNumber, (Float) value);
-            }
-            break;
-         case BOOL:
-            for (Object value : collection) {
-               out.writeBool(fieldNumber, (Boolean) value);
-            }
-            break;
-         case STRING:
-            for (Object value : collection) {
-               out.writeString(fieldNumber, (String) value);
-            }
-            break;
-         case BYTES:
-            for (Object value : collection) {
-               out.writeBytes(fieldNumber, (byte[]) value);
-            }
-            break;
-         case INT64:
-            for (Object value : collection) {
-               out.writeInt64(fieldNumber, (Long) value);
-            }
-            break;
-         case UINT64:
-            for (Object value : collection) {
-               out.writeUInt64(fieldNumber, (Long) value);
-            }
-            break;
-         case FIXED64:
-            for (Object value : collection) {
-               out.writeFixed64(fieldNumber, (Long) value);
-            }
-            break;
-         case SFIXED64:
-            for (Object value : collection) {
-               out.writeSFixed64(fieldNumber, (Long) value);
-            }
-            break;
-         case SINT64:
-            for (Object value : collection) {
-               out.writeSInt64(fieldNumber, (Long) value);
-            }
-            break;
-         case INT32:
-            for (Object value : collection) {
-               out.writeInt32(fieldNumber, (Integer) value);
-            }
-            break;
-         case FIXED32:
-            for (Object value : collection) {
-               out.writeFixed32(fieldNumber, (Integer) value);
-            }
-            break;
-         case UINT32:
-            for (Object value : collection) {
-               out.writeUInt32(fieldNumber, (Integer) value);
-            }
-            break;
-         case SFIXED32:
-            for (Object value : collection) {
-               out.writeSFixed32(fieldNumber, (Integer) value);
-            }
-            break;
-         case SINT32:
-            for (Object value : collection) {
-               out.writeSInt32(fieldNumber, (Integer) value);
-            }
-            break;
-         default:
-            throw new IllegalStateException("Unexpected field type : " + type);
-      }
-   }
-
    @Override
    public void writeString(String fieldName, String value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -321,7 +232,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public void writeBytes(String fieldName, byte[] value) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -341,7 +252,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (value == null) {
          if (fd.isRequired()) {
@@ -386,7 +297,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <E> void writeCollection(String fieldName, Collection<? super E> collection, Class<E> elementClass) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (collection == null) {
          // a repeated field is never flagged as required
@@ -395,26 +306,107 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
       checkFieldWrite(fd, true);
 
-      if (fd.getType() == Type.GROUP) {
+      final Type type = fd.getType();
+      if (type == Type.GROUP) {
          for (Object t : collection) {
             writeGroup(fieldName, fd, t, elementClass);
          }
-      } else if (fd.getType() == Type.MESSAGE) {
+      } else if (type == Type.MESSAGE) {
          for (Object t : collection) {
             writeMessage(fieldName, fd, t, elementClass);
          }
-      } else if (fd.getType() == Type.ENUM) {
+      } else if (type == Type.ENUM) {
          for (Object t : collection) {
             writeEnum(fieldName, fd, (Enum) t);
          }
       } else {
-         writePrimitiveCollection(fd, collection, elementClass);
+         final RawProtoStreamWriter out = messageContext.out;
+         final int fieldNumber = fd.getNumber();
+         switch (type) {
+            case DOUBLE:
+               for (Object value : collection) {  //todo check (value != null && value.getClass() == elementClass)
+                  out.writeDouble(fieldNumber, (Double) value);
+               }
+               break;
+            case FLOAT:
+               for (Object value : collection) {
+                  out.writeFloat(fieldNumber, (Float) value);
+               }
+               break;
+            case BOOL:
+               for (Object value : collection) {
+                  out.writeBool(fieldNumber, (Boolean) value);
+               }
+               break;
+            case STRING:
+               for (Object value : collection) {
+                  out.writeString(fieldNumber, (String) value);
+               }
+               break;
+            case BYTES:
+               for (Object value : collection) {
+                  out.writeBytes(fieldNumber, (byte[]) value);
+               }
+               break;
+            case INT64:
+               for (Object value : collection) {
+                  out.writeInt64(fieldNumber, (Long) value);
+               }
+               break;
+            case UINT64:
+               for (Object value : collection) {
+                  out.writeUInt64(fieldNumber, (Long) value);
+               }
+               break;
+            case FIXED64:
+               for (Object value : collection) {
+                  out.writeFixed64(fieldNumber, (Long) value);
+               }
+               break;
+            case SFIXED64:
+               for (Object value : collection) {
+                  out.writeSFixed64(fieldNumber, (Long) value);
+               }
+               break;
+            case SINT64:
+               for (Object value : collection) {
+                  out.writeSInt64(fieldNumber, (Long) value);
+               }
+               break;
+            case INT32:
+               for (Object value : collection) {
+                  out.writeInt32(fieldNumber, (Integer) value);
+               }
+               break;
+            case FIXED32:
+               for (Object value : collection) {
+                  out.writeFixed32(fieldNumber, (Integer) value);
+               }
+               break;
+            case UINT32:
+               for (Object value : collection) {
+                  out.writeUInt32(fieldNumber, (Integer) value);
+               }
+               break;
+            case SFIXED32:
+               for (Object value : collection) {
+                  out.writeSFixed32(fieldNumber, (Integer) value);
+               }
+               break;
+            case SINT32:
+               for (Object value : collection) {
+                  out.writeSInt32(fieldNumber, (Integer) value);
+               }
+               break;
+            default:
+               throw new IllegalStateException("Unexpected field type : " + type);
+         }
       }
    }
 
    @Override
    public <E> void writeArray(String fieldName, E[] array, Class<? extends E> elementClass) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
       if (array == null) {
          // a repeated field is never flagged as required
@@ -423,20 +415,101 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
       checkFieldWrite(fd, true);
 
-      if (fd.getType() == Type.GROUP) {
+      final Type type = fd.getType();
+      if (type == Type.GROUP) {
          for (Object t : array) {
             writeGroup(fieldName, fd, t, elementClass);
          }
-      } else if (fd.getType() == Type.MESSAGE) {
+      } else if (type == Type.MESSAGE) {
          for (Object t : array) {
             writeMessage(fieldName, fd, t, elementClass);
          }
-      } else if (fd.getType() == Type.ENUM) {
+      } else if (type == Type.ENUM) {
          for (Object t : array) {
             writeEnum(fieldName, fd, (Enum) t);
          }
       } else {
-         writePrimitiveCollection(fd, Arrays.asList(array), elementClass);   //todo [anistor] optimize away the Arrays.asList( )
+         final RawProtoStreamWriter out = messageContext.out;
+         final int fieldNumber = fd.getNumber();
+         switch (type) {
+            case DOUBLE:
+               for (Object value : array) {  //todo check (value != null && value.getClass() == elementClass)
+                  out.writeDouble(fieldNumber, (Double) value);
+               }
+               break;
+            case FLOAT:
+               for (Object value : array) {
+                  out.writeFloat(fieldNumber, (Float) value);
+               }
+               break;
+            case BOOL:
+               for (Object value : array) {
+                  out.writeBool(fieldNumber, (Boolean) value);
+               }
+               break;
+            case STRING:
+               for (Object value : array) {
+                  out.writeString(fieldNumber, (String) value);
+               }
+               break;
+            case BYTES:
+               for (Object value : array) {
+                  out.writeBytes(fieldNumber, (byte[]) value);
+               }
+               break;
+            case INT64:
+               for (Object value : array) {
+                  out.writeInt64(fieldNumber, (Long) value);
+               }
+               break;
+            case UINT64:
+               for (Object value : array) {
+                  out.writeUInt64(fieldNumber, (Long) value);
+               }
+               break;
+            case FIXED64:
+               for (Object value : array) {
+                  out.writeFixed64(fieldNumber, (Long) value);
+               }
+               break;
+            case SFIXED64:
+               for (Object value : array) {
+                  out.writeSFixed64(fieldNumber, (Long) value);
+               }
+               break;
+            case SINT64:
+               for (Object value : array) {
+                  out.writeSInt64(fieldNumber, (Long) value);
+               }
+               break;
+            case INT32:
+               for (Object value : array) {
+                  out.writeInt32(fieldNumber, (Integer) value);
+               }
+               break;
+            case FIXED32:
+               for (Object value : array) {
+                  out.writeFixed32(fieldNumber, (Integer) value);
+               }
+               break;
+            case UINT32:
+               for (Object value : array) {
+                  out.writeUInt32(fieldNumber, (Integer) value);
+               }
+               break;
+            case SFIXED32:
+               for (Object value : array) {
+                  out.writeSFixed32(fieldNumber, (Integer) value);
+               }
+               break;
+            case SINT32:
+               for (Object value : array) {
+                  out.writeSInt32(fieldNumber, (Integer) value);
+               }
+               break;
+            default:
+               throw new IllegalStateException("Unexpected field type : " + type);
+         }
       }
    }
 

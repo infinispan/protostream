@@ -75,8 +75,8 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    private Object readPrimitive(String fieldName, JavaType javaType) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-      Type type = fd.getType();
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final Type type = fd.getType();
       if (type == Type.ENUM
             || type == Type.GROUP
             || type == Type.MESSAGE) {
@@ -86,7 +86,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
          throw new IllegalArgumentException("Declared field type is not of the expected type : " + fd.getFullName());
       }
       checkFieldRead(fd, false);
-      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
+      final int expectedTag = WireFormat.makeTag(fd.getNumber(), type.getWireType());
 
       Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
       if (o != null) {
@@ -100,7 +100,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
             break;
          }
          if (tag == expectedTag) {
-            switch (fd.getType()) {
+            switch (type) {
                case DOUBLE:
                   return in.readDouble();
                case FLOAT:
@@ -132,7 +132,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
                case SINT64:
                   return in.readSInt64();
                default:
-                  throw new IOException("Unexpected field type : " + fd.getType());
+                  throw new IOException("Unexpected field type : " + type);
             }
          }
          messageContext.unknownFieldSet.readSingleField(tag, in);
@@ -166,12 +166,14 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       } else if (type == Type.FIXED32
             || type == Type.SFIXED32) {
          //o is an Integer
+         o = (Integer) o;
       } else if (type == Type.INT64
             || type == Type.UINT64
             || type == Type.FIXED64
             || type == Type.SFIXED64
             || type == Type.SINT64) {
          //o is a Long
+         o = (Long) o;
       } else if (type == Type.BOOL) {
          o = ((Long) o) != 0;
       } else if (type == Type.FLOAT) {
@@ -219,7 +221,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <E> E readObject(String fieldName, Class<E> clazz) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       checkFieldRead(fd, false);
 
       if (fd.getType() == Type.ENUM) {
@@ -227,7 +229,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       }
 
       //todo validate type is compatible with readObject
-      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
+      final int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
       Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
       if (o != null) {
          byte[] byteArray = (byte[]) o;
@@ -275,7 +277,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    @Override
    public <E, C extends Collection<? super E>> C readCollection(String fieldName, C collection, Class<E> elementClass) throws IOException {
-      FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       checkFieldRead(fd, true);
 
       if (primitiveTypes.contains(fd.getType())) {
@@ -284,7 +286,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
       }
 
       //todo validate type is compatible with readCollection
-      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
+      final int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
 
       while (true) {
          Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
@@ -311,7 +313,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    }
 
    private void readPrimitiveCollection(FieldDescriptor fd, Collection<? super Object> collection, Class elementClass) throws IOException {
-      int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
+      final int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
       Type type = fd.getType();
 
       while (true) {
