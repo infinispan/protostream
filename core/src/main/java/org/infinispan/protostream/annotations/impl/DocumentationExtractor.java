@@ -8,7 +8,7 @@ import java.lang.reflect.AnnotatedElement;
  * @author anistor@redhat.com
  * @since 3.0
  */
-public final class DocumentationExtractor {
+final class DocumentationExtractor {
 
    public static String getDocumentation(AnnotatedElement... elements) {
       StringBuilder sb = null;
