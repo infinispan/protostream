@@ -156,7 +156,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (Modifier.isFinal(field.getModifiers())) {
                   throw new ProtoSchemaBuilderException("Final fields cannot be @ProtoField annotated: " + field);
                }
-               if (!Modifier.isPublic(field.getModifiers())) {
+               if (Modifier.isPrivate(field.getModifiers())) {
                   throw new ProtoSchemaBuilderException("Non-public fields cannot be @ProtoField annotated: " + field);
                }
                String fieldName = annotation.name();
