@@ -56,11 +56,11 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
 
       Note note2 = new Note();
       note2.setText("Lorem Ipsum");
-      note2.setAuthor(user);
+      //note2.setAuthor(user);
 
       Note note3 = new Note();
       note3.setText("Lorem Ipsum");
-      note3.setAuthor(user);
+      //note3.setAuthor(user);
 
       note.note = note2;
       note.notes = Collections.singletonList(note3);
