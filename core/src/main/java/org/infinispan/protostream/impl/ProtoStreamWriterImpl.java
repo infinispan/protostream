@@ -6,7 +6,6 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.jboss.logging.Logger;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -276,11 +275,11 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    private void writeMessage(String fieldName, FieldDescriptor fd, Object value, Class clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       RawProtoStreamWriter out = RawProtoStreamWriterImpl.newInstance(baos);
       marshallerDelegate.marshall(fieldName, fd, value, this, out);
       out.flush();
-      messageContext.out.writeBytes(fd.getNumber(), baos.toByteArray());
+      messageContext.out.writeBytes(fd.getNumber(), baos.getByteBuffer());
    }
 
    private void writeGroup(String fieldName, FieldDescriptor fd, Object value, Class clazz) throws IOException {

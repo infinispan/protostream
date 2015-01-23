@@ -9,7 +9,6 @@ import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
@@ -89,11 +88,11 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
          BaseMarshaller marshaller = ctx.getMarshaller(t.getClass());
          out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, marshaller.getTypeName());
 
-         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+         ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
          ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl((SerializationContextImpl) ctx);
          writer.write(RawProtoStreamWriterImpl.newInstance(buffer), t);
 
-         out.writeBytes(WRAPPED_MESSAGE_BYTES, buffer.toByteArray());
+         out.writeBytes(WRAPPED_MESSAGE_BYTES, buffer.getByteBuffer());
       }
       out.flush();
    }

@@ -4,11 +4,11 @@ import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.UnknownFieldSet;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -198,13 +198,15 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
 
    @Override
    public void writeExternal(ObjectOutput out) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       RawProtoStreamWriter output = RawProtoStreamWriterImpl.newInstance(baos);
       writeTo(output);
       output.flush();
-      byte[] bytes = baos.toByteArray();
-      out.writeInt(bytes.length);
-      out.write(bytes);
+      ByteBuffer buffer = baos.getByteBuffer();
+      int off = buffer.arrayOffset();
+      int len = buffer.limit() - off;
+      out.writeInt(len);
+      out.write(buffer.array(), off, len);
    }
 
    @Override

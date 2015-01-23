@@ -124,7 +124,9 @@ public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
 
    @Override
    public void writeBytes(int number, ByteBuffer value) throws IOException {
-      delegate.writeByteBuffer(number, value);
+      final int off = value.arrayOffset();
+      final int len = value.limit() - off;
+      delegate.writeByteArray(number, value.array(), off, len);
    }
 
    @Override

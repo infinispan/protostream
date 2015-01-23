@@ -3,12 +3,14 @@ package org.infinispan.protostream.annotations.impl;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
+import org.infinispan.protostream.impl.ProtoStreamReaderImpl;
+import org.infinispan.protostream.impl.ProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
+import org.infinispan.protostream.impl.SerializationContextImpl;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
@@ -24,7 +26,8 @@ public class GeneratedMarshallerBase {
       if (m instanceof RawProtobufMarshaller) {
          return ((RawProtobufMarshaller<T>) m).readFrom(ctx, in);
       } else {
-         return ProtobufUtil.readFrom(ctx, in, clazz);
+         ProtoStreamReaderImpl reader = new ProtoStreamReaderImpl((SerializationContextImpl) ctx);
+         return reader.read(in, clazz);
       }
    }
 
@@ -33,15 +36,16 @@ public class GeneratedMarshallerBase {
       if (m instanceof RawProtobufMarshaller) {
          ((RawProtobufMarshaller<T>) m).writeTo(ctx, out, message);
       } else {
-         ProtobufUtil.writeTo(ctx, out, message);
+         ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl((SerializationContextImpl) ctx);
+         writer.write(out, message);
       }
    }
 
    protected final <T> void writeNestedMessage(SerializationContext ctx, RawProtoStreamWriter out, Class<T> clazz, int fieldNumber, T message) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       RawProtoStreamWriter nested = RawProtoStreamWriterImpl.newInstance(baos);
       writeMessage(ctx, nested, clazz, message);
       nested.flush();
-      out.writeBytes(fieldNumber, baos.toByteArray());
+      out.writeBytes(fieldNumber, baos.getByteBuffer());
    }
 }
