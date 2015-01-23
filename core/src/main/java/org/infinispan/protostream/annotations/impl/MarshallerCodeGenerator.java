@@ -11,6 +11,7 @@ import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.Log;
@@ -351,7 +352,9 @@ final class MarshallerCodeGenerator {
             iw.append("if (!").append(fieldMetadata.getName()).append("WasSet) {\n");
             iw.inc();
             String v;
-            if (defaultValue instanceof ProtoEnumValueMetadata) {
+            if (Date.class.isAssignableFrom(fieldMetadata.getJavaType())) {
+               v = box(defaultValue + "L", fieldMetadata.getJavaType());
+            } else if (defaultValue instanceof ProtoEnumValueMetadata) {
                Enum enumValue = ((ProtoEnumValueMetadata) defaultValue).getEnumValue();
                v = enumValue.getDeclaringClass().getName() + "." + enumValue.name();
             } else if (defaultValue instanceof Long) {
@@ -526,7 +529,13 @@ final class MarshallerCodeGenerator {
 
    private String box(String v, Class<?> clazz) {
       if (Date.class.isAssignableFrom(clazz)) {
-         return "new java.util.Date(" + v + ")";
+         try {
+            // just check this type really has a constructor that accepts a long timestamp param
+            clazz.getConstructor(Long.TYPE);
+         } catch (NoSuchMethodException e) {
+            throw new ProtoSchemaBuilderException("Type " + clazz + " is not a valid Date type because it does not have a constructor that accepts a 'long' timestamp parameter");
+         }
+         return "new " + clazz.getName() + "(" + v + ")";
       } else if (clazz == Float.class) {
          return "new java.lang.Float(" + v + ")";
       } else if (clazz == Double.class) {

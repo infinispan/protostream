@@ -379,6 +379,9 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          if (fieldType == Byte.class || fieldType == Byte.TYPE) {
             return Byte.valueOf(defaultValue);
          }
+         if (Date.class.isAssignableFrom(fieldType)) {
+            return Long.valueOf(defaultValue);
+         }
       } catch (NumberFormatException e) {
          throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of " + clazz + ": " + defaultValue, e);
       }

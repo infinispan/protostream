@@ -51,7 +51,7 @@ public class Note {
    }
 
    @ProtoDoc("@IndexedField")
-   @ProtoField(number = 5, type = Type.FIXED64, required = false)
+   @ProtoField(number = 5, type = Type.FIXED64, required = false, defaultValue = "0")
    public Date getCreationDate() {
       return creationDate;
    }

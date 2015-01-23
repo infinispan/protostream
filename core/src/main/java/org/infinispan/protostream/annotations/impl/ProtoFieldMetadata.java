@@ -4,6 +4,7 @@ import org.infinispan.protostream.descriptors.Type;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -174,7 +175,9 @@ final class ProtoFieldMetadata {
       Object defaultValue = getDefaultValue();
       if (defaultValue != null) {
          String v = defaultValue instanceof ProtoEnumValueMetadata ?
-               ((ProtoEnumValueMetadata) defaultValue).getProtoName() : defaultValue.toString();
+               ((ProtoEnumValueMetadata) defaultValue).getProtoName() :
+               (defaultValue instanceof Date ?
+                      Long.toString(((Date) defaultValue).getTime()) : defaultValue.toString());
          iw.append(" [default = ").append(v).append(']');
       }
       iw.append(" /* ");
