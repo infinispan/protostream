@@ -18,7 +18,7 @@ public class TestBaseClass {
    public List<Integer> ints;
 
    @ProtoField(number = 888)
-   public Float floats;
+   public Float aFloat;
 
    @ProtoField(number = 999, type = Type.MESSAGE, required = true)
    public float x;

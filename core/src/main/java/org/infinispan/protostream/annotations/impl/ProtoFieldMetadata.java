@@ -44,6 +44,7 @@ final class ProtoFieldMetadata {
    private final ProtoTypeMetadata protoTypeMetadata;
    private final boolean isRequired;
    private final boolean isRepeated;
+   private final boolean isArray;
    private final Object defaultValue;
 
    private final String propertyName;
@@ -53,7 +54,7 @@ final class ProtoFieldMetadata {
 
    public ProtoFieldMetadata(Class<?> declaringClass, int number, String name, Class<?> javaType,
                              Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
-                             boolean isRequired, boolean isRepeated, Object defaultValue,
+                             boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
                              Field field) {
       this.declaringClass = declaringClass;
       this.number = number;
@@ -63,6 +64,7 @@ final class ProtoFieldMetadata {
       this.protoTypeMetadata = protoTypeMetadata;
       this.isRequired = isRequired;
       this.isRepeated = isRepeated;
+      this.isArray = isArray;
       this.defaultValue = defaultValue;
       this.protobufType = protobufType;
       this.propertyName = field.getName();
@@ -74,7 +76,7 @@ final class ProtoFieldMetadata {
 
    public ProtoFieldMetadata(Class<?> declaringClass, int number, String name, Class<?> javaType,
                              Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
-                             boolean isRequired, boolean isRepeated, Object defaultValue,
+                             boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
                              String propertyName, Method getter, Method setter) {
       this.declaringClass = declaringClass;
       this.number = number;
@@ -84,6 +86,7 @@ final class ProtoFieldMetadata {
       this.protoTypeMetadata = protoTypeMetadata;
       this.isRequired = isRequired;
       this.isRepeated = isRepeated;
+      this.isArray = isArray;
       this.defaultValue = defaultValue;
       this.protobufType = protobufType;
       this.field = null;
@@ -131,6 +134,10 @@ final class ProtoFieldMetadata {
 
    public boolean isRepeated() {
       return isRepeated;
+   }
+
+   public boolean isArray() {
+      return isArray;
    }
 
    public Object getDefaultValue() {

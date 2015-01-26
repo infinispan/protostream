@@ -241,6 +241,11 @@ final class MarshallerCodeGenerator {
          if (fieldMetadata.isRequired() || fieldMetadata.getDefaultValue() != null) {
             iw.append("boolean ").append(fieldMetadata.getName()).append("WasSet = false;\n");
          }
+         if (fieldMetadata.isRepeated()) {
+            String c = "___" + fieldMetadata.getName();
+            String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
+            iw.append(collectionImpl).append(' ').append(c).append(" = null;\n");
+         }
       }
       iw.append("boolean done = false;\n");
       iw.append("while (!done) {\n");
@@ -367,14 +372,36 @@ final class MarshallerCodeGenerator {
                v = defaultValue.toString();
             }
             if (fieldMetadata.isRepeated()) {
-               iw.append("java.util.List c = o.").append(createGetter(fieldMetadata)).append(";\n");
-               iw.append("if (c == null) { c = new ").append(fieldMetadata.getCollectionImplementation().getName()).append("(); o.").append(createSetter(fieldMetadata, "c")).append("; }\n");
-               iw.append("c.add(").append(v).append(");\n");
+               String c = "___" + fieldMetadata.getName();
+               String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
+               iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(collectionImpl).append("();\n");
+               iw.append(c).append(".add(").append(v).append(");\n");
             } else {
                iw.append("o.").append(createSetter(fieldMetadata, v)).append(";\n");
             }
             iw.dec();
             iw.append("}\n");
+         }
+      }
+      for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
+         if (fieldMetadata.isRepeated()) {
+            String c = "___" + fieldMetadata.getName();
+            if (fieldMetadata.isArray()) {
+               iw.append("if (").append(c).append(" != null) { ");
+               if (fieldMetadata.getJavaType().isPrimitive()) {
+                  iw.append(fieldMetadata.getJavaType().getName()).append("[] _c = new ").append(fieldMetadata.getJavaType().getName()).append("[").append(c).append(".size()]; ");
+                  Class<?> boxedType = box(fieldMetadata.getJavaType());
+                  iw.append("for (int i = 0; i < _c.length; i++) _c[i] = ").append(unbox("((" + boxedType.getName() + ")" + c + ".get(i))", boxedType)).append("; ");
+                  c = "_c";
+               } else {
+                  c = "(" + fieldMetadata.getJavaType().getName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaType().getName() + "[" + c + ".size()])";
+               }
+            }
+            iw.append("o.").append(createSetter(fieldMetadata, c)).append(';');
+            if (fieldMetadata.isArray()) {
+               iw.append(" }");
+            }
+            iw.append('\n');
          }
       }
       if (requiredFields > 0) {
@@ -410,9 +437,10 @@ final class MarshallerCodeGenerator {
 
    private void genSetField(ProtoFieldMetadata fieldMetadata, IndentWriter iw) {
       if (fieldMetadata.isRepeated()) {
-         iw.append("java.util.List c = o.").append(createGetter(fieldMetadata)).append(";\n");
-         iw.append("if (c == null) { c = new ").append(fieldMetadata.getCollectionImplementation().getName()).append("(); o.").append(createSetter(fieldMetadata, "c")).append("; }\n");
-         iw.append("c.add(v);\n");
+         String c = "___" + fieldMetadata.getName();
+         String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
+         iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(collectionImpl).append("();\n");
+         iw.append(c).append(".add(").append(box("v", box(fieldMetadata.getJavaType()))).append(");\n");
       } else {
          iw.append("o.").append(createSetter(fieldMetadata, "v")).append(";\n");
       }
@@ -439,8 +467,13 @@ final class MarshallerCodeGenerator {
          iw.append("{\n");
          iw.inc();
          final String v = fieldMetadata.isRepeated() ? "c" : "v";
+         iw.append("final ");
          if (fieldMetadata.isRepeated()) {
-            iw.append("java.util.List");
+            if (fieldMetadata.isArray()) {
+               iw.append(fieldMetadata.getJavaType().getName()).append("[]");
+            } else {
+               iw.append("java.util.Collection");
+            }
          } else {
             iw.append(fieldMetadata.getJavaType().getName());
          }
@@ -455,16 +488,22 @@ final class MarshallerCodeGenerator {
                iw.append("if (").append(v).append(" == null) throw new IllegalStateException(\"Required field must not be null : ").append(fieldMetadata.getName()).append("\");\n");
             }
          } else {
-            if (!fieldMetadata.getJavaType().isPrimitive()) {
+            if (!fieldMetadata.getJavaType().isPrimitive() || fieldMetadata.isRepeated()) {
                iw.append("if (").append(v).append(" != null) ");
             }
          }
          if (fieldMetadata.isRepeated()) {
             iw.append('\n');
             iw.inc();
-            iw.append("for (java.util.Iterator it = c.iterator(); it.hasNext(); ) {\n");
-            iw.inc();
-            iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") it.next();\n");
+            if (fieldMetadata.isArray()) {
+               iw.append("for (int i = 0; i < c.length; i++) {\n");
+               iw.inc();
+               iw.append("final ").append(fieldMetadata.getJavaType().getName()).append(" v = c[i];\n");
+            } else {
+               iw.append("for (java.util.Iterator it = c.iterator(); it.hasNext(); ) {\n");
+               iw.inc();
+               iw.append("final ").append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") it.next();\n");
+            }
          }
          switch (fieldMetadata.getProtobufType()) {
             case DOUBLE:
@@ -509,6 +548,7 @@ final class MarshallerCodeGenerator {
          if (fieldMetadata.isRepeated()) {
             iw.dec();
             iw.append("}\n");
+            iw.dec();
          }
          iw.dec();
          iw.append("}\n");
@@ -527,29 +567,50 @@ final class MarshallerCodeGenerator {
       return iw.toString();
    }
 
+   private Class<?> box(Class<?> clazz) {
+      if (clazz == Float.TYPE) {
+         return Float.class;
+      } else if (clazz == Double.TYPE) {
+         return Double.class;
+      } else if (clazz == Boolean.TYPE) {
+         return Boolean.class;
+      } else if (clazz == Long.TYPE) {
+         return Long.class;
+      } else if (clazz == Integer.TYPE) {
+         return Integer.class;
+      } else if (clazz == Short.TYPE) {
+         return Short.class;
+      } else if (clazz == Byte.TYPE) {
+         return Byte.class;
+      }
+      return null;
+   }
+
    private String box(String v, Class<?> clazz) {
-      if (Date.class.isAssignableFrom(clazz)) {
-         try {
-            // just check this type really has a constructor that accepts a long timestamp param
-            clazz.getConstructor(Long.TYPE);
-         } catch (NoSuchMethodException e) {
-            throw new ProtoSchemaBuilderException("Type " + clazz + " is not a valid Date type because it does not have a constructor that accepts a 'long' timestamp parameter");
+      if (clazz != null) {
+         if (Date.class.isAssignableFrom(clazz)) {
+            try {
+               // just check this type really has a constructor that accepts a long timestamp param
+               clazz.getConstructor(Long.TYPE);
+            } catch (NoSuchMethodException e) {
+               throw new ProtoSchemaBuilderException("Type " + clazz + " is not a valid Date type because it does not have a constructor that accepts a 'long' timestamp parameter");
+            }
+            return "new " + clazz.getName() + "(" + v + ")";
+         } else if (clazz == Float.class) {
+            return "new java.lang.Float(" + v + ")";
+         } else if (clazz == Double.class) {
+            return "new java.lang.Double(" + v + ")";
+         } else if (clazz == Boolean.class) {
+            return "new java.lang.Boolean(" + v + ")";
+         } else if (clazz == Long.class) {
+            return "new java.lang.Long(" + v + ")";
+         } else if (clazz == Integer.class) {
+            return "new java.lang.Integer(" + v + ")";
+         } else if (clazz == Short.class) {
+            return "new java.lang.Short(" + v + ")";
+         } else if (clazz == Byte.class) {
+            return "new java.lang.Byte(" + v + ")";
          }
-         return "new " + clazz.getName() + "(" + v + ")";
-      } else if (clazz == Float.class) {
-         return "new java.lang.Float(" + v + ")";
-      } else if (clazz == Double.class) {
-         return "new java.lang.Double(" + v + ")";
-      } else if (clazz == Boolean.class) {
-         return "new java.lang.Boolean(" + v + ")";
-      } else if (clazz == Long.class) {
-         return "new java.lang.Long(" + v + ")";
-      } else if (clazz == Integer.class) {
-         return "new java.lang.Integer(" + v + ")";
-      } else if (clazz == Short.class) {
-         return "new java.lang.Short(" + v + ")";
-      } else if (clazz == Byte.class) {
-         return "new java.lang.Byte(" + v + ")";
       }
       return v;
    }

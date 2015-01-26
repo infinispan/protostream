@@ -178,6 +178,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   fieldName = field.getName();
                }
 
+               boolean isArray = field.getType().isArray();
                boolean isRepeated = isRepeated(field.getType());
                boolean isRequired = annotation.required();
                if (isRepeated && isRequired) {
@@ -197,7 +198,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, annotation.defaultValue());
 
-               if (!isRequired && javaType.isPrimitive() && defaultValue == null) {
+               if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
                   throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz + " should be marked required or should have a default value.");
                }
 
@@ -209,7 +210,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
                }
                ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(clazz, annotation.number(), fieldName, javaType, collectionImplementation,
-                                                                         protobufType, protoTypeMetadata, isRequired, isRepeated, defaultValue, field);
+                                                                         protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue, field);
 
                ProtoFieldMetadata existing = fieldsByNumber.get(annotation.number());
                if (existing != null) {
@@ -298,6 +299,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   fieldName = propertyName;
                }
 
+               boolean isArray = getter.getReturnType().isArray();
                boolean isRepeated = isRepeated(getter.getReturnType());
                boolean isRequired = annotation.required();
                if (isRepeated && isRequired) {
@@ -317,7 +319,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, annotation.defaultValue());
 
-               if (!isRequired && javaType.isPrimitive() && defaultValue == null) {
+               if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
                   throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz + " should be marked required or should have a default value.");
                }
 
@@ -330,7 +332,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                }
 
                ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(clazz, annotation.number(), fieldName, javaType, collectionImplementation,
-                                                                         protobufType, protoTypeMetadata, isRequired, isRepeated, defaultValue,
+                                                                         protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue,
                                                                          propertyName, getter, setter);
 
                ProtoFieldMetadata existing = fieldsByNumber.get(annotation.number());
@@ -405,7 +407,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private Class<?> getCollectionImplementation(Class<?> clazz, Class<?> fieldType, Class<?> configuredCollection, String fieldName, boolean isRepeated) {
       Class<?> collectionImplementation;
-      if (isRepeated) {
+      if (isRepeated && !fieldType.isArray()) {
          collectionImplementation = configuredCollection;
          if (collectionImplementation == ProtoField.UNSPECIFIED_COLLECTION.class) {
             collectionImplementation = fieldType;
@@ -428,7 +430,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          }
       } else {
          if (configuredCollection != ProtoField.UNSPECIFIED_COLLECTION.class) {
-            throw new ProtoSchemaBuilderException("Specifying the collection class is only allowed for repeated fields:  '" + fieldName + "' of " + clazz);
+            throw new ProtoSchemaBuilderException("Specifying the collection class is only allowed for repeated collection fields: '" + fieldName + "' of " + clazz);
          }
          collectionImplementation = null;
       }
@@ -519,7 +521,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    private boolean isRepeated(Class<?> type) {
-      return Collection.class.isAssignableFrom(type);
+      return type.isArray() || Collection.class.isAssignableFrom(type);
    }
 
    private Method findGetter(String propertyName, Class<?> propertyType) {
@@ -561,6 +563,9 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    private static Class<?> determineElementType(Class<?> type, java.lang.reflect.Type genericType) {
+      if (type.isArray()) {
+         return type.getComponentType();
+      }
       if (Collection.class.isAssignableFrom(type)) {
          return determineCollectionElementType(genericType);
       }

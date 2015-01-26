@@ -6,6 +6,8 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.testdomain.Simple;
+import org.infinispan.protostream.annotations.impl.testdomain.TestArraysAndCollectionsClass;
+import org.infinispan.protostream.annotations.impl.testdomain.TestArraysAndCollectionsClass2;
 import org.infinispan.protostream.annotations.impl.testdomain.TestClass;
 import org.infinispan.protostream.annotations.impl.testdomain.TestClass3;
 import org.infinispan.protostream.annotations.impl.testdomain.TestEnum;
@@ -116,6 +118,46 @@ public class ProtoSchemaBuilderTest {
       assertTrue(unmarshalled instanceof TestClass);
       assertEquals("test", ((TestClass) unmarshalled).surname);
       assertEquals("test address", ((TestClass) unmarshalled).testClass2.address);
+   }
+
+   @Test
+   public void testGeneration2() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder
+            .fileName("test.proto")
+            .packageName("test_package")
+            .addClass(TestArraysAndCollectionsClass.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall(TestArraysAndCollectionsClass.class));
+      assertTrue(ctx.canMarshall("test_package.TestArraysAndCollectionsClass"));
+
+      TestArraysAndCollectionsClass testObject = new TestArraysAndCollectionsClass();
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, testObject);
+
+      Object unmarshalled = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertTrue(unmarshalled instanceof TestArraysAndCollectionsClass);
+   }
+
+   @Test
+   public void testGeneration3() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder
+            .fileName("test.proto")
+            .packageName("test_package")
+            .addClass(TestArraysAndCollectionsClass2.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall(TestArraysAndCollectionsClass2.class));
+      assertTrue(ctx.canMarshall("test_package.TestArraysAndCollectionsClass2"));
+
+      TestArraysAndCollectionsClass2 testObject = new TestArraysAndCollectionsClass2();
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, testObject);
+
+      Object unmarshalled = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertTrue(unmarshalled instanceof TestArraysAndCollectionsClass2);
    }
 
    @Test
