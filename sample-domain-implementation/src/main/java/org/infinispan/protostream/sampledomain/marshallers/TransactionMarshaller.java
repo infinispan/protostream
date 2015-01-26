@@ -26,7 +26,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
       int id = reader.readInt("id");
       String description = reader.readString("description");
       int accountId = reader.readInt("accountId");
-      long date = reader.readLong("date");
+      Date date = reader.readDate("date");
       double amount = reader.readDouble("amount");
       boolean isDebit = reader.readBoolean("isDebit");
 
@@ -34,7 +34,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
       transaction.setId(id);
       transaction.setDescription(description);
       transaction.setAccountId(accountId);
-      transaction.setDate(new Date(date));
+      transaction.setDate(date);
       transaction.setAmount(amount);
       transaction.setDebit(isDebit);
       return transaction;

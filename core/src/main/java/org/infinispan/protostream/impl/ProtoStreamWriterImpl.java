@@ -8,6 +8,7 @@ import org.jboss.logging.Logger;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
 
 /**
  * @author anistor@redhat.com
@@ -81,7 +82,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
             messageContext.out.writeSInt32(fd.getNumber(), value);
             break;
          default:
-            throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
    }
 
@@ -109,7 +110,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
             messageContext.out.writeSInt64(fd.getNumber(), value);
             break;
          default:
-            throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
    }
 
@@ -134,7 +135,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       checkFieldWrite(fd, false);
 
       if (fd.getType() != Type.DOUBLE) {
-         throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
 
       messageContext.out.writeDouble(fd.getNumber(), value);
@@ -161,7 +162,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       checkFieldWrite(fd, false);
 
       if (fd.getType() != Type.FLOAT) {
-         throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
 
       messageContext.out.writeFloat(fd.getNumber(), value);
@@ -188,7 +189,7 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
       checkFieldWrite(fd, false);
 
       if (fd.getType() != Type.BOOL) {
-         throw new IllegalArgumentException("The declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
 
       messageContext.out.writeBool(fd.getNumber(), value);
@@ -509,6 +510,13 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
             default:
                throw new IllegalStateException("Unexpected field type : " + type);
          }
+      }
+   }
+
+   @Override
+   public void writeDate(String fieldName, Date value) throws IOException {
+      if (value != null) {
+         writeLong(fieldName, value.getTime());
       }
    }
 

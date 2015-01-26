@@ -6,6 +6,7 @@ import org.infinispan.protostream.domain.User;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -20,12 +21,14 @@ public class NoteMarshaller implements MessageMarshaller<Note> {
       User author = reader.readObject("author", User.class);
       Note note2 = reader.readObject("note", Note.class);
       List<Note> notes = reader.readCollection("notes", new ArrayList<Note>(), Note.class);
+      Date creationDate = reader.readDate("creationDate");
 
       Note note = new Note();
       note.setText(text);
       note.setAuthor(author);
       note.note = note2;
       note.notes = notes;
+      note.setCreationDate(creationDate);
       return note;
    }
 
@@ -35,6 +38,7 @@ public class NoteMarshaller implements MessageMarshaller<Note> {
       writer.writeObject("author", note.getAuthor(), User.class);
       writer.writeObject("note", note.note, Note.class);
       writer.writeCollection("notes", note.notes, Note.class);
+      writer.writeDate("creationDate", note.getCreationDate());
    }
 
    @Override

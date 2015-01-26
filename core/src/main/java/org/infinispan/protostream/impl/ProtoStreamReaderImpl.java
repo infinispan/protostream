@@ -13,6 +13,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -192,6 +193,12 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    @Override
    public Long readLong(String fieldName) throws IOException {
       return (Long) readPrimitive(fieldName, JavaType.LONG);
+   }
+
+   @Override
+   public Date readDate(String fieldName) throws IOException {
+      Long tstamp = readLong(fieldName);
+      return tstamp == null ? null : new Date(tstamp);
    }
 
    @Override

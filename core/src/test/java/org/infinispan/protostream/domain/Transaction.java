@@ -41,8 +41,8 @@ public class Transaction extends BaseMessage {
       this.accountId = accountId;
    }
 
-   public long getDate() {
-      return date.getTime();
+   public Date getDate() {
+      return date;
    }
 
    public void setDate(Date date) {

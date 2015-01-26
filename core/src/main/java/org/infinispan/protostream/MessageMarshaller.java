@@ -2,6 +2,7 @@ package org.infinispan.protostream;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
 
 // todo [anistor] make separate Marshaller and Unmarshaller interfaces
 
@@ -29,6 +30,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       Long readLong(String fieldName) throws IOException;
 
+      Date readDate(String fieldName) throws IOException;
+
       Float readFloat(String fieldName) throws IOException;
 
       Double readDouble(String fieldName) throws IOException;
@@ -55,6 +58,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       void writeLong(String fieldName, long value) throws IOException;
 
       void writeLong(String fieldName, Long value) throws IOException;
+
+      void writeDate(String fieldName, Date value) throws IOException;
 
       void writeDouble(String fieldName, double value) throws IOException;
 

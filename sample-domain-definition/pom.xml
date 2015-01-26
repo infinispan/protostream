@@ -15,7 +15,7 @@
 
    <name>Sample domain model definitions in proto file</name>
    <description>
-      Defines message and enum types in a protobuf schema file which is to be used by other projects for testing.
+      Defines some message and enum types in a *.proto schema file, for demo purposes and testing.
    </description>
 
    <build>

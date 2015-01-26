@@ -27,14 +27,14 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
    public Account readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
       String description = reader.readString("description");
-      long creationDate = reader.readLong("creationDate");
+      Date creationDate = reader.readDate("creationDate");
       Account.Limits limits = reader.readObject("limits", Account.Limits.class);
       List<byte[]> blurb = reader.readCollection("blurb", new ArrayList<byte[]>(), byte[].class);
 
       Account account = new Account();
       account.setId(id);
       account.setDescription(description);
-      account.setCreationDate(new Date(creationDate));
+      account.setCreationDate(creationDate);
       account.setLimits(limits);
       account.setBlurb(blurb);
       return account;
@@ -44,7 +44,7 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
    public void writeTo(ProtoStreamWriter writer, Account account) throws IOException {
       writer.writeInt("id", account.getId());
       writer.writeString("description", account.getDescription());
-      writer.writeLong("creationDate", account.getCreationDate().getTime());
+      writer.writeDate("creationDate", account.getCreationDate());
       writer.writeObject("limits", account.getLimits(), Account.Limits.class);
       writer.writeCollection("blurb", account.getBlurb(), byte[].class);
    }

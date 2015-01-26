@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -52,6 +53,7 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
 
       Note note = new Note();
       note.setText("Lorem Ipsum");
+      note.setCreationDate(new Date());
       //note.setAuthor(user);
 
       Note note2 = new Note();
@@ -112,6 +114,7 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
             "    optional User author = 2;\n" +
             "    optional Note note = 3;\n" +
             "    repeated Note notes = 4;\n" +
+            "    optional uint64 creationDate = 5 [default = 0];\n" +
             "}\n";
 
       ctx.registerProtoFiles(FileDescriptorSource.fromString("note.proto", file));
