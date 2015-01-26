@@ -6,6 +6,7 @@ import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
 import org.infinispan.protostream.descriptors.Type;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -125,6 +126,19 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          if (fields.isEmpty()) {
             throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller.");
          }
+         checkConstructor();
+      }
+   }
+
+   private void checkConstructor() {
+      Constructor<?> ctor;
+      try {
+         ctor = javaClass.getConstructor();
+      } catch (NoSuchMethodException e) {
+         throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " must have a non-private no argument constructor");
+      }
+      if (Modifier.isPrivate(ctor.getModifiers())) {
+         throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " must have a non-private no argument constructor");
       }
    }
 
