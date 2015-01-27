@@ -17,7 +17,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 1.0
  */
-public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMarshallerDelegate<T> {
+final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMarshallerDelegate<T> {
 
    private final EnumMarshaller<T> enumMarshaller;
 

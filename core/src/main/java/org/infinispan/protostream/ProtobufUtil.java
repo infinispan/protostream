@@ -1,8 +1,7 @@
 package org.infinispan.protostream;
 
 import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.ProtoStreamReaderImpl;
-import org.infinispan.protostream.impl.ProtoStreamWriterImpl;
+import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
@@ -38,9 +37,13 @@ public final class ProtobufUtil {
       return serializationContext;
    }
 
-   public static <A> void writeTo(SerializationContext ctx, RawProtoStreamWriter out, A t) throws IOException {
-      ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl((SerializationContextImpl) ctx);
-      writer.write(out, t);
+   private static <A> void writeTo(SerializationContext ctx, RawProtoStreamWriter out, A t) throws IOException {
+      if (t == null) {
+         throw new IllegalArgumentException("Object to marshall cannot be null");
+      }
+      BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t.getClass());
+      marshallerDelegate.marshall(null, null, t, null, out);
+      out.flush();
    }
 
    public static void writeTo(SerializationContext ctx, OutputStream out, Object t) throws IOException {
@@ -53,9 +56,9 @@ public final class ProtobufUtil {
       return baos.toByteArray();
    }
 
-   public static <A> A readFrom(SerializationContext ctx, RawProtoStreamReader in, Class<A> clazz) throws IOException {
-      ProtoStreamReaderImpl reader = new ProtoStreamReaderImpl((SerializationContextImpl) ctx);
-      return reader.read(in, clazz);
+   private static <A> A readFrom(SerializationContext ctx, RawProtoStreamReader in, Class<A> clazz) throws IOException {
+      BaseMarshallerDelegate<A> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(clazz);
+      return marshallerDelegate.unmarshall(null, null, null, in);
    }
 
    public static <A> A readFrom(SerializationContext ctx, InputStream in, Class<A> clazz) throws IOException {

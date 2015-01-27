@@ -18,7 +18,9 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 1.0
  */
-public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
+final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
+
+   private final SerializationContextImpl ctx;
 
    private final MessageMarshaller<T> marshaller;
 
@@ -28,7 +30,8 @@ public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegat
 
    private final Map<String, FieldDescriptor> fieldsByName;
 
-   public MessageMarshallerDelegate(MessageMarshaller<T> marshaller, Descriptor messageDescriptor) {
+   public MessageMarshallerDelegate(SerializationContextImpl ctx, MessageMarshaller<T> marshaller, Descriptor messageDescriptor) {
+      this.ctx = ctx;
       this.marshaller = marshaller;
       this.messageDescriptor = messageDescriptor;
       List<FieldDescriptor> fields = messageDescriptor.getFields();
@@ -62,6 +65,9 @@ public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegat
 
    @Override
    public void marshall(String fieldName, FieldDescriptor fieldDescriptor, T message, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
+      if (writer == null) {
+         writer = new ProtoStreamWriterImpl(ctx);
+      }
       WriteMessageContext messageContext = writer.pushContext(fieldName, this, out);
 
       marshaller.writeTo(writer, message);
@@ -99,6 +105,9 @@ public final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegat
 
    @Override
    public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
+      if (reader == null) {
+         reader = new ProtoStreamReaderImpl(ctx);
+      }
       ReadMessageContext messageContext = reader.pushContext(fieldName, this, in);
 
       T message = marshaller.readFrom(reader);

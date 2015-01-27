@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 
-// todo [anistor] make separate Marshaller and Unmarshaller interfaces
-
 /**
  * @author anistor@redhat.com
  * @since 1.0

@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author anistor@redhat.com
  */
-public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader {
+final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader {
 
    private static final Log log = Log.LogFactory.getLog(ProtoStreamReaderImpl.class);
 
@@ -61,18 +61,6 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
 
    UnknownFieldSet getUnknownFieldSet() {
       return messageContext.unknownFieldSet;
-   }
-
-   public <A> A read(RawProtoStreamReader in, Class<A> clazz) throws IOException {
-      messageContext = null;
-      BaseMarshallerDelegate<A> marshallerDelegate = ctx.getMarshallerDelegate(clazz);
-      return marshallerDelegate.unmarshall(null, null, this, in);
-   }
-
-   public <A> A read(RawProtoStreamReader in, MessageMarshaller<A> marshaller) throws IOException {
-      messageContext = null;
-      BaseMarshallerDelegate<A> marshallerDelegate = ctx.getMarshallerDelegate(marshaller.getTypeName());
-      return marshallerDelegate.unmarshall(null, null, this, in);
    }
 
    private Object readPrimitive(String fieldName, JavaType javaType) throws IOException {

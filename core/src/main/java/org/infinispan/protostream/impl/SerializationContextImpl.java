@@ -180,10 +180,10 @@ public final class SerializationContextImpl implements SerializationContext {
          EnumDescriptor enumDescriptor = getEnumDescriptor(marshaller.getTypeName());
          marshallerDelegate = new EnumMarshallerDelegate((EnumMarshaller) marshaller, enumDescriptor);
       } else if (marshaller instanceof RawProtobufMarshaller) {
-         marshallerDelegate = new RawProtobufMarshallerDelegate((RawProtobufMarshaller) marshaller, this);
+         marshallerDelegate = new RawProtobufMarshallerDelegate(this, (RawProtobufMarshaller) marshaller);
       } else {
          Descriptor messageDescriptor = getMessageDescriptor(marshaller.getTypeName());
-         marshallerDelegate = new MessageMarshallerDelegate((MessageMarshaller) marshaller, messageDescriptor);
+         marshallerDelegate = new MessageMarshallerDelegate(this, (MessageMarshaller) marshaller, messageDescriptor);
       }
       marshallersByName.put(marshaller.getTypeName(), marshallerDelegate);
       marshallersByClass.put(marshaller.getJavaClass(), marshallerDelegate);
@@ -215,7 +215,7 @@ public final class SerializationContextImpl implements SerializationContext {
       return getMarshallerDelegate(clazz).getMarshaller();
    }
 
-   <T> BaseMarshallerDelegate<T> getMarshallerDelegate(String descriptorFullName) {
+   public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(String descriptorFullName) {
       BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) marshallersByName.get(descriptorFullName);
       if (marshallerDelegate == null) {
          throw new IllegalArgumentException("No marshaller registered for " + descriptorFullName);
@@ -223,7 +223,7 @@ public final class SerializationContextImpl implements SerializationContext {
       return marshallerDelegate;
    }
 
-   <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> clazz) {
+   public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> clazz) {
       BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) marshallersByClass.get(clazz);
       if (marshallerDelegate == null) {
          throw new IllegalArgumentException("No marshaller registered for " + clazz);

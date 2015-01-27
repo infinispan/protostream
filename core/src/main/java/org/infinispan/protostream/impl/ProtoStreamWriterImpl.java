@@ -13,7 +13,7 @@ import java.util.Date;
 /**
  * @author anistor@redhat.com
  */
-public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter {
+final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter {
 
    private static final Log log = Log.LogFactory.getLog(ProtoStreamWriterImpl.class);
 
@@ -32,16 +32,6 @@ public final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStrea
 
    void popContext() {
       messageContext = messageContext.getParentContext();
-   }
-
-   public void write(RawProtoStreamWriter out, Object value) throws IOException {
-      if (value == null) {
-         throw new IllegalArgumentException("Object to marshall cannot be null");
-      }
-      messageContext = null;
-      BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(value.getClass());
-      marshallerDelegate.marshall(null, null, value, this, out);
-      out.flush();
    }
 
    @Override

@@ -11,15 +11,15 @@ import java.io.IOException;
  * @author anistor@redhat.com
  * @since 1.0
  */
-public final class RawProtobufMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
+final class RawProtobufMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
 
    private final RawProtobufMarshaller<T> marshaller;
 
    private final SerializationContextImpl ctx;
 
-   public RawProtobufMarshallerDelegate(RawProtobufMarshaller<T> marshaller, SerializationContextImpl ctx) {
-      this.marshaller = marshaller;
+   public RawProtobufMarshallerDelegate(SerializationContextImpl ctx, RawProtobufMarshaller<T> marshaller) {
       this.ctx = ctx;
+      this.marshaller = marshaller;
    }
 
    @Override

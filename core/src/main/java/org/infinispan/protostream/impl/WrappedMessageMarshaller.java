@@ -1,8 +1,6 @@
 package org.infinispan.protostream.impl;
 
-import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
@@ -80,18 +78,20 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
       } else if (t instanceof Enum) {
          // use an enum encoder
          EnumMarshaller enumMarshaller = (EnumMarshaller) ctx.getMarshaller((Class<Enum>) t.getClass());
+         int encodedEnum = enumMarshaller.encode((Enum) t);
          out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, enumMarshaller.getTypeName());
-         out.writeEnum(WRAPPED_ENUM, enumMarshaller.encode((Enum) t));
+         out.writeEnum(WRAPPED_ENUM, encodedEnum);
       } else {
          // this is either an unknown primitive type or a message type
          // try to use a message marshaller
-         BaseMarshaller marshaller = ctx.getMarshaller(t.getClass());
-         out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, marshaller.getTypeName());
-
+         SerializationContextImpl ctxImpl = (SerializationContextImpl) ctx;
+         BaseMarshallerDelegate marshallerDelegate = ctxImpl.getMarshallerDelegate(t.getClass());
          ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
-         ProtoStreamWriterImpl writer = new ProtoStreamWriterImpl((SerializationContextImpl) ctx);
-         writer.write(RawProtoStreamWriterImpl.newInstance(buffer), t);
+         RawProtoStreamWriter nestedOut = RawProtoStreamWriterImpl.newInstance(buffer);
+         marshallerDelegate.marshall(null, null, t, null, nestedOut);
+         nestedOut.flush();
 
+         out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, marshallerDelegate.getMarshaller().getTypeName());
          out.writeBytes(WRAPPED_MESSAGE_BYTES, buffer.getByteBuffer());
       }
       out.flush();
@@ -183,20 +183,15 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
       }
 
       SerializationContextImpl ctxImpl = (SerializationContextImpl) ctx;
+      BaseMarshallerDelegate marshallerDelegate = ctxImpl.getMarshallerDelegate(descriptorFullName);
       if (messageBytes != null) {
          // it's a Message type
-         BaseMarshallerDelegate marshallerDelegate = ctxImpl.getMarshallerDelegate(descriptorFullName);
          RawProtoStreamReader nestedInput = RawProtoStreamReaderImpl.newInstance(messageBytes);
-         if (marshallerDelegate instanceof MessageMarshallerDelegate) {
-            ProtoStreamReaderImpl reader = new ProtoStreamReaderImpl(ctxImpl);
-            return reader.read(nestedInput, (MessageMarshaller) marshallerDelegate.getMarshaller());
-         } else {
-            return ((RawProtobufMarshaller) marshallerDelegate.getMarshaller()).readFrom(ctxImpl, nestedInput);
-         }
+         return marshallerDelegate.unmarshall(null, null, null, nestedInput);
       } else {
          // it's an Enum
-         EnumMarshallerDelegate marshallerDelegate = (EnumMarshallerDelegate) ctxImpl.getMarshallerDelegate(descriptorFullName);
-         return marshallerDelegate.getMarshaller().decode(enumValue);
+         EnumMarshaller marshaller = (EnumMarshaller) marshallerDelegate.getMarshaller();
+         return marshaller.decode(enumValue);
       }
    }
 }
