@@ -42,7 +42,7 @@ public final class ProtobufUtil {
          throw new IllegalArgumentException("Object to marshall cannot be null");
       }
       BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t.getClass());
-      marshallerDelegate.marshall(null, null, t, null, out);
+      marshallerDelegate.marshall(null, t, null, out);
       out.flush();
    }
 
@@ -58,7 +58,7 @@ public final class ProtobufUtil {
 
    private static <A> A readFrom(SerializationContext ctx, RawProtoStreamReader in, Class<A> clazz) throws IOException {
       BaseMarshallerDelegate<A> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(clazz);
-      return marshallerDelegate.unmarshall(null, null, null, in);
+      return marshallerDelegate.unmarshall(null, null, in);
    }
 
    public static <A> A readFrom(SerializationContext ctx, InputStream in, Class<A> clazz) throws IOException {

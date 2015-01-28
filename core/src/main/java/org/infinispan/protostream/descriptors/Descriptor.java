@@ -1,6 +1,7 @@
 package org.infinispan.protostream.descriptors;
 
 import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import static java.util.Collections.unmodifiableList;
  */
 public final class Descriptor extends AnnotatedDescriptorImpl implements GenericDescriptor {
 
+   private Integer typeId;
    private final List<Option> options;
    private final List<FieldDescriptor> fields;
    private final List<Descriptor> nestedTypes;
@@ -87,6 +89,7 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       for (EnumDescriptor nested : enumTypes) {
          nested.setFileDescriptor(fileDescriptor);
       }
+      typeId = getProcessedAnnotation(Configuration.TYPE_ID_ANNOTATION);
    }
 
    @Override
@@ -102,6 +105,11 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
    @Override
    public int hashCode() {
       return fullName.hashCode();
+   }
+
+   @Override
+   public Integer getTypeId() {
+      return typeId;
    }
 
    @Override

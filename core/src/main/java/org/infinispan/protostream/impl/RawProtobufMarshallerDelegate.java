@@ -28,12 +28,12 @@ final class RawProtobufMarshallerDelegate<T> implements BaseMarshallerDelegate<T
    }
 
    @Override
-   public void marshall(String fieldName, FieldDescriptor fieldDescriptor, T value, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
+   public void marshall(FieldDescriptor fieldDescriptor, T value, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
       marshaller.writeTo(ctx, out, value);
    }
 
    @Override
-   public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
+   public T unmarshall(FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
       return marshaller.readFrom(ctx, in);
    }
 }

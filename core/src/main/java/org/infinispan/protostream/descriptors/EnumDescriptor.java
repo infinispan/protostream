@@ -1,6 +1,7 @@
 package org.infinispan.protostream.descriptors;
 
 import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import static java.util.Collections.unmodifiableList;
  */
 public final class EnumDescriptor extends AnnotatedDescriptorImpl implements GenericDescriptor {
 
+   private Integer typeId;
    private final List<Option> options;
    private final List<EnumValueDescriptor> values;
    private final Map<Integer, EnumValueDescriptor> valueByNumber = new HashMap<Integer, EnumValueDescriptor>();
@@ -44,6 +46,11 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
    @Override
    public FileDescriptor getFileDescriptor() {
       return fileDescriptor;
+   }
+
+   @Override
+   public Integer getTypeId() {
+      return typeId;
    }
 
    @Override
@@ -76,6 +83,7 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
       for (EnumValueDescriptor valueDescriptor : values) {
          valueDescriptor.setFileDescriptor(fileDescriptor);
       }
+      typeId = getProcessedAnnotation(Configuration.TYPE_ID_ANNOTATION);
    }
 
    public static class Builder {

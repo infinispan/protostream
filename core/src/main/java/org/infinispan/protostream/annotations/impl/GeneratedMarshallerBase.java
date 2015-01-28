@@ -20,7 +20,7 @@ public class GeneratedMarshallerBase {
 
    protected final <T> T readMessage(SerializationContext ctx, RawProtoStreamReader in, Class<T> clazz) throws IOException {
       BaseMarshallerDelegate<T> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(clazz);
-      return marshallerDelegate.unmarshall(null, null, null, in);
+      return marshallerDelegate.unmarshall(null, null, in);
    }
 
    protected final <T> void writeMessage(SerializationContext ctx, RawProtoStreamWriter out, Class<T> clazz, T message) throws IOException {
@@ -28,7 +28,7 @@ public class GeneratedMarshallerBase {
          throw new IllegalArgumentException("Object to marshall cannot be null");
       }
       BaseMarshallerDelegate<T> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(clazz);
-      marshallerDelegate.marshall(null, null, message, null, out);
+      marshallerDelegate.marshall(null, message, null, out);
       out.flush();
    }
 

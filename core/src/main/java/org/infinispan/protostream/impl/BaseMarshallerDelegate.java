@@ -28,7 +28,6 @@ public interface BaseMarshallerDelegate<T> {
    /**
     * Marshalls an object.
     *
-    * @param fieldName       the name of the field being marshalled or {@code null} if this is a top-level object
     * @param fieldDescriptor the {@code FieldDescriptor} of the field being marshalled or {@code null} if this is a
     *                        top-level object
     * @param value           the value being marshalled (cannot be {@code null})
@@ -38,12 +37,11 @@ public interface BaseMarshallerDelegate<T> {
     * @param out             the Protobuf tag output stream (cannot be {@code null})
     * @throws IOException if marshalling fails for some reason
     */
-   void marshall(String fieldName, FieldDescriptor fieldDescriptor, T value, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException;
+   void marshall(FieldDescriptor fieldDescriptor, T value, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException;
 
    /**
     * Unmarshalls an object.
     *
-    * @param fieldName       the name of the field being unmarshalled or {@code null} if this is a top-level object
     * @param fieldDescriptor the {@code FieldDescriptor} of the field being unmarshalled or {@code null} if this is a
     *                        top-level object
     * @param reader          the {@link ProtoStreamReaderImpl} instance to use/re-use, if the specific marshaller type
@@ -52,5 +50,5 @@ public interface BaseMarshallerDelegate<T> {
     * @param in              the Protobuf tag input stream (cannot be {@code null})
     * @throws IOException if unmarshalling fails for some reason
     */
-   T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException;
+   T unmarshall(FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException;
 }

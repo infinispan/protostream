@@ -43,6 +43,8 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final Map<String, FileDescriptor> fileDescriptors = new HashMap<String, FileDescriptor>();
 
+   private final Map<Integer, String> typeIds = new HashMap<Integer, String>();
+
    private final Map<String, GenericDescriptor> genericDescriptors = new HashMap<String, GenericDescriptor>();
 
    private final Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<String, BaseMarshallerDelegate<?>>();
@@ -122,12 +124,38 @@ public final class SerializationContextImpl implements SerializationContext {
       if (log.isDebugEnabled()) {
          log.debugf("Registering file descriptor : fileName=%s types=%s", fileDescriptor.getName(), fileDescriptor.getTypes().keySet());
       }
+      Map<Integer, String> newTypeIds = new HashMap<Integer, String>();
+      for (Map.Entry<String, GenericDescriptor> e : fileDescriptor.getTypes().entrySet()) {
+         Integer typeId = e.getValue().getTypeId();
+         if (typeId != null) {
+            String fullName = e.getKey();
+            String existing = typeIds.get(typeId);
+            if (existing != null && !existing.equals(fullName)) {
+               GenericDescriptor x = fileDescriptor.getTypes().get(existing);
+               if (x == null || typeId.equals(x.getTypeId())) {
+                  throw new IllegalArgumentException("Duplicate type id " + typeId + " for type " + fullName + ". Already used by " + existing);
+               }
+            }
+            existing = newTypeIds.get(typeId);
+            if (existing != null) {
+               throw new IllegalArgumentException("Duplicate type id " + typeId + " for type " + fullName + ". Already used by " + existing);
+            }
+            newTypeIds.put(typeId, fullName);
+         }
+      }
       fileDescriptors.put(fileDescriptor.getName(), fileDescriptor);
       genericDescriptors.putAll(fileDescriptor.getTypes());
+      typeIds.putAll(newTypeIds);
    }
 
    @GuardedBy("writeLock")
    private void unregisterFileDescriptorTypes(FileDescriptor fileDescriptor) {
+      for (GenericDescriptor d : fileDescriptor.getTypes().values()) {
+         Integer typeId = d.getTypeId();
+         if (typeId != null) {
+            typeIds.remove(typeId);
+         }
+      }
       genericDescriptors.keySet().removeAll(fileDescriptor.getTypes().keySet());
       for (FileDescriptor fd : fileDescriptor.getDependants().values()) {
          fd.markUnresolved();
@@ -229,5 +257,33 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("No marshaller registered for " + clazz);
       }
       return marshallerDelegate;
+   }
+
+   @Override
+   public String getTypeNameById(Integer typeId) {
+      readLock.lock();
+      try {
+         String descriptorFullName = typeIds.get(typeId);
+         if (descriptorFullName == null) {
+            throw new IllegalArgumentException("Unknown type id : " + typeId);
+         }
+         return descriptorFullName;
+      } finally {
+         readLock.unlock();
+      }
+   }
+
+   @Override
+   public Integer getTypeIdByName(String descriptorFullName) {
+      readLock.lock();
+      try {
+         GenericDescriptor descriptor = genericDescriptors.get(descriptorFullName);
+         if (descriptor == null) {
+            throw new IllegalArgumentException("Unknown type name : " + descriptorFullName);
+         }
+         return descriptor.getTypeId();
+      } finally {
+         readLock.unlock();
+      }
    }
 }

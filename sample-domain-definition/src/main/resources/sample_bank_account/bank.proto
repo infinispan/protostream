@@ -5,6 +5,7 @@ option java_outer_classname = "BankProtos";
 
 /**
  * @Indexed(true)
+ * @TypeId(42)
  */
 message User {
 
@@ -43,8 +44,9 @@ message User {
     */
    optional int32 age = 6;   // persisting age instead of birth date is not ideal but is ok for our sample code
 
+   /* @TypeId(41) */
    enum Gender {
-      MALE = 0;    //NOTE: It seem negative values are accepted too!
+      MALE = 0;    //NOTE: It seems negative values are accepted too!
       FEMALE = 1;
    }
 

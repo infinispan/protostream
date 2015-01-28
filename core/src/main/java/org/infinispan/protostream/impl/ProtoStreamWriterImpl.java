@@ -25,8 +25,8 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       this.ctx = ctx;
    }
 
-   WriteMessageContext pushContext(String fieldName, MessageMarshallerDelegate<?> marshallerDelegate, RawProtoStreamWriter out) {
-      messageContext = new WriteMessageContext(messageContext, fieldName, marshallerDelegate, out);
+   WriteMessageContext pushContext(FieldDescriptor fd, MessageMarshallerDelegate<?> marshallerDelegate, RawProtoStreamWriter out) {
+      messageContext = new WriteMessageContext(messageContext, fd == null ? null : fd.getName(), marshallerDelegate, out);
       return messageContext;
    }
 
@@ -254,35 +254,35 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       checkFieldWrite(fd, false);
 
       if (fd.getType() == Type.GROUP) {
-         writeGroup(fieldName, fd, value, clazz);
+         writeGroup(fd, value, clazz);
       } else if (fd.getType() == Type.MESSAGE) {
-         writeMessage(fieldName, fd, value, clazz);
+         writeMessage(fd, value, clazz);
       } else if (fd.getType() == Type.ENUM) {
-         writeEnum(fieldName, fd, (Enum) value);
+         writeEnum(fd, (Enum) value);
       } else {
          throw new IllegalArgumentException("Declared field type is not a message or an enum : " + fieldName);
       }
    }
 
-   private void writeMessage(String fieldName, FieldDescriptor fd, Object value, Class clazz) throws IOException {
+   private void writeMessage(FieldDescriptor fd, Object value, Class clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       RawProtoStreamWriter out = RawProtoStreamWriterImpl.newInstance(baos);
-      marshallerDelegate.marshall(fieldName, fd, value, this, out);
+      marshallerDelegate.marshall(fd, value, this, out);
       out.flush();
       messageContext.out.writeBytes(fd.getNumber(), baos.getByteBuffer());
    }
 
-   private void writeGroup(String fieldName, FieldDescriptor fd, Object value, Class clazz) throws IOException {
+   private void writeGroup(FieldDescriptor fd, Object value, Class clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_START_GROUP);
-      marshallerDelegate.marshall(fieldName, fd, value, this, messageContext.out);
+      marshallerDelegate.marshall(fd, value, this, messageContext.out);
       messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_END_GROUP);
    }
 
-   private <T extends Enum<T>> void writeEnum(String fieldName, FieldDescriptor fd, T value) throws IOException {
+   private <T extends Enum<T>> void writeEnum(FieldDescriptor fd, T value) throws IOException {
       BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) ctx.getMarshallerDelegate(value.getClass());
-      marshallerDelegate.marshall(fieldName, fd, value, this, messageContext.out);
+      marshallerDelegate.marshall(fd, value, this, messageContext.out);
    }
 
    @Override
@@ -299,15 +299,15 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       final Type type = fd.getType();
       if (type == Type.GROUP) {
          for (Object t : collection) {
-            writeGroup(fieldName, fd, t, elementClass);
+            writeGroup(fd, t, elementClass);
          }
       } else if (type == Type.MESSAGE) {
          for (Object t : collection) {
-            writeMessage(fieldName, fd, t, elementClass);
+            writeMessage(fd, t, elementClass);
          }
       } else if (type == Type.ENUM) {
          for (Object t : collection) {
-            writeEnum(fieldName, fd, (Enum) t);
+            writeEnum(fd, (Enum) t);
          }
       } else {
          final RawProtoStreamWriter out = messageContext.out;
@@ -408,15 +408,15 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       final Type type = fd.getType();
       if (type == Type.GROUP) {
          for (Object t : array) {
-            writeGroup(fieldName, fd, t, elementClass);
+            writeGroup(fd, t, elementClass);
          }
       } else if (type == Type.MESSAGE) {
          for (Object t : array) {
-            writeMessage(fieldName, fd, t, elementClass);
+            writeMessage(fd, t, elementClass);
          }
       } else if (type == Type.ENUM) {
          for (Object t : array) {
-            writeEnum(fieldName, fd, (Enum) t);
+            writeEnum(fd, (Enum) t);
          }
       } else {
          final RawProtoStreamWriter out = messageContext.out;

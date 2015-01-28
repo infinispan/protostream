@@ -79,19 +79,28 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
          // use an enum encoder
          EnumMarshaller enumMarshaller = (EnumMarshaller) ctx.getMarshaller((Class<Enum>) t.getClass());
          int encodedEnum = enumMarshaller.encode((Enum) t);
-         out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, enumMarshaller.getTypeName());
+         Integer typeId = ctx.getTypeIdByName(enumMarshaller.getTypeName());
+         if (typeId == null) {
+            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, enumMarshaller.getTypeName());
+         } else {
+            out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
+         }
          out.writeEnum(WRAPPED_ENUM, encodedEnum);
       } else {
          // this is either an unknown primitive type or a message type
          // try to use a message marshaller
-         SerializationContextImpl ctxImpl = (SerializationContextImpl) ctx;
-         BaseMarshallerDelegate marshallerDelegate = ctxImpl.getMarshallerDelegate(t.getClass());
+         BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t.getClass());
          ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
          RawProtoStreamWriter nestedOut = RawProtoStreamWriterImpl.newInstance(buffer);
-         marshallerDelegate.marshall(null, null, t, null, nestedOut);
+         marshallerDelegate.marshall(null, t, null, nestedOut);
          nestedOut.flush();
 
-         out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, marshallerDelegate.getMarshaller().getTypeName());
+         Integer typeId = ctx.getTypeIdByName(marshallerDelegate.getMarshaller().getTypeName());
+         if (typeId == null) {
+            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, marshallerDelegate.getMarshaller().getTypeName());
+         } else {
+            out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
+         }
          out.writeBytes(WRAPPED_MESSAGE_BYTES, buffer.getByteBuffer());
       }
       out.flush();
@@ -99,6 +108,7 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
 
    public static Object readWrappedMessage(SerializationContext ctx, RawProtoStreamReader in) throws IOException {
       String descriptorFullName = null;
+      Integer typeId = null;
       int enumValue = -1;
       byte[] messageBytes = null;
       Object value = null;
@@ -110,6 +120,9 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
          switch (tag) {
             case WRAPPED_DESCRIPTOR_FULL_NAME << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                descriptorFullName = in.readString();
+               break;
+            case WRAPPED_DESCRIPTOR_ID << 3 | WireFormat.WIRETYPE_VARINT:
+               typeId = in.readInt32();
                break;
             case WRAPPED_ENUM << 3 | WireFormat.WIRETYPE_VARINT:
                enumValue = in.readEnum();
@@ -167,7 +180,7 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
          }
       }
 
-      if (value == null && descriptorFullName == null && messageBytes == null) {
+      if (value == null && descriptorFullName == null && typeId == null && messageBytes == null) {
          return null;
       }
 
@@ -178,16 +191,18 @@ public final class WrappedMessageMarshaller implements RawProtobufMarshaller<Wra
          return value;
       }
 
-      if (descriptorFullName == null || readTags != 2) {
+      if (descriptorFullName == null && typeId == null || descriptorFullName != null && typeId != null || readTags != 2) {
          throw new IOException("Invalid message encoding.");
       }
 
-      SerializationContextImpl ctxImpl = (SerializationContextImpl) ctx;
-      BaseMarshallerDelegate marshallerDelegate = ctxImpl.getMarshallerDelegate(descriptorFullName);
+      if (typeId != null) {
+         descriptorFullName = ctx.getTypeNameById(typeId);
+      }
+      BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(descriptorFullName);
       if (messageBytes != null) {
          // it's a Message type
          RawProtoStreamReader nestedInput = RawProtoStreamReaderImpl.newInstance(messageBytes);
-         return marshallerDelegate.unmarshall(null, null, null, nestedInput);
+         return marshallerDelegate.unmarshall(null, null, nestedInput);
       } else {
          // it's an Enum
          EnumMarshaller marshaller = (EnumMarshaller) marshallerDelegate.getMarshaller();

@@ -64,11 +64,11 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
    }
 
    @Override
-   public void marshall(String fieldName, FieldDescriptor fieldDescriptor, T message, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
+   public void marshall(FieldDescriptor fieldDescriptor, T message, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
       if (writer == null) {
          writer = new ProtoStreamWriterImpl(ctx);
       }
-      WriteMessageContext messageContext = writer.pushContext(fieldName, this, out);
+      WriteMessageContext messageContext = writer.pushContext(fieldDescriptor, this, out);
 
       marshaller.writeTo(writer, message);
 
@@ -104,11 +104,11 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
    }
 
    @Override
-   public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
+   public T unmarshall(FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
       if (reader == null) {
          reader = new ProtoStreamReaderImpl(ctx);
       }
-      ReadMessageContext messageContext = reader.pushContext(fieldName, this, in);
+      ReadMessageContext messageContext = reader.pushContext(fieldDescriptor, this, in);
 
       T message = marshaller.readFrom(reader);
 

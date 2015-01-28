@@ -49,7 +49,7 @@ final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMarshallerD
    }
 
    @Override
-   public void marshall(String fieldName, FieldDescriptor fd, T value, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
+   public void marshall(FieldDescriptor fd, T value, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
       int enumValue = enumMarshaller.encode(value);
 
       if (!definedValues.contains(enumValue)) {
@@ -60,7 +60,7 @@ final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMarshallerD
    }
 
    @Override
-   public T unmarshall(String fieldName, FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
+   public T unmarshall(FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
       final int expectedTag = WireFormat.makeTag(fieldDescriptor.getNumber(), WireFormat.WIRETYPE_VARINT);
       int enumValue;
       UnknownFieldSet unknownFieldSet = reader.getUnknownFieldSet();

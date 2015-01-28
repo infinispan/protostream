@@ -1,9 +1,9 @@
 package org.infinispan.protostream.test;
 
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.Log;
@@ -141,8 +141,8 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private void readWithProtoStream(byte[] bytes, long[] result) throws IOException, DescriptorParserException {
-      Configuration cfg = new Configuration.Builder().setLogOutOfSequenceReads(false).build();
-      SerializationContext ctx = createContext(cfg);
+      Configuration.Builder cfgBuilder = new Configuration.Builder().setLogOutOfSequenceReads(false);
+      SerializationContext ctx = createContext(cfgBuilder);
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 
       long tStart = System.nanoTime();
@@ -191,8 +191,8 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private byte[] writeWithProtoStream(User user, long[] result) throws IOException, DescriptorParserException {
-      Configuration cfg = new Configuration.Builder().setLogOutOfSequenceWrites(false).build();
-      SerializationContext ctx = createContext(cfg);
+      Configuration.Builder cfgBuilder = new Configuration.Builder().setLogOutOfSequenceWrites(false);
+      SerializationContext ctx = createContext(cfgBuilder);
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
 
       long tStart = System.nanoTime();

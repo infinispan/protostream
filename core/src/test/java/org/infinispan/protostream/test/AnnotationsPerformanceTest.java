@@ -101,11 +101,10 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
    }
 
    private SerializationContext createCtxWithHandWrittenMarshaller() throws IOException {
-      Configuration cfg = new Configuration.Builder()
+      Configuration.Builder cfgBuilder = new Configuration.Builder()
             .setLogOutOfSequenceWrites(false)
-            .setLogOutOfSequenceReads(false)
-            .build();
-      SerializationContext ctx = createContext(cfg);
+            .setLogOutOfSequenceReads(false);
+      SerializationContext ctx = createContext(cfgBuilder);
 
       String file = " package sample_bank_account;\n" +
             "import \"sample_bank_account/bank.proto\";\n" +
@@ -123,11 +122,10 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
    }
 
    private SerializationContext createCtxWithGeneratedMarshaller() throws IOException {
-      Configuration cfg = new Configuration.Builder()
+      Configuration.Builder cfgBuilder = new Configuration.Builder()
             .setLogOutOfSequenceWrites(false)
-            .setLogOutOfSequenceReads(false)
-            .build();
-      SerializationContext ctx = createContext(cfg);
+            .setLogOutOfSequenceReads(false);
+      SerializationContext ctx = createContext(cfgBuilder);
 
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       protoSchemaBuilder

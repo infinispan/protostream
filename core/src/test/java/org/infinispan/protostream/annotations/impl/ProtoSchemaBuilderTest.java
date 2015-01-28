@@ -12,11 +12,11 @@ import org.infinispan.protostream.annotations.impl.testdomain.TestClass;
 import org.infinispan.protostream.annotations.impl.testdomain.TestClass3;
 import org.infinispan.protostream.annotations.impl.testdomain.TestEnum;
 import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2;
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
+import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
  * @author anistor@redhat.com
  * @since 3.0
  */
-public class ProtoSchemaBuilderTest {
+public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    @org.junit.Rule
    public ExpectedException exception = ExpectedException.none();
@@ -54,7 +54,7 @@ public class ProtoSchemaBuilderTest {
       exception.expect(ProtoSchemaBuilderException.class);
       exception.expectMessage("fileName cannot be null");
 
-      SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       protoSchemaBuilder.addClass(Simple.class).build(ctx);
    }
@@ -64,7 +64,7 @@ public class ProtoSchemaBuilderTest {
       exception.expect(ProtoSchemaBuilderException.class);
       exception.expectMessage("Class java.lang.Object does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller");
 
-      SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       protoSchemaBuilder.fileName("test.proto");
       protoSchemaBuilder.addClass(Object.class).build(ctx);
@@ -72,7 +72,7 @@ public class ProtoSchemaBuilderTest {
 
    @Test
    public void testGeneration() throws Exception {
-      SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       protoSchemaBuilder
             .fileName("test.proto")
@@ -122,7 +122,7 @@ public class ProtoSchemaBuilderTest {
 
    @Test
    public void testGeneration2() throws Exception {
-      SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       protoSchemaBuilder
             .fileName("test.proto")
@@ -142,7 +142,7 @@ public class ProtoSchemaBuilderTest {
 
    @Test
    public void testGeneration3() throws Exception {
-      SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       protoSchemaBuilder
             .fileName("test.proto")
@@ -162,7 +162,7 @@ public class ProtoSchemaBuilderTest {
 
    @Test
    public void testTwoFilesGeneration() throws Exception {
-      SerializationContext ctx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      SerializationContext ctx = createContext();
 
       ProtoSchemaBuilder protoSchemaBuilder1 = new ProtoSchemaBuilder();
       protoSchemaBuilder1
@@ -188,8 +188,7 @@ public class ProtoSchemaBuilderTest {
 
    @Test
    public void testDocumentation() throws Exception {
-      Configuration config = new Configuration.Builder().build();
-      SerializationContext ctx = ProtobufUtil.newSerializationContext(config);
+      SerializationContext ctx = createContext();
 
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String schemaFile = protoSchemaBuilder
@@ -200,7 +199,7 @@ public class ProtoSchemaBuilderTest {
             .build(ctx);
 
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test1.proto", schemaFile);
-      Map<String, FileDescriptor> fileDescriptors = new SquareProtoParser(config).parse(fileDescriptorSource);
+      Map<String, FileDescriptor> fileDescriptors = new SquareProtoParser(ctx.getConfiguration()).parse(fileDescriptorSource);
 
       FileDescriptor fd = fileDescriptors.get("test1.proto");
       assertNotNull(fd);

@@ -8,5 +8,7 @@ package org.infinispan.protostream.descriptors;
  */
 public interface GenericDescriptor extends AnnotatedDescriptor {
 
+   Integer getTypeId();
+
    GenericDescriptor getContainingType();
 }

@@ -1,5 +1,7 @@
 package org.infinispan.protostream.config;
 
+import org.infinispan.protostream.AnnotationMetadataCreator;
+import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
@@ -13,6 +15,8 @@ import java.util.Map;
  * @since 2.0
  */
 public final class Configuration {
+
+   public static final String TYPE_ID_ANNOTATION = "TypeId";
 
    private final boolean logOutOfSequenceReads;
 
@@ -114,6 +118,27 @@ public final class Configuration {
       }
 
       public Configuration build() {
+         messageAnnotation(TYPE_ID_ANNOTATION)
+               .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
+               .intType()
+               .annotationMetadataCreator(new AnnotationMetadataCreator<Integer, Descriptor>() {
+                  @Override
+                  public Integer create(Descriptor annotatedDescriptor, AnnotationElement.Annotation annotation) {
+                     AnnotationElement.Value value = annotation.getDefaultAttributeValue();
+                     return value == null ? null : (Integer) value.getValue();
+                  }
+               });
+         enumAnnotation(TYPE_ID_ANNOTATION)
+               .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
+               .intType()
+               .annotationMetadataCreator(new AnnotationMetadataCreator<Integer, EnumDescriptor>() {
+                  @Override
+                  public Integer create(EnumDescriptor annotatedDescriptor, AnnotationElement.Annotation annotation) {
+                     AnnotationElement.Value value = annotation.getDefaultAttributeValue();
+                     return value == null ? null : (Integer) value.getValue();
+                  }
+               });
+
          Map<String, AnnotationConfig<Descriptor>> messageAnnotations = new HashMap<String, AnnotationConfig<Descriptor>>(messageAnnotationBuilders.size());
          for (AnnotationConfig.Builder<Descriptor> annotationBuilder : messageAnnotationBuilders.values()) {
             AnnotationConfig<Descriptor> annotationConfig = annotationBuilder.buildAnnotationConfig();

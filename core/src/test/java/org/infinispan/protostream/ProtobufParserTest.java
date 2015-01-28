@@ -49,12 +49,16 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
             log.tracef("onTag %s %s", fieldName, tagValue);
 
             switch (fieldNumber) {
+               case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_ID:
+                  String typeName = ctx.getTypeNameById((Integer) tagValue);
+                  nextDescriptor = ctx.getMessageDescriptor(typeName);
+                  break;
                case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_FULL_NAME:
                   nextDescriptor = ctx.getMessageDescriptor((String) tagValue);
                   break;
                case WrappedMessageMarshaller.WRAPPED_MESSAGE_BYTES:
                   try {
-                     // todo here we expect WRAPPED_DESCRIPTOR_FULL_NAME was already read, which might not be the case
+                     // todo here we expect WRAPPED_DESCRIPTOR_FULL_NAME or WRAPPED_DESCRIPTOR_ID was already read, which might not be the case
                      ProtobufParser.INSTANCE.parse(this, nextDescriptor, (byte[]) tagValue);
                   } catch (IOException e) {
                      throw new RuntimeException(e);
