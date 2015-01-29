@@ -56,17 +56,17 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
             Map<String, Object> _parsedAnnotations = new LinkedHashMap<String, Object>();
             for (AnnotationElement.Annotation annotation : _annotations.values()) {
                AnnotationConfig annotationConfig = getAnnotationConfig(annotation.getName());
-               if (annotationConfig == null) {
-                  throw new AnnotationParserException("Unexpected annotation '" + annotation.getName() + "' on " + getFullName());
-               }
+               // unknown annotations are ignored
+               if (annotationConfig != null) {
+                  //todo [anistor] all annotation fields should be required unless they have defaults
+                  validateAttributes(annotation, annotationConfig);
 
-               validateAttributes(annotation, annotationConfig);
+                  // convert single values to arrays if needed and set the default values for missing attributes
+                  normalizeValues(annotation, annotationConfig);
 
-               // convert single values to arrays if needed and set the default values for missing attributes
-               normalizeValues(annotation, annotationConfig);
-
-               if (annotationConfig.annotationMetadataCreator() != null) {
-                  _parsedAnnotations.put(annotation.getName(), annotationConfig.annotationMetadataCreator().create(this, annotation));
+                  if (annotationConfig.annotationMetadataCreator() != null) {
+                     _parsedAnnotations.put(annotation.getName(), annotationConfig.annotationMetadataCreator().create(this, annotation));
+                  }
                }
             }
             annotations = _annotations;
@@ -78,7 +78,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
       }
    }
 
-   private void validateAttributes(AnnotationElement.Annotation annotation, AnnotationConfig<AnnotatedDescriptor> annotationConfig) {
+   private void validateAttributes(AnnotationElement.Annotation annotation, AnnotationConfig<?> annotationConfig) {
       for (Map.Entry<String, AnnotationElement.Attribute> entry : annotation.getAttributes().entrySet()) {
          AnnotationElement.Attribute attribute = entry.getValue();
 
@@ -185,7 +185,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
       }
    }
 
-   private void normalizeValues(AnnotationElement.Annotation annotation, AnnotationConfig<AnnotatedDescriptor> annotationConfig) {
+   private void normalizeValues(AnnotationElement.Annotation annotation, AnnotationConfig<?> annotationConfig) {
       for (AnnotationAttributeConfig attributeConfig : annotationConfig.attributes().values()) {
          AnnotationElement.Attribute attribute = annotation.getAttributes().get(attributeConfig.name());
          if (attribute != null) {
