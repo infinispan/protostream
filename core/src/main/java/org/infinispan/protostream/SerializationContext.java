@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * A repository for protobuf definitions and marshallers. All marshalling operations happen in the context of a  {@code
+ * A repository for protobuf definitions and marshallers. All marshalling operations happen in the context of a {@code
  * SerializationContext}.
  *
  * @author anistor@redhat.com
