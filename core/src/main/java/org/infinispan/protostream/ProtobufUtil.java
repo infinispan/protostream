@@ -2,6 +2,7 @@ package org.infinispan.protostream;
 
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
+import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
@@ -12,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 /**
  * @author anistor@redhat.com
@@ -56,6 +58,12 @@ public final class ProtobufUtil {
       return baos.toByteArray();
    }
 
+   public static ByteBuffer toByteBuffer(SerializationContext ctx, Object t) throws IOException {
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
+      writeTo(ctx, baos, t);
+      return baos.getByteBuffer();
+   }
+
    private static <A> A readFrom(SerializationContext ctx, RawProtoStreamReader in, Class<A> clazz) throws IOException {
       BaseMarshallerDelegate<A> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(clazz);
       return marshallerDelegate.unmarshall(null, null, in);
@@ -69,8 +77,13 @@ public final class ProtobufUtil {
       return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(bytes), clazz);
    }
 
+   //todo [anistor] what happens with remaining trailing bytes? signal error?
    public static <A> A fromByteArray(SerializationContext ctx, byte[] bytes, int offset, int length, Class<A> clazz) throws IOException {
       return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(bytes, offset, length), clazz);
+   }
+
+   public static <A> A fromByteBuffer(SerializationContext ctx, ByteBuffer byteBuffer, Class<A> clazz) throws IOException {
+      return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(byteBuffer), clazz);
    }
 
    /**
@@ -91,9 +104,19 @@ public final class ProtobufUtil {
       return WrappedMessageMarshaller.readWrappedMessage(ctx, RawProtoStreamReaderImpl.newInstance(bais));
    }
 
+   public static Object fromWrappedByteBuffer(SerializationContext ctx, ByteBuffer byteBuffer) throws IOException {
+      return WrappedMessageMarshaller.readWrappedMessage(ctx, RawProtoStreamReaderImpl.newInstance(byteBuffer));
+   }
+
    public static byte[] toWrappedByteArray(SerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       WrappedMessageMarshaller.writeWrappedMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.toByteArray();
+   }
+
+   public static ByteBuffer toWrappedByteBuffer(SerializationContext ctx, Object t) throws IOException {
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
+      WrappedMessageMarshaller.writeWrappedMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
+      return baos.getByteBuffer();
    }
 }
