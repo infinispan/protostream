@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.descriptors.Type;
 
 import java.lang.reflect.Field;
@@ -187,12 +188,17 @@ final class ProtoFieldMetadata {
                       Long.toString(((Date) defaultValue).getTime()) : defaultValue.toString());
          iw.append(" [default = ").append(v).append(']');
       }
-      iw.append(" /* ");
-      if (field != null) {
-         iw.append("field = ").append(field.getName());
-      } else {
-         iw.append("getter = ").append(getter.getName()).append(", setter = ").append(setter.getName());
+
+      if (ProtoSchemaBuilder.generateSchemaDebugComments) {
+         iw.append(" /* ");
+         if (field != null) {
+            iw.append("field = ").append(field.getName());
+         } else {
+            iw.append("getter = ").append(getter.getName()).append(", setter = ").append(setter.getName());
+         }
+         iw.append(" */");
       }
-      iw.append(" */;\n");
+
+      iw.append(";\n");
    }
 }

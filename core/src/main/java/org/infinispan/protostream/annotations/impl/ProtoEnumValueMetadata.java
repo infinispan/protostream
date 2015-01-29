@@ -1,5 +1,7 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
+
 import java.lang.reflect.Field;
 
 /**
@@ -53,6 +55,10 @@ final class ProtoEnumValueMetadata {
          iw.append(documentation).append('\n');
          iw.append("*/\n");
       }
-      iw.append("   ").append(protoName).append(" = ").append(String.valueOf(number)).append(" /* field = ").append(enumField.getName()).append(" */;\n");
+      iw.append("   ").append(protoName).append(" = ").append(String.valueOf(number));
+      if (ProtoSchemaBuilder.generateSchemaDebugComments) {
+         iw.append(" /* field = ").append(enumField.getName()).append(" */");
+      }
+      iw.append(";\n");
    }
 }

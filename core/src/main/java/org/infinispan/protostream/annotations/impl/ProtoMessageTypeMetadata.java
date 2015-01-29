@@ -2,6 +2,7 @@ package org.infinispan.protostream.annotations.impl;
 
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
 import org.infinispan.protostream.descriptors.Type;
@@ -91,7 +92,11 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          iw.append(documentation).append('\n');
          iw.append("*/\n");
       }
-      iw.append("message ").append(name).append(" /* ").append(javaClass.getCanonicalName()).append(" */ {\n");
+      iw.append("message ").append(name);
+      if (ProtoSchemaBuilder.generateSchemaDebugComments) {
+         iw.append(" /* ").append(javaClass.getCanonicalName()).append(" */");
+      }
+      iw.append(" {\n");
 
       if (!innerTypes.isEmpty()) {
          iw.inc();

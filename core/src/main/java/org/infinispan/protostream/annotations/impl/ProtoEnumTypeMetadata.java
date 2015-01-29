@@ -2,6 +2,7 @@ package org.infinispan.protostream.annotations.impl;
 
 import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.impl.Log;
 
@@ -87,7 +88,11 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
          iw.append(documentation).append('\n');
          iw.append("*/\n");
       }
-      iw.append("enum ").append(name).append(" /* ").append(javaClass.getCanonicalName()).append(" */ {\n");
+      iw.append("enum ").append(name);
+      if (ProtoSchemaBuilder.generateSchemaDebugComments) {
+         iw.append(" /* ").append(javaClass.getCanonicalName()).append(" */");
+      }
+      iw.append(" {\n");
       for (ProtoEnumValueMetadata m : membersByNumber.values()) {
          m.generateProto(iw);
       }

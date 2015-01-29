@@ -32,6 +32,11 @@ import java.util.Set;
  */
 public final class ProtoSchemaBuilder {
 
+   /**
+    * Set this to {@code true} to enable output of debug comments in the generated protobuf schema.
+    */
+   public static boolean generateSchemaDebugComments = false;
+
    private String fileName;
 
    private String packageName;
