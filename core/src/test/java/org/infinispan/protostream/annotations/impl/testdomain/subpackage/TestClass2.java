@@ -16,11 +16,11 @@ public class TestClass2 {
    private UnknownFieldSet unknownFieldSet;
 
    @ProtoUnknownFieldSet
-   public UnknownFieldSet getUnknownFieldSet() {
+   public UnknownFieldSet getUnknown() {
       return unknownFieldSet;
    }
 
-   public void setUnknownFieldSet(UnknownFieldSet unknownFieldSet) {
+   public void setUnknown(UnknownFieldSet unknownFieldSet) {
       this.unknownFieldSet = unknownFieldSet;
    }
 }

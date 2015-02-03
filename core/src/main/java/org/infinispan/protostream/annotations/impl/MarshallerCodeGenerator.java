@@ -3,6 +3,7 @@ package org.infinispan.protostream.annotations.impl;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.CtField;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 import org.infinispan.protostream.EnumMarshaller;
@@ -14,6 +15,8 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.impl.BaseMarshallerDelegate;
+import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.Log;
 
 import java.io.IOException;
@@ -25,7 +28,6 @@ import java.util.Map;
 // TODO [anistor] check which java classfile limits impose limits on the size of the supported protobuf schema
 // TODO [anistor] what do we do with non-repeated fields that come repeated from stream?
 // TODO [anistor] bounded streams should be checked to be exactly as the size indicated
-// TODO [anistor] implement extensions registry?, MessageSet support?, packed fields?
 
 /**
  * @author anistor@readhat.com
@@ -69,6 +71,8 @@ final class MarshallerCodeGenerator {
    private final CtClass enumMarshallerInterface;
    private final CtClass rawProtobufMarshallerInterface;
    private final CtClass generatedMarshallerBaseClass;
+   private final CtClass baseMarshallerDelegateClass;
+   private final CtClass enumMarshallerDelegateClass;
    private final CtMethod getJavaClassMethod;
    private final CtMethod getTypeNameMethod;
    private final CtMethod readFromMethod;
@@ -84,6 +88,8 @@ final class MarshallerCodeGenerator {
       enumMarshallerInterface = cp.getCtClass(EnumMarshaller.class.getName());
       rawProtobufMarshallerInterface = cp.getCtClass(RawProtobufMarshaller.class.getName());
       generatedMarshallerBaseClass = cp.getCtClass(GeneratedMarshallerBase.class.getName());
+      baseMarshallerDelegateClass = cp.getCtClass(BaseMarshallerDelegate.class.getName());
+      enumMarshallerDelegateClass = cp.getCtClass(EnumMarshallerDelegate.class.getName());
       getJavaClassMethod = rawProtobufMarshallerInterface.getMethod("getJavaClass", "()Ljava/lang/Class;");
       getTypeNameMethod = rawProtobufMarshallerInterface.getMethod("getTypeName", "()Ljava/lang/String;");
       String rawProtobufInputStreamName = RawProtoStreamReader.class.getName().replace('.', '/');
@@ -95,6 +101,9 @@ final class MarshallerCodeGenerator {
       encodeMethod = enumMarshallerInterface.getMethod("encode", "(Ljava/lang/Enum;)I");
    }
 
+   /**
+    * Generates a unique id to be used for generating unique class names.
+    */
    private static synchronized long nextMarshallerClassId() {
       return nextId++;
    }
@@ -111,7 +120,7 @@ final class MarshallerCodeGenerator {
 
       CtMethod ctGetTypeNameMethod = new CtMethod(getTypeNameMethod, marshallerImpl, null);
       ctGetTypeNameMethod.setModifiers(ctGetTypeNameMethod.getModifiers() | Modifier.FINAL);
-      ctGetTypeNameMethod.setBody("{ return \"" + makeQualifiedName(petm.getFullName()) + "\"; }");
+      ctGetTypeNameMethod.setBody("{ return \"" + makeQualifiedTypeName(petm.getFullName()) + "\"; }");
       marshallerImpl.addMethod(ctGetTypeNameMethod);
 
       CtMethod ctDecodeMethod = new CtMethod(decodeMethod, marshallerImpl, null);
@@ -169,11 +178,23 @@ final class MarshallerCodeGenerator {
       return iw.toString();
    }
 
-   private String makeQualifiedName(String fullName) {
+   private String makeQualifiedTypeName(String fullName) {
       if (protobufPackage != null) {
          return protobufPackage + "." + fullName;
       }
       return fullName;
+   }
+
+   private String makeFieldWasSetFlag(ProtoFieldMetadata fieldMetadata) {
+      return "__wasSet$" + fieldMetadata.getName();
+   }
+
+   private String makeCollectionLocalVar(ProtoFieldMetadata fieldMetadata) {
+      return "__c$" + fieldMetadata.getName();
+   }
+
+   private String makeMarshallerDelegateFieldName(ProtoFieldMetadata fieldMetadata) {
+      return "__md$" + fieldMetadata.getJavaType().getCanonicalName().replace('.', '$');
    }
 
    public RawProtobufMarshaller generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException, IllegalAccessException, InstantiationException {
@@ -182,6 +203,8 @@ final class MarshallerCodeGenerator {
       marshallerImpl.addInterface(rawProtobufMarshallerInterface);
       marshallerImpl.setSuperclass(generatedMarshallerBaseClass);
 
+      addMarshallerDelegateFields(marshallerImpl, messageTypeMetadata);
+
       CtMethod ctGetJavaClassMethod = new CtMethod(getJavaClassMethod, marshallerImpl, null);
       ctGetJavaClassMethod.setModifiers(ctGetJavaClassMethod.getModifiers() | Modifier.FINAL);
       ctGetJavaClassMethod.setBody("{ return " + entityClass.getName() + ".class; }");
@@ -189,7 +212,7 @@ final class MarshallerCodeGenerator {
 
       CtMethod ctGetTypeNameMethod = new CtMethod(getTypeNameMethod, marshallerImpl, null);
       ctGetTypeNameMethod.setModifiers(ctGetTypeNameMethod.getModifiers() | Modifier.FINAL);
-      ctGetTypeNameMethod.setBody("{ return \"" + makeQualifiedName(messageTypeMetadata.getFullName()) + "\"; }");
+      ctGetTypeNameMethod.setBody("{ return \"" + makeQualifiedTypeName(messageTypeMetadata.getFullName()) + "\"; }");
       marshallerImpl.addMethod(ctGetTypeNameMethod);
 
       CtMethod ctReadFromMethod = new CtMethod(readFromMethod, marshallerImpl, null);
@@ -213,6 +236,24 @@ final class MarshallerCodeGenerator {
       RawProtobufMarshaller marshallerInstance = (RawProtobufMarshaller) marshallerImpl.toClass().newInstance();
       marshallerImpl.detach();
       return marshallerInstance;
+   }
+
+   private void addMarshallerDelegateFields(CtClass marshallerImpl, ProtoMessageTypeMetadata messageTypeMetadata) throws CannotCompileException {
+      for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
+         switch (fieldMetadata.getProtobufType()) {
+            case GROUP:
+            case MESSAGE:
+            case ENUM:
+               String fieldName = makeMarshallerDelegateFieldName(fieldMetadata);
+               try {
+                  // add the field only if it does not already exist
+                  marshallerImpl.getDeclaredField(fieldName);
+               } catch (NotFoundException ex) {
+                  marshallerImpl.addField(new CtField(fieldMetadata.getJavaType().isEnum() ? enumMarshallerDelegateClass : baseMarshallerDelegateClass, fieldName, marshallerImpl));
+               }
+               break;
+         }
+      }
    }
 
    private String generateReadFromMethod(ProtoMessageTypeMetadata messageTypeMetadata) {
@@ -239,10 +280,10 @@ final class MarshallerCodeGenerator {
             requiredFields++;
          }
          if (fieldMetadata.isRequired() || fieldMetadata.getDefaultValue() != null) {
-            iw.append("boolean ").append(fieldMetadata.getName()).append("WasSet = false;\n");
+            iw.append("boolean ").append(makeFieldWasSetFlag(fieldMetadata)).append(" = false;\n");
          }
          if (fieldMetadata.isRepeated()) {
-            String c = "___" + fieldMetadata.getName();
+            String c = makeCollectionLocalVar(fieldMetadata);
             String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
             iw.append(collectionImpl).append(' ').append(c).append(" = null;\n");
          }
@@ -280,34 +321,37 @@ final class MarshallerCodeGenerator {
                iw.append("{\n");
                iw.inc();
                iw.append(fieldMetadata.getJavaType().getName()).append(" v = ").append(box("$2.read" + protoTypeToFriendlyName.get(fieldMetadata.getProtobufType()) + "()", fieldMetadata.getJavaType())).append(";\n");
-               genSetField(fieldMetadata, iw);
+               genSetField(iw, fieldMetadata);
                iw.dec();
                iw.append("}\n");
                break;
             case GROUP:
                iw.append("{\n");
                iw.inc();
-               iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") readMessage($1, $2, ").append(fieldMetadata.getJavaType().getName()).append(".class);\n");
+               initMarshallerDelegateField(iw, fieldMetadata);
+               iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") readMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2);\n");
                iw.append("$2.checkLastTagWas(").append(String.valueOf(fieldMetadata.getNumber() << 3 | org.infinispan.protostream.impl.WireFormat.WIRETYPE_END_GROUP)).append(");\n");
-               genSetField(fieldMetadata, iw);
+               genSetField(iw, fieldMetadata);
                iw.dec();
                iw.append("}\n");
                break;
             case MESSAGE:
                iw.append("{\n");
                iw.inc();
+               initMarshallerDelegateField(iw, fieldMetadata);
                iw.append("int length = $2.readRawVarint32();\n");
                iw.append("int oldLimit = $2.pushLimit(length);\n");
-               iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") readMessage($1, $2, ").append(fieldMetadata.getJavaType().getName()).append(".class);\n");
+               iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") readMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2);\n");
                iw.append("$2.checkLastTagWas(0);\n");
                iw.append("$2.popLimit(oldLimit);\n");
-               genSetField(fieldMetadata, iw);
+               genSetField(iw, fieldMetadata);
                iw.dec();
                iw.append("}\n");
                break;
             case ENUM:
                iw.append("{\n");
                iw.inc();
+               initMarshallerDelegateField(iw, fieldMetadata);
                iw.append("int enumVal = $2.readEnum();\n");
                iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") ((").append(PROTOSTREAM_PACKAGE).append(".EnumMarshaller) $1.getMarshaller(").append(fieldMetadata.getJavaType().getName()).append(".class)).decode(enumVal);\n");
                iw.append("if (v == null) {\n");
@@ -320,7 +364,7 @@ final class MarshallerCodeGenerator {
                }
                iw.append("} else {\n");
                iw.inc();
-               genSetField(fieldMetadata, iw);
+               genSetField(iw, fieldMetadata);
                iw.dec();
                iw.append("}\n");
                iw.dec();
@@ -354,7 +398,7 @@ final class MarshallerCodeGenerator {
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          Object defaultValue = fieldMetadata.getDefaultValue();
          if (defaultValue != null) {
-            iw.append("if (!").append(fieldMetadata.getName()).append("WasSet) {\n");
+            iw.append("if (!").append(makeFieldWasSetFlag(fieldMetadata)).append(") {\n");
             iw.inc();
             String v;
             if (Date.class.isAssignableFrom(fieldMetadata.getJavaType())) {
@@ -372,7 +416,7 @@ final class MarshallerCodeGenerator {
                v = defaultValue.toString();
             }
             if (fieldMetadata.isRepeated()) {
-               String c = "___" + fieldMetadata.getName();
+               String c = makeCollectionLocalVar(fieldMetadata);
                String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
                iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(collectionImpl).append("();\n");
                iw.append(c).append(".add(").append(v).append(");\n");
@@ -385,7 +429,7 @@ final class MarshallerCodeGenerator {
       }
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          if (fieldMetadata.isRepeated()) {
-            String c = "___" + fieldMetadata.getName();
+            String c = makeCollectionLocalVar(fieldMetadata);
             if (fieldMetadata.isArray()) {
                iw.append("if (").append(c).append(" != null) { ");
                if (fieldMetadata.getJavaType().isPrimitive()) {
@@ -414,7 +458,7 @@ final class MarshallerCodeGenerator {
                } else {
                   iw.append(" && ");
                }
-               iw.append(fieldMetadata.getName()).append("WasSet");
+               iw.append(makeFieldWasSetFlag(fieldMetadata));
             }
          }
          iw.append("))\n{\n");
@@ -422,7 +466,7 @@ final class MarshallerCodeGenerator {
          iw.append("StringBuilder missingFields = null;\n");
          for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
             if (fieldMetadata.isRequired()) {
-               iw.append("if (!").append(fieldMetadata.getName()).append("WasSet) { if (missingFields == null) missingFields = new StringBuilder(); else missingFields.append(\", \"); missingFields.append(\"").append(fieldMetadata.getName()).append("\"); }\n");
+               iw.append("if (!").append(makeFieldWasSetFlag(fieldMetadata)).append(") { if (missingFields == null) missingFields = new StringBuilder(); else missingFields.append(\", \"); missingFields.append(\"").append(fieldMetadata.getName()).append("\"); }\n");
             }
          }
          iw.append("if (missingFields != null) throw new java.io.IOException(\"Required field(s) missing from input stream : \" + missingFields);\n");
@@ -435,9 +479,9 @@ final class MarshallerCodeGenerator {
       return iw.toString();
    }
 
-   private void genSetField(ProtoFieldMetadata fieldMetadata, IndentWriter iw) {
+   private void genSetField(IndentWriter iw, ProtoFieldMetadata fieldMetadata) {
       if (fieldMetadata.isRepeated()) {
-         String c = "___" + fieldMetadata.getName();
+         String c = makeCollectionLocalVar(fieldMetadata);
          String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
          iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(collectionImpl).append("();\n");
          iw.append(c).append(".add(").append(box("v", box(fieldMetadata.getJavaType()))).append(");\n");
@@ -445,7 +489,7 @@ final class MarshallerCodeGenerator {
          iw.append("o.").append(createSetter(fieldMetadata, "v")).append(";\n");
       }
       if (fieldMetadata.isRequired()) {
-         iw.append(fieldMetadata.getName()).append("WasSet = true;\n");
+         iw.append(makeFieldWasSetFlag(fieldMetadata)).append(" = true;\n");
       }
    }
 
@@ -526,8 +570,9 @@ final class MarshallerCodeGenerator {
             case GROUP:
                iw.append("{\n");
                iw.inc();
+               initMarshallerDelegateField(iw, fieldMetadata);
                iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_START_GROUP);\n");
-               iw.append("writeMessage($1, $2, ").append(fieldMetadata.getJavaType().getName()).append(".class, v);\n");
+               iw.append("writeMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2, v);\n");
                iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_END_GROUP);\n");
                iw.dec();
                iw.append("}\n");
@@ -535,12 +580,18 @@ final class MarshallerCodeGenerator {
             case MESSAGE:
                iw.append("{\n");
                iw.inc();
-               iw.append("writeNestedMessage($1, $2, ").append(fieldMetadata.getJavaType().getName()).append(".class, ").append(String.valueOf(fieldMetadata.getNumber())).append(", v);\n");
+               initMarshallerDelegateField(iw, fieldMetadata);
+               iw.append("writeNestedMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2, ").append(String.valueOf(fieldMetadata.getNumber())).append(", v);\n");
                iw.dec();
                iw.append("}\n");
                break;
             case ENUM:
-               iw.append("$2.writeEnum(").append(String.valueOf(fieldMetadata.getNumber())).append(", ((").append(PROTOSTREAM_PACKAGE).append(".EnumMarshaller) $1.getMarshaller(").append(fieldMetadata.getJavaType().getName()).append(".class)).encode(v));\n");
+               iw.append("{\n");
+               iw.inc();
+               initMarshallerDelegateField(iw, fieldMetadata);
+               iw.append("$2.writeEnum(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(".getMarshaller().encode(v));\n");
+               iw.dec();
+               iw.append("}\n");
                break;
             default:
                throw new IllegalStateException("Unknown field type " + fieldMetadata.getProtobufType());
@@ -565,6 +616,17 @@ final class MarshallerCodeGenerator {
       iw.dec();
       iw.append("}\n");
       return iw.toString();
+   }
+
+   private void initMarshallerDelegateField(IndentWriter iw, ProtoFieldMetadata fieldMetadata) {
+      iw.append("if (").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(" == null) ")
+            .append(makeMarshallerDelegateFieldName(fieldMetadata)).append(" = ");
+      if (fieldMetadata.getJavaType().isEnum()) {
+         iw.append("(").append(PROTOSTREAM_PACKAGE).append(".impl.EnumMarshallerDelegate) ");
+      }
+      iw.append("((").append(PROTOSTREAM_PACKAGE)
+            .append(".impl.SerializationContextImpl) $1).getMarshallerDelegate(")
+            .append(fieldMetadata.getJavaType().getName()).append(".class);\n");
    }
 
    private Class<?> box(Class<?> clazz) {
