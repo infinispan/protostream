@@ -216,7 +216,6 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          throw new IllegalArgumentException("Declared field type is not of type String : " + fieldName);
       }
 
-      //TODO this is a big performance problem due to usage of the notoriously inefficient String.getBytes in CodedOutputStream.writeStringNoTag
       messageContext.out.writeString(fd.getNumber(), value);
    }
 

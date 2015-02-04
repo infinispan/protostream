@@ -6,6 +6,7 @@ import org.infinispan.protostream.RawProtoStreamWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 /**
  * @author anistor@redhat.com
@@ -14,6 +15,8 @@ import java.nio.ByteBuffer;
 public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
 
    private final CodedOutputStream delegate;
+
+   private final Charset charset = Charset.forName("UTF-8");
 
    private RawProtoStreamWriterImpl(CodedOutputStream delegate) {
       this.delegate = delegate;
@@ -64,7 +67,12 @@ public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
 
    @Override
    public void writeString(int number, String value) throws IOException {
-      delegate.writeString(number, value);
+      //TODO this is a big performance problem due to usage of the notoriously inefficient String.getBytes
+      //delegate.writeString(number, value);
+      byte[] buf = value.getBytes(charset);
+      delegate.writeTag(number, WireFormat.WIRETYPE_LENGTH_DELIMITED);
+      delegate.writeRawVarint32(buf.length);
+      delegate.writeRawBytes(buf, 0, buf.length);
    }
 
    @Override
