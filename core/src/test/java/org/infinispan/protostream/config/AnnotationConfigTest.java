@@ -3,6 +3,8 @@ package org.infinispan.protostream.config;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author anistor@redhat.com
  */
@@ -16,12 +18,13 @@ public class AnnotationConfigTest {
       exception.expect(IllegalArgumentException.class);
       exception.expectMessage("Illegal default value type for attribute 'attr'. Boolean expected.");
 
-      Configuration cfg = new Configuration.Builder()
+      AnnotationAttributeConfig.Builder builder = new Configuration.Builder()
             .messageAnnotation("Xyz")
             .attribute("attr")
             .booleanType()
-            .defaultValue(13)
-            .build();
+            .defaultValue(13);  // this is not valid
+
+      builder.build();  // exception expected here
    }
 
    @Test
@@ -32,5 +35,6 @@ public class AnnotationConfigTest {
             .booleanType()
             .defaultValue(true)
             .build();
+      assertEquals(Boolean.TRUE, cfg.messageAnnotations().get("Xyz").attributes().get("attr").defaultValue());
    }
 }

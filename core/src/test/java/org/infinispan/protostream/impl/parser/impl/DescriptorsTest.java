@@ -41,11 +41,11 @@ public class DescriptorsTest {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Import 'invalid.proto' not found");
       String file =
-              " package test;\n" +
-                      " import invalid.proto;\n" +
-                      " message M {\n" +
-                      "    required string a = 1;\n" +
-                      "}";
+            " package test;\n" +
+                  " import invalid.proto;\n" +
+                  " message M {\n" +
+                  "    required string a = 1;\n" +
+                  "}";
 
       parseAndResolve(FileDescriptorSource.fromString("dummy.proto", file));
    }
@@ -55,15 +55,15 @@ public class DescriptorsTest {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Possible cyclic import detected at test.proto, import test2.proto");
       String file1 =
-              " import test2.proto;\n" +
-                      " message M {\n" +
-                      "    required string a = 1;\n" +
-                      "}";
+            " import test2.proto;\n" +
+                  " message M {\n" +
+                  "    required string a = 1;\n" +
+                  "}";
       String file2 =
-              " import test.proto;\n" +
-                      " message M2 {\n" +
-                      "    required string a = 1;\n" +
-                      "}";
+            " import test.proto;\n" +
+                  " message M2 {\n" +
+                  "    required string a = 1;\n" +
+                  "}";
 
       FileDescriptorSource source = new FileDescriptorSource();
       source.addProtoFile("test.proto", file1);
@@ -90,9 +90,9 @@ public class DescriptorsTest {
    public void testTransform() throws Exception {
 
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromResources(
-              "org/infinispan/protostream/test/message.proto",
-              "org/infinispan/protostream/lib/base.proto",
-              "org/infinispan/protostream/lib/base2.proto");
+            "org/infinispan/protostream/test/message.proto",
+            "org/infinispan/protostream/lib/base.proto",
+            "org/infinispan/protostream/lib/base2.proto");
 
       Map<String, FileDescriptor> files = parseAndResolve(fileDescriptorSource);
 
@@ -152,7 +152,7 @@ public class DescriptorsTest {
       String file1 = "package test;\n" +
             "message M1 {\n" +
             "  required string a = 1;\n" +
-            "  message M1 { required string a = 1; }\n"+
+            "  message M1 { required string a = 1; }\n" +
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
@@ -173,8 +173,8 @@ public class DescriptorsTest {
       String file1 = "package test;\n" +
             "message M1 {\n" +
             "  required string a = 1;\n" +
-            "  message M2 { required string a = 1; }\n"+
-            "  message M2 { required string a = 1; }\n"+
+            "  message M2 { required string a = 1; }\n" +
+            "  message M2 { required string a = 1; }\n" +
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
@@ -191,8 +191,8 @@ public class DescriptorsTest {
       String file1 = "package test;\n" +
             "message M1 {\n" +
             "  required string a = 1;\n" +
-            "  enum E1 { VAL1 = 1; }\n"+
-            "  enum E1 { VAL2 = 2; }\n"+
+            "  enum E1 { VAL1 = 1; }\n" +
+            "  enum E1 { VAL2 = 2; }\n" +
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
@@ -539,6 +539,21 @@ public class DescriptorsTest {
       Descriptor accountMessageType = messageTypes.get(1);
       assertEquals("sample_bank_account.Account", accountMessageType.getFullName());
       assertEquals(Boolean.TRUE, accountMessageType.getProcessedAnnotation("Indexed"));
+   }
+
+   @Test
+   public void testAnnotationParserMissingRequiredAttribute() throws Exception {
+      exception.expect(AnnotationParserException.class);
+      exception.expectMessage("Attribute 'value' of annotation 'Indexed' on sample_bank_account.Account is required");
+
+      Configuration config = new Configuration.Builder()
+            .messageAnnotation("Indexed")
+            .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
+            .booleanType()
+            .build();
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromResources("/sample_bank_account/bank.proto");
+      new SquareProtoParser(config).parseAndResolve(fileDescriptorSource);
    }
 
    @Test

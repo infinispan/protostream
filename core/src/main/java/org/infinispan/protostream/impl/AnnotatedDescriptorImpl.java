@@ -196,17 +196,19 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                attribute = new AnnotationElement.Attribute(attribute.position, attributeConfig.name(), value);
                annotation.getAttributes().put(attributeConfig.name(), attribute);
             }
-         } else {
-            if (attributeConfig.defaultValue() != null) {
-               AnnotationElement.Value value = attributeConfig.type() == AnnotationAttributeConfig.AttributeType.IDENTIFIER ?
-                     new AnnotationElement.Identifier(AnnotationElement.UNKNOWN_POSITION, (String) attributeConfig.defaultValue()) :
-                     new AnnotationElement.Literal(AnnotationElement.UNKNOWN_POSITION, attributeConfig.defaultValue());
-               if (attributeConfig.multiple()) {
-                  value = new AnnotationElement.Array(value.position, Collections.singletonList(value));
-               }
-               attribute = new AnnotationElement.Attribute(AnnotationElement.UNKNOWN_POSITION, attributeConfig.name(), value);
-               annotation.getAttributes().put(attributeConfig.name(), attribute);
+         } else if (attributeConfig.defaultValue() != null) {
+            AnnotationElement.Value value = attributeConfig.type() == AnnotationAttributeConfig.AttributeType.IDENTIFIER ?
+                  new AnnotationElement.Identifier(AnnotationElement.UNKNOWN_POSITION, (String) attributeConfig.defaultValue()) :
+                  new AnnotationElement.Literal(AnnotationElement.UNKNOWN_POSITION, attributeConfig.defaultValue());
+            if (attributeConfig.multiple()) {
+               value = new AnnotationElement.Array(value.position, Collections.singletonList(value));
             }
+            attribute = new AnnotationElement.Attribute(AnnotationElement.UNKNOWN_POSITION, attributeConfig.name(), value);
+            annotation.getAttributes().put(attributeConfig.name(), attribute);
+         } else {
+            throw new AnnotationParserException("Attribute '" + attributeConfig.name()
+                                                      + "' of annotation '" + annotation.getName()
+                                                      + "' on " + getFullName() + " is required");
          }
       }
    }
