@@ -14,7 +14,6 @@ import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.descriptors.JavaType;
-import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.Log;
@@ -22,8 +21,6 @@ import org.infinispan.protostream.impl.Log;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 // TODO [anistor] check which java classfile limits impose limits on the size of the supported protobuf schema
 // TODO [anistor] what do we do with non-repeated fields that come repeated from stream?
@@ -41,30 +38,10 @@ final class MarshallerCodeGenerator {
 
    private static final String MARSHALLER_CLASS_NAME = "___ProtostreamGeneratedMarshaller";
 
+   /**
+    * A numeric id that is appended to generated class names to avoid potential collisions.
+    */
    private static long nextId = 0;
-
-   private static final Map<Type, String> protoTypeToFriendlyName = new HashMap<Type, String>();
-
-   static {
-      protoTypeToFriendlyName.put(Type.DOUBLE, "Double");
-      protoTypeToFriendlyName.put(Type.FLOAT, "Float");
-      protoTypeToFriendlyName.put(Type.INT64, "Int64");
-      protoTypeToFriendlyName.put(Type.UINT64, "UInt64");
-      protoTypeToFriendlyName.put(Type.INT32, "Int32");
-      protoTypeToFriendlyName.put(Type.FIXED64, "Fixed64");
-      protoTypeToFriendlyName.put(Type.FIXED32, "Fixed32");
-      protoTypeToFriendlyName.put(Type.BOOL, "Bool");
-      protoTypeToFriendlyName.put(Type.STRING, "String");
-      protoTypeToFriendlyName.put(Type.GROUP, "Group");
-      protoTypeToFriendlyName.put(Type.MESSAGE, "Message");
-      protoTypeToFriendlyName.put(Type.BYTES, "Bytes");
-      protoTypeToFriendlyName.put(Type.UINT32, "UInt32");
-      protoTypeToFriendlyName.put(Type.ENUM, "Enum");
-      protoTypeToFriendlyName.put(Type.SFIXED32, "SFixed32");
-      protoTypeToFriendlyName.put(Type.SFIXED64, "SFixed64");
-      protoTypeToFriendlyName.put(Type.SINT32, "SInt32");
-      protoTypeToFriendlyName.put(Type.SINT64, "SInt64");
-   }
 
    private final ClassPool cp;
    private final CtClass ioException;
@@ -79,10 +56,10 @@ final class MarshallerCodeGenerator {
    private final CtMethod writeToMethod;
    private final CtMethod decodeMethod;
    private final CtMethod encodeMethod;
-   private final String protobufPackage;
+   private final String protobufSchemaPackage;
 
-   public MarshallerCodeGenerator(String protobufPackage, ClassPool cp) throws NotFoundException {
-      this.protobufPackage = protobufPackage;
+   public MarshallerCodeGenerator(String protobufSchemaPackage, ClassPool cp) throws NotFoundException {
+      this.protobufSchemaPackage = protobufSchemaPackage;
       this.cp = cp;
       ioException = cp.getCtClass(IOException.class.getName());
       enumMarshallerInterface = cp.getCtClass(EnumMarshaller.class.getName());
@@ -179,8 +156,8 @@ final class MarshallerCodeGenerator {
    }
 
    private String makeQualifiedTypeName(String fullName) {
-      if (protobufPackage != null) {
-         return protobufPackage + "." + fullName;
+      if (protobufSchemaPackage != null) {
+         return protobufSchemaPackage + "." + fullName;
       }
       return fullName;
    }
@@ -320,7 +297,7 @@ final class MarshallerCodeGenerator {
             case SINT64:
                iw.append("{\n");
                iw.inc();
-               iw.append(fieldMetadata.getJavaType().getName()).append(" v = ").append(box("$2.read" + protoTypeToFriendlyName.get(fieldMetadata.getProtobufType()) + "()", fieldMetadata.getJavaType())).append(";\n");
+               iw.append(fieldMetadata.getJavaType().getName()).append(" v = ").append(box("$2." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata.getJavaType())).append(";\n");
                genSetField(iw, fieldMetadata);
                iw.dec();
                iw.append("}\n");
@@ -565,7 +542,7 @@ final class MarshallerCodeGenerator {
             case SFIXED64:
             case SINT32:
             case SINT64:
-               iw.append("$2.write").append(protoTypeToFriendlyName.get(fieldMetadata.getProtobufType())).append("(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(unbox("v", fieldMetadata.getJavaType())).append(");\n");
+               iw.append("$2.").append(makeStreamIOMethodName(fieldMetadata, true)).append("(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(unbox("v", fieldMetadata.getJavaType())).append(");\n");
                break;
             case GROUP:
                iw.append("{\n");
@@ -627,6 +604,70 @@ final class MarshallerCodeGenerator {
       iw.append("((").append(PROTOSTREAM_PACKAGE)
             .append(".impl.SerializationContextImpl) $1).getMarshallerDelegate(")
             .append(fieldMetadata.getJavaType().getName()).append(".class);\n");
+   }
+
+   private String makeStreamIOMethodName(ProtoFieldMetadata fieldMetadata, boolean isWrite) {
+      String suffix;
+      switch (fieldMetadata.getProtobufType()) {
+         case DOUBLE:
+            suffix = "Double";
+            break;
+         case FLOAT:
+            suffix = "Float";
+            break;
+         case INT64:
+            suffix = "Int64";
+            break;
+         case UINT64:
+            suffix = "UInt64";
+            break;
+         case INT32:
+            suffix = "Int32";
+            break;
+         case FIXED64:
+            suffix = "Fixed64";
+            break;
+         case FIXED32:
+            suffix = "Fixed32";
+            break;
+         case BOOL:
+            suffix = "Bool";
+            break;
+         case STRING:
+            suffix = "String";
+            break;
+         case GROUP:
+            suffix = "Group";
+            break;
+         case MESSAGE:
+            suffix = "Message";
+            break;
+         case BYTES:
+            suffix = "Bytes";
+            break;
+         case UINT32:
+            suffix = "UInt32";
+            break;
+         case ENUM:
+            suffix = "Enum";
+            break;
+         case SFIXED32:
+            suffix = "SFixed32";
+            break;
+         case SFIXED64:
+            suffix = "SFixed64";
+            break;
+         case SINT32:
+            suffix = "SInt32";
+            break;
+         case SINT64:
+            suffix = "SInt64";
+            break;
+         default:
+            throw new IllegalStateException("Unknown field type " + fieldMetadata.getProtobufType());
+      }
+
+      return (isWrite ? "write" : "read") + suffix;
    }
 
    private Class<?> box(Class<?> clazz) {
