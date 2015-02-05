@@ -465,8 +465,7 @@ public class DescriptorsTest {
             .annotationMetadataCreator(new AnnotationMetadataCreator<Object, Descriptor>() {
                @Override
                public Object create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
-                  AnnotationElement.Value value = annotation.getDefaultAttributeValue();
-                  return value == null ? null : value.getValue();
+                  return annotation.getDefaultAttributeValue().getValue();
                }
             })
             .fieldAnnotation("Bar")
@@ -475,8 +474,7 @@ public class DescriptorsTest {
             .annotationMetadataCreator(new AnnotationMetadataCreator<Object, FieldDescriptor>() {
                @Override
                public Object create(FieldDescriptor fieldDescriptor, AnnotationElement.Annotation annotation) {
-                  AnnotationElement.Value value = annotation.getDefaultAttributeValue();
-                  return value == null ? null : value.getValue();
+                  return annotation.getDefaultAttributeValue().getValue();
                }
             })
             .build();
@@ -512,16 +510,7 @@ public class DescriptorsTest {
             .annotationMetadataCreator(new AnnotationMetadataCreator<Boolean, Descriptor>() {
                @Override
                public Boolean create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
-                  AnnotationElement.Value value = annotation.getDefaultAttributeValue();
-                  if (value == null) {
-                     return Boolean.TRUE;
-                  }
-                  if (Boolean.TRUE.equals(value.getValue())) {
-                     return Boolean.TRUE;
-                  } else if (Boolean.FALSE.equals(value.getValue())) {
-                     return Boolean.FALSE;
-                  }
-                  throw new AnnotationParserException("Invalid value " + value.getValue());
+                  return (Boolean) annotation.getDefaultAttributeValue().getValue();
                }
             })
             .build();

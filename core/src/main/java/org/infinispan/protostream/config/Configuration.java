@@ -124,8 +124,7 @@ public final class Configuration {
                .annotationMetadataCreator(new AnnotationMetadataCreator<Integer, Descriptor>() {
                   @Override
                   public Integer create(Descriptor annotatedDescriptor, AnnotationElement.Annotation annotation) {
-                     AnnotationElement.Value value = annotation.getDefaultAttributeValue();
-                     return value == null ? null : (Integer) value.getValue();
+                     return (Integer) annotation.getDefaultAttributeValue().getValue();
                   }
                });
          enumAnnotation(TYPE_ID_ANNOTATION)
@@ -134,8 +133,7 @@ public final class Configuration {
                .annotationMetadataCreator(new AnnotationMetadataCreator<Integer, EnumDescriptor>() {
                   @Override
                   public Integer create(EnumDescriptor annotatedDescriptor, AnnotationElement.Annotation annotation) {
-                     AnnotationElement.Value value = annotation.getDefaultAttributeValue();
-                     return value == null ? null : (Integer) value.getValue();
+                     return (Integer) annotation.getDefaultAttributeValue().getValue();
                   }
                });
 
