@@ -14,6 +14,18 @@ public class AnnotationConfigTest {
    public ExpectedException exception = ExpectedException.none();
 
    @Test
+   public void testNullDefaultValue() {
+      exception.expect(IllegalArgumentException.class);
+      exception.expectMessage("Default value cannot be null");
+
+      new Configuration.Builder()
+            .messageAnnotation("Xyz")
+            .attribute("attr")
+            .booleanType()
+            .defaultValue(null);  // exception expected here
+   }
+
+   @Test
    public void testWrongDefaultValueType() {
       exception.expect(IllegalArgumentException.class);
       exception.expectMessage("Illegal default value type for attribute 'attr'. Boolean expected.");

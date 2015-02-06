@@ -1,8 +1,5 @@
 package org.infinispan.protostream.impl.parser;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * The tokens used by the annotation grammar.
  *
@@ -20,7 +17,6 @@ enum AnnotationTokens {
    EQ("'='"),
    TRUE("true"),
    FALSE("false"),
-   NULL("null"),
    IDENTIFIER("<identifier>"),
    CHARACTER_LITERAL("<character>"),
    STRING_LITERAL("<string>"),
@@ -36,23 +32,35 @@ enum AnnotationTokens {
       this.text = text;
    }
 
-   private static final Map<String, AnnotationTokens> tokensByName = new HashMap<String, AnnotationTokens>();
-
-   static {
-      tokensByName.put("@", AT);
-      tokensByName.put("(", LPAREN);
-      tokensByName.put(")", RPAREN);
-      tokensByName.put("{", LBRACE);
-      tokensByName.put("}", RBRACE);
-      tokensByName.put(",", COMMA);
-      tokensByName.put(".", DOT);
-      tokensByName.put("=", EQ);
-      tokensByName.put("true", TRUE);
-      tokensByName.put("false", FALSE);
-      tokensByName.put("null", NULL);
-   }
-
    static AnnotationTokens byName(String name) {
-      return tokensByName.get(name);
+      if (name.length() == 1) {
+         switch (name.charAt(0)) {
+            case '@':
+               return AT;
+            case '(':
+               return LPAREN;
+            case ')':
+               return RPAREN;
+            case '{':
+               return LBRACE;
+            case '}':
+               return RBRACE;
+            case ',':
+               return COMMA;
+            case '.':
+               return DOT;
+            case '=':
+               return EQ;
+            default:
+               return null;
+         }
+      }
+      if ("true".equals(name)) {
+         return TRUE;
+      }
+      if ("false".equals(name)) {
+         return FALSE;
+      }
+      return null;
    }
 }

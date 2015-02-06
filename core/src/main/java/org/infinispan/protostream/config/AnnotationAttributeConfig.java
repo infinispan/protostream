@@ -80,6 +80,9 @@ public final class AnnotationAttributeConfig {
       }
 
       public Builder<DescriptorType> defaultValue(Object defaultValue) {
+         if (defaultValue == null) {
+            throw new IllegalArgumentException("Default value cannot be null");
+         }
          this.defaultValue = defaultValue;
          return this;
       }

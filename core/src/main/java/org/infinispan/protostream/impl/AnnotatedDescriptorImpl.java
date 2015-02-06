@@ -84,15 +84,15 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
 
          final AnnotationAttributeConfig attributeConfig = annotationConfig.attributes().get(attribute.getName());
          if (attributeConfig == null) {
-            throw new AnnotationParserException("Unexpected annotation attribute '" + attribute.getName()
-                                                      + "' in annotation '" + annotation.getName() + "' on " + getFullName()
-                                                      + " does not accept array values");
+            throw new AnnotationParserException("Unexpected attribute '" + attribute.getName()
+                                                      + "' in annotation '" + annotation.getName() + "' on " + getFullName());
          }
 
          AnnotationElement.Value value = attribute.getValue();
          if (!attributeConfig.multiple() && value instanceof AnnotationElement.Array) {
             throw new AnnotationParserException("Annotation attribute '" + attribute.getName()
-                                                      + "' in annotation '" + annotation.getName() + "' on " + getFullName());
+                                                      + "' in annotation '" + annotation.getName() + "' on " + getFullName()
+                                                      + " does not accept array values");
          }
 
          if (value instanceof AnnotationElement.Array) {

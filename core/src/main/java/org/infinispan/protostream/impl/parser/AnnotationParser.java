@@ -105,7 +105,6 @@ public final class AnnotationParser {
                   return members;
                }
             }
-            case NULL:
             case FALSE:
             case TRUE:
             case INT_LITERAL:
@@ -171,7 +170,6 @@ public final class AnnotationParser {
          case STRING_LITERAL:
          case TRUE:
          case FALSE:
-         case NULL:
             AnnotationTokens tok = lexer.token;
             String text = lexer.getText(start, lexer.mark());
             Object value = null;
@@ -201,9 +199,6 @@ public final class AnnotationParser {
                      break;
                   case FALSE:
                      value = Boolean.FALSE;
-                     break;
-                  case NULL:
-                     value = null;
                      break;
                }
             } catch (NumberFormatException e) {
