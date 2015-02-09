@@ -421,7 +421,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             throw new ProtoSchemaBuilderException("The collection class of repeated field '" + fieldName + "' of " + clazz + " must implement java.util.Collection.");
          }
          if (Modifier.isAbstract(collectionImplementation.getModifiers())) {
-            throw new ProtoSchemaBuilderException("The collection class (" + collectionImplementation.getName() + ") of repeated field '" + fieldName + "' of " + clazz + " must not be abstract.");
+            throw new ProtoSchemaBuilderException("The collection class (" + collectionImplementation.getName() + ") of repeated field '" + fieldName + "' of " + clazz + " must not be abstract. Please specify an appropriate class in collectionImplementation member.");
          }
          try {
             collectionImplementation.getDeclaredConstructor();
