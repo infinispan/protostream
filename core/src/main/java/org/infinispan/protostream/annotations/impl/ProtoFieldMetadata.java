@@ -6,34 +6,12 @@ import org.infinispan.protostream.descriptors.Type;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
  * @since 3.0
  */
 final class ProtoFieldMetadata {
-
-   private static final Map<Type, String> typeNames = new HashMap<Type, String>();
-
-   static {
-      typeNames.put(Type.DOUBLE, "double");
-      typeNames.put(Type.FLOAT, "float");
-      typeNames.put(Type.INT32, "int32");
-      typeNames.put(Type.INT64, "int64");
-      typeNames.put(Type.FIXED32, "fixed32");
-      typeNames.put(Type.FIXED64, "fixed64");
-      typeNames.put(Type.BOOL, "bool");
-      typeNames.put(Type.STRING, "string");
-      typeNames.put(Type.BYTES, "bytes");
-      typeNames.put(Type.UINT32, "uint32");
-      typeNames.put(Type.UINT64, "uint64");
-      typeNames.put(Type.SFIXED32, "sfixed32");
-      typeNames.put(Type.SFIXED64, "sfixed64");
-      typeNames.put(Type.SINT32, "sint32");
-      typeNames.put(Type.SINT64, "sint64");
-   }
 
    private final Class<?> declaringClass;
    private final int number;
@@ -176,7 +154,55 @@ final class ProtoFieldMetadata {
       if (protobufType == Type.ENUM || protobufType == Type.MESSAGE || protobufType == Type.GROUP) {
          typeName = protoTypeMetadata.getFullName();
       } else {
-         typeName = typeNames.get(protobufType);
+         switch (protobufType) {
+            case DOUBLE:
+               typeName = "double";
+               break;
+            case FLOAT:
+               typeName = "float";
+               break;
+            case INT32:
+               typeName = "int32";
+               break;
+            case INT64:
+               typeName = "int64";
+               break;
+            case FIXED32:
+               typeName = "fixed32";
+               break;
+            case FIXED64:
+               typeName = "fixed64";
+               break;
+            case BOOL:
+               typeName = "bool";
+               break;
+            case STRING:
+               typeName = "string";
+               break;
+            case BYTES:
+               typeName = "bytes";
+               break;
+            case UINT32:
+               typeName = "uint32";
+               break;
+            case UINT64:
+               typeName = "uint64";
+               break;
+            case SFIXED32:
+               typeName = "sfixed32";
+               break;
+            case SFIXED64:
+               typeName = "sfixed64";
+               break;
+            case SINT32:
+               typeName = "sint32";
+               break;
+            case SINT64:
+               typeName = "sint64";
+               break;
+            default:
+               throw new IllegalStateException("Unknown field type " + protobufType);
+         }
       }
       iw.append(typeName);
       iw.append(' ').append(name).append(" = ").append(String.valueOf(number));
