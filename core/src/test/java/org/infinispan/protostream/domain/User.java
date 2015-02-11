@@ -1,6 +1,8 @@
 package org.infinispan.protostream.domain;
 
 import org.infinispan.protostream.BaseMessage;
+import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoField;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.Set;
 /**
  * @author anistor@redhat.com
  */
+@ProtoDoc("@Indexed")
 public class User extends BaseMessage implements Externalizable {   // implement Externalizable just for PerformanceTest
 
    public enum Gender {
@@ -29,6 +32,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
    private Gender gender;
    private String notes;
 
+   @ProtoField(number = 1, required = true)
    public int getId() {
       return id;
    }
@@ -37,6 +41,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.id = id;
    }
 
+   @ProtoField(number = 2, collectionImplementation = HashSet.class)
    public Set<Integer> getAccountIds() {
       return accountIds;
    }
@@ -45,6 +50,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.accountIds = accountIds;
    }
 
+   @ProtoField(number = 3, required = true)
    public String getName() {
       return name;
    }
@@ -53,6 +59,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.name = name;
    }
 
+   @ProtoField(number = 4, required = true)
    public String getSurname() {
       return surname;
    }
@@ -61,6 +68,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.surname = surname;
    }
 
+   @ProtoField(number = 5, collectionImplementation = ArrayList.class)
    public List<Address> getAddresses() {
       return addresses;
    }
@@ -69,6 +77,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.addresses = addresses;
    }
 
+   @ProtoField(number = 6)
    public Integer getAge() {
       return age;
    }
@@ -77,6 +86,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.age = age;
    }
 
+   @ProtoField(number = 7)
    public Gender getGender() {
       return gender;
    }
@@ -85,6 +95,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.gender = gender;
    }
 
+   @ProtoField(number = 8)
    public String getNotes() {
       return notes;
    }

@@ -52,7 +52,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeInt(String fieldName, int value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
-      checkFieldWrite(fd, false);
+      checkFieldWrite(fd);
 
       //need to know which exact flavor of write to use depending on wire type
       switch (fd.getType()) {
@@ -80,7 +80,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeLong(String fieldName, long value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
-      checkFieldWrite(fd, false);
+      checkFieldWrite(fd);
 
       //need to know which exact flavor of write to use depending on wire type
       switch (fd.getType()) {
@@ -122,7 +122,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeDouble(String fieldName, double value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
-      checkFieldWrite(fd, false);
+      checkFieldWrite(fd);
 
       if (fd.getType() != Type.DOUBLE) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
@@ -149,7 +149,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeFloat(String fieldName, float value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
-      checkFieldWrite(fd, false);
+      checkFieldWrite(fd);
 
       if (fd.getType() != Type.FLOAT) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
@@ -176,7 +176,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeBoolean(String fieldName, boolean value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
 
-      checkFieldWrite(fd, false);
+      checkFieldWrite(fd);
 
       if (fd.getType() != Type.BOOL) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
@@ -210,7 +210,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          return;
       }
 
-      checkFieldWrite(fd, false);
+      checkFieldWrite(fd);
 
       if (fd.getType() != Type.STRING) {
          throw new IllegalArgumentException("Declared field type is not of type String : " + fieldName);
@@ -230,7 +230,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          return;
       }
 
-      checkFieldWrite(fd, false);
+      checkFieldWrite(fd);
 
       if (fd.getType() != Type.BYTES) {
          throw new IllegalArgumentException("Declared field type is not of type byte[] : " + fieldName);
@@ -250,7 +250,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          return;
       }
 
-      checkFieldWrite(fd, false);
+      checkFieldWrite(fd);
 
       if (fd.getType() == Type.GROUP) {
          writeGroup(fd, value, clazz);
@@ -293,7 +293,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          return;
       }
 
-      checkFieldWrite(fd, true);
+      checkRepeatedFieldWrite(fd);
 
       final Type type = fd.getType();
       if (type == Type.GROUP) {
@@ -402,7 +402,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          return;
       }
 
-      checkFieldWrite(fd, true);
+      checkRepeatedFieldWrite(fd);
 
       final Type type = fd.getType();
       if (type == Type.GROUP) {
@@ -509,15 +509,25 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
    }
 
-   private void checkFieldWrite(FieldDescriptor fd, boolean expectRepeated) {
-      if (expectRepeated) {
-         if (!fd.isRepeated()) {
-            throw new IllegalArgumentException("This field is not repeated and cannot be written with the methods intended for collections or arrays: " + fd.getFullName());
-         }
-      } else {
-         if (fd.isRepeated()) {
-            throw new IllegalArgumentException("A repeated field should be written with one of the methods intended for collections or arrays: " + fd.getFullName());
-         }
+   private void checkFieldWrite(FieldDescriptor fd) {
+      if (fd.isRepeated()) {
+         throw new IllegalArgumentException("A repeated field should be written with one of the methods intended for collections or arrays: " + fd.getFullName());
+      }
+
+      if (!messageContext.markField(fd.getNumber())) {
+         throw new IllegalStateException("A field cannot be written twice : " + fd.getFullName());
+      }
+
+      if (ctx.getConfiguration().logOutOfSequenceWrites()
+            && log.isEnabled(Logger.Level.WARN)
+            && messageContext.getMaxSeenFieldNumber() > fd.getNumber()) {
+         log.fieldWriteOutOfSequence(fd.getFullName());
+      }
+   }
+
+   private void checkRepeatedFieldWrite(FieldDescriptor fd) {
+      if (!fd.isRepeated()) {
+         throw new IllegalArgumentException("This field is not repeated and cannot be written with the methods intended for collections or arrays: " + fd.getFullName());
       }
 
       if (!messageContext.markField(fd.getNumber())) {

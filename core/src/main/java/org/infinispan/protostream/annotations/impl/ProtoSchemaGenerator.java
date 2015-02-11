@@ -66,11 +66,13 @@ public final class ProtoSchemaGenerator {
 
       // establish the outer-inner relationship between definitions
       for (Class<?> c : metadataByClass.keySet()) {
-         ProtoMessageTypeMetadata outer = findOuterType(c);
-         if (outer != null) {
-            ProtoTypeMetadata m = metadataByClass.get(c);
-            m.setOuterType(outer);
-            outer.addInnerType(m);
+         ProtoTypeMetadata m = metadataByClass.get(c);
+         if (m instanceof ProtoMessageTypeMetadata || m instanceof ProtoEnumTypeMetadata) {
+            ProtoMessageTypeMetadata outer = findOuterType(c);
+            if (outer != null) {
+               m.setOuterType(outer);
+               outer.addInnerType(m);
+            }
          }
       }
 

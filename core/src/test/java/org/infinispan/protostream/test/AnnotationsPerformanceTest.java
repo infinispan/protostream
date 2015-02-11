@@ -1,6 +1,5 @@
 package org.infinispan.protostream.test;
 
-import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -10,6 +9,7 @@ import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.Note;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.domain.marshallers.NoteMarshaller;
+import org.infinispan.protostream.domain.marshallers.UserMarshaller;
 import org.infinispan.protostream.impl.Log;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -54,15 +54,15 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
       Note note = new Note();
       note.setText("Lorem Ipsum");
       note.setCreationDate(new Date());
-      //note.setAuthor(user);
+      note.setAuthor(user);
 
       Note note2 = new Note();
       note2.setText("Lorem Ipsum");
-      //note2.setAuthor(user);
+      note2.setAuthor(user);
 
       Note note3 = new Note();
       note3.setText("Lorem Ipsum");
-      //note3.setAuthor(user);
+      note3.setAuthor(user);
 
       note.note = note2;
       note.notes = Collections.singletonList(note3);
@@ -70,11 +70,14 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
       byte[] bytes = writeWithProtoStream(ctx1, note);
       writeWithProtoStream(ctx2, note);
 
-      readWithProtoStream(ctx1, bytes);
-      readWithProtoStream(ctx2, bytes);
+      long d1 = readWithProtoStream(ctx1, bytes);
+      log.infof("ProtoStream read duration           = %d ns", d1);
+
+      long d2 = readWithProtoStream(ctx2, bytes);
+      log.infof("ProtoStream read duration           = %d ns", d2);
    }
 
-   private void readWithProtoStream(SerializationContext ctx, byte[] bytes) throws IOException, DescriptorParserException {
+   private long readWithProtoStream(SerializationContext ctx, byte[] bytes) throws IOException {
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
       long tStart = System.nanoTime();
       for (int i = 0; i < NUM_LOOPS; i++) {
@@ -83,10 +86,10 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
          bais.reset();
       }
       long duration = System.nanoTime() - tStart;
-      log.infof("ProtoStream read duration           = %d ns", duration / NUM_LOOPS);
+      return duration / NUM_LOOPS;
    }
 
-   private byte[] writeWithProtoStream(SerializationContext ctx, Note note) throws IOException, DescriptorParserException {
+   private byte[] writeWithProtoStream(SerializationContext ctx, Note note) throws IOException {
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
       long tStart = System.nanoTime();
       for (int i = 0; i < NUM_LOOPS; i++) {
@@ -117,6 +120,7 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
             "}\n";
 
       ctx.registerProtoFiles(FileDescriptorSource.fromString("note.proto", file));
+      ctx.registerMarshaller(new UserMarshaller());
       ctx.registerMarshaller(new NoteMarshaller());
       return ctx;
    }
@@ -130,7 +134,8 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       protoSchemaBuilder
             .fileName("note.proto")
-            .packageName("sample_bank_account")
+            .packageName("sample_bank_account2")
+            .addClass(User.class)
             .addClass(Note.class)
             .build(ctx);
 
