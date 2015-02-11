@@ -157,6 +157,12 @@ public final class ProtoSchemaBuilder {
       if (classes.isEmpty()) {
          throw new ProtoSchemaBuilderException("At least one class must be specified");
       }
-      return new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes).generateAndRegister();
+      String schema = new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes).generateAndRegister();
+
+      fileName = null;
+      packageName = null;
+      classes.clear();
+
+      return schema;
    }
 }
