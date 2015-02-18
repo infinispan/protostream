@@ -6,6 +6,8 @@ package org.infinispan.protostream;
    WrappedMessage is intended to solve this problem of self-describing messages by allowing the stream reader to detect
    the type of the message. Still, message structure is not provided as it would not be efficient. The user is expected
    to have knowledge of the structure once it knows the type.
+
+   @TypeId(1000000)
 */
 message WrappedMessage {
    //TODO [anistor] use 'oneof' introduced in protobuf 2.6.0
