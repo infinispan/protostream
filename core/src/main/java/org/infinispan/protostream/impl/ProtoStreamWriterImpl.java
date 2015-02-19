@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl;
 
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.jboss.logging.Logger;
@@ -32,6 +33,11 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    void popContext() {
       messageContext = messageContext.getParentContext();
+   }
+
+   @Override
+   public SerializationContext getSerializationContext() {
+      return ctx;
    }
 
    @Override

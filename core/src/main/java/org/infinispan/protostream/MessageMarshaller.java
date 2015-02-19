@@ -20,6 +20,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
     */
    interface ProtoStreamReader {
 
+      SerializationContext getSerializationContext();
+
       /**
        * Can't return an {@code int} here because the field might be declared optional and missing so we might need to
        * return a {@code null}.
@@ -48,6 +50,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
    }
 
    interface ProtoStreamWriter {
+
+      SerializationContext getSerializationContext();
 
       void writeInt(String fieldName, Integer value) throws IOException;
 

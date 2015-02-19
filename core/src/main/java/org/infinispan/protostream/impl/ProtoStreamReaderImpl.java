@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl;
 
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
@@ -171,6 +172,11 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
          o = Double.longBitsToDouble((Long) o);
       }
       return o;
+   }
+
+   @Override
+   public SerializationContext getSerializationContext() {
+      return ctx;
    }
 
    @Override

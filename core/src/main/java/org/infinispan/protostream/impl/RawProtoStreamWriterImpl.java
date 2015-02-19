@@ -166,4 +166,9 @@ public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
    public void writeSInt64(int number, long value) throws IOException {
       delegate.writeSInt64(number, value);
    }
+
+   @Override
+   public void writeRawBytes(byte[] value) throws IOException {
+      delegate.writeRawBytes(value);
+   }
 }

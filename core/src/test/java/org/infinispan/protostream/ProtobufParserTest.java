@@ -6,7 +6,6 @@ import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.Log;
-import org.infinispan.protostream.impl.WrappedMessageMarshaller;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
 
@@ -49,14 +48,14 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
             log.tracef("onTag %s %s", fieldName, tagValue);
 
             switch (fieldNumber) {
-               case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_ID:
+               case WrappedMessage.WRAPPED_DESCRIPTOR_ID:
                   String typeName = ctx.getTypeNameById((Integer) tagValue);
                   nextDescriptor = ctx.getMessageDescriptor(typeName);
                   break;
-               case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_FULL_NAME:
+               case WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME:
                   nextDescriptor = ctx.getMessageDescriptor((String) tagValue);
                   break;
-               case WrappedMessageMarshaller.WRAPPED_MESSAGE_BYTES:
+               case WrappedMessage.WRAPPED_MESSAGE_BYTES:
                   try {
                      // todo here we expect WRAPPED_DESCRIPTOR_FULL_NAME or WRAPPED_DESCRIPTOR_ID was already read, which might not be the case
                      ProtobufParser.INSTANCE.parse(this, nextDescriptor, (byte[]) tagValue);

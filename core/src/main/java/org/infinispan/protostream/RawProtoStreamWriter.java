@@ -52,4 +52,6 @@ public interface RawProtoStreamWriter {
    void writeBytes(int number, byte[] value) throws IOException;
 
    void writeBytes(int number, byte[] value, int offset, int length) throws IOException;
+
+   void writeRawBytes(byte[] value) throws IOException;
 }

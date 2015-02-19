@@ -6,7 +6,6 @@ import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
-import org.infinispan.protostream.impl.WrappedMessageMarshaller;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,7 +33,7 @@ public final class ProtobufUtil {
          throw new RuntimeException("Failed to initialize serialization context", e);
       }
 
-      serializationContext.registerMarshaller(new WrappedMessageMarshaller());
+      serializationContext.registerMarshaller(new WrappedMessage.Marshaller());
 
       return serializationContext;
    }
@@ -101,22 +100,22 @@ public final class ProtobufUtil {
 
    public static Object fromWrappedByteArray(SerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes, offset, length);
-      return WrappedMessageMarshaller.readWrappedMessage(ctx, RawProtoStreamReaderImpl.newInstance(bais));
+      return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(bais));
    }
 
    public static Object fromWrappedByteBuffer(SerializationContext ctx, ByteBuffer byteBuffer) throws IOException {
-      return WrappedMessageMarshaller.readWrappedMessage(ctx, RawProtoStreamReaderImpl.newInstance(byteBuffer));
+      return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(byteBuffer));
    }
 
    public static byte[] toWrappedByteArray(SerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      WrappedMessageMarshaller.writeWrappedMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
+      WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toWrappedByteBuffer(SerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
-      WrappedMessageMarshaller.writeWrappedMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
+      WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.getByteBuffer();
    }
 }
