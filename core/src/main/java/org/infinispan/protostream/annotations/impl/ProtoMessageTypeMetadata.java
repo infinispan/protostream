@@ -190,7 +190,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz + " cannot be marked required.");
                }
                Class<?> javaType = annotation.javaType();
-               if (javaType == ProtoField.UNSPECIFIED_TYPE.class) {
+               if (javaType == void.class) {
                   if (isRepeated) {
                      javaType = determineElementType(field.getType(), field.getGenericType());
                   } else {
@@ -311,7 +311,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz + " cannot be marked required.");
                }
                Class<?> javaType = annotation.javaType();
-               if (javaType == ProtoField.UNSPECIFIED_TYPE.class) {
+               if (javaType == void.class) {
                   if (isRepeated) {
                      javaType = determineElementType(getter.getReturnType(), getter.getGenericReturnType());
                   } else {
@@ -414,7 +414,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       Class<?> collectionImplementation;
       if (isRepeated && !fieldType.isArray()) {
          collectionImplementation = configuredCollection;
-         if (collectionImplementation == ProtoField.UNSPECIFIED_COLLECTION.class) {
+         if (collectionImplementation == Collection.class) {
             collectionImplementation = fieldType;
          }
          if (!Collection.class.isAssignableFrom(collectionImplementation)) {
@@ -434,8 +434,8 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                                                         + fieldName + "' of " + clazz + " is not assignable to this field's type.");
          }
       } else {
-         if (configuredCollection != ProtoField.UNSPECIFIED_COLLECTION.class) {
-            throw new ProtoSchemaBuilderException("Specifying the collection class is only allowed for repeated collection fields: '" + fieldName + "' of " + clazz);
+         if (configuredCollection != Collection.class) {
+            throw new ProtoSchemaBuilderException("Specifying the collection implementation class is only allowed for repeated/collection fields: '" + fieldName + "' of " + clazz);
          }
          collectionImplementation = null;
       }

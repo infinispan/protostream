@@ -32,19 +32,7 @@ public @interface ProtoField {
 
    String defaultValue() default "";
 
-   Class<?> javaType() default UNSPECIFIED_TYPE.class;
+   Class<?> javaType() default void.class;
 
-   Class<? extends Collection> collectionImplementation() default UNSPECIFIED_COLLECTION.class;
-
-   // dummy class to be used as 'unspecified' marker only
-   public static abstract class UNSPECIFIED_COLLECTION implements Collection {
-      private UNSPECIFIED_COLLECTION() {
-      }
-   }
-
-   // dummy class to be used as 'unspecified' marker only
-   public static abstract class UNSPECIFIED_TYPE {
-      private UNSPECIFIED_TYPE() {
-      }
-   }
+   Class<? extends Collection> collectionImplementation() default Collection.class;
 }
