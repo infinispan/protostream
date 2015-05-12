@@ -41,13 +41,17 @@ public final class FileDescriptorSource {
    }
 
    public FileDescriptorSource addProtoFiles(String... classpathResources) throws IOException {
+      return addProtoFiles(null, classpathResources);
+   }
+
+   public FileDescriptorSource addProtoFiles(ClassLoader userClassLoader, String... classpathResources) throws IOException {
       for (String classpathResource : classpathResources) {
          if (classpathResource == null) {
             throw new IllegalArgumentException("classpathResource cannot be null");
          }
          // enforce absolute resource path
          String absPath = classpathResource.startsWith("/") ? classpathResource : "/" + classpathResource;
-         InputStream resourceAsStream = getClass().getResourceAsStream(absPath);
+         InputStream resourceAsStream = getResourceAsStream(userClassLoader, absPath);
          if (resourceAsStream == null) {
             throw new IOException("Resource not found in class path : " + classpathResource);
          }
@@ -110,6 +114,10 @@ public final class FileDescriptorSource {
       return this;
    }
 
+   public static FileDescriptorSource fromResources(ClassLoader userClassLoader, String... classPathResources) throws IOException {
+      return new FileDescriptorSource().addProtoFiles(userClassLoader, classPathResources);
+   }
+
    public static FileDescriptorSource fromResources(String... classPathResources) throws IOException {
       return new FileDescriptorSource().addProtoFiles(classPathResources);
    }
@@ -156,5 +164,25 @@ public final class FileDescriptorSource {
       } finally {
          reader.close();
       }
+   }
+
+   private static InputStream getResourceAsStream(ClassLoader userClassLoader, String resourcePath) {
+      if (resourcePath.startsWith("/")) {
+         resourcePath = resourcePath.substring(1);
+      }
+      ClassLoader[] classLoaders = {userClassLoader,
+                                    FileDescriptorSource.class.getClassLoader(),
+                                    ClassLoader.getSystemClassLoader(),
+                                    Thread.currentThread().getContextClassLoader()};
+      InputStream is = null;
+      for (ClassLoader cl : classLoaders) {
+         if (cl != null) {
+            is = cl.getResourceAsStream(resourcePath);
+            if (is != null) {
+               break;
+            }
+         }
+      }
+      return is;
    }
 }
