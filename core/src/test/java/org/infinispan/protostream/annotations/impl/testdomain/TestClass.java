@@ -2,7 +2,6 @@ package org.infinispan.protostream.annotations.impl.testdomain;
 
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoDoc;
-import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2;
 
@@ -37,13 +36,13 @@ public class TestClass extends TestBaseClass implements TestBaseInterface /*, Te
    public WrappedMessage wm;
 
    @ProtoField(number = 1000, defaultValue = "23")
-   public double longField;
+   public long longField;
 
    @ProtoField(number = 1001, defaultValue = "3.14")
    public double doubleField;
 
    @ProtoField(number = 1002, defaultValue = "3.14")
-   public double floatField;
+   public float floatField;
 
    public TestClass() {
    }
