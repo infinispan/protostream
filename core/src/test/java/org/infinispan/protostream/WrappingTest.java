@@ -216,7 +216,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
       user.setSurname(surname);
       user.setGender(User.Gender.MALE);
       user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
-      user.setAddresses(Collections.singletonList(new Address("Old Street", "XYZ42")));
+      user.setAddresses(Collections.singletonList(new Address("Old Street", "XYZ42", -12)));
       return user;
    }
 }

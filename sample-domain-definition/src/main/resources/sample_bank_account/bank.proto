@@ -32,6 +32,7 @@ message User {
    message Address {
       required string street = 1;
       required string postCode = 2;
+      required int32 number = 3;
    }
 
    /**

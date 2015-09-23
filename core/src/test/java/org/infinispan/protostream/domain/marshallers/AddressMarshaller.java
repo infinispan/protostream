@@ -24,10 +24,12 @@ public class AddressMarshaller implements MessageMarshaller<Address> {
    public Address readFrom(ProtoStreamReader reader) throws IOException {
       String street = reader.readString("street");
       String postCode = reader.readString("postCode");
+      int number = reader.readInt("number");
 
       Address address = new Address();
       address.setStreet(street);
       address.setPostCode(postCode);
+      address.setNumber(number);
       return address;
    }
 
@@ -35,6 +37,7 @@ public class AddressMarshaller implements MessageMarshaller<Address> {
    public void writeTo(ProtoStreamWriter writer, Address address) throws IOException {
       writer.writeString("street", address.getStreet());
       writer.writeString("postCode", address.getPostCode());
+      writer.writeInt("number", address.getNumber());
    }
 }
 

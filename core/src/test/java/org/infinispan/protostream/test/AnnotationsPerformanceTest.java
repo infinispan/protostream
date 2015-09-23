@@ -47,8 +47,8 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
       user.setGender(User.Gender.MALE);
       user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
       List<Address> addresses = new ArrayList<Address>();
-      addresses.add(new Address("Old Street", "XYZ42"));
-      addresses.add(new Address("Bond Street", "QQ42"));
+      addresses.add(new Address("Old Street", "XYZ42", -12));
+      addresses.add(new Address("Bond Street", "QQ42", 312));
       user.setAddresses(addresses);
 
       Note note = new Note();
