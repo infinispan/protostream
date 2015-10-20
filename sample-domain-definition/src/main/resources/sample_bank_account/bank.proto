@@ -106,7 +106,7 @@ message Transaction {
    required int32 id = 1;
 
    /**
-    * @IndexedField
+    * @IndexedField(store = false)
     */
    optional string description = 2;
 
@@ -129,6 +129,8 @@ message Transaction {
     * @IndexedField
     */
    required bool isDebit = 6;
+
+   required bool isValid = 7;
 }
 
 /**

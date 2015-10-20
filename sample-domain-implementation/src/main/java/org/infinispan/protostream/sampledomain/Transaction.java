@@ -16,6 +16,7 @@ public class Transaction extends BaseMessage {
    private Date date;
    private BigDecimal amount;
    private boolean isDebit;
+   private boolean isValid;
 
    public int getId() {
       return id;
@@ -69,6 +70,14 @@ public class Transaction extends BaseMessage {
       this.isDebit = isDebit;
    }
 
+   public boolean isValid() {
+      return isValid;
+   }
+
+   public void setValid(boolean isValid) {
+      this.isValid = isValid;
+   }
+
    @Override
    public String toString() {
       return "Transaction{" +
@@ -78,6 +87,7 @@ public class Transaction extends BaseMessage {
             ", date=" + date +
             ", amount=" + amount +
             ", isDebit=" + isDebit +
+            ", isValid=" + isValid +
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }

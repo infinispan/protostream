@@ -29,6 +29,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
       Date date = reader.readDate("date");
       double amount = reader.readDouble("amount");
       boolean isDebit = reader.readBoolean("isDebit");
+      boolean isValid = reader.readBoolean("isValid");
 
       Transaction transaction = new Transaction();
       transaction.setId(id);
@@ -37,6 +38,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
       transaction.setDate(date);
       transaction.setAmount(amount);
       transaction.setDebit(isDebit);
+      transaction.setValid(isValid);
       return transaction;
    }
 
@@ -48,5 +50,6 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
       writer.writeLong("date", transaction.getDate().getTime());
       writer.writeDouble("amount", transaction.getAmount());
       writer.writeBoolean("isDebit", transaction.isDebit());
+      writer.writeBoolean("isValid", transaction.isValid());
    }
 }
