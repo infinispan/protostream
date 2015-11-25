@@ -114,7 +114,7 @@
       <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
       <version.log4j>1.2.16</version.log4j>
       <version.jboss.marshalling>1.4.8.Final</version.jboss.marshalling>
-      <version.javassist>3.18.1-GA</version.javassist>
+      <version.javassist>3.20.0-GA</version.javassist>
       <version.commons-cli>1.2</version.commons-cli>
    </properties>
 
