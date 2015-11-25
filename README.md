@@ -9,7 +9,7 @@ Add this to your POM
 <dependency>
    <groupId>org.infinispan.protostream</groupId>
    <artifactId>protostream</artifactId>
-   <version>3.0.4.Final</version>
+   <version>3.0.5.Final</version>
 </dependency>
 ```
 
