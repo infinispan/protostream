@@ -110,6 +110,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       TestClass testClass = new TestClass();
       testClass.surname = "test";
+      testClass.longField = 100L;
       testClass.testClass2 = new TestClass2();
       testClass.testClass2.address = "test address";
       bytes = ProtobufUtil.toWrappedByteArray(ctx, testClass);
@@ -117,6 +118,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       unmarshalled = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
       assertTrue(unmarshalled instanceof TestClass);
       assertEquals("test", ((TestClass) unmarshalled).surname);
+      assertEquals(100L, ((TestClass) unmarshalled).longField);
       assertEquals("test address", ((TestClass) unmarshalled).testClass2.address);
    }
 

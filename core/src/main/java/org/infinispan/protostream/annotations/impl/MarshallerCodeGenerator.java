@@ -465,7 +465,7 @@ final class MarshallerCodeGenerator {
       } else {
          iw.append("o.").append(createSetter(fieldMetadata, "v")).append(";\n");
       }
-      if (fieldMetadata.isRequired()) {
+      if (fieldMetadata.isRequired() || fieldMetadata.getDefaultValue() != null) {
          iw.append(makeFieldWasSetFlag(fieldMetadata)).append(" = true;\n");
       }
    }
