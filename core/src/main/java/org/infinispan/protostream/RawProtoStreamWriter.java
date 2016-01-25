@@ -13,9 +13,9 @@ public interface RawProtoStreamWriter {
 
    void writeTag(int number, int wireType) throws IOException;
 
-   void writeRawVarint32(int value) throws IOException;
+   void writeUInt32NoTag(int value) throws IOException;
 
-   void writeRawVarint64(long value) throws IOException;
+   void writeUInt64NoTag(long value) throws IOException;
 
    void writeString(int number, String value) throws IOException;
 

@@ -149,7 +149,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
             break;
          case WireFormat.WIRETYPE_START_GROUP:
             for (UnknownFieldSetImpl value : (Deque<UnknownFieldSetImpl>) values) {
-               output.writeRawVarint32(tag);
+               output.writeUInt32NoTag(tag);
                value.writeTo(output);
                output.writeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP);
             }

@@ -14,12 +14,11 @@ final class FieldMapper implements Mapper<FieldElement, FieldDescriptor> {
 
    @Override
    public FieldDescriptor map(FieldElement am) {
-      String defaultValue = am.getDefault() != null ? am.getDefault().value().toString() : null;     //todo [anistor]
       return new FieldDescriptor.Builder()
             .withName(am.name())
             .withNumber(am.tag())
             .withTypeName(am.type().toString())
-            .withDefaultValue(defaultValue)   //todo [anistor]
+            .withDefaultValue(am.getDefault() != null ? (String) am.getDefault().value() : null)
             .withRule(Rule.valueOf(am.label().name()))
             .withOptions(OPTION_LIST_MAPPER.map(am.options()))
             .withDocumentation(am.documentation())

@@ -6,7 +6,6 @@ import org.infinispan.protostream.RawProtoStreamWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 /**
  * @author anistor@redhat.com
@@ -15,8 +14,6 @@ import java.nio.charset.Charset;
 public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
 
    private final CodedOutputStream delegate;
-
-   private final Charset charset = Charset.forName("UTF-8");
 
    private RawProtoStreamWriterImpl(CodedOutputStream delegate) {
       this.delegate = delegate;
@@ -42,10 +39,6 @@ public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
       return new RawProtoStreamWriterImpl(CodedOutputStream.newInstance(byteBuffer));
    }
 
-   public static RawProtoStreamWriter newInstance(ByteBuffer byteBuffer, int bufferSize) {
-      return new RawProtoStreamWriterImpl(CodedOutputStream.newInstance(byteBuffer, bufferSize));
-   }
-
    public CodedOutputStream getDelegate() {
       return delegate;
    }
@@ -56,23 +49,18 @@ public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
    }
 
    @Override
-   public void writeRawVarint32(int value) throws IOException {
-      delegate.writeRawVarint32(value);
+   public void writeUInt32NoTag(int value) throws IOException {
+      delegate.writeUInt32NoTag(value);
    }
 
    @Override
-   public void writeRawVarint64(long value) throws IOException {
-      delegate.writeRawVarint64(value);
+   public void writeUInt64NoTag(long value) throws IOException {
+      delegate.writeUInt64NoTag(value);
    }
 
    @Override
    public void writeString(int number, String value) throws IOException {
-      //TODO this is a big performance problem due to usage of the notoriously inefficient String.getBytes
-      //delegate.writeString(number, value);
-      byte[] buf = value.getBytes(charset);
-      delegate.writeTag(number, WireFormat.WIRETYPE_LENGTH_DELIMITED);
-      delegate.writeRawVarint32(buf.length);
-      delegate.writeRawBytes(buf, 0, buf.length);
+      delegate.writeString(number, value);
    }
 
    @Override
