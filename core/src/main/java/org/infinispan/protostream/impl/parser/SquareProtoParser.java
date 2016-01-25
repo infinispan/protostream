@@ -1,11 +1,11 @@
 package org.infinispan.protostream.impl.parser;
 
 import com.squareup.protoparser.ProtoFile;
-import com.squareup.protoparser.ProtoSchemaParser;
-import org.infinispan.protostream.config.Configuration;
+import com.squareup.protoparser.ProtoParser;
 import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.impl.parser.mappers.ProtofileMapper;
@@ -53,7 +53,7 @@ public final class SquareProtoParser implements DescriptorParser {
       Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<String, FileDescriptor>(input.size());
       for (Map.Entry<String, char[]> entry : input.entrySet()) {
          try {
-            ProtoFile protoFile = ProtoSchemaParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));
+            ProtoFile protoFile = ProtoParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));
             FileDescriptor fileDescriptor = PROTOFILE_MAPPER.map(protoFile);
             fileDescriptor.setConfiguration(configuration);
             fileDescriptorMap.put(entry.getKey(), fileDescriptor);

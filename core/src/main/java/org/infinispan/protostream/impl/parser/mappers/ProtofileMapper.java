@@ -1,7 +1,7 @@
 package org.infinispan.protostream.impl.parser.mappers;
 
-import com.squareup.protoparser.EnumType;
-import com.squareup.protoparser.MessageType;
+import com.squareup.protoparser.EnumElement;
+import com.squareup.protoparser.MessageElement;
 import com.squareup.protoparser.ProtoFile;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 
@@ -20,17 +20,17 @@ public final class ProtofileMapper implements Mapper<ProtoFile, FileDescriptor> 
 
    @Override
    public FileDescriptor map(ProtoFile protoFile) {
-      List<MessageType> messageTypes = filter(protoFile.getTypes(), MessageType.class);
-      List<EnumType> enumTypes = filter(protoFile.getTypes(), EnumType.class);
+      List<MessageElement> messageTypes = filter(protoFile.typeElements(), MessageElement.class);
+      List<EnumElement> enumTypes = filter(protoFile.typeElements(), EnumElement.class);
       return new FileDescriptor.Builder()
-              .withName(protoFile.getFileName())
-              .withPackageName(protoFile.getPackageName())
-              .withMessageTypes(MESSAGE_LIST_MAPPER.map(messageTypes))
-              .withEnumTypes(ENUM_LIST_MAPPER.map(enumTypes))
-              .withExtendDescriptors(EXTEND_LIST_MAPPER.map(protoFile.getExtendDeclarations()))
-              .withOptions(OPTION_LIST_MAPPER.map(protoFile.getOptions()))
-              .withDependencies(protoFile.getDependencies())
-              .withPublicDependencies(protoFile.getPublicDependencies())
-              .build();
+            .withName(protoFile.filePath())
+            .withPackageName(protoFile.packageName())
+            .withMessageTypes(MESSAGE_LIST_MAPPER.map(messageTypes))
+            .withEnumTypes(ENUM_LIST_MAPPER.map(enumTypes))
+            .withExtendDescriptors(EXTEND_LIST_MAPPER.map(protoFile.extendDeclarations()))
+            .withOptions(OPTION_LIST_MAPPER.map(protoFile.options()))
+            .withDependencies(protoFile.dependencies())
+            .withPublicDependencies(protoFile.publicDependencies())
+            .build();
    }
 }

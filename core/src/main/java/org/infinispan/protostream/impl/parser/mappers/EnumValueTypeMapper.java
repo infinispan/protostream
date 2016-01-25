@@ -1,6 +1,6 @@
 package org.infinispan.protostream.impl.parser.mappers;
 
-import com.squareup.protoparser.EnumType;
+import com.squareup.protoparser.EnumConstantElement;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 
 import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST_MAPPER;
@@ -10,15 +10,15 @@ import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST
  * @author gustavonalle
  * @since 2.0
  */
-final class EnumValueTypeMapper implements Mapper<EnumType.Value, EnumValueDescriptor> {
+final class EnumValueTypeMapper implements Mapper<EnumConstantElement, EnumValueDescriptor> {
 
    @Override
-   public EnumValueDescriptor map(EnumType.Value input) {
+   public EnumValueDescriptor map(EnumConstantElement input) {
       return new EnumValueDescriptor.Builder()
-              .withName(input.getName())
-              .withTag(input.getTag())
-              .withDocumentation(input.getDocumentation())
-              .withOptions(OPTION_LIST_MAPPER.map(input.getOptions()))
-              .build();
+            .withName(input.name())
+            .withTag(input.tag())
+            .withDocumentation(input.documentation())
+            .withOptions(OPTION_LIST_MAPPER.map(input.options()))
+            .build();
    }
 }
