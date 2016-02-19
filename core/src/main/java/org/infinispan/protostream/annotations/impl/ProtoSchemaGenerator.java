@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
+import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.LoaderClassPath;
 import org.infinispan.protostream.BaseMarshaller;
@@ -131,6 +132,9 @@ public final class ProtoSchemaGenerator {
 
    private void generateMarshallers() throws Exception {
       ClassPool cp = new ClassPool(ClassPool.getDefault());
+      for (Class<?> c : classes) {
+         cp.appendClassPath(new ClassClassPath(c));
+      }
       cp.appendClassPath(new LoaderClassPath(getClass().getClassLoader()));
 
       MarshallerCodeGenerator marshallerCodeGenerator = new MarshallerCodeGenerator(packageName, cp);

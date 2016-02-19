@@ -41,7 +41,7 @@ public final class WrappedMessage {
    /**
     * The wrapped object or (boxed) primitive.
     */
-   private Object value;
+   private final Object value;
 
    public WrappedMessage(Object value) {
       this.value = value;
