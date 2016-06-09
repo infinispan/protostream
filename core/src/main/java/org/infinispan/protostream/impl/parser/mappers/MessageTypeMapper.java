@@ -24,6 +24,7 @@ final class MessageTypeMapper implements Mapper<MessageElement, Descriptor> {
             .withFullName(type.qualifiedName())
             .withName(type.name())
             .withFields(FIELD_LIST_MAPPER.map(type.fields()))
+            .withOneOfs(ONEOF_LIST_MAPPER.map(type.oneOfs()))
             .withEnumTypes(ENUM_LIST_MAPPER.map(enumTypes))
             .withNestedTypes(MESSAGE_LIST_MAPPER.map(nestedMessageTypes))
             .withOptions(OPTION_LIST_MAPPER.map(type.options()))

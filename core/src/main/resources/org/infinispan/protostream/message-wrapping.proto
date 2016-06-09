@@ -1,3 +1,5 @@
+syntax = "proto3";
+
 package org.infinispan.protostream;
 
 /*
@@ -10,36 +12,40 @@ package org.infinispan.protostream;
    @TypeId(1000000)
 */
 message WrappedMessage {
-   //TODO [anistor] use 'oneof' introduced in protobuf 2.6.0
 
-   // only one of these fields is used if the wrapped value is a scalar type
-   optional double wrappedDouble = 1;
-   optional float wrappedFloat = 2;
-   optional int64 wrappedInt64 = 3;
-   optional uint64 wrappedUInt64 = 4;
-   optional int32 wrappedInt32 = 5;
-   optional fixed64 wrappedFixed64 = 6;
-   optional fixed32 wrappedFixed32 = 7;
-   optional bool wrappedBool = 8;
-   optional string wrappedString = 9;
-   optional bytes wrappedBytes = 10;
-   optional uint32 wrappedUInt32 = 11;
-   optional sfixed32 wrappedSFixed32 = 12;
-   optional sfixed64 wrappedSFixed64 = 13;
-   optional sint32 wrappedSInt32 = 14;
-   optional sint64 wrappedSInt64 = 15;
+   oneof ScalarOrMessage {
+      // Exactly one of the following fields is used if the wrapped value is a primitive (scalar) type
+      double wrappedDouble = 1;
+      float wrappedFloat = 2;
+      int64 wrappedInt64 = 3;
+      uint64 wrappedUInt64 = 4;
+      int32 wrappedInt32 = 5;
+      fixed64 wrappedFixed64 = 6;
+      fixed32 wrappedFixed32 = 7;
+      bool wrappedBool = 8;
+      string wrappedString = 9;
+      bytes wrappedBytes = 10;
+      uint32 wrappedUInt32 = 11;
+      sfixed32 wrappedSFixed32 = 12;
+      sfixed64 wrappedSFixed64 = 13;
+      sint32 wrappedSInt32 = 14;
+      sint64 wrappedSInt64 = 15;
 
-   // this field is used only if the wrapped value is a message or an enum
-   optional string wrappedDescriptorFullName = 16;
+      // this is used to store the message bytes if the wrapped value is a message type
+      bytes wrappedMessageBytes = 17;
 
-   // this is used if the wrapped value is a message
-   optional bytes wrappedMessageBytes = 17;
+      // this is used if the wrapped value is an enum
+      int32 wrappedEnum = 18;
+   }
 
-   // this is used if the wrapped value is an enum
-   optional int32 wrappedEnum = 18;
+   oneof TypeNameOrId {
+      // this field stored the fully qualified type name if the wrapped value is a message or an enum type
+      string wrappedDescriptorFullName = 16;
 
-   // this is used as an alternative to wrappedDescriptorFullName if a unique id was assigned to the type
-   optional int32 wrappedDescriptorId = 19;
+      // this is used as an alternative to wrappedDescriptorFullName if a unique id was assigned to the type with the
+      // @TypeId annotation
+      int32 wrappedDescriptorId = 19;
+   }
 }
 
 

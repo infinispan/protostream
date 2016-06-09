@@ -8,6 +8,14 @@ package org.infinispan.protostream.descriptors;
  */
 public enum Rule {
    REQUIRED,
+
    OPTIONAL,
-   REPEATED
+
+   REPEATED,
+
+   /**
+    * Indicates a field that is a member of a {@code oneof} element. It is an implicitly optional and non-repeated
+    * field.
+    */
+   ONE_OF
 }

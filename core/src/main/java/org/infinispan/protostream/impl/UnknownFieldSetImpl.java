@@ -29,6 +29,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
    private Map<Integer, Deque<Object>> fields;
 
    public UnknownFieldSetImpl() {
+      // needs to be public to be serializable
    }
 
    /**
@@ -56,6 +57,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
       return fields == null || fields.isEmpty();
    }
 
+   @Override
    public void readAllFields(RawProtoStreamReader input) throws IOException {
       while (true) {
          int tag = input.readTag();
@@ -65,6 +67,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
       }
    }
 
+   @Override
    public boolean readSingleField(int tag, RawProtoStreamReader input) throws IOException {
       int wireType = WireFormat.getTagWireType(tag);
       switch (wireType) {
@@ -99,6 +102,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
       }
    }
 
+   @Override
    public void putVarintField(int tag, int value) {
       if (tag == 0) {
          throw new IllegalArgumentException("Zero is not a valid tag");
@@ -109,6 +113,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
       getField(tag).addLast(value);
    }
 
+   @Override
    public void writeTo(RawProtoStreamWriter output) throws IOException {
       if (fields != null) {
          // we sort by tag to ensure we always have a predictable output order
@@ -159,6 +164,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
       }
    }
 
+   @Override
    public <A> A consumeTag(int tag) {
       if (tag == 0) {
          throw new IllegalArgumentException("Zero is not a valid tag number");

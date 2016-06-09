@@ -23,6 +23,7 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
    private Integer typeId;
    private final List<Option> options;
    private final List<FieldDescriptor> fields;
+   private final List<OneOfDescriptor> oneofs;
    private final List<Descriptor> nestedTypes;
    private final List<EnumDescriptor> enumTypes;
    private final Map<Integer, FieldDescriptor> fieldsByNumber = new HashMap<Integer, FieldDescriptor>();
@@ -34,10 +35,11 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       super(builder.name, builder.fullName, builder.documentation);
       this.options = unmodifiableList(builder.options);
       this.fields = unmodifiableList(builder.fields);
-      for (FieldDescriptor fieldDescriptor : fields) {
-         fieldsByName.put(fieldDescriptor.getName(), fieldDescriptor);
-         fieldsByNumber.put(fieldDescriptor.getNumber(), fieldDescriptor);
-         fieldDescriptor.setContainingMessage(this);
+      addFields(builder.fields);
+      this.oneofs = unmodifiableList(builder.oneofs);
+      for (OneOfDescriptor oneof : oneofs) {
+         addFields(oneof.getFields());
+         oneof.setContainingMessage(this);
       }
       this.nestedTypes = unmodifiableList(builder.nestedTypes);
       this.enumTypes = unmodifiableList(builder.enumTypes);
@@ -46,6 +48,23 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       }
       for (EnumDescriptor nested : enumTypes) {
          nested.setContainingType(this);
+      }
+   }
+
+   private void addFields(List<FieldDescriptor> fields) {
+      for (FieldDescriptor fieldDescriptor : fields) {
+         FieldDescriptor existing = fieldsByNumber.put(fieldDescriptor.getNumber(), fieldDescriptor);
+         if (existing != null) {
+            throw new IllegalStateException("Field number " + fieldDescriptor.getNumber()
+                  + " has already been used in \"" + fullName + "\" by field \"" + existing.getName() + "\".");
+         }
+         existing = fieldsByName.put(fieldDescriptor.getName(), fieldDescriptor);
+         if (existing != null) {
+            throw new IllegalStateException("Field \"" + fieldDescriptor.getName()
+                  + "\" is already defined in \"" + fullName + "\" with numbers "
+                  + existing.getNumber() + " and " + fieldDescriptor.getNumber() + ".");
+         }
+         fieldDescriptor.setContainingMessage(this);
       }
    }
 
@@ -60,6 +79,10 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
 
    public List<FieldDescriptor> getFields() {
       return fields;
+   }
+
+   public List<OneOfDescriptor> getOneOfs() {
+      return oneofs;
    }
 
    public List<Descriptor> getNestedTypes() {
@@ -136,6 +159,7 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       private String name, fullName;
       private List<Option> options;
       private List<FieldDescriptor> fields;
+      private List<OneOfDescriptor> oneofs;
       private List<Descriptor> nestedTypes = new LinkedList<Descriptor>();
       private List<EnumDescriptor> enumTypes;
       private String documentation;
@@ -157,6 +181,11 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
 
       public Builder withFields(List<FieldDescriptor> fields) {
          this.fields = fields;
+         return this;
+      }
+
+      public Builder withOneOfs(List<OneOfDescriptor> oneofs) {
+         this.oneofs = oneofs;
          return this;
       }
 

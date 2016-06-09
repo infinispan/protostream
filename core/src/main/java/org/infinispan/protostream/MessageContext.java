@@ -1,8 +1,8 @@
 package org.infinispan.protostream;
 
-import org.infinispan.protostream.descriptors.Descriptor;
-
 import java.util.BitSet;
+
+import org.infinispan.protostream.descriptors.Descriptor;
 
 /**
  * @author anistor@redhat.com
@@ -27,7 +27,7 @@ public class MessageContext<E extends MessageContext> {
     */
    private final Descriptor messageDescriptor;
 
-   private final BitSet seenFields;
+   private final BitSet seenFields;      //todo [anistor] need a sparse bitset here
    private int maxSeenFieldNumber = 0;
 
    public MessageContext(E parentContext, String fieldName, Descriptor messageDescriptor) {
@@ -45,7 +45,7 @@ public class MessageContext<E extends MessageContext> {
       this.fieldName = fieldName;
       this.messageDescriptor = messageDescriptor;
 
-      seenFields = new BitSet(messageDescriptor.getFields().size());
+      seenFields = new BitSet(messageDescriptor.getFields().size() + messageDescriptor.getOneOfs().size());
    }
 
    public E getParentContext() {

@@ -28,7 +28,8 @@ public class SerializationContextImplTest {
    public void testRegisterProtoFiles() throws Exception {
       SerializationContextImpl ctx = createContext();
 
-      final String file1 = "package p;\n" +
+      final String file1 = "syntax = \"proto3\";\n" +
+            "package p;\n" +
             "message A {\n" +
             "   optional int32 f1 = 1;\n" +
             "}";

@@ -5,11 +5,13 @@ import com.squareup.protoparser.EnumElement;
 import com.squareup.protoparser.ExtendElement;
 import com.squareup.protoparser.FieldElement;
 import com.squareup.protoparser.MessageElement;
+import com.squareup.protoparser.OneOfElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.ExtendDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.OneOfDescriptor;
 import org.infinispan.protostream.descriptors.Option;
 
 import java.util.LinkedList;
@@ -30,9 +32,11 @@ final class Mappers {
    public static final MessageTypeMapper MESSAGE_TYPE_MAPPER = new MessageTypeMapper();
    public static final ExtendMapper EXTEND_MAPPER = new ExtendMapper();
    public static final OptionMapper OPTION_MAPPER = new OptionMapper();
+   public static final OneOfMapper ONEOF_MAPPER = new OneOfMapper();
 
    // Collections mappers
    public static final ListMapper<FieldElement, FieldDescriptor> FIELD_LIST_MAPPER = ListMapper.forMapper(FIELD_MAPPER);
+   public static final ListMapper<OneOfElement, OneOfDescriptor> ONEOF_LIST_MAPPER = ListMapper.forMapper(ONEOF_MAPPER);
    public static final ListMapper<EnumElement, EnumDescriptor> ENUM_LIST_MAPPER = ListMapper.forMapper(ENUM_MAPPER);
    public static final ListMapper<EnumConstantElement, EnumValueDescriptor> ENUM_VALUE_LIST_MAPPER = ListMapper.forMapper(ENUM_VALUE_MAPPER);
    public static final ListMapper<ExtendElement, ExtendDescriptor> EXTEND_LIST_MAPPER = ListMapper.forMapper(EXTEND_MAPPER);
