@@ -156,7 +156,7 @@ public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
    }
 
    @Override
-   public void writeRawBytes(byte[] value) throws IOException {
-      delegate.writeRawBytes(value);
+   public void writeRawBytes(byte[] value, int offset, int length) throws IOException {
+      delegate.writeRawBytes(value, offset, length);
    }
 }

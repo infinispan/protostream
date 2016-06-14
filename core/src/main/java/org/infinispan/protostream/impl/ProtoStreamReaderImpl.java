@@ -9,7 +9,9 @@ import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.jboss.logging.Logger;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -47,7 +49,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
 
    private ReadMessageContext messageContext;
 
-   public ProtoStreamReaderImpl(SerializationContextImpl ctx) {
+   ProtoStreamReaderImpl(SerializationContextImpl ctx) {
       this.ctx = ctx;
    }
 
@@ -218,6 +220,12 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
    @Override
    public byte[] readBytes(String fieldName) throws IOException {
       return (byte[]) readPrimitive(fieldName, JavaType.BYTE_STRING);
+   }
+
+   @Override
+   public InputStream readBytesAsInputStream(String fieldName) throws IOException {
+      byte[] bytes = readBytes(fieldName);
+      return bytes != null ? new ByteArrayInputStream(bytes) : null;
    }
 
    @Override

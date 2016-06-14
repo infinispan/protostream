@@ -1,6 +1,7 @@
 package org.infinispan.protostream;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Date;
 
@@ -42,6 +43,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       byte[] readBytes(String fieldName) throws IOException;
 
+      InputStream readBytesAsInputStream(String fieldName) throws IOException;
+
       <E> E readObject(String fieldName, Class<E> clazz) throws IOException;
 
       <E, C extends Collection<? super E>> C readCollection(String fieldName, C collection, Class<E> elementClass) throws IOException;
@@ -78,6 +81,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       void writeString(String fieldName, String value) throws IOException;
 
       void writeBytes(String fieldName, byte[] value) throws IOException;
+
+      void writeBytes(String fieldName, InputStream input) throws IOException;
 
       <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException;
 

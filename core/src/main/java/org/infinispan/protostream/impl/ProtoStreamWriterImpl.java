@@ -8,8 +8,11 @@ import org.infinispan.protostream.descriptors.Type;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author anistor@redhat.com
@@ -18,11 +21,13 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    private static final Log log = Log.LogFactory.getLog(ProtoStreamWriterImpl.class);
 
+   private static final int CHUNK_SIZE = 4096;
+
    private final SerializationContextImpl ctx;
 
    private WriteMessageContext messageContext;
 
-   public ProtoStreamWriterImpl(SerializationContextImpl ctx) {
+   ProtoStreamWriterImpl(SerializationContextImpl ctx) {
       this.ctx = ctx;
    }
 
@@ -243,6 +248,39 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
 
       messageContext.out.writeBytes(fd.getNumber(), value);
+   }
+
+   @Override
+   public void writeBytes(String fieldName, InputStream input) throws IOException {
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+
+      if (input == null) {
+         throw new IllegalArgumentException("The input stream cannot be null");
+      }
+
+      checkFieldWrite(fd);
+
+      if (fd.getType() != Type.BYTES) {
+         throw new IllegalArgumentException("Declared field type is not of type byte[] : " + fieldName);
+      }
+
+      int len = 0;
+      List<byte[]> chunks = new LinkedList<byte[]>();
+      int bufLen;
+      byte[] buffer = new byte[CHUNK_SIZE];
+      while ((bufLen = input.read(buffer)) != -1) {
+         chunks.add(buffer);
+         len += bufLen;
+         buffer = new byte[CHUNK_SIZE];
+      }
+      input.close();
+
+      RawProtoStreamWriter out = messageContext.out;
+      out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_LENGTH_DELIMITED);
+      out.writeUInt32NoTag(len);
+      for (byte[] chunk : chunks) {
+         out.writeRawBytes(buffer, 0, chunk == buffer ? bufLen : CHUNK_SIZE);
+      }
    }
 
    @Override
