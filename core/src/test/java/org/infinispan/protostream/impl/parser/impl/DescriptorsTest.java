@@ -23,7 +23,7 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
-import org.infinispan.protostream.descriptors.Rule;
+import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.junit.Ignore;
@@ -726,10 +726,10 @@ public class DescriptorsTest {
    private void assertResult(Descriptor descriptor) {
       assertThat(descriptor.getFields()).hasSize(4);
       assertThat(descriptor.findFieldByName("url").getJavaType()).isEqualTo(JavaType.STRING);
-      assertThat(descriptor.findFieldByName("title").getRule()).isEqualTo(Rule.OPTIONAL);
+      assertThat(descriptor.findFieldByName("title").getLabel()).isEqualTo(Label.OPTIONAL);
       assertThat(descriptor.findFieldByName("i").getType()).isEqualTo(Type.MESSAGE);
       assertThat(descriptor.findFieldByName("i").getMessageType().getName()).isEqualTo("MoreInner");
-      assertThat(descriptor.findFieldByNumber(3).getRule()).isEqualTo(Rule.REPEATED);
+      assertThat(descriptor.findFieldByNumber(3).getLabel()).isEqualTo(Label.REPEATED);
    }
 
    private void assertExtensions(List<ExtendDescriptor> extensions) {
@@ -740,7 +740,7 @@ public class DescriptorsTest {
       assertThat(resultExtension.getFileDescriptor()).isNotNull();
 
       FieldDescriptor barField = resultExtension.getFields().get(0);
-      assertThat(barField.getRule()).isEqualTo(Rule.OPTIONAL);
+      assertThat(barField.getLabel()).isEqualTo(Label.OPTIONAL);
       assertThat(barField.getJavaType()).isEqualTo(JavaType.FLOAT);
       assertThat(barField.getNumber()).isEqualTo(101);
       assertThat(barField.isPacked()).isTrue();
@@ -773,7 +773,7 @@ public class DescriptorsTest {
 
    private void assertSearchRequestFields(List<FieldDescriptor> fields) {
       FieldDescriptor queryField = fields.get(0);
-      assertThat(queryField.getRule()).isEqualTo(Rule.REQUIRED);
+      assertThat(queryField.getLabel()).isEqualTo(Label.REQUIRED);
       assertThat(queryField.getType()).isEqualTo(Type.STRING);
       assertThat(queryField.getJavaType()).isEqualTo(JavaType.STRING);
       assertThat(queryField.getFullName()).isEqualTo("org.infinispan.protostream.test.SearchRequest.query");
@@ -784,7 +784,7 @@ public class DescriptorsTest {
 
 
       FieldDescriptor pageNumberField = fields.get(1);
-      assertThat(pageNumberField.getRule()).isEqualTo(Rule.OPTIONAL);
+      assertThat(pageNumberField.getLabel()).isEqualTo(Label.OPTIONAL);
       assertThat(pageNumberField.getType()).isEqualTo(Type.INT32);
       assertThat(pageNumberField.getJavaType()).isEqualTo(JavaType.INT);
       assertThat(pageNumberField.getName()).isEqualTo("page_number");
@@ -794,13 +794,13 @@ public class DescriptorsTest {
       assertThat(pageNumberField.getMessageType()).isNull();
 
       FieldDescriptor flagField = fields.get(3);
-      assertThat(flagField.getRule()).isEqualTo(Rule.REPEATED);
+      assertThat(flagField.getLabel()).isEqualTo(Label.REPEATED);
       assertThat(flagField.getType()).isEqualTo(Type.INT32);
       assertThat(flagField.getJavaType()).isEqualTo(JavaType.INT);
       assertThat(flagField.getOptionByName("packed")).isEqualTo("true");
 
       FieldDescriptor dntField = fields.get(4);
-      assertThat(dntField.getRule()).isEqualTo(Rule.OPTIONAL);
+      assertThat(dntField.getLabel()).isEqualTo(Label.OPTIONAL);
       assertThat(dntField.getType()).isEqualTo(Type.ENUM);
       assertThat(dntField.getEnumType().findValueByName("DONT_CARE").getNumber()).isEqualTo(2);
       assertThat(dntField.getEnumType().findValueByNumber(1).getName()).isEqualTo("TRACK_FOR_SURE");
@@ -809,7 +809,7 @@ public class DescriptorsTest {
       assertThat(dntField.getJavaType()).isEqualTo(JavaType.ENUM);
 
       FieldDescriptor reqEnumField = fields.get(5);
-      assertThat(reqEnumField.getRule()).isEqualTo(Rule.REQUIRED);
+      assertThat(reqEnumField.getLabel()).isEqualTo(Label.REQUIRED);
       assertThat(reqEnumField.getType()).isEqualTo(Type.ENUM);
       assertThat(reqEnumField.getJavaType()).isEqualTo(JavaType.ENUM);
       assertThat(reqEnumField.hasDefaultValue()).isFalse();

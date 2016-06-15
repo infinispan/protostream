@@ -20,7 +20,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
 
    private static final String PACKED = "packed";
    private final int number;
-   private final Rule rule;
+   private final Label label;
    private final List<Option> options;
    private final String typeName;
    private final String defaultValue;
@@ -35,7 +35,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    private FieldDescriptor(Builder builder) {
       super(builder.name, null, builder.documentation);
       this.number = builder.number;
-      this.rule = builder.rule;
+      this.label = builder.label;
       this.options = unmodifiableList(builder.options);
       for (Option opt : options) {
          optionByName.put(opt.getName(), opt.getValue());
@@ -61,8 +61,8 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       return messageType;
    }
 
-   public Rule getRule() {
-      return rule;
+   public Label getLabel() {
+      return label;
    }
 
    public Object getOptionByName(String name) {
@@ -74,11 +74,11 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    }
 
    public boolean isRequired() {
-      return rule.equals(Rule.REQUIRED);
+      return label.equals(Label.REQUIRED);
    }
 
    public boolean isRepeated() {
-      return rule.equals(Rule.REPEATED);
+      return label.equals(Label.REPEATED);
    }
 
    public boolean isPacked() {
@@ -151,7 +151,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       private String typeName;
       private int number;
       private String name;
-      private Rule rule;
+      private Label label;
       private List<Option> options;
       private String defaultValue;
       private boolean isExtension;
@@ -172,8 +172,8 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
          return this;
       }
 
-      public Builder withRule(Rule rule) {
-         this.rule = rule;
+      public Builder withLabel(Label label) {
+         this.label = label;
          return this;
       }
 

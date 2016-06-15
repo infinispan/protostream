@@ -2,7 +2,7 @@ package org.infinispan.protostream.impl.parser.mappers;
 
 import com.squareup.protoparser.FieldElement;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.protostream.descriptors.Rule;
+import org.infinispan.protostream.descriptors.Label;
 
 import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST_MAPPER;
 
@@ -19,7 +19,7 @@ final class FieldMapper implements Mapper<FieldElement, FieldDescriptor> {
             .withNumber(am.tag())
             .withTypeName(am.type().toString())
             .withDefaultValue(am.getDefault() != null ? (String) am.getDefault().value() : null)
-            .withRule(Rule.valueOf(am.label().name()))
+            .withLabel(Label.valueOf(am.label().name()))
             .withOptions(OPTION_LIST_MAPPER.map(am.options()))
             .withDocumentation(am.documentation())
             .build();

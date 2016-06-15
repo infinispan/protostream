@@ -6,7 +6,8 @@ package org.infinispan.protostream.descriptors;
  * @author gustavonalle
  * @since 2.0
  */
-public enum Rule {
+public enum Label {
+
    REQUIRED,
 
    OPTIONAL,
