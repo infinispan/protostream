@@ -92,19 +92,19 @@
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots</jboss.snapshots.repo.url>
 
-      <version.maven.compiler>3.1</version.maven.compiler>
-      <version.maven.source>2.2.1</version.maven.source>
-      <version.maven.resources>2.6</version.maven.resources>
-      <version.maven.genjavadoc>0.9</version.maven.genjavadoc>
+      <version.maven.compiler>3.5.1</version.maven.compiler>
+      <version.maven.javadoc>2.10.4</version.maven.javadoc>
+      <version.maven.source>3.0.1</version.maven.source>
+      <version.maven.resources>3.0.1</version.maven.resources>
       <version.maven.antrun>1.8</version.maven.antrun>
-      <version.maven.surefire>2.18.1</version.maven.surefire>
+      <version.maven.surefire>2.19.1</version.maven.surefire>
       <version.maven.bundle>2.4.0</version.maven.bundle>
-      <version.maven.buildhelper>1.8</version.maven.buildhelper>
-      <version.maven.animalsniffer>1.9</version.maven.animalsniffer>
+      <version.maven.buildhelper>1.10</version.maven.buildhelper>
+      <version.maven.animalsniffer>1.15</version.maven.animalsniffer>
       <version.maven.shade>2.4.3</version.maven.shade>
 
       <version.protobuf>2.6.1</version.protobuf>
-      <version.junit>4.11</version.junit>
+      <version.junit>4.12</version.junit>
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.fest.assertions>2.0M10</version.fest.assertions>
       <version.protoparser>3.1.4</version.protoparser>
@@ -254,6 +254,12 @@
                   <target>1.6</target>
                   <encoding>UTF-8</encoding>
                </configuration>
+            </plugin>
+
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-javadoc-plugin</artifactId>
+               <version>${version.maven.javadoc}</version>
             </plugin>
 
             <plugin>
