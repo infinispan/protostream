@@ -1,7 +1,5 @@
 package sample_bank_account;
 
-option java_package = "com.example.generated_by_protoc";
-option java_outer_classname = "BankProtos";
 
 /**
  * @Indexed(true)
