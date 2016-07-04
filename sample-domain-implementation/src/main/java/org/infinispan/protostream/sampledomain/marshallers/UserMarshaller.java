@@ -38,7 +38,7 @@ public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetH
       List<Address> addresses = reader.readCollection("addresses", new ArrayList<Address>(), Address.class);
 
       Integer age = reader.readInt("age");
-      User.Gender gender = reader.readObject("gender", User.Gender.class);
+      User.Gender gender = reader.readEnum("gender", User.Gender.class);
       String notes = reader.readString("notes");
 
       User user = new User();
@@ -61,7 +61,7 @@ public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetH
       writer.writeString("surname", user.getSurname());
       writer.writeCollection("addresses", user.getAddresses(), Address.class);
       writer.writeInt("age", user.getAge());
-      writer.writeObject("gender", user.getGender(), User.Gender.class);
+      writer.writeEnum("gender", user.getGender(), User.Gender.class);
       writer.writeString("notes", user.getNotes());
    }
 

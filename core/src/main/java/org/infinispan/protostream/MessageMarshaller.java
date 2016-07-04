@@ -45,6 +45,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       InputStream readBytesAsInputStream(String fieldName) throws IOException;
 
+      <E extends Enum<E>> E readEnum(String fieldName, Class<E> clazz) throws IOException;
+
       <E> E readObject(String fieldName, Class<E> clazz) throws IOException;
 
       <E, C extends Collection<? super E>> C readCollection(String fieldName, C collection, Class<E> elementClass) throws IOException;
@@ -85,6 +87,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       void writeBytes(String fieldName, InputStream input) throws IOException;
 
       <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException;
+
+      <E extends Enum<E>> void writeEnum(String fieldName, E value, Class<E> clazz) throws IOException;
 
       <E> void writeCollection(String fieldName, Collection<? super E> collection, Class<E> elementClass) throws IOException;
 

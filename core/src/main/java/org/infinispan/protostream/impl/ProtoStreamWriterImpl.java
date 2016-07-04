@@ -307,6 +307,11 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
    }
 
+   @Override
+   public <E extends Enum<E>> void writeEnum(String fieldName, E value, Class<E> clazz) throws IOException {
+      writeObject(fieldName, value, clazz);
+   }
+
    private void writeMessage(FieldDescriptor fd, Object value, Class clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();

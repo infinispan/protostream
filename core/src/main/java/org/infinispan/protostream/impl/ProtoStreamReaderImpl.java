@@ -229,6 +229,11 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
    }
 
    @Override
+   public <E extends Enum<E>> E readEnum(String fieldName, Class<E> clazz) throws IOException {
+      return readObject(fieldName, clazz);
+   }
+
+   @Override
    public <E> E readObject(String fieldName, Class<E> clazz) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       checkFieldRead(fd, false);
