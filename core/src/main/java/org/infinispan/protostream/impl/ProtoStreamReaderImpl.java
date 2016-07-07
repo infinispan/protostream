@@ -128,12 +128,12 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
          messageContext.unknownFieldSet.readSingleField(tag, in);
       }
 
-      if (fd.isRequired()) {
-         throw new IOException("Field " + fd.getFullName() + " is required but is not present in the stream");
-      }
-
       if (fd.hasDefaultValue()) {
          return fd.getDefaultValue();
+      }
+
+      if (fd.isRequired()) {
+         throw new IOException("Field " + fd.getFullName() + " is required but is not present in the stream");
       }
 
       return null;
