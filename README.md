@@ -25,7 +25,7 @@ Add this dependency to your pom.xml file:
 Requirements
 ------------
 
-Java 1.7 or newer
+Java 1.8 or newer
 
 Maven 3.3.3 or newer
 
