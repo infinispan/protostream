@@ -1,10 +1,11 @@
 package org.infinispan.protostream.impl.parser.mappers;
 
-import com.squareup.protoparser.EnumElement;
-import org.infinispan.protostream.descriptors.EnumDescriptor;
-
 import static org.infinispan.protostream.impl.parser.mappers.Mappers.ENUM_VALUE_LIST_MAPPER;
 import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST_MAPPER;
+
+import org.infinispan.protostream.descriptors.EnumDescriptor;
+
+import com.squareup.protoparser.EnumElement;
 
 /**
  * @author gustavonalle

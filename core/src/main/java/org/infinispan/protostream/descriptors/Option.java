@@ -1,7 +1,7 @@
 package org.infinispan.protostream.descriptors;
 
 /**
- * Represents any option in a proto file
+ * Represents any option in a proto file.
  *
  * @author gustavonalle
  * @since 2.0
@@ -28,19 +28,12 @@ public final class Option {
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
       Option option = (Option) o;
-
-      if (!name.equals(option.name)) return false;
-      if (!value.equals(option.value)) return false;
-
-      return true;
+      return name.equals(option.name) && value.equals(option.value);
    }
 
    @Override
    public int hashCode() {
-      int result = name.hashCode();
-      result = 31 * result + value.hashCode();
-      return result;
+      return 31 * name.hashCode() + value.hashCode();
    }
 }

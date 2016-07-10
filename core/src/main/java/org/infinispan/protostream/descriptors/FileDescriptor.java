@@ -1,9 +1,6 @@
 package org.infinispan.protostream.descriptors;
 
-import org.infinispan.protostream.DescriptorParserException;
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.Log;
+import static java.util.Collections.unmodifiableList;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static java.util.Collections.unmodifiableList;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.impl.Log;
 
 /**
  * Representation of a protofile, including dependencies.
@@ -38,9 +38,9 @@ public final class FileDescriptor {
    private final List<FieldDescriptor> extensions;
    private final List<EnumDescriptor> enumTypes;
    private final List<ExtendDescriptor> extendTypes;
-   private final Map<String, ExtendDescriptor> extendDescriptors = new HashMap<String, ExtendDescriptor>();
+   private final Map<String, ExtendDescriptor> extendDescriptors = new HashMap<>();
 
-   private final Map<String, FileDescriptor> dependants = new HashMap<String, FileDescriptor>();
+   private final Map<String, FileDescriptor> dependants = new HashMap<>();
 
    public void setConfiguration(Configuration configuration) {
       this.configuration = configuration;
@@ -55,17 +55,17 @@ public final class FileDescriptor {
    /**
     * All types defined in this file or visible from imported files.
     */
-   private final Map<String, GenericDescriptor> typeRegistry = new HashMap<String, GenericDescriptor>();
+   private final Map<String, GenericDescriptor> typeRegistry = new HashMap<>();
 
    /**
     * Types defined in this file or defined in publicly imported files.
     */
-   private final Map<String, GenericDescriptor> exportedTypes = new HashMap<String, GenericDescriptor>();
+   private final Map<String, GenericDescriptor> exportedTypes = new HashMap<>();
 
    /**
     * Types defined in this file.
     */
-   private final Map<String, GenericDescriptor> types = new HashMap<String, GenericDescriptor>();
+   private final Map<String, GenericDescriptor> types = new HashMap<>();
 
    private FileDescriptor(Builder builder) {
       this.name = builder.name;
@@ -110,7 +110,7 @@ public final class FileDescriptor {
                                       Map<String, FileDescriptor> fileDescriptorMap,
                                       Map<String, GenericDescriptor> allTypes) throws DescriptorParserException {
       if (status == Status.UNRESOLVED) {
-         resolveDependencies(progressCallback, fileDescriptorMap, allTypes, new HashSet<String>());
+         resolveDependencies(progressCallback, fileDescriptorMap, allTypes, new HashSet<>());
       }
       return status == Status.RESOLVED;
    }
@@ -202,8 +202,8 @@ public final class FileDescriptor {
                                                Map<String, GenericDescriptor> allTypes,
                                                Set<String> processedFiles,
                                                List<String> dependencies) throws DescriptorParserException {
-      List<FileDescriptor> fileDescriptors = new ArrayList<FileDescriptor>(dependencies.size());
-      Set<String> dependencySet = new HashSet<String>(dependencies);
+      List<FileDescriptor> fileDescriptors = new ArrayList<>(dependencies.size());
+      Set<String> dependencySet = new HashSet<>(dependencies);
       for (String dependency : dependencySet) {
          FileDescriptor fd = fileDescriptorMap.get(dependency);
          if (fd == null) {
@@ -356,8 +356,8 @@ public final class FileDescriptor {
 
       private String name;
       private String packageName;
-      private List<String> dependencies = new ArrayList<String>();
-      private List<String> publicDependencies = new ArrayList<String>();
+      private List<String> dependencies = new ArrayList<>();
+      private List<String> publicDependencies = new ArrayList<>();
       private List<FieldDescriptor> extensions;
       private List<Option> options;
       private List<EnumDescriptor> enumTypes;

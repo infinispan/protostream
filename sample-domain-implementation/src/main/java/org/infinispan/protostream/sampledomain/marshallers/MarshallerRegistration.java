@@ -1,10 +1,10 @@
 package org.infinispan.protostream.sampledomain.marshallers;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

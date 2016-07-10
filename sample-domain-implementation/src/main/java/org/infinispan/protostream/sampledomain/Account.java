@@ -1,9 +1,9 @@
 package org.infinispan.protostream.sampledomain;
 
-import org.infinispan.protostream.BaseMessage;
-
 import java.util.Date;
 import java.util.List;
+
+import org.infinispan.protostream.BaseMessage;
 
 //todo move everyting to core and make a tests jar
 

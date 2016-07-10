@@ -1,5 +1,13 @@
 package org.infinispan.protostream.annotations.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
@@ -23,11 +31,6 @@ import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.*;
 
 /**
  * @author anistor@redhat.com
@@ -209,12 +212,12 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       FileDescriptor fd = fileDescriptors.get("test1.proto");
       assertNotNull(fd);
 
-      Map<String, EnumDescriptor> enums = new HashMap<String, EnumDescriptor>();
+      Map<String, EnumDescriptor> enums = new HashMap<>();
       for (EnumDescriptor e : fd.getEnumTypes()) {
          enums.put(e.getFullName(), e);
       }
 
-      Map<String, Descriptor> messages = new HashMap<String, Descriptor>();
+      Map<String, Descriptor> messages = new HashMap<>();
       for (Descriptor m : fd.getMessageTypes()) {
          messages.put(m.getFullName(), m);
       }

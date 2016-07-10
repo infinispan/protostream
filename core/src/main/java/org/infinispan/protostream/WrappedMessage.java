@@ -1,13 +1,13 @@
 package org.infinispan.protostream;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.WireFormat;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

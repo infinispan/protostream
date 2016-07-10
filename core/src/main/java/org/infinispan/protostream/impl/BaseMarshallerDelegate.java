@@ -1,11 +1,11 @@
 package org.infinispan.protostream.impl;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-
-import java.io.IOException;
 
 /**
  * The marshallers (descendants of {@link BaseMarshaller}) do not have a uniform interface, so an extra layer of

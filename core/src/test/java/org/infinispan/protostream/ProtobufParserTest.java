@@ -1,5 +1,10 @@
 package org.infinispan.protostream;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
@@ -8,11 +13,6 @@ import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 
 /**
  * @author anistor@redhat.com
@@ -30,7 +30,7 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
       user.setName("John");
       user.setSurname("Batman");
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
       user.setAddresses(Collections.singletonList(new Address("Old Street", "XYZ42", -12)));
 
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, user);

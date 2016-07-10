@@ -1,5 +1,10 @@
 package org.infinispan.protostream.impl;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtoStreamReader;
@@ -8,11 +13,6 @@ import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.UnknownFieldSetHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -36,7 +36,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
       this.messageDescriptor = messageDescriptor;
       List<FieldDescriptor> fields = messageDescriptor.getFields();
       fieldDescriptors = fields.toArray(new FieldDescriptor[fields.size()]);
-      fieldsByName = new HashMap<String, FieldDescriptor>(fieldDescriptors.length);
+      fieldsByName = new HashMap<>(fieldDescriptors.length);
       for (FieldDescriptor fd : fieldDescriptors) {
          fieldsByName.put(fd.getName(), fd);
       }
@@ -95,8 +95,8 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
          if (fd.isRequired() && !messageContext.isFieldMarked(fd.getNumber())
                && (unknownFieldSet == null || !unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType())))) {
             throw new IllegalStateException("Required field \"" + fd.getFullName()
-                                                  + "\" should have been written by a calling a suitable method of "
-                                                  + MessageMarshaller.ProtoStreamWriter.class.getName());
+                  + "\" should have been written by a calling a suitable method of "
+                  + MessageMarshaller.ProtoStreamWriter.class.getName());
          }
       }
 

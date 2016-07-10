@@ -1,10 +1,9 @@
 package org.infinispan.protostream;
 
-import org.infinispan.protostream.domain.Account;
-import org.infinispan.protostream.domain.Address;
-import org.infinispan.protostream.domain.User;
-import org.infinispan.protostream.test.AbstractProtoStreamTest;
-import org.junit.Test;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +12,11 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import org.infinispan.protostream.domain.Account;
+import org.infinispan.protostream.domain.Address;
+import org.infinispan.protostream.domain.User;
+import org.infinispan.protostream.test.AbstractProtoStreamTest;
+import org.junit.Test;
 
 /**
  * @author anistor@redhat.com
@@ -29,7 +32,7 @@ public class MarshallingTest extends AbstractProtoStreamTest {
       user.setName("John");
       user.setSurname("Batman");
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
       user.setAddresses(Collections.singletonList(new Address("Old Street", "XYZ42", -12)));
 
       byte[] bytes = ProtobufUtil.toByteArray(ctx, user);
@@ -61,7 +64,7 @@ public class MarshallingTest extends AbstractProtoStreamTest {
       account.setDescription("test account");
       Date creationDate = new Date();
       account.setCreationDate(creationDate);
-      List<byte[]> blurb = new ArrayList<byte[]>();
+      List<byte[]> blurb = new ArrayList<>();
       blurb.add(new byte[0]);
       blurb.add(new byte[]{1, 2, 3});
       account.setBlurb(blurb);

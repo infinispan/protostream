@@ -1,7 +1,11 @@
 package org.infinispan.protostream.impl.parser;
 
-import com.squareup.protoparser.ProtoFile;
-import com.squareup.protoparser.ProtoParser;
+import java.io.CharArrayReader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -10,11 +14,8 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.impl.parser.mappers.ProtofileMapper;
 
-import java.io.CharArrayReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import com.squareup.protoparser.ProtoFile;
+import com.squareup.protoparser.ProtoParser;
 
 /**
  * Parser for proto files based on the Protoparser.
@@ -39,7 +40,7 @@ public final class SquareProtoParser implements DescriptorParser {
       Map<String, FileDescriptor> fileDescriptorMap = parse(fileDescriptorSource);
 
       // resolve imports and types
-      Map<String, GenericDescriptor> types = new HashMap<String, GenericDescriptor>();
+      Map<String, GenericDescriptor> types = new HashMap<>();
       for (FileDescriptor fileDescriptor : fileDescriptorMap.values()) {
          fileDescriptor.resolveDependencies(null, fileDescriptorMap, types);
          types.putAll(fileDescriptor.getTypes());
@@ -50,7 +51,7 @@ public final class SquareProtoParser implements DescriptorParser {
    @Override
    public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws DescriptorParserException {
       Map<String, char[]> input = fileDescriptorSource.getFileDescriptors();
-      Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<String, FileDescriptor>(input.size());
+      Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<>(input.size());
       for (Map.Entry<String, char[]> entry : input.entrySet()) {
          try {
             ProtoFile protoFile = ProtoParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));

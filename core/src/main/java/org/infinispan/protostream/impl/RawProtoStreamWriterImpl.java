@@ -1,11 +1,12 @@
 package org.infinispan.protostream.impl;
 
-import com.google.protobuf.CodedOutputStream;
-import org.infinispan.protostream.RawProtoStreamWriter;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+
+import org.infinispan.protostream.RawProtoStreamWriter;
+
+import com.google.protobuf.CodedOutputStream;
 
 /**
  * @author anistor@redhat.com

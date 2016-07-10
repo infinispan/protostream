@@ -1,9 +1,9 @@
 package org.infinispan.protostream.domain;
 
-import org.infinispan.protostream.BaseMessage;
-
 import java.math.BigDecimal;
 import java.util.Date;
+
+import org.infinispan.protostream.BaseMessage;
 
 /**
  * @author anistor@redhat.com

@@ -1,5 +1,7 @@
 package org.infinispan.protostream;
 
+import static java.util.Collections.unmodifiableMap;
+
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,8 +11,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.Collections.unmodifiableMap;
 
 /**
  * Aggregator for source protofiles.
@@ -24,7 +24,7 @@ public final class FileDescriptorSource {
    private static final String ENCODING = "UTF-8";
    private static final int BUFFER_SIZE = 1024;
 
-   private final Map<String, char[]> descriptors = new ConcurrentHashMap<String, char[]>();
+   private final Map<String, char[]> descriptors = new ConcurrentHashMap<>();
 
    private ProgressCallback progressCallback;
 

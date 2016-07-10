@@ -1,9 +1,10 @@
 package org.infinispan.protostream;
 
-import org.infinispan.protostream.domain.Address;
-import org.infinispan.protostream.domain.User;
-import org.infinispan.protostream.test.AbstractProtoStreamTest;
-import org.junit.Test;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,7 +13,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import org.infinispan.protostream.domain.Address;
+import org.infinispan.protostream.domain.User;
+import org.infinispan.protostream.test.AbstractProtoStreamTest;
+import org.junit.Test;
 
 /**
  * @author anistor@redhat.com
@@ -83,7 +87,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
          @Override
          public ArrayList readFrom(ProtoStreamReader reader) throws IOException {
-            return reader.readCollection("theList", new ArrayList<User>(), User.class);
+            return reader.readCollection("theList", new ArrayList<>(), User.class);
          }
 
          @Override
@@ -92,7 +96,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
          }
       });
 
-      List<User> users = new ArrayList<User>();
+      List<User> users = new ArrayList<>();
       users.add(createUser(1, "X1", "Y1"));
       users.add(createUser(2, "X2", "Y2"));
       users.add(createUser(3, "X3", "Y3"));
@@ -215,7 +219,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
       user.setName(name);
       user.setSurname(surname);
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
       user.setAddresses(Collections.singletonList(new Address("Old Street", "XYZ42", -12)));
       return user;
    }

@@ -1,11 +1,11 @@
 package org.infinispan.protostream.annotations.impl;
 
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
-import org.infinispan.protostream.descriptors.Type;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Date;
+
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
+import org.infinispan.protostream.descriptors.Type;
 
 /**
  * @author anistor@redhat.com

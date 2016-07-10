@@ -1,13 +1,13 @@
 package org.infinispan.protostream;
 
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * A repository for protobuf definitions and marshallers. All marshalling operations happen in the context of a {@code

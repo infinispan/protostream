@@ -1,9 +1,9 @@
 package org.infinispan.protostream.domain.marshallers;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.domain.Account;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

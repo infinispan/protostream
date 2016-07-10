@@ -1,16 +1,16 @@
 package org.infinispan.protostream.sampledomain.marshallers;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.UnknownFieldSet;
-import org.infinispan.protostream.UnknownFieldSetHandler;
-import org.infinispan.protostream.sampledomain.Address;
-import org.infinispan.protostream.sampledomain.User;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.UnknownFieldSet;
+import org.infinispan.protostream.UnknownFieldSetHandler;
+import org.infinispan.protostream.sampledomain.Address;
+import org.infinispan.protostream.sampledomain.User;
 
 /**
  * @author anistor@redhat.com
@@ -30,12 +30,12 @@ public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetH
    @Override
    public User readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
-      Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<Integer>(), Integer.class);
+      Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<>(), Integer.class);
 
       String surname = reader.readString("surname");
       String name = reader.readString("name");
 
-      List<Address> addresses = reader.readCollection("addresses", new ArrayList<Address>(), Address.class);
+      List<Address> addresses = reader.readCollection("addresses", new ArrayList<>(), Address.class);
 
       Integer age = reader.readInt("age");
       User.Gender gender = reader.readEnum("gender", User.Gender.class);

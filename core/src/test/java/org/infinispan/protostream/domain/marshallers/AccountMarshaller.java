@@ -1,12 +1,12 @@
 package org.infinispan.protostream.domain.marshallers;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.domain.Account;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.domain.Account;
 
 /**
  * @author anistor@redhat.com
@@ -29,7 +29,7 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
       String description = reader.readString("description");
       Date creationDate = reader.readDate("creationDate");
       Account.Limits limits = reader.readObject("limits", Account.Limits.class);
-      List<byte[]> blurb = reader.readCollection("blurb", new ArrayList<byte[]>(), byte[].class);
+      List<byte[]> blurb = reader.readCollection("blurb", new ArrayList<>(), byte[].class);
 
       Account account = new Account();
       account.setId(id);

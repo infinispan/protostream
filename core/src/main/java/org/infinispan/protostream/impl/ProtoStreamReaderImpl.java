@@ -1,14 +1,5 @@
 package org.infinispan.protostream.impl;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.UnknownFieldSet;
-import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.protostream.descriptors.JavaType;
-import org.infinispan.protostream.descriptors.Type;
-import org.jboss.logging.Logger;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +10,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.UnknownFieldSet;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.protostream.descriptors.Type;
+import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com

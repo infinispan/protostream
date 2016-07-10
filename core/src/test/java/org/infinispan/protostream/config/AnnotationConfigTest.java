@@ -1,9 +1,9 @@
 package org.infinispan.protostream.config;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author anistor@redhat.com

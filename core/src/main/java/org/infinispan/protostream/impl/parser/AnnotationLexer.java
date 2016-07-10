@@ -1,9 +1,9 @@
 package org.infinispan.protostream.impl.parser;
 
+import java.text.MessageFormat;
+
 import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.descriptors.AnnotationElement;
-
-import java.text.MessageFormat;
 
 /**
  * @author anistor@redhat.com

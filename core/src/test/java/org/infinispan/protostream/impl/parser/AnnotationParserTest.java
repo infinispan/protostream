@@ -1,12 +1,12 @@
 package org.infinispan.protostream.impl.parser;
 
-import org.infinispan.protostream.descriptors.AnnotationElement;
-import org.infinispan.protostream.impl.Log;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import org.infinispan.protostream.descriptors.AnnotationElement;
+import org.infinispan.protostream.impl.Log;
+import org.junit.Test;
 
 /**
  * @author anistor@redhat.com

@@ -1,14 +1,14 @@
 package org.infinispan.protostream;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.WireFormat;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * @author anistor@redhat.com

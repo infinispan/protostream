@@ -1,14 +1,14 @@
 package org.infinispan.protostream.domain.marshallers;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.domain.Address;
-import org.infinispan.protostream.domain.User;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.domain.Address;
+import org.infinispan.protostream.domain.User;
 
 //todo write a code generator to generate this kind of boilerplate to provide a starting point for our users
 
@@ -32,13 +32,13 @@ public class UserMarshaller implements MessageMarshaller<User> {
    @Override
    public User readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
-      Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<Integer>(), Integer.class);
+      Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<>(), Integer.class);
 
       // Read them out of order. It still works but logs a warning!
       String surname = reader.readString("surname");
       String name = reader.readString("name");
 
-      List<Address> addresses = reader.readCollection("addresses", new ArrayList<Address>(), Address.class);
+      List<Address> addresses = reader.readCollection("addresses", new ArrayList<>(), Address.class);
 
       Integer age = reader.readInt("age");
       User.Gender gender = reader.readEnum("gender", User.Gender.class);

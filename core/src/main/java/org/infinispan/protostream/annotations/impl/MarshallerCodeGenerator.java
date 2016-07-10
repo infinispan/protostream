@@ -1,11 +1,9 @@
 package org.infinispan.protostream.annotations.impl;
 
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.CtMethod;
-import javassist.NotFoundException;
+import java.io.IOException;
+import java.lang.reflect.Modifier;
+import java.util.Date;
+
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.RawProtoStreamReader;
@@ -18,9 +16,12 @@ import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.Log;
 
-import java.io.IOException;
-import java.lang.reflect.Modifier;
-import java.util.Date;
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtField;
+import javassist.CtMethod;
+import javassist.NotFoundException;
 
 // TODO [anistor] check which java classfile limits impose limits on the size of the supported protobuf schema
 // TODO [anistor] what do we do with non-repeated fields that come repeated from stream?

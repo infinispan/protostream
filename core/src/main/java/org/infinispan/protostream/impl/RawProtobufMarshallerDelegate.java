@@ -1,11 +1,11 @@
 package org.infinispan.protostream.impl;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

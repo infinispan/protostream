@@ -1,12 +1,12 @@
 package org.infinispan.protostream.test;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.domain.marshallers.MarshallerRegistration;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

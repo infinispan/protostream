@@ -1,12 +1,12 @@
 package org.infinispan.protostream.annotations.impl;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
-
-import java.io.IOException;
 
 /**
  * Base class for generated marshallers. Provides some handy helper methods.

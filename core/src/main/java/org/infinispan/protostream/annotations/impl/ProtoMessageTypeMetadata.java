@@ -1,12 +1,5 @@
 package org.infinispan.protostream.annotations.impl;
 
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoMessage;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
-import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
-import org.infinispan.protostream.descriptors.Type;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -19,6 +12,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoMessage;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
+import org.infinispan.protostream.descriptors.Type;
 
 /**
  * @author anistor@redhat.com
@@ -36,7 +36,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private Method unknownFieldSetSetter;
 
-   private final Map<Class<?>, ProtoTypeMetadata> innerTypes = new HashMap<Class<?>, ProtoTypeMetadata>();
+   private final Map<Class<?>, ProtoTypeMetadata> innerTypes = new HashMap<>();
 
    public ProtoMessageTypeMetadata(ProtoSchemaGenerator protoSchemaGenerator, Class<?> messageClass) {
       super(getProtoName(messageClass), messageClass);
@@ -124,9 +124,9 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    public void scanMemberAnnotations() {
       if (fields == null) {
          // use a TreeMap to ensure ascending order by field number
-         fields = new TreeMap<Integer, ProtoFieldMetadata>();
-         Map<String, ProtoFieldMetadata> fieldByName = new HashMap<String, ProtoFieldMetadata>();
-         Set<Class<?>> examinedClasses = new HashSet<Class<?>>();
+         fields = new TreeMap<>();
+         Map<String, ProtoFieldMetadata> fieldByName = new HashMap<>();
+         Set<Class<?>> examinedClasses = new HashSet<>();
          discoverFields(javaClass, examinedClasses, fields, fieldByName);
          if (fields.isEmpty()) {
             throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller.");

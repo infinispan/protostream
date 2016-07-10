@@ -1,15 +1,15 @@
 package org.infinispan.protostream.annotations.impl;
 
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.impl.Log;
-
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @author anistor@redhat.com
@@ -35,7 +35,7 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
    @Override
    public void scanMemberAnnotations() {
       if (membersByNumber == null) {
-         membersByNumber = new TreeMap<Integer, ProtoEnumValueMetadata>();
+         membersByNumber = new TreeMap<>();
          for (Field f : javaClass.getDeclaredFields()) {
             if (f.isEnumConstant()) {
                ProtoEnumValue annotation = f.getAnnotation(ProtoEnumValue.class);
@@ -61,7 +61,7 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
          if (membersByNumber.isEmpty()) {
             throw new ProtoSchemaBuilderException("Members of enum " + javaClass.getCanonicalName() + " must be @ProtoEnum annotated");
          }
-         membersByName = new HashMap<String, ProtoEnumValueMetadata>(membersByNumber.size());
+         membersByName = new HashMap<>(membersByNumber.size());
          for (ProtoEnumValueMetadata enumVal : membersByNumber.values()) {
             membersByName.put(enumVal.getProtoName(), enumVal);
          }

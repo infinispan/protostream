@@ -1,8 +1,8 @@
 package org.infinispan.protostream;
 
-import org.infinispan.protostream.descriptors.FileDescriptor;
-
 import java.util.Map;
+
+import org.infinispan.protostream.descriptors.FileDescriptor;
 
 /**
  * Main parser interface.

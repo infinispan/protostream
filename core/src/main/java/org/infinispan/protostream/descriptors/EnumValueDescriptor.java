@@ -1,8 +1,8 @@
 package org.infinispan.protostream.descriptors;
 
-import java.util.List;
-
 import static java.util.Collections.unmodifiableList;
+
+import java.util.List;
 
 /**
  * Represents each value of a enumeration in a .proto file.
@@ -58,7 +58,7 @@ public final class EnumValueDescriptor {
       this.fileDescriptor = fileDescriptor;
    }
 
-   public static class Builder {
+   public static final class Builder {
       private String name;
       private int number;
       private String documentation;

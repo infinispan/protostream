@@ -1,13 +1,13 @@
 package org.infinispan.protostream.descriptors;
 
-import org.infinispan.protostream.config.AnnotationConfig;
-import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
+import static java.util.Collections.unmodifiableList;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Collections.unmodifiableList;
+import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 
 /**
  * Represents a field in a proto file.
@@ -24,7 +24,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    private final List<Option> options;
    private final String typeName;
    private final String defaultValue;
-   private final Map<String, Object> optionByName = new HashMap<String, Object>();
+   private final Map<String, Object> optionByName = new HashMap<>();
    private final boolean isExtension;
    private Type type;
    private FileDescriptor fileDescriptor;
@@ -147,7 +147,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       return fileDescriptor.configuration.fieldAnnotations().get(annotationName);
    }
 
-   public static class Builder {
+   public static final class Builder {
       private String typeName;
       private int number;
       private String name;

@@ -1,12 +1,12 @@
 package org.infinispan.protostream.domain;
 
-import org.infinispan.protostream.annotations.ProtoDoc;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.descriptors.Type;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.descriptors.Type;
 
 /**
  * An annotated entity.

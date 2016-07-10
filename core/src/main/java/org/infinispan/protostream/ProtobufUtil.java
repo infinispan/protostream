@@ -1,18 +1,18 @@
 package org.infinispan.protostream;
 
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.BaseMarshallerDelegate;
-import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
-import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
-import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
-import org.infinispan.protostream.impl.SerializationContextImpl;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.impl.BaseMarshallerDelegate;
+import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
+import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
+import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
+import org.infinispan.protostream.impl.SerializationContextImpl;
 
 /**
  * @author anistor@redhat.com

@@ -1,15 +1,15 @@
 package org.infinispan.protostream.descriptors;
 
-import org.infinispan.protostream.config.AnnotationConfig;
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
+import static java.util.Collections.unmodifiableList;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Collections.unmodifiableList;
+import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 
 /**
  * Represents a message declaration in a proto file.
@@ -26,8 +26,8 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
    private final List<OneOfDescriptor> oneofs;
    private final List<Descriptor> nestedTypes;
    private final List<EnumDescriptor> enumTypes;
-   private final Map<Integer, FieldDescriptor> fieldsByNumber = new HashMap<Integer, FieldDescriptor>();
-   private final Map<String, FieldDescriptor> fieldsByName = new HashMap<String, FieldDescriptor>();
+   private final Map<Integer, FieldDescriptor> fieldsByNumber = new HashMap<>();
+   private final Map<String, FieldDescriptor> fieldsByName = new HashMap<>();
    private FileDescriptor fileDescriptor;
    private Descriptor containingType;
 
@@ -160,7 +160,7 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       private List<Option> options;
       private List<FieldDescriptor> fields;
       private List<OneOfDescriptor> oneofs;
-      private List<Descriptor> nestedTypes = new LinkedList<Descriptor>();
+      private List<Descriptor> nestedTypes = new LinkedList<>();
       private List<EnumDescriptor> enumTypes;
       private String documentation;
 

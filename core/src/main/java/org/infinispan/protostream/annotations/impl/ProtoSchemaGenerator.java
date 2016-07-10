@@ -1,8 +1,13 @@
 package org.infinispan.protostream.annotations.impl;
 
-import javassist.ClassClassPath;
-import javassist.ClassPool;
-import javassist.LoaderClassPath;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -11,13 +16,9 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.impl.Log;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.LoaderClassPath;
 
 /**
  * @author anistor@redhat.com
@@ -35,11 +36,11 @@ public final class ProtoSchemaGenerator {
 
    private final Set<Class<?>> classes;
 
-   private final Set<String> imports = new HashSet<String>();
+   private final Set<String> imports = new HashSet<>();
 
-   private final Map<Class<?>, ProtoTypeMetadata> metadataByClass = new HashMap<Class<?>, ProtoTypeMetadata>();
+   private final Map<Class<?>, ProtoTypeMetadata> metadataByClass = new HashMap<>();
 
-   private final Map<String, ProtoTypeMetadata> metadataByTypeName = new HashMap<String, ProtoTypeMetadata>();
+   private final Map<String, ProtoTypeMetadata> metadataByTypeName = new HashMap<>();
 
    public ProtoSchemaGenerator(SerializationContext serializationContext, String fileName, String packageName, Set<Class<?>> classes) {
       this.serializationContext = serializationContext;
@@ -56,7 +57,7 @@ public final class ProtoSchemaGenerator {
       }
 
       while (true) {
-         List<ProtoTypeMetadata> meta = new ArrayList<ProtoTypeMetadata>(metadataByClass.values());
+         List<ProtoTypeMetadata> meta = new ArrayList<>(metadataByClass.values());
          for (ProtoTypeMetadata m : meta) {
             m.scanMemberAnnotations();
          }

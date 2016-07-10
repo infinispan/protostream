@@ -1,13 +1,13 @@
 package org.infinispan.protostream.domain.marshallers;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.domain.Note;
-import org.infinispan.protostream.domain.User;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.domain.Note;
+import org.infinispan.protostream.domain.User;
 
 /**
  * @author anistor@redhat.com
@@ -20,7 +20,7 @@ public class NoteMarshaller implements MessageMarshaller<Note> {
       String text = reader.readString("text");
       User author = reader.readObject("author", User.class);
       Note note2 = reader.readObject("note", Note.class);
-      List<Note> notes = reader.readCollection("notes", new ArrayList<Note>(), Note.class);
+      List<Note> notes = reader.readCollection("notes", new ArrayList<>(), Note.class);
       Date creationDate = reader.readDate("creationDate");
 
       Note note = new Note();

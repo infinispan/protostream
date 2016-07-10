@@ -1,9 +1,9 @@
 package org.infinispan.protostream.domain;
 
-import org.infinispan.protostream.BaseMessage;
-
 import java.util.Date;
 import java.util.List;
+
+import org.infinispan.protostream.BaseMessage;
 
 /**
  * @author anistor@redhat.com

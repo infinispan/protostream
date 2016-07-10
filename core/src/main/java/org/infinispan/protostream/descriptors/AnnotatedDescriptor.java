@@ -1,8 +1,8 @@
 package org.infinispan.protostream.descriptors;
 
-import org.infinispan.protostream.AnnotationParserException;
-
 import java.util.Map;
+
+import org.infinispan.protostream.AnnotationParserException;
 
 /**
  * @author anistor@redhat.com

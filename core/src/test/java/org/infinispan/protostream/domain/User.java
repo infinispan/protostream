@@ -1,9 +1,5 @@
 package org.infinispan.protostream.domain;
 
-import org.infinispan.protostream.BaseMessage;
-import org.infinispan.protostream.annotations.ProtoDoc;
-import org.infinispan.protostream.annotations.ProtoField;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -12,6 +8,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.protostream.BaseMessage;
+import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author anistor@redhat.com
@@ -159,7 +159,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       if (numAccountIds == -1) {
          accountIds = null;
       } else {
-         accountIds = new HashSet<Integer>(numAccountIds);
+         accountIds = new HashSet<>(numAccountIds);
          for (int i = 0; i < numAccountIds; i++) {
             accountIds.add(in.readInt());
          }
@@ -168,7 +168,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       if (numAddresses == -1) {
          addresses = null;
       } else {
-         addresses = new ArrayList<Address>(numAddresses);
+         addresses = new ArrayList<>(numAddresses);
          for (int i = 0; i < numAddresses; i++) {
             addresses.add((Address) in.readObject());
          }

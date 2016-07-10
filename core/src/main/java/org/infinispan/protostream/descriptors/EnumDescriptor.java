@@ -22,8 +22,8 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
    private Integer typeId;
    private final List<Option> options;
    private final List<EnumValueDescriptor> values;
-   private final Map<Integer, EnumValueDescriptor> valueByNumber = new HashMap<Integer, EnumValueDescriptor>();
-   private final Map<String, EnumValueDescriptor> valueByName = new HashMap<String, EnumValueDescriptor>();
+   private final Map<Integer, EnumValueDescriptor> valueByNumber = new HashMap<>();
+   private final Map<String, EnumValueDescriptor> valueByName = new HashMap<>();
    private FileDescriptor fileDescriptor;
    private Descriptor containingType;
 

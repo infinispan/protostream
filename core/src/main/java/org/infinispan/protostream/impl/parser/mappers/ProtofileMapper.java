@@ -1,13 +1,18 @@
 package org.infinispan.protostream.impl.parser.mappers;
 
-import com.squareup.protoparser.EnumElement;
-import com.squareup.protoparser.MessageElement;
-import com.squareup.protoparser.ProtoFile;
-import org.infinispan.protostream.descriptors.FileDescriptor;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.ENUM_LIST_MAPPER;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.EXTEND_LIST_MAPPER;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.MESSAGE_LIST_MAPPER;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST_MAPPER;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.filter;
 
 import java.util.List;
 
-import static org.infinispan.protostream.impl.parser.mappers.Mappers.*;
+import org.infinispan.protostream.descriptors.FileDescriptor;
+
+import com.squareup.protoparser.EnumElement;
+import com.squareup.protoparser.MessageElement;
+import com.squareup.protoparser.ProtoFile;
 
 /**
  * Mapper for high level protofile to FileDescriptor.

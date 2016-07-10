@@ -1,9 +1,5 @@
 package org.infinispan.protostream.impl;
 
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.UnknownFieldSet;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -15,6 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.UnknownFieldSet;
 
 /**
  * {@code UnknownFieldSet} implementation. This class should never be directly instantiated by users.
@@ -41,12 +41,12 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
       }
       Deque<Object> field = null;
       if (fields == null) {
-         fields = new HashMap<Integer, Deque<Object>>();
+         fields = new HashMap<>();
       } else {
          field = fields.get(tag);
       }
       if (field == null) {
-         field = new ArrayDeque<Object>();
+         field = new ArrayDeque<>();
          fields.put(tag, field);
       }
       return field;
@@ -117,7 +117,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
    public void writeTo(RawProtoStreamWriter output) throws IOException {
       if (fields != null) {
          // we sort by tag to ensure we always have a predictable output order
-         SortedMap<Integer, Deque> sorted = new TreeMap<Integer, Deque>(fields);
+         SortedMap<Integer, Deque> sorted = new TreeMap<>(fields);
          for (Map.Entry<Integer, Deque> entry : sorted.entrySet()) {
             writeField(entry.getKey(), entry.getValue(), output);
          }

@@ -1,11 +1,8 @@
 package org.infinispan.protostream.impl.parser.mappers;
 
-import com.squareup.protoparser.EnumConstantElement;
-import com.squareup.protoparser.EnumElement;
-import com.squareup.protoparser.ExtendElement;
-import com.squareup.protoparser.FieldElement;
-import com.squareup.protoparser.MessageElement;
-import com.squareup.protoparser.OneOfElement;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
@@ -14,8 +11,12 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.OneOfDescriptor;
 import org.infinispan.protostream.descriptors.Option;
 
-import java.util.LinkedList;
-import java.util.List;
+import com.squareup.protoparser.EnumConstantElement;
+import com.squareup.protoparser.EnumElement;
+import com.squareup.protoparser.ExtendElement;
+import com.squareup.protoparser.FieldElement;
+import com.squareup.protoparser.MessageElement;
+import com.squareup.protoparser.OneOfElement;
 
 /**
  * Mappers and utilities used by the conversion of the protoparser model to protostream descriptors.
@@ -45,7 +46,7 @@ final class Mappers {
 
    @SuppressWarnings(value = "unchecked")
    static <T> List<T> filter(List<? super T> input, Class<T> ofType) {
-      List<T> ts = new LinkedList<T>();
+      List<T> ts = new LinkedList<>();
       for (Object elem : input) {
          if (ofType.isAssignableFrom(elem.getClass())) {
             ts.add((T) elem);

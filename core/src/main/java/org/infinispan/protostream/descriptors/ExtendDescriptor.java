@@ -50,7 +50,7 @@ public final class ExtendDescriptor {
       return fileDescriptor;
    }
 
-   public static class Builder {
+   public static final class Builder {
       private List<FieldDescriptor> fields;
       private String fullName;
       private String name;

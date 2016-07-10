@@ -1,10 +1,10 @@
 package org.infinispan.protostream.domain.marshallers;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.domain.Transaction;
-
 import java.io.IOException;
 import java.util.Date;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.domain.Transaction;
 
 /**
  * @author anistor@redhat.com

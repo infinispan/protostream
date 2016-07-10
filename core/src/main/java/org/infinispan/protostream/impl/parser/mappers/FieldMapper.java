@@ -1,10 +1,11 @@
 package org.infinispan.protostream.impl.parser.mappers;
 
-import com.squareup.protoparser.FieldElement;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST_MAPPER;
+
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Label;
 
-import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST_MAPPER;
+import com.squareup.protoparser.FieldElement;
 
 /**
  * @author gustavonalle

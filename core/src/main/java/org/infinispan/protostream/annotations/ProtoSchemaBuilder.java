@@ -1,5 +1,13 @@
 package org.infinispan.protostream.annotations;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -12,14 +20,6 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.impl.ProtoSchemaGenerator;
 import org.infinispan.protostream.config.Configuration;
-
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
 
 /**
  * Generates a Protocol Buffers schema definition file based on a set of @Proto* annotated classes.
@@ -41,7 +41,7 @@ public final class ProtoSchemaBuilder {
 
    private String packageName;
 
-   private final Set<Class<?>> classes = new HashSet<Class<?>>();
+   private final Set<Class<?>> classes = new HashSet<>();
 
    public static void main(String[] args) throws Exception {
       Option f = new Option("f", "file", true, "output file name");

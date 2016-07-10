@@ -1,18 +1,20 @@
 package org.infinispan.protostream.impl;
 
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.DescriptorParserException;
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.descriptors.FileDescriptor;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.junit.Test;
 
 /**
  * @author anistor@redhat.com
@@ -40,8 +42,8 @@ public class SerializationContextImplTest {
             "   required b.A ma = 1;\n" +
             "}";
 
-      final Map<String, DescriptorParserException> failed = new HashMap<String, DescriptorParserException>();
-      final Set<String> successful = new HashSet<String>();
+      final Map<String, DescriptorParserException> failed = new HashMap<>();
+      final Set<String> successful = new HashSet<>();
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource()
             .addProtoFile("file1.proto", file1)
             .addProtoFile("file2.proto", file2)

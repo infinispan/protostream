@@ -1,10 +1,10 @@
 package org.infinispan.protostream.impl.parser;
 
-import org.infinispan.protostream.descriptors.AnnotationElement;
-
 import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.Map;
+
+import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
  * Visits a syntax tree and pretty-prints it into a String.

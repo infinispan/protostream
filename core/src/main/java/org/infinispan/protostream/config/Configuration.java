@@ -1,14 +1,14 @@
 package org.infinispan.protostream.config;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -74,9 +74,9 @@ public final class Configuration {
 
       private boolean logOutOfSequenceWrites = true;
 
-      private final Map<String, AnnotationConfig.Builder<Descriptor>> messageAnnotationBuilders = new HashMap<String, AnnotationConfig.Builder<Descriptor>>();
-      private final Map<String, AnnotationConfig.Builder<FieldDescriptor>> fieldAnnotationBuilders = new HashMap<String, AnnotationConfig.Builder<FieldDescriptor>>();
-      private final Map<String, AnnotationConfig.Builder<EnumDescriptor>> enumAnnotationBuilders = new HashMap<String, AnnotationConfig.Builder<EnumDescriptor>>();
+      private final Map<String, AnnotationConfig.Builder<Descriptor>> messageAnnotationBuilders = new HashMap<>();
+      private final Map<String, AnnotationConfig.Builder<FieldDescriptor>> fieldAnnotationBuilders = new HashMap<>();
+      private final Map<String, AnnotationConfig.Builder<EnumDescriptor>> enumAnnotationBuilders = new HashMap<>();
 
       public Builder() {
       }
@@ -100,19 +100,19 @@ public final class Configuration {
       }
 
       public AnnotationConfig.Builder<Descriptor> messageAnnotation(String annotationName) {
-         AnnotationConfig.Builder<Descriptor> builder = new AnnotationConfig.Builder<Descriptor>(this, annotationName);
+         AnnotationConfig.Builder<Descriptor> builder = new AnnotationConfig.Builder<>(this, annotationName);
          messageAnnotationBuilders.put(annotationName, builder);
          return builder;
       }
 
       public AnnotationConfig.Builder<EnumDescriptor> enumAnnotation(String annotationName) {
-         AnnotationConfig.Builder<EnumDescriptor> builder = new AnnotationConfig.Builder<EnumDescriptor>(this, annotationName);
+         AnnotationConfig.Builder<EnumDescriptor> builder = new AnnotationConfig.Builder<>(this, annotationName);
          enumAnnotationBuilders.put(annotationName, builder);
          return builder;
       }
 
       public AnnotationConfig.Builder<FieldDescriptor> fieldAnnotation(String annotationName) {
-         AnnotationConfig.Builder<FieldDescriptor> builder = new AnnotationConfig.Builder<FieldDescriptor>(this, annotationName);
+         AnnotationConfig.Builder<FieldDescriptor> builder = new AnnotationConfig.Builder<>(this, annotationName);
          fieldAnnotationBuilders.put(annotationName, builder);
          return builder;
       }
@@ -137,19 +137,19 @@ public final class Configuration {
                   }
                });
 
-         Map<String, AnnotationConfig<Descriptor>> messageAnnotations = new HashMap<String, AnnotationConfig<Descriptor>>(messageAnnotationBuilders.size());
+         Map<String, AnnotationConfig<Descriptor>> messageAnnotations = new HashMap<>(messageAnnotationBuilders.size());
          for (AnnotationConfig.Builder<Descriptor> annotationBuilder : messageAnnotationBuilders.values()) {
             AnnotationConfig<Descriptor> annotationConfig = annotationBuilder.buildAnnotationConfig();
             messageAnnotations.put(annotationConfig.name(), annotationConfig);
          }
 
-         Map<String, AnnotationConfig<FieldDescriptor>> fieldAnnotations = new HashMap<String, AnnotationConfig<FieldDescriptor>>(fieldAnnotationBuilders.size());
+         Map<String, AnnotationConfig<FieldDescriptor>> fieldAnnotations = new HashMap<>(fieldAnnotationBuilders.size());
          for (AnnotationConfig.Builder<FieldDescriptor> annotationBuilder : fieldAnnotationBuilders.values()) {
             AnnotationConfig<FieldDescriptor> annotationConfig = annotationBuilder.buildAnnotationConfig();
             fieldAnnotations.put(annotationConfig.name(), annotationConfig);
          }
 
-         Map<String, AnnotationConfig<EnumDescriptor>> enumAnnotations = new HashMap<String, AnnotationConfig<EnumDescriptor>>(enumAnnotationBuilders.size());
+         Map<String, AnnotationConfig<EnumDescriptor>> enumAnnotations = new HashMap<>(enumAnnotationBuilders.size());
          for (AnnotationConfig.Builder<EnumDescriptor> annotationBuilder : enumAnnotationBuilders.values()) {
             AnnotationConfig<EnumDescriptor> annotationConfig = annotationBuilder.buildAnnotationConfig();
             enumAnnotations.put(annotationConfig.name(), annotationConfig);

@@ -1,18 +1,18 @@
 package org.infinispan.protostream.impl;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.protostream.descriptors.Type;
-import org.jboss.logging.Logger;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.Type;
+import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
@@ -265,7 +265,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
 
       int len = 0;
-      List<byte[]> chunks = new LinkedList<byte[]>();
+      List<byte[]> chunks = new LinkedList<>();
       int bufLen;
       byte[] buffer = new byte[CHUNK_SIZE];
       while ((bufLen = input.read(buffer)) != -1) {

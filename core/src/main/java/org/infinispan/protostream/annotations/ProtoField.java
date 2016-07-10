@@ -1,12 +1,12 @@
 package org.infinispan.protostream.annotations;
 
-import org.infinispan.protostream.descriptors.Type;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Collection;
+
+import org.infinispan.protostream.descriptors.Type;
 
 /**
  * Defines a Protocol Buffers message field. A class must have at least one field/property annotated with {@link

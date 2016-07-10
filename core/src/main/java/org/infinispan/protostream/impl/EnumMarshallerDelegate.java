@@ -1,5 +1,10 @@
 package org.infinispan.protostream.impl;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
@@ -7,11 +12,6 @@ import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -29,7 +29,7 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
       this.enumMarshaller = enumMarshaller;
       this.enumDescriptor = enumDescriptor;
       List<EnumValueDescriptor> enumValues = enumDescriptor.getValues();
-      definedValues = new HashSet<Integer>(enumValues.size());
+      definedValues = new HashSet<>(enumValues.size());
       for (EnumValueDescriptor evd : enumValues) {
          definedValues.add(evd.getNumber());
       }

@@ -1,14 +1,14 @@
 package org.infinispan.protostream.config;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -46,7 +46,7 @@ public final class AnnotationConfig<DescriptorType extends AnnotatedDescriptor> 
 
       private String name;
 
-      private final Map<String, AnnotationAttributeConfig.Builder<DescriptorType>> attributeBuilders = new HashMap<String, AnnotationAttributeConfig.Builder<DescriptorType>>();
+      private final Map<String, AnnotationAttributeConfig.Builder<DescriptorType>> attributeBuilders = new HashMap<>();
 
       private AnnotationMetadataCreator<?, DescriptorType> annotationMetadataCreator;
 
@@ -62,7 +62,7 @@ public final class AnnotationConfig<DescriptorType extends AnnotatedDescriptor> 
          if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("attribute name must not be null or empty");
          }
-         AnnotationAttributeConfig.Builder<DescriptorType> annotationAttributeConfigBuilder = new AnnotationAttributeConfig.Builder<DescriptorType>(this, name);
+         AnnotationAttributeConfig.Builder<DescriptorType> annotationAttributeConfigBuilder = new AnnotationAttributeConfig.Builder<>(this, name);
          attributeBuilders.put(name, annotationAttributeConfigBuilder);
          return annotationAttributeConfigBuilder;
       }
@@ -85,12 +85,12 @@ public final class AnnotationConfig<DescriptorType extends AnnotatedDescriptor> 
       }
 
       AnnotationConfig<DescriptorType> buildAnnotationConfig() {
-         Map<String, AnnotationAttributeConfig> attributes = new HashMap<String, AnnotationAttributeConfig>(attributeBuilders.size());
+         Map<String, AnnotationAttributeConfig> attributes = new HashMap<>(attributeBuilders.size());
          for (AnnotationAttributeConfig.Builder<DescriptorType> attributeBuilder : attributeBuilders.values()) {
             AnnotationAttributeConfig annotationAttributeConfig = attributeBuilder.buildAnnotationAttributeConfig();
             attributes.put(annotationAttributeConfig.name(), annotationAttributeConfig);
          }
-         return new AnnotationConfig<DescriptorType>(name, attributes, annotationMetadataCreator);
+         return new AnnotationConfig<>(name, attributes, annotationMetadataCreator);
       }
 
       public Configuration build() {

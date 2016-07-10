@@ -1,8 +1,8 @@
 package org.infinispan.protostream.annotations.impl;
 
-import org.infinispan.protostream.annotations.ProtoDoc;
-
 import java.lang.reflect.AnnotatedElement;
+
+import org.infinispan.protostream.annotations.ProtoDoc;
 
 /**
  * @author anistor@redhat.com

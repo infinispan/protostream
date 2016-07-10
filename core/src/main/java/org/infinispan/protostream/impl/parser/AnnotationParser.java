@@ -1,13 +1,13 @@
 package org.infinispan.protostream.impl.parser;
 
-import org.infinispan.protostream.AnnotationParserException;
-import org.infinispan.protostream.descriptors.AnnotationElement;
-
 import java.text.MessageFormat;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.protostream.AnnotationParserException;
+import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
  * @author anistor@redhat.com
@@ -22,7 +22,7 @@ public final class AnnotationParser {
    }
 
    public Map<String, AnnotationElement.Annotation> parse() throws AnnotationParserException {
-      Map<String, AnnotationElement.Annotation> annotations = new LinkedHashMap<String, AnnotationElement.Annotation>();
+      Map<String, AnnotationElement.Annotation> annotations = new LinkedHashMap<>();
       while (lexer.token != AnnotationTokens.EOF) {
          AnnotationElement.Annotation annotation = parseAnnotation();
          if (annotations.containsKey(annotation.getName())) {
@@ -75,7 +75,7 @@ public final class AnnotationParser {
    }
 
    private Map<String, AnnotationElement.Attribute> parseAttributes() {
-      LinkedHashMap<String, AnnotationElement.Attribute> members = new LinkedHashMap<String, AnnotationElement.Attribute>();
+      LinkedHashMap<String, AnnotationElement.Attribute> members = new LinkedHashMap<>();
       if (lexer.token == AnnotationTokens.LPAREN) {
          int start = lexer.mark();
          expect(AnnotationTokens.LPAREN);
@@ -221,7 +221,7 @@ public final class AnnotationParser {
       int start = lexer.mark();
       long pos = lexer.pos;
       expect(AnnotationTokens.LBRACE);
-      List<AnnotationElement.Value> values = new LinkedList<AnnotationElement.Value>();
+      List<AnnotationElement.Value> values = new LinkedList<>();
       while (lexer.token != AnnotationTokens.RBRACE && lexer.token != AnnotationTokens.EOF) {
          values.add(parseValue(start));
          start = lexer.mark();

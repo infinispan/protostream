@@ -1,12 +1,18 @@
 package org.infinispan.protostream.impl.parser.mappers;
 
-import com.squareup.protoparser.EnumElement;
-import com.squareup.protoparser.MessageElement;
-import org.infinispan.protostream.descriptors.Descriptor;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.ENUM_LIST_MAPPER;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.FIELD_LIST_MAPPER;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.MESSAGE_LIST_MAPPER;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.ONEOF_LIST_MAPPER;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.OPTION_LIST_MAPPER;
+import static org.infinispan.protostream.impl.parser.mappers.Mappers.filter;
 
 import java.util.List;
 
-import static org.infinispan.protostream.impl.parser.mappers.Mappers.*;
+import org.infinispan.protostream.descriptors.Descriptor;
+
+import com.squareup.protoparser.EnumElement;
+import com.squareup.protoparser.MessageElement;
 
 /**
  * Mapper for Type.

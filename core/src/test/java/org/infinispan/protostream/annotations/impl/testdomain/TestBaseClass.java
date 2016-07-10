@@ -1,9 +1,9 @@
 package org.infinispan.protostream.annotations.impl.testdomain;
 
+import java.util.List;
+
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
-
-import java.util.List;
 
 /**
  * @author anistor@redhat.com

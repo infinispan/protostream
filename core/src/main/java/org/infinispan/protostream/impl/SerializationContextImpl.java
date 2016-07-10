@@ -1,6 +1,12 @@
 package org.infinispan.protostream.impl;
 
-import net.jcip.annotations.GuardedBy;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
@@ -16,12 +22,7 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * @author anistor@redhat.com
@@ -41,15 +42,15 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final DescriptorParser parser;
 
-   private final Map<String, FileDescriptor> fileDescriptors = new HashMap<String, FileDescriptor>();
+   private final Map<String, FileDescriptor> fileDescriptors = new HashMap<>();
 
-   private final Map<Integer, String> typeIds = new HashMap<Integer, String>();
+   private final Map<Integer, String> typeIds = new HashMap<>();
 
-   private final Map<String, GenericDescriptor> genericDescriptors = new HashMap<String, GenericDescriptor>();
+   private final Map<String, GenericDescriptor> genericDescriptors = new HashMap<>();
 
-   private final Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<String, BaseMarshallerDelegate<?>>();
+   private final Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<>();
 
-   private final Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<Class<?>, BaseMarshallerDelegate<?>>();
+   private final Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<>();
 
    public SerializationContextImpl(Configuration configuration) {
       if (configuration == null) {
@@ -67,7 +68,7 @@ public final class SerializationContextImpl implements SerializationContext {
    public Map<String, FileDescriptor> getFileDescriptors() {
       readLock.lock();
       try {
-         return new HashMap<String, FileDescriptor>(fileDescriptors);
+         return new HashMap<>(fileDescriptors);
       } finally {
          readLock.unlock();
       }
@@ -124,7 +125,7 @@ public final class SerializationContextImpl implements SerializationContext {
       if (log.isDebugEnabled()) {
          log.debugf("Registering file descriptor : fileName=%s types=%s", fileDescriptor.getName(), fileDescriptor.getTypes().keySet());
       }
-      Map<Integer, String> newTypeIds = new HashMap<Integer, String>();
+      Map<Integer, String> newTypeIds = new HashMap<>();
       for (Map.Entry<String, GenericDescriptor> e : fileDescriptor.getTypes().entrySet()) {
          Integer typeId = e.getValue().getTypeId();
          if (typeId != null) {

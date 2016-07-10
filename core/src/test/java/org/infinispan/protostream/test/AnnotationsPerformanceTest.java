@@ -1,5 +1,15 @@
 package org.infinispan.protostream.test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -13,16 +23,6 @@ import org.infinispan.protostream.domain.marshallers.UserMarshaller;
 import org.infinispan.protostream.impl.Log;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * @author anistor@redhat.com
@@ -45,8 +45,8 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
       user.setName("John");
       user.setSurname("Batman");
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
-      List<Address> addresses = new ArrayList<Address>();
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
+      List<Address> addresses = new ArrayList<>();
       addresses.add(new Address("Old Street", "XYZ42", -12));
       addresses.add(new Address("Bond Street", "QQ42", 312));
       user.setAddresses(addresses);

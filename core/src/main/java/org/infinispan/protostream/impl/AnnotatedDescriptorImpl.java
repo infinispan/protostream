@@ -1,5 +1,9 @@
 package org.infinispan.protostream.impl;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.config.AnnotationAttributeConfig;
@@ -7,10 +11,6 @@ import org.infinispan.protostream.config.AnnotationConfig;
 import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.impl.parser.AnnotationParser;
-
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -53,7 +53,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
          if (documentation != null) {
             AnnotationParser parser = new AnnotationParser(documentation);
             Map<String, AnnotationElement.Annotation> _annotations = parser.parse();
-            Map<String, Object> _parsedAnnotations = new LinkedHashMap<String, Object>();
+            Map<String, Object> _parsedAnnotations = new LinkedHashMap<>();
             for (AnnotationElement.Annotation annotation : _annotations.values()) {
                AnnotationConfig annotationConfig = getAnnotationConfig(annotation.getName());
                // unknown annotations are ignored

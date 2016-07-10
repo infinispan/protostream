@@ -1,8 +1,8 @@
 package org.infinispan.protostream.annotations.impl;
 
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
-
 import java.lang.reflect.Field;
+
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 
 /**
  * @author anistor@redhat.com

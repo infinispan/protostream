@@ -1,10 +1,10 @@
 package org.infinispan.protostream.config;
 
-import org.infinispan.protostream.AnnotationMetadataCreator;
-import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.protostream.AnnotationMetadataCreator;
+import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 
 
 /**
@@ -157,7 +157,7 @@ public final class AnnotationAttributeConfig {
                case ANNOTATION:
                case IDENTIFIER:
                case STRING:
-                  allowedValuesSet = new HashSet<String>(allowedValues.length);
+                  allowedValuesSet = new HashSet<>(allowedValues.length);
                   for (String v : allowedValues) {
                      allowedValuesSet.add(v);
                   }

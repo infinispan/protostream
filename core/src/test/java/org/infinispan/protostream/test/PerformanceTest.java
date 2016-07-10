@@ -1,5 +1,17 @@
 package org.infinispan.protostream.test;
 
+import static org.junit.Assert.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -14,18 +26,6 @@ import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.Unmarshaller;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * Compare performance (time, space) versus Java Serialization and JBoss Marshalling.
@@ -132,8 +132,8 @@ public class PerformanceTest extends AbstractProtoStreamTest {
       user.setName("John");
       user.setSurname("Batman");
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 3)));
-      List<Address> addresses = new ArrayList<Address>();
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
+      List<Address> addresses = new ArrayList<>();
       addresses.add(new Address("Old Street", "XYZ42", -12));
       addresses.add(new Address("Bond Street", "QQ42", 312));
       user.setAddresses(addresses);

@@ -1,9 +1,9 @@
 package org.infinispan.protostream.annotations.impl.testdomain;
 
-import org.infinispan.protostream.annotations.ProtoField;
-
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author anistor@redhat.com

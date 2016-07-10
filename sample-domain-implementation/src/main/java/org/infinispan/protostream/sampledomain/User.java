@@ -1,9 +1,9 @@
 package org.infinispan.protostream.sampledomain;
 
-import org.infinispan.protostream.UnknownFieldSet;
-
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.protostream.UnknownFieldSet;
 
 /**
  * @author anistor@redhat.com

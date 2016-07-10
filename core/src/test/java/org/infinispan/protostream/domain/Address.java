@@ -1,11 +1,11 @@
 package org.infinispan.protostream.domain;
 
-import org.infinispan.protostream.BaseMessage;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.infinispan.protostream.BaseMessage;
 
 /**
  * @author anistor@redhat.com
