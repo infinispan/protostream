@@ -1,6 +1,13 @@
 package org.infinispan.protostream.impl;
 
-import net.jcip.annotations.GuardedBy;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
@@ -16,12 +23,7 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * @author anistor@redhat.com
@@ -31,6 +33,9 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private static final Log log = Log.LogFactory.getLog(SerializationContextImpl.class);
 
+   /**
+    * All state is protected by this RW lock.
+    */
    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
    private final Lock readLock = readWriteLock.readLock();
@@ -41,7 +46,7 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final DescriptorParser parser;
 
-   private final Map<String, FileDescriptor> fileDescriptors = new HashMap<String, FileDescriptor>();
+   private final Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<String, FileDescriptor>();
 
    private final Map<Integer, String> typeIds = new HashMap<Integer, String>();
 
@@ -109,10 +114,11 @@ public final class SerializationContextImpl implements SerializationContext {
       log.debugf("Unregistering proto file : %s", fileName);
       writeLock.lock();
       try {
-         FileDescriptor fileDescriptor = fileDescriptors.get(fileName);
+         FileDescriptor fileDescriptor = fileDescriptors.remove(fileName);
          if (fileDescriptor != null) {
-            fileDescriptors.remove(fileDescriptor.getName());
             unregisterFileDescriptorTypes(fileDescriptor);
+         } else {
+            throw new IllegalArgumentException("File " + fileName + " does not exist");
          }
       } finally {
          writeLock.unlock();

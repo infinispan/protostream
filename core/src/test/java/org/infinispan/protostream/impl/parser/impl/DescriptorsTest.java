@@ -54,7 +54,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testInputFromFile() throws Exception {
+   public void testInputFromDiskFile() throws Exception {
       String f1 = "org/infinispan/protostream/lib/base.proto";
       String f2 = "org/infinispan/protostream/lib/base2.proto";
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
@@ -62,6 +62,30 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile(f2, asFile(f2));
       Map<String, FileDescriptor> parseResult = parseAndResolve(fileDescriptorSource);
       assertThat(parseResult).isNotEmpty();
+   }
+
+   @Test
+   public void testInputFromString() throws Exception {
+      String file1 = "package test1;\n" +
+            "enum E1 {\n" +
+            "   V1 = 1;\n" +
+            "   V2 = 2;\n" +
+            "}\n" +
+            "message M {\n" +
+            "   optional int32 f = 1;\n" +
+            "   enum E2 {\n" +
+            "      V1 = 1;\n" +
+            "      V2 = 2;\n" +
+            "   }\n" +
+            "}";
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("test.proto", file1);
+
+      Map<String, FileDescriptor> files = parseAndResolve(source);
+      FileDescriptor fileDescriptor = files.get("test.proto");
+      assertThat(fileDescriptor.getMessageTypes()).hasSize(1);
+      assertThat(fileDescriptor.getMessageTypes().get(0).getEnumTypes()).hasSize(1);
+      assertThat(fileDescriptor.getEnumTypes()).hasSize(1);
    }
 
    @Test
@@ -81,26 +105,50 @@ public class DescriptorsTest {
    @Test
    public void testCyclicImport() throws Exception {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Possible cyclic import detected at test.proto, import test2.proto");
+      exception.expectMessage("Cyclic import detected at test1.proto, import test2.proto");
 
-      String file1 = "import test2.proto;\n" +
+      String file1 = "import \"test2.proto\";\n" +
             "message M {\n" +
             "   required string a = 1;\n" +
             "}";
-      String file2 = "import test.proto;\n" +
+      String file2 = "import \"test1.proto\";\n" +
             " message M2 {\n" +
             "   required string a = 1;\n" +
             "}";
 
       FileDescriptorSource source = new FileDescriptorSource();
-      source.addProtoFile("test.proto", file1);
+      source.addProtoFile("test1.proto", file1);
       source.addProtoFile("test2.proto", file2);
 
       parseAndResolve(source);
    }
 
    @Test
+   public void testIndirectlyImportSameFile() throws Exception {
+      String file1 = "import public \"test2.proto\";\n" +
+            "import public \"test3.proto\";" +
+            "message M1 { optional M4 a = 1; }";
+      String file2 = "import public \"test4.proto\";";
+      String file3 = "import public \"test4.proto\";";
+      String file4 = "message M4 { optional string a = 1; }";
+
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("test1.proto", file1);
+      source.addProtoFile("test2.proto", file2);
+      source.addProtoFile("test3.proto", file3);
+      source.addProtoFile("test4.proto", file4);
+
+      Map<String, FileDescriptor> files = parseAndResolve(source);
+
+      FileDescriptor descriptor1 = files.get("test1.proto");
+      assertThat(descriptor1.getMessageTypes()).hasSize(1);
+   }
+
+   @Test
    public void testDuplicateImport() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Duplicate import : file1.proto");
+
       String file1 = "package test1;\n";
 
       String file2 = "import \"file1.proto\";\n" +
@@ -110,15 +158,23 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("file1.proto", file1);
       fileDescriptorSource.addProtoFile("file2.proto", file2);
 
-      Map<String, FileDescriptor> files = parseAndResolve(fileDescriptorSource);
+      parseAndResolve(fileDescriptorSource);
+   }
 
-      FileDescriptor descriptor1 = files.get("file1.proto");
-      assertThat(descriptor1.getMessageTypes()).hasSize(0);
-      assertThat(descriptor1.getEnumTypes()).hasSize(0);
+   @Test
+   public void testEnumConstantNameClashesWithEnumTypeName() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Enum constant 'E' clashes with enum type name: test1.E");
 
-      FileDescriptor descriptor2 = files.get("file2.proto");
-      assertThat(descriptor2.getMessageTypes()).hasSize(0);
-      assertThat(descriptor2.getEnumTypes()).hasSize(0);
+      String file1 = "package test1;\n" +
+            "enum E {\n" +
+            "   A = 1;\n" +
+            "   E = 2;\n" +
+            "}";
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("test.proto", file1);
+
+      parseAndResolve(source);
    }
 
    @Test
@@ -138,7 +194,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testEnumConstantNameClashesWithEnumTypeName() throws Exception {
+   public void testEnumConstantNameClashesWithContainingEnumTypeName() throws Exception {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum constant 'E' clashes with enum type name: test1.E");
 
@@ -169,7 +225,7 @@ public class DescriptorsTest {
       parseAndResolve(source);
    }
 
-   @Ignore("see https://issues.jboss.org/browse/IPROTO-14")
+   @Ignore("Test disabled due to https://issues.jboss.org/browse/IPROTO-14")
    @Test
    public void testAllowAliasOfEnumConstantValue() throws Exception {
       String file1 = "package test1;\n" +
@@ -223,7 +279,7 @@ public class DescriptorsTest {
       String file1 = "package test;\n" +
             "message M1 {\n" +
             "  required string a = 1;\n" +
-            "}\n\n" +
+            "}\n" +
             "message M1 {\n" +
             "  required string a = 1;\n" +
             "}\n";
@@ -242,8 +298,27 @@ public class DescriptorsTest {
       String file1 = "package test;\n" +
             "message M1 {\n" +
             "  required string a = 1;\n" +
-            "}\n\n" +
+            "}\n" +
             "enum M1 {\n" +
+            "  VAL = 1;\n" +
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
+
+      parseAndResolve(fileDescriptorSource);
+   }
+
+   @Test
+   public void testDuplicateTypeInFile3() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("test.E1 is already defined in test_proto_path/file1.proto");
+
+      String file1 = "package test;\n" +
+            "enum E1 {\n" +
+            "  VAL = 1;\n" +
+            "}\n" +
+            "enum E1 {\n" +
             "  VAL = 1;\n" +
             "}\n";
 
@@ -280,7 +355,7 @@ public class DescriptorsTest {
             "message M1 {\n" +
             "  required string a = 1;\n" +
             "  message M2 { required string a = 1; }\n" +
-            "  message M2 { required string a = 1; }\n" +
+            "  message M2 { required string b = 1; }\n" +
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
@@ -299,6 +374,24 @@ public class DescriptorsTest {
             "  required string a = 1;\n" +
             "  enum E1 { VAL1 = 1; }\n" +
             "  enum E1 { VAL2 = 2; }\n" +
+            "}\n";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
+
+      parseAndResolve(fileDescriptorSource);
+   }
+
+   @Test
+   public void testDuplicateTypeInMessage3() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("test.M1.E1 is already defined in test_proto_path/file1.proto");
+
+      String file1 = "package test;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "  message E1 { required string a = 1; }\n" +
+            "  enum E1 { VAL1 = 1; }\n" +
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
@@ -782,7 +875,6 @@ public class DescriptorsTest {
       assertThat(queryField.getMessageType()).isNull();
       assertThat(queryField.getContainingMessage().getName()).isEqualTo("SearchRequest");
 
-
       FieldDescriptor pageNumberField = fields.get(1);
       assertThat(pageNumberField.getRule()).isEqualTo(Rule.OPTIONAL);
       assertThat(pageNumberField.getType()).isEqualTo(Type.INT32);
@@ -815,6 +907,7 @@ public class DescriptorsTest {
       assertThat(reqEnumField.hasDefaultValue()).isFalse();
       assertThat(reqEnumField.getEnumType()).isNotNull();
       assertThat(reqEnumField.getEnumType().findValueByNumber(0).getFileDescriptor()).isNotNull();
+      assertThat(reqEnumField.getEnumType().findValueByNumber(0).getContainingEnum()).isEqualTo(reqEnumField.getEnumType());
       assertThat(reqEnumField.getOptionByName("deprecated")).isEqualTo("true");
 
       FieldDescriptor labelField = fields.get(6);
@@ -828,7 +921,6 @@ public class DescriptorsTest {
 
       assertThat(typedField.getType()).isEqualTo(Type.MESSAGE);
       assertThat(typedField.getFullName()).isEqualTo("org.infinispan.protostream.test.SearchRequest.typed");
-
    }
 
    private void assertTopLevelEnum(EnumDescriptor topLevelEnum) {

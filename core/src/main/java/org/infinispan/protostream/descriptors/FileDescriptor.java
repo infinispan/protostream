@@ -1,23 +1,22 @@
 package org.infinispan.protostream.descriptors;
 
-import org.infinispan.protostream.DescriptorParserException;
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.Log;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static java.util.Collections.unmodifiableList;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.impl.Log;
 
 /**
- * Representation of a protofile, including dependencies.
+ * Representation of a .proto file, including its dependencies.
  *
  * @author gustavonalle
  * @author anistor@redhat.com
@@ -31,23 +30,54 @@ public final class FileDescriptor {
 
    private final String name;
    private final String packageName;
+
+   /**
+    * The imports. These are not transitive.
+    */
    private final List<String> dependencies;
+
+   /**
+    * The public imports. These generate transitive dependencies.
+    */
    private final List<String> publicDependencies;
+
    private final List<Option> options;
    private final List<Descriptor> messageTypes;
    private final List<FieldDescriptor> extensions;
    private final List<EnumDescriptor> enumTypes;
    private final List<ExtendDescriptor> extendTypes;
+
    private final Map<String, ExtendDescriptor> extendDescriptors = new HashMap<String, ExtendDescriptor>();
 
+   /**
+    * Files that directly depend on this one.
+    */
    private final Map<String, FileDescriptor> dependants = new HashMap<String, FileDescriptor>();
 
    public void setConfiguration(Configuration configuration) {
       this.configuration = configuration;
    }
 
+   /**
+    * The validation status of a .proto file. Only {@link Status#RESOLVED} files contribute to the current state (known
+    * types) of the {@link org.infinispan.protostream.SerializationContext}.
+    */
    private enum Status {
-      UNRESOLVED, RESOLVED, ERROR
+
+      /**
+       * Not processed yet.
+       */
+      UNRESOLVED,
+
+      /**
+       * Processed successfully.
+       */
+      RESOLVED,
+
+      /**
+       * An error was encountered during processing.
+       */
+      ERROR
    }
 
    private Status status = Status.UNRESOLVED;
@@ -65,18 +95,18 @@ public final class FileDescriptor {
    /**
     * Types defined in this file.
     */
-   private final Map<String, GenericDescriptor> types = new HashMap<String, GenericDescriptor>();
+   private final Map<String, GenericDescriptor> types = new LinkedHashMap<String, GenericDescriptor>();
 
    private FileDescriptor(Builder builder) {
       this.name = builder.name;
       this.packageName = builder.packageName;
-      this.dependencies = unmodifiableList(builder.dependencies);
-      this.publicDependencies = unmodifiableList(builder.publicDependencies);
-      this.options = unmodifiableList(builder.options);
-      this.enumTypes = unmodifiableList(builder.enumTypes);
-      this.messageTypes = unmodifiableList(builder.messageTypes);
+      this.dependencies = Collections.unmodifiableList(builder.dependencies);
+      this.publicDependencies = Collections.unmodifiableList(builder.publicDependencies);
+      this.options = Collections.unmodifiableList(builder.options);
+      this.enumTypes = Collections.unmodifiableList(builder.enumTypes);
+      this.messageTypes = Collections.unmodifiableList(builder.messageTypes);
       this.extensions = builder.extensions;
-      this.extendTypes = unmodifiableList(builder.extendDescriptors);
+      this.extendTypes = Collections.unmodifiableList(builder.extendDescriptors);
    }
 
    public Map<String, FileDescriptor> getDependants() {
@@ -91,8 +121,12 @@ public final class FileDescriptor {
       status = Status.UNRESOLVED;
    }
 
+   /**
+    * Transition form ERROR status to UNRESOLVED and propagate to all dependant FileDescriptors. All internal state used
+    * during type reference resolution is cleared for this file and dependants.
+    */
    public void clearErrors() {
-      if (status == Status.ERROR) {
+      if (status != Status.RESOLVED) {
          status = Status.UNRESOLVED;
          typeRegistry.clear();
          exportedTypes.clear();
@@ -121,6 +155,10 @@ public final class FileDescriptor {
                                     Set<String> processedFiles) throws DescriptorParserException {
       if (status != Status.UNRESOLVED) {
          return;
+      }
+
+      if (log.isDebugEnabled()) {
+         log.debugf("Resolving dependencies of %s", name);
       }
 
       try {
@@ -203,16 +241,21 @@ public final class FileDescriptor {
                                                Set<String> processedFiles,
                                                List<String> dependencies) throws DescriptorParserException {
       List<FileDescriptor> fileDescriptors = new ArrayList<FileDescriptor>(dependencies.size());
-      Set<String> dependencySet = new HashSet<String>(dependencies);
-      for (String dependency : dependencySet) {
+      Set<String> uniqueDependencies = new HashSet<String>(dependencies.size());
+      for (String dependency : dependencies) {
+         if (!uniqueDependencies.add(dependency)) {
+            throw new DescriptorParserException("Duplicate import : " + dependency);
+         }
          FileDescriptor fd = fileDescriptorMap.get(dependency);
          if (fd == null) {
             throw new DescriptorParserException("Import '" + dependency + "' not found");
          }
-         if (!processedFiles.add(dependency)) {
-            throw new DescriptorParserException("Possible cyclic import detected at " + name + ", import " + dependency);
+         if (fd.status == Status.UNRESOLVED) {
+            if (!processedFiles.add(dependency)) {
+               throw new DescriptorParserException("Cyclic import detected at " + name + ", import " + dependency);
+            }
+            fd.resolveDependencies(progressCallback, fileDescriptorMap, allTypes, processedFiles);
          }
-         fd.resolveDependencies(progressCallback, fileDescriptorMap, allTypes, processedFiles);
          if (fd.status == Status.ERROR) {
             status = Status.ERROR;
             return null;
@@ -349,6 +392,9 @@ public final class FileDescriptor {
     * All types defined in this file (both message and enum).
     */
    public Map<String, GenericDescriptor> getTypes() {
+      if (status != Status.RESOLVED) {
+         throw new IllegalStateException("File " + name + " is not resolved yet");
+      }
       return types;
    }
 
@@ -413,5 +459,4 @@ public final class FileDescriptor {
          return new FileDescriptor(this);
       }
    }
-
 }

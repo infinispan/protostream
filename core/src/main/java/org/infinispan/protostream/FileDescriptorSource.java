@@ -1,5 +1,7 @@
 package org.infinispan.protostream;
 
+import static java.util.Collections.unmodifiableMap;
+
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,8 +11,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import static java.util.Collections.unmodifiableMap;
 
 /**
  * Aggregator for source protofiles.
@@ -24,6 +24,9 @@ public final class FileDescriptorSource {
    private static final String ENCODING = "UTF-8";
    private static final int BUFFER_SIZE = 1024;
 
+   /**
+    * The unparsed files. Using a LinkedHashMap to ensure parsing happens in the order specified by the user.
+    */
    private final Map<String, char[]> descriptors = new LinkedHashMap<String, char[]>();
 
    private ProgressCallback progressCallback;
