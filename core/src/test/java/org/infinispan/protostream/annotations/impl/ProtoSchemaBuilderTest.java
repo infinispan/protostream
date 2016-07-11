@@ -1,8 +1,11 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.ProtoEnum;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.testdomain.Simple;
@@ -227,5 +230,32 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       assertEquals("@Indexed()\nbla bla bla\nand some more bla", testClass.getDocumentation());
       assertEquals("The surname, of course", testClass.getFields().get(0).getDocumentation());
+   }
+
+   static class TestCase_DuplicateEnumValueName {
+
+      @ProtoEnum
+      public enum E {
+
+         @ProtoEnumValue(number = 1)
+         A,
+
+         @ProtoEnumValue(number = 2, name = "A")
+         B
+      }
+   }
+
+   @Test
+   public void testDuplicateEnumValueName() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Enum constant 'A' is already defined in test_package1.E");
+
+      SerializationContext ctx = createContext();
+
+      new ProtoSchemaBuilder()
+            .fileName("test1.proto")
+            .packageName("test_package1")
+            .addClass(TestCase_DuplicateEnumValueName.E.class)
+            .build(ctx);
    }
 }

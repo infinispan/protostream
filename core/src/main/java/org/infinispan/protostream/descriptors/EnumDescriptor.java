@@ -1,14 +1,14 @@
 package org.infinispan.protostream.descriptors;
 
-import org.infinispan.protostream.config.AnnotationConfig;
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
-
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Collections.unmodifiableList;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 
 /**
  * Represents an enum in a proto file.
@@ -29,12 +29,18 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
 
    private EnumDescriptor(Builder builder) {
       super(builder.name, builder.fullName, builder.documentation);
-      this.options = unmodifiableList(builder.options);
-      this.values = unmodifiableList(builder.values);
+      this.options = Collections.unmodifiableList(builder.options);
+      this.values = Collections.unmodifiableList(builder.values);
       for (EnumValueDescriptor value : values) {
-         value.setContainingEnum(this);
-         valueByNumber.put(value.getNumber(), value);
+         if (name.equals(value.getName())) {
+            throw new DescriptorParserException("Enum constant '" + value.getName() + "' clashes with enum type name: " + fullName);
+         }
+         if (valueByName.containsKey(value.getName())) {
+            throw new DescriptorParserException("Enum constant '" + value.getName() + "' is already defined in " + fullName);
+         }
          valueByName.put(value.getName(), value);
+         valueByNumber.put(value.getNumber(), value);
+         value.setContainingEnum(this);
       }
    }
 
@@ -86,7 +92,7 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
       typeId = getProcessedAnnotation(Configuration.TYPE_ID_ANNOTATION);
    }
 
-   public static class Builder {
+   public static final class Builder {
       private String name;
       private String fullName;
       private List<Option> options;
