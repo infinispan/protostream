@@ -1,22 +1,34 @@
 package org.infinispan.protostream.impl.parser.impl;
 
-import org.infinispan.protostream.AnnotationMetadataCreator;
-import org.infinispan.protostream.AnnotationParserException;
-import org.infinispan.protostream.DescriptorParserException;
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.descriptors.*;
-import org.infinispan.protostream.impl.parser.SquareProtoParser;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import static org.fest.assertions.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import org.infinispan.protostream.AnnotationMetadataCreator;
+import org.infinispan.protostream.AnnotationParserException;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.AnnotationElement;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.EnumDescriptor;
+import org.infinispan.protostream.descriptors.ExtendDescriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
+import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.protostream.descriptors.Rule;
+import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.impl.parser.SquareProtoParser;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class DescriptorsTest {
 
@@ -24,6 +36,22 @@ public class DescriptorsTest {
 
    @org.junit.Rule
    public ExpectedException exception = ExpectedException.none();
+
+   @Test
+   public void testGroupsAreNotSupported() throws Exception {
+      // groups are a deprecated feature and are not supported
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Syntax error in file1.proto at 2:33: expected ';'");
+
+      String file1 = "message TestMessage {\n" +
+            "  repeated group TestGroup = 1 {\n" +
+            "    required string url = 2;\n" +
+            "    optional string title = 3;\n" +
+            "  }\n" +
+            "}";
+
+      parseAndResolve(FileDescriptorSource.fromString("file1.proto", file1));
+   }
 
    @Test
    public void testInputFromFile() throws Exception {
@@ -40,30 +68,29 @@ public class DescriptorsTest {
    public void testInvalidImport() throws Exception {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Import 'invalid.proto' not found");
-      String file =
-            " package test;\n" +
-                  " import invalid.proto;\n" +
-                  " message M {\n" +
-                  "    required string a = 1;\n" +
-                  "}";
 
-      parseAndResolve(FileDescriptorSource.fromString("dummy.proto", file));
+      String file1 = "package test;\n" +
+            "import invalid.proto;\n" +
+            "message M {\n" +
+            "   required string a = 1;\n" +
+            "}";
+
+      parseAndResolve(FileDescriptorSource.fromString("file1.proto", file1));
    }
 
    @Test
    public void testCyclicImport() throws Exception {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Possible cyclic import detected at test.proto, import test2.proto");
-      String file1 =
-            " import test2.proto;\n" +
-                  " message M {\n" +
-                  "    required string a = 1;\n" +
-                  "}";
-      String file2 =
-            " import test.proto;\n" +
-                  " message M2 {\n" +
-                  "    required string a = 1;\n" +
-                  "}";
+
+      String file1 = "import test2.proto;\n" +
+            "message M {\n" +
+            "   required string a = 1;\n" +
+            "}";
+      String file2 = "import test.proto;\n" +
+            " message M2 {\n" +
+            "   required string a = 1;\n" +
+            "}";
 
       FileDescriptorSource source = new FileDescriptorSource();
       source.addProtoFile("test.proto", file1);
@@ -83,12 +110,91 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("file1.proto", file1);
       fileDescriptorSource.addProtoFile("file2.proto", file2);
 
-      parseAndResolve(fileDescriptorSource);
+      Map<String, FileDescriptor> files = parseAndResolve(fileDescriptorSource);
+
+      FileDescriptor descriptor1 = files.get("file1.proto");
+      assertThat(descriptor1.getMessageTypes()).hasSize(0);
+      assertThat(descriptor1.getEnumTypes()).hasSize(0);
+
+      FileDescriptor descriptor2 = files.get("file2.proto");
+      assertThat(descriptor2.getMessageTypes()).hasSize(0);
+      assertThat(descriptor2.getEnumTypes()).hasSize(0);
+   }
+
+   @Test
+   public void testDuplicateEnumConstantName() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Enum constant 'A' is already defined in test1.E");
+
+      String file1 = "package test1;\n" +
+            "enum E {\n" +
+            "   A = 1;\n" +
+            "   A = 2;\n" +
+            "}";
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("test.proto", file1);
+
+      parseAndResolve(source);
+   }
+
+   @Test
+   public void testEnumConstantNameClashesWithEnumTypeName() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Enum constant 'E' clashes with enum type name: test1.E");
+
+      String file1 = "package test1;\n" +
+            "enum E {\n" +
+            "   A = 1;\n" +
+            "   E = 2;\n" +
+            "}";
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("test.proto", file1);
+
+      parseAndResolve(source);
+   }
+
+   @Test
+   public void testDuplicateEnumConstantValue() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("java.lang.IllegalStateException: Duplicate tag 1 in test1.E");
+
+      String file1 = "package test1;\n" +
+            "enum E {\n" +
+            "   A = 1;\n" +
+            "   B = 1;\n" +
+            "}";
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("test.proto", file1);
+
+      parseAndResolve(source);
+   }
+
+   @Ignore("see https://issues.jboss.org/browse/IPROTO-14")
+   @Test
+   public void testAllowAliasOfEnumConstantValue() throws Exception {
+      String file1 = "package test1;\n" +
+            "enum E {\n" +
+            "   option allow_alias = true;\n" +
+            "   A = 1;\n" +
+            "   B = 1;\n" +
+            "}";
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("test.proto", file1);
+
+      Map<String, FileDescriptor> descriptors = parseAndResolve(source);
+      FileDescriptor descriptor = descriptors.get("test.proto");
+      assertThat(descriptor.getEnumTypes()).hasSize(1);
+      EnumDescriptor enumDescriptor = descriptor.getEnumTypes().get(0);
+      assertThat(enumDescriptor.getName()).isEqualTo("E");
+      assertThat(enumDescriptor.getValues().size()).isEqualTo(2);
+      assertThat(enumDescriptor.getValues().get(0).getName()).isEqualTo("A");
+      assertThat(enumDescriptor.getValues().get(0).getNumber()).isEqualTo(1);
+      assertThat(enumDescriptor.getValues().get(1).getName()).isEqualTo("B");
+      assertThat(enumDescriptor.getValues().get(1).getNumber()).isEqualTo(1);
    }
 
    @Test
    public void testTransform() throws Exception {
-
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromResources(
             "org/infinispan/protostream/test/message.proto",
             "org/infinispan/protostream/lib/base.proto",
