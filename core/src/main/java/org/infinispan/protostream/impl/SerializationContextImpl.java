@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -18,8 +19,10 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
+import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
+import org.infinispan.protostream.descriptors.ResolutionContext;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 
 import net.jcip.annotations.GuardedBy;
@@ -32,6 +35,9 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private static final Log log = Log.LogFactory.getLog(SerializationContextImpl.class);
 
+   /**
+    * All state is protected by this RW lock.
+    */
    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
    private final Lock readLock = readWriteLock.readLock();
@@ -42,11 +48,13 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final DescriptorParser parser;
 
-   private final Map<String, FileDescriptor> fileDescriptors = new HashMap<>();
+   private final Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<>();
 
-   private final Map<Integer, String> typeIds = new HashMap<>();
+   private final Map<Integer, GenericDescriptor> typeIds = new HashMap<>();
 
    private final Map<String, GenericDescriptor> genericDescriptors = new HashMap<>();
+
+   private final Map<String, EnumValueDescriptor> enumValueDescriptors = new HashMap<>();
 
    private final Map<String, BaseMarshallerDelegate<?>> marshallersByName = new ConcurrentHashMap<>();
 
@@ -90,12 +98,18 @@ public final class SerializationContextImpl implements SerializationContext {
             }
          }
          fileDescriptors.putAll(fileDescriptorMap);
-         // resolve imports and types
+
+         // clear errors and put in unresolved state whatever is not resolved already
          for (FileDescriptor fileDescriptor : fileDescriptors.values()) {
-            if (fileDescriptor.resolveDependencies(source.getProgressCallback(), fileDescriptors, genericDescriptors)) {
-               registerFileDescriptor(fileDescriptor);
-            }
+            fileDescriptor.clearErrors();
          }
+
+         // resolve imports and types for all files
+         ResolutionContext resolutionContext = new ResolutionContext(source.getProgressCallback(), fileDescriptors, genericDescriptors, typeIds, enumValueDescriptors);
+         for (FileDescriptor fileDescriptor : fileDescriptors.values()) {
+            fileDescriptor.resolveDependencies(resolutionContext);
+         }
+
          // clear errors and leave in unresolved state whatever could not be resolved
          for (FileDescriptor fileDescriptor : fileDescriptors.values()) {
             fileDescriptor.clearErrors();
@@ -110,43 +124,15 @@ public final class SerializationContextImpl implements SerializationContext {
       log.debugf("Unregistering proto file : %s", fileName);
       writeLock.lock();
       try {
-         FileDescriptor fileDescriptor = fileDescriptors.get(fileName);
+         FileDescriptor fileDescriptor = fileDescriptors.remove(fileName);
          if (fileDescriptor != null) {
-            fileDescriptors.remove(fileDescriptor.getName());
             unregisterFileDescriptorTypes(fileDescriptor);
+         } else {
+            throw new IllegalArgumentException("File " + fileName + " does not exist");
          }
       } finally {
          writeLock.unlock();
       }
-   }
-
-   @GuardedBy("writeLock")
-   private void registerFileDescriptor(FileDescriptor fileDescriptor) {
-      if (log.isDebugEnabled()) {
-         log.debugf("Registering file descriptor : fileName=%s types=%s", fileDescriptor.getName(), fileDescriptor.getTypes().keySet());
-      }
-      Map<Integer, String> newTypeIds = new HashMap<>();
-      for (Map.Entry<String, GenericDescriptor> e : fileDescriptor.getTypes().entrySet()) {
-         Integer typeId = e.getValue().getTypeId();
-         if (typeId != null) {
-            String fullName = e.getKey();
-            String existing = typeIds.get(typeId);
-            if (existing != null && !existing.equals(fullName)) {
-               GenericDescriptor x = fileDescriptor.getTypes().get(existing);
-               if (x == null || typeId.equals(x.getTypeId())) {
-                  throw new DescriptorParserException("Duplicate type id " + typeId + " for type " + fullName + ". Already used by " + existing);
-               }
-            }
-            existing = newTypeIds.get(typeId);
-            if (existing != null) {
-               throw new DescriptorParserException("Duplicate type id " + typeId + " for type " + fullName + ". Already used by " + existing);
-            }
-            newTypeIds.put(typeId, fullName);
-         }
-      }
-      fileDescriptors.put(fileDescriptor.getName(), fileDescriptor);
-      genericDescriptors.putAll(fileDescriptor.getTypes());
-      typeIds.putAll(newTypeIds);
    }
 
    @GuardedBy("writeLock")
@@ -155,6 +141,11 @@ public final class SerializationContextImpl implements SerializationContext {
          Integer typeId = d.getTypeId();
          if (typeId != null) {
             typeIds.remove(typeId);
+         }
+         if (d instanceof EnumDescriptor) {
+            for (EnumValueDescriptor ev : ((EnumDescriptor) d).getValues()) {
+               enumValueDescriptors.remove(ev.getScopedName());
+            }
          }
       }
       genericDescriptors.keySet().removeAll(fileDescriptor.getTypes().keySet());
@@ -262,9 +253,14 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public String getTypeNameById(Integer typeId) {
+      return getDescriptorByTypeId(typeId).getFullName();
+   }
+
+   @Override
+   public GenericDescriptor getDescriptorByTypeId(Integer typeId) {
       readLock.lock();
       try {
-         String descriptorFullName = typeIds.get(typeId);
+         GenericDescriptor descriptorFullName = typeIds.get(typeId);
          if (descriptorFullName == null) {
             throw new IllegalArgumentException("Unknown type id : " + typeId);
          }

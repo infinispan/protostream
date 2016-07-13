@@ -2,7 +2,10 @@ package org.infinispan.protostream.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -82,7 +85,54 @@ public class SerializationContextImplTest {
 
       FileDescriptor fd2 = fileDescriptors.get("file2.proto");
       assertNotNull(fd2);
-      assertTrue(fd2.getTypes().isEmpty());
+      try {
+         fd2.getTypes();
+         fail("IllegalStateException expected");
+      } catch (IllegalStateException e) {
+         assertEquals("File file2.proto is not resolved yet", e.getMessage());
+      }
+   }
+
+   @Test
+   public void testUnregisterMissingFiles() throws Exception {
+      exception.expect(IllegalArgumentException.class);
+      exception.expectMessage("File test.proto does not exist");
+
+      SerializationContextImpl ctx = createContext();
+      ctx.unregisterProtoFile("test.proto");
+   }
+
+   @Test
+   public void testFileCanExistWithSemanticErrors() throws Exception {
+      SerializationContextImpl ctx = createContext();
+      FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "import \"no_such_file.proto\";");
+
+      try {
+         ctx.registerProtoFiles(source);
+         fail("DescriptorParserException expected");
+      } catch (DescriptorParserException e) {
+         assertEquals("Import 'no_such_file.proto' not found", e.getMessage());
+      }
+
+      FileDescriptor fileDescriptor = ctx.getFileDescriptors().get("file1.proto");
+      assertNotNull(fileDescriptor);
+      assertFalse(fileDescriptor.isResolved());
+   }
+
+   @Test
+   public void testFileCannotExistWithParsingErrors() throws Exception {
+      SerializationContextImpl ctx = createContext();
+      FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "this is bogus");
+
+      try {
+         ctx.registerProtoFiles(source);
+         fail("DescriptorParserException expected");
+      } catch (DescriptorParserException e) {
+         assertEquals("java.lang.IllegalStateException: Syntax error in file1.proto at 1:5: unexpected label: this", e.getMessage());
+      }
+
+      FileDescriptor fileDescriptor = ctx.getFileDescriptors().get("file1.proto");
+      assertNull(fileDescriptor);
    }
 
    @Test
@@ -97,13 +147,13 @@ public class SerializationContextImplTest {
             "}";
       String file2 = "package test2;\n" +
             "/**@TypeId(10)*/\n" +
-            " message M2 {\n" +
+            "message M2 {\n" +
             "   optional string b = 1;\n" +
             "}";
 
-      FileDescriptorSource source = new FileDescriptorSource();
-      source.addProtoFile("test1.proto", file1);
-      source.addProtoFile("test2.proto", file2);
+      FileDescriptorSource source = new FileDescriptorSource()
+            .addProtoFile("test1.proto", file1)
+            .addProtoFile("test2.proto", file2);
 
       SerializationContextImpl ctx = createContext();
       ctx.registerProtoFiles(source);
@@ -112,7 +162,7 @@ public class SerializationContextImplTest {
    @Test
    public void testDuplicateTypeIdInSameFile() throws Exception {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate type id 10 for type test1.M1. Already used by test1.M2");
+      exception.expectMessage("Duplicate type id 10 for type test1.M2. Already used by test1.M1");
 
       String file1 = "package test1;\n" +
             "/**@TypeId(10)*/\n" +
@@ -121,13 +171,70 @@ public class SerializationContextImplTest {
             "}" +
             "/**@TypeId(10)*/\n" +
             "message M2 {\n" +
-            "   optional string a = 1;\n" +
+            "   optional string b = 1;\n" +
             "}";
 
-      FileDescriptorSource source = new FileDescriptorSource();
-      source.addProtoFile("test1.proto", file1);
+      SerializationContextImpl ctx = createContext();
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
+   }
+
+   @Test
+   public void testEnumConstantNameClashesWithOtherType1() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
+
+      String file1 = "package test1;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}\n" +
+            "enum E1 {\n" +
+            "  M1 = 1;\n" +
+            "}";
 
       SerializationContextImpl ctx = createContext();
-      ctx.registerProtoFiles(source);
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
+   }
+
+   @Test
+   public void testEnumConstantNameClashesWithOtherType2() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
+
+      String file1 = "package test1;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      String file2 = "package test1;\n" +
+            "enum E1 {\n" +
+            "  M1 = 1;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource()
+            .addProtoFile("test_proto_path/file1.proto", file1)
+            .addProtoFile("test_proto_path/file2.proto", file2);
+
+      SerializationContextImpl ctx = createContext();
+      ctx.registerProtoFiles(fileDescriptorSource);
+   }
+
+   @Test
+   public void testEnumConstantNameClashesWithOtherType3() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
+
+      String file1 = "package test1;\n" +
+            "message M1 {\n" +
+            "  required string a = 1;\n" +
+            "}";
+
+      String file2 = "package test1;\n" +
+            "enum E1 {\n" +
+            "  M1 = 1;\n" +
+            "}";
+
+      SerializationContextImpl ctx = createContext();
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("test_proto_path/file1.proto", file1));
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("test_proto_path/file2.proto", file2));
    }
 }

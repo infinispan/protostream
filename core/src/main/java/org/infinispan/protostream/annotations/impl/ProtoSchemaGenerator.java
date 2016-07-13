@@ -80,7 +80,7 @@ public final class ProtoSchemaGenerator {
 
       IndentWriter iw = new IndentWriter();
       iw.append("// File name: ").append(fileName).append('\n');
-      iw.append("// Scanned classes:\n");
+      iw.append("// Scanned classes:\n");    //todo [anistor] this list of scanned classes should include all interfaces and bases classes not just the ones for which a proto definition was generated
       for (ProtoTypeMetadata ptm : metadataByClass.values()) {
          if (ptm instanceof ProtoEnumTypeMetadata || ptm instanceof ProtoMessageTypeMetadata) {
             iw.append("//   ").append(ptm.getJavaClass().getCanonicalName()).append('\n');

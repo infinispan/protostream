@@ -5,14 +5,17 @@ import static java.util.Collections.unmodifiableList;
 import java.util.List;
 
 /**
- * Represents each value of a enumeration in a .proto file.
+ * Represents each constant value of a enumeration in a .proto file.
  *
  * @author gustavonalle
+ * @author anistor@redhat.com
  * @since 2.0
  */
 public final class EnumValueDescriptor {
 
    private final String name;
+   private String fullName;
+   private String scopedName; // the name of this enum value constant in its scope
    private final int number;
    private final String documentation;
    private final List<Option> options;
@@ -42,12 +45,23 @@ public final class EnumValueDescriptor {
       return options;
    }
 
+   public String getFullName() {
+      return fullName;
+   }
+
+   public String getScopedName() {
+      return scopedName;
+   }
+
    public EnumDescriptor getContainingEnum() {
       return enumDescriptor;
    }
 
    void setContainingEnum(EnumDescriptor enumDescriptor) {
       this.enumDescriptor = enumDescriptor;
+      fullName = enumDescriptor.getFullName() + "." + name;
+      scopedName = enumDescriptor.getFullName().substring(0, enumDescriptor.getFullName().length()
+            - enumDescriptor.getName().length()) + name;
    }
 
    public FileDescriptor getFileDescriptor() {

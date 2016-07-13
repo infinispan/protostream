@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.infinispan.protostream.BaseMessage;
 
-//todo move everyting to core and make a tests jar
+//todo move everything to core and make a tests jar
 
 /**
  * @author anistor@redhat.com

@@ -8,6 +8,7 @@ import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 
 /**
  * A repository for protobuf definitions and marshallers. All marshalling operations happen in the context of a {@code
@@ -76,6 +77,15 @@ public interface SerializationContext { //todo [anistor] split this into separat
     * @throws IllegalArgumentException if the given type id is unknown
     */
    String getTypeNameById(Integer typeId);
+
+   /**
+    * Obtains the type name associated with a numeric type id.
+    *
+    * @param typeId the numeric type id
+    * @return the fully qualified type name
+    * @throws IllegalArgumentException if the given type id is unknown
+    */
+   GenericDescriptor getDescriptorByTypeId(Integer typeId);
 
    /**
     * Obtains the associated numeric type id, if one was defined.

@@ -2,7 +2,6 @@ package org.infinispan.protostream.impl.parser;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -11,14 +10,13 @@ import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
-import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.impl.parser.mappers.ProtofileMapper;
 
 import com.squareup.protoparser.ProtoFile;
 import com.squareup.protoparser.ProtoParser;
 
 /**
- * Parser for proto files based on the Protoparser.
+ * Parser for .proto files based on the Protoparser.
  *
  * @author gustavonalle
  * @author anistor@redhat.com
@@ -35,37 +33,31 @@ public final class SquareProtoParser implements DescriptorParser {
    }
 
    @Override
-   public Map<String, FileDescriptor> parseAndResolve(FileDescriptorSource fileDescriptorSource) throws DescriptorParserException {
-      // parse the input
-      Map<String, FileDescriptor> fileDescriptorMap = parse(fileDescriptorSource);
-
-      // resolve imports and types
-      Map<String, GenericDescriptor> types = new HashMap<>();
-      for (FileDescriptor fileDescriptor : fileDescriptorMap.values()) {
-         fileDescriptor.resolveDependencies(null, fileDescriptorMap, types);
-         types.putAll(fileDescriptor.getTypes());
-      }
-      return fileDescriptorMap;
-   }
-
-   @Override
    public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws DescriptorParserException {
       Map<String, char[]> input = fileDescriptorSource.getFileDescriptors();
       Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<>(input.size());
       for (Map.Entry<String, char[]> entry : input.entrySet()) {
+         String fileName = entry.getKey();
          try {
-            ProtoFile protoFile = ProtoParser.parse(entry.getKey(), new CharArrayReader(entry.getValue()));
+            ProtoFile protoFile = ProtoParser.parse(fileName, new CharArrayReader(entry.getValue()));
             FileDescriptor fileDescriptor = PROTOFILE_MAPPER.map(protoFile);
             fileDescriptor.setConfiguration(configuration);
-            fileDescriptorMap.put(entry.getKey(), fileDescriptor);
+            fileDescriptorMap.put(fileName, fileDescriptor);
          } catch (IOException e) {
-            throw new DescriptorParserException("Internal parsing error : " + e.getMessage());
+            reportParsingError(fileName, new DescriptorParserException("Internal parsing error : " + e.getMessage()), fileDescriptorSource);
          } catch (DescriptorParserException e) {
-            throw e;
+            reportParsingError(fileName, e, fileDescriptorSource);
          } catch (RuntimeException e) {
-            throw new DescriptorParserException(e);
+            reportParsingError(fileName, new DescriptorParserException(e), fileDescriptorSource);
          }
       }
       return fileDescriptorMap;
+   }
+
+   private void reportParsingError(String fileName, DescriptorParserException dpe, FileDescriptorSource fileDescriptorSource) {
+      if (fileDescriptorSource.getProgressCallback() == null) {
+         throw dpe;
+      }
+      fileDescriptorSource.getProgressCallback().handleError(fileName, dpe);
    }
 }
