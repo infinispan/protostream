@@ -134,12 +134,12 @@ public final class SerializationContextImpl implements SerializationContext {
             if (existing != null && !existing.equals(fullName)) {
                GenericDescriptor x = fileDescriptor.getTypes().get(existing);
                if (x == null || typeId.equals(x.getTypeId())) {
-                  throw new IllegalArgumentException("Duplicate type id " + typeId + " for type " + fullName + ". Already used by " + existing);
+                  throw new DescriptorParserException("Duplicate type id " + typeId + " for type " + fullName + ". Already used by " + existing);
                }
             }
             existing = newTypeIds.get(typeId);
             if (existing != null) {
-               throw new IllegalArgumentException("Duplicate type id " + typeId + " for type " + fullName + ". Already used by " + existing);
+               throw new DescriptorParserException("Duplicate type id " + typeId + " for type " + fullName + ". Already used by " + existing);
             }
             newTypeIds.put(typeId, fullName);
          }
