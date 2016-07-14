@@ -1,24 +1,30 @@
 package org.infinispan.protostream.impl;
 
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.DescriptorParserException;
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.descriptors.FileDescriptor;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * @author anistor@redhat.com
  * @since 2.0
  */
 public class SerializationContextImplTest {
+
+   @org.junit.Rule
+   public ExpectedException exception = ExpectedException.none();
 
    private SerializationContextImpl createContext() {
       return (SerializationContextImpl) ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
@@ -28,7 +34,7 @@ public class SerializationContextImplTest {
    public void testRegisterProtoFiles() throws Exception {
       SerializationContextImpl ctx = createContext();
 
-      final String file1 = "package p;\n" +
+      String file1 = "package p;\n" +
             "message A {\n" +
             "   optional int32 f1 = 1;\n" +
             "}";
@@ -76,5 +82,51 @@ public class SerializationContextImplTest {
       FileDescriptor fd2 = fileDescriptors.get("file2.proto");
       assertNotNull(fd2);
       assertTrue(fd2.getTypes().isEmpty());
+   }
+
+   @Test
+   public void testDuplicateTypeIdInDifferentFiles() throws Exception {
+      exception.expect(IllegalArgumentException.class);
+      exception.expectMessage("Duplicate type id 10 for type test2.M2. Already used by test1.M1");
+
+      String file1 = "package test1;\n" +
+            "/**@TypeId(10)*/\n" +
+            "message M1 {\n" +
+            "   optional string a = 1;\n" +
+            "}";
+      String file2 = "package test2;\n" +
+            "/**@TypeId(10)*/\n" +
+            " message M2 {\n" +
+            "   optional string b = 1;\n" +
+            "}";
+
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("test1.proto", file1);
+      source.addProtoFile("test2.proto", file2);
+
+      SerializationContextImpl ctx = createContext();
+      ctx.registerProtoFiles(source);
+   }
+
+   @Test
+   public void testDuplicateTypeIdInSameFile() throws Exception {
+      exception.expect(IllegalArgumentException.class);
+      exception.expectMessage("Duplicate type id 10 for type test1.M1. Already used by test1.M2");
+
+      String file1 = "package test1;\n" +
+            "/**@TypeId(10)*/\n" +
+            "message M1 {\n" +
+            "   optional string a = 1;\n" +
+            "}" +
+            "/**@TypeId(10)*/\n" +
+            "message M2 {\n" +
+            "   optional string a = 1;\n" +
+            "}";
+
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("test1.proto", file1);
+
+      SerializationContextImpl ctx = createContext();
+      ctx.registerProtoFiles(source);
    }
 }
