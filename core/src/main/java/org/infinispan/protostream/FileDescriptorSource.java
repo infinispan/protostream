@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Aggregator for source protofiles.
@@ -24,7 +24,10 @@ public final class FileDescriptorSource {
    private static final String ENCODING = "UTF-8";
    private static final int BUFFER_SIZE = 1024;
 
-   private final Map<String, char[]> descriptors = new ConcurrentHashMap<>();
+   /**
+    * The unparsed files. Using a LinkedHashMap to ensure parsing happens in the order specified by the user.
+    */
+   private final Map<String, char[]> descriptors = new LinkedHashMap<>();
 
    private ProgressCallback progressCallback;
 
@@ -135,20 +138,14 @@ public final class FileDescriptorSource {
    }
 
    private char[] toCharArray(File file) throws IOException {
-      FileInputStream is = new FileInputStream(file);
-      try {
+      try (FileInputStream is = new FileInputStream(file)) {
          return toCharArray(is);
-      } finally {
-         is.close();
       }
    }
 
    private char[] toCharArray(InputStream is) throws IOException {
-      Reader reader = new InputStreamReader(is, ENCODING);
-      try {
+      try (Reader reader = new InputStreamReader(is, ENCODING)) {
          return toCharArray(reader);
-      } finally {
-         reader.close();
       }
    }
 
