@@ -82,7 +82,7 @@
         </dependency>
 
         <dependency>
-            <groupId>org.infinispan.protostream</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>sample-domain-definition</artifactId>
             <scope>test</scope>
         </dependency>
