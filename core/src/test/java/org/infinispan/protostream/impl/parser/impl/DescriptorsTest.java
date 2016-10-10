@@ -779,15 +779,20 @@ public class DescriptorsTest {
    @Test
    public void testAnnotationParserMissingRequiredAttribute() throws Exception {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("org.infinispan.protostream.AnnotationParserException: Attribute 'value' of annotation 'Indexed' on sample_bank_account.Account is required");
+      exception.expectMessage("org.infinispan.protostream.AnnotationParserException: Attribute 'value' of annotation 'AnnotationWithRequiredAttribute' on M is required");
 
       Configuration config = new Configuration.Builder()
-            .messageAnnotation("Indexed")
+            .messageAnnotation("AnnotationWithRequiredAttribute")
             .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
             .booleanType()
             .build();
 
-      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromResources("/sample_bank_account/bank.proto");
+      String testProto = "/** @AnnotationWithRequiredAttribute */\n" +
+            "message M {\n" +
+            "  optional int32 field1 = 1; \n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
       parseAndResolve(fileDescriptorSource, config);
    }
 
