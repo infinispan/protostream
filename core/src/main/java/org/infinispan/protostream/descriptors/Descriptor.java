@@ -7,7 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 
@@ -151,11 +152,20 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
    }
 
    @Override
-   protected AnnotationConfig<Descriptor> getAnnotationConfig(String annotationName) {
-      return fileDescriptor.configuration.messageAnnotations().get(annotationName);
+   protected AnnotationConfiguration getAnnotationConfig(String annotationName) {
+      AnnotationConfiguration annotationConfiguration = fileDescriptor.configuration.annotationsConfig().annotations().get(annotationName);
+      if (annotationConfiguration == null) {
+         return null;
+      }
+      for (AnnotationElement.AnnotationTarget t : annotationConfiguration.target()) {
+         if (t == AnnotationElement.AnnotationTarget.MESSAGE) {
+            return annotationConfiguration;
+         }
+      }
+      throw new DescriptorParserException("Annotation '" + annotationName + "' cannot be applied to message types.");
    }
 
-   public static class Builder {
+   public static final class Builder {
       private String name, fullName;
       private List<Option> options;
       private List<FieldDescriptor> fields;

@@ -1,33 +1,35 @@
 package org.infinispan.protostream.config;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
+import org.infinispan.protostream.descriptors.AnnotationElement;
+import org.infinispan.protostream.impl.parser.AnnotationParser;
 
 
 /**
  * @author anistor@redhat.com
  * @since 2.0
  */
-public final class AnnotationAttributeConfig {
+final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeConfiguration {
 
-   public enum AttributeType {
-      IDENTIFIER, STRING, CHARACTER, BOOLEAN, INT, LONG, FLOAT, DOUBLE, ANNOTATION
-   }
-
+   /**
+    * The name of the attribute.
+    */
    private final String name;
 
    private final boolean isMultiple;
 
    private final Object defaultValue;
 
-   private final AttributeType type;
+   private final AnnotationElement.AttributeType type;
 
    private final Set<String> allowedValues;
 
-   private AnnotationAttributeConfig(String name, boolean isMultiple, Object defaultValue, AttributeType type, Set<String> allowedValues) {
+   private AnnotationAttributeConfigurationImpl(String name, boolean isMultiple, Object defaultValue, AnnotationElement.AttributeType type, Set<String> allowedValues) {
       this.name = name;
       this.isMultiple = isMultiple;
       this.defaultValue = defaultValue;
@@ -35,51 +37,73 @@ public final class AnnotationAttributeConfig {
       this.allowedValues = allowedValues;
    }
 
+   @Override
    public String name() {
       return name;
    }
 
+   @Override
    public boolean multiple() {
       return isMultiple;
    }
 
+   @Override
    public Object defaultValue() {
       return defaultValue;
    }
 
-   public AttributeType type() {
+   @Override
+   public AnnotationElement.AttributeType type() {
       return type;
    }
 
+   @Override
    public Set<String> allowedValues() {
       return allowedValues;
    }
 
-   public static final class Builder<DescriptorType extends AnnotatedDescriptor> {
+   static final class BuilderImpl implements Builder {
 
-      private final AnnotationConfig.Builder<DescriptorType> parentBuilder;
+      private final AnnotationConfiguration.Builder parentBuilder;
 
+      /**
+       * The attribute name.
+       */
       private final String name;
+
+      private AnnotationElement.AttributeType type = AnnotationElement.AttributeType.STRING;
 
       private boolean isMultiple;
 
       private Object defaultValue;
 
-      private AttributeType type = AttributeType.STRING;
-
+      /**
+       * The set of allowed values. This is only used with STRING, IDENTIFIER, or ANNOTATION type.
+       */
       private String[] allowedValues;
 
-      Builder(AnnotationConfig.Builder<DescriptorType> parentBuilder, String name) {
+      BuilderImpl(AnnotationConfiguration.Builder parentBuilder, String name) {
          this.parentBuilder = parentBuilder;
          this.name = name;
       }
 
-      public Builder<DescriptorType> multiple(boolean isMultiple) {
+      @Override
+      public Builder type(AnnotationElement.AttributeType type) {
+         if (type == null) {
+            throw new IllegalArgumentException("attribute type must not be null");
+         }
+         this.type = type;
+         return this;
+      }
+
+      @Override
+      public Builder multiple(boolean isMultiple) {
          this.isMultiple = isMultiple;
          return this;
       }
 
-      public Builder<DescriptorType> defaultValue(Object defaultValue) {
+      @Override
+      public Builder defaultValue(Object defaultValue) {
          if (defaultValue == null) {
             throw new IllegalArgumentException("Default value cannot be null");
          }
@@ -87,69 +111,30 @@ public final class AnnotationAttributeConfig {
          return this;
       }
 
-      public Builder<DescriptorType> annotationType(String... allowedAnnotations) {
-         type = AttributeType.ANNOTATION;
-         allowedValues = allowedAnnotations;
-         return this;
-      }
-
-      public Builder<DescriptorType> identifierType(String... allowedValues) {
-         type = AttributeType.IDENTIFIER;
+      @Override
+      public Builder allowedValues(String... allowedValues) {
          this.allowedValues = allowedValues;
          return this;
       }
 
-      public Builder<DescriptorType> stringType(String... allowedValues) {
-         type = AttributeType.STRING;
-         this.allowedValues = allowedValues;
-         return this;
-      }
-
-      public Builder<DescriptorType> characterType() {
-         type = AttributeType.CHARACTER;
-         allowedValues = null;
-         return this;
-      }
-
-      public Builder<DescriptorType> booleanType() {
-         type = AttributeType.BOOLEAN;
-         allowedValues = null;
-         return this;
-      }
-
-      public Builder<DescriptorType> intType() {
-         type = AttributeType.INT;
-         allowedValues = null;
-         return this;
-      }
-
-      public Builder<DescriptorType> longType() {
-         type = AttributeType.LONG;
-         allowedValues = null;
-         return this;
-      }
-
-      public Builder<DescriptorType> floatType() {
-         type = AttributeType.FLOAT;
-         allowedValues = null;
-         return this;
-      }
-
-      public Builder<DescriptorType> doubleType() {
-         type = AttributeType.DOUBLE;
-         allowedValues = null;
-         return this;
-      }
-
-      public Builder<DescriptorType> attribute(String name) {
+      @Override
+      public Builder attribute(String name) {
          return parentBuilder.attribute(name);
       }
 
-      public AnnotationConfig.Builder<DescriptorType> annotationMetadataCreator(AnnotationMetadataCreator<?, DescriptorType> annotationMetadataCreator) {
-         return parentBuilder.annotationMetadataCreator(annotationMetadataCreator);
+      @Override
+      public Builder metadataCreator(AnnotationMetadataCreator<?, ? extends AnnotatedDescriptor> annotationMetadataCreator) {
+         parentBuilder.metadataCreator(annotationMetadataCreator);
+         return this;
       }
 
-      AnnotationAttributeConfig buildAnnotationAttributeConfig() {
+      @Override
+      public Builder repeatable(String containingAnnotationName) {
+         parentBuilder.repeatable(containingAnnotationName);
+         return this;
+      }
+
+      AnnotationAttributeConfiguration buildAnnotationAttributeConfiguration() {
          Set<String> allowedValuesSet = null;
 
          if (allowedValues != null && allowedValues.length != 0) {
@@ -171,7 +156,21 @@ public final class AnnotationAttributeConfig {
          if (defaultValue != null) {
             switch (type) {
                case ANNOTATION:
-                  throw new IllegalArgumentException("The type of attribute '" + name + "' does not allow a default value.");
+                  if (!(defaultValue instanceof String)) {
+                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Annotation expected.");
+                  }
+                  AnnotationParser parser = new AnnotationParser((String) defaultValue, false);
+                  List<AnnotationElement.Annotation> _annotations = parser.parse();
+                  if (_annotations.size() != 1) {
+                     throw new IllegalArgumentException("Default value for attribute '" + name + "' must contain a single annotation value");
+                  }
+                  AnnotationElement.Annotation annotationValue = _annotations.iterator().next();
+                  if (allowedValuesSet != null && !allowedValuesSet.contains(annotationValue.getName())) {
+                     throw new IllegalArgumentException("Default value for attribute '" + name + "' must be an annotation of type: " + allowedValuesSet);
+                  }
+                  defaultValue = annotationValue;
+                  break;
+
                case STRING:
                case IDENTIFIER:
                   if (!(defaultValue instanceof String)) {
@@ -211,9 +210,15 @@ public final class AnnotationAttributeConfig {
             }
          }
 
-         return new AnnotationAttributeConfig(name, isMultiple, defaultValue, type, allowedValuesSet);
+         return new AnnotationAttributeConfigurationImpl(name, isMultiple, defaultValue, type, allowedValuesSet);
       }
 
+      @Override
+      public AnnotationConfiguration.Builder parentBuilder() {
+         return parentBuilder;
+      }
+
+      @Override
       public Configuration build() {
          return parentBuilder.build();
       }

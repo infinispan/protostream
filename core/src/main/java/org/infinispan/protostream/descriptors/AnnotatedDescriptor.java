@@ -5,6 +5,9 @@ import java.util.Map;
 import org.infinispan.protostream.AnnotationParserException;
 
 /**
+ * Base class for all descriptors. Provides common methods for naming, accessing the attached documentation and
+ * annotations.
+ *
  * @author anistor@redhat.com
  * @since 2.0
  */
@@ -27,8 +30,8 @@ public interface AnnotatedDescriptor {
    Map<String, AnnotationElement.Annotation> getAnnotations() throws AnnotationParserException;
 
    /**
-    * Get the annotation object created by the registered AnnotationMetadataCreator or null if the annotation is missing
-    * or no AnnotationMetadataCreator was registered.
+    * Get the annotation object created by the registered AnnotationMetadataCreator or {@code null} if the annotation is
+    * missing or no {@link org.infinispan.protostream.AnnotationMetadataCreator} was registered.
     *
     * @param annotationName
     * @param <T>

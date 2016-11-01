@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 
 /**
@@ -143,8 +144,17 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    }
 
    @Override
-   protected AnnotationConfig<FieldDescriptor> getAnnotationConfig(String annotationName) {
-      return fileDescriptor.configuration.fieldAnnotations().get(annotationName);
+   protected AnnotationConfiguration getAnnotationConfig(String annotationName) {
+      AnnotationConfiguration annotationConfiguration = fileDescriptor.configuration.annotationsConfig().annotations().get(annotationName);
+      if (annotationConfiguration == null) {
+         return null;
+      }
+      for (AnnotationElement.AnnotationTarget t : annotationConfiguration.target()) {
+         if (t == AnnotationElement.AnnotationTarget.FIELD) {
+            return annotationConfiguration;
+         }
+      }
+      throw new DescriptorParserException("Annotation '" + annotationName + "' cannot be applied to fields.");
    }
 
    public static final class Builder {

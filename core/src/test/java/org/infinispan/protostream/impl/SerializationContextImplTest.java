@@ -1,9 +1,9 @@
 package org.infinispan.protostream.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -30,7 +30,7 @@ public class SerializationContextImplTest {
    public ExpectedException exception = ExpectedException.none();
 
    private SerializationContextImpl createContext() {
-      return (SerializationContextImpl) ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      return (SerializationContextImpl) ProtobufUtil.newSerializationContext(Configuration.builder().build());
    }
 
    @Test

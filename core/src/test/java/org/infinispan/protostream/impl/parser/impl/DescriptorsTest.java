@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl.parser.impl;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.protostream.AnnotationMetadataCreator;
+import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.config.Configuration;
@@ -33,7 +35,7 @@ import org.junit.rules.ExpectedException;
 
 public class DescriptorsTest {
 
-   private final Configuration config = new Configuration.Builder().build();
+   private final Configuration config = Configuration.builder().build();
 
    @org.junit.Rule
    public ExpectedException exception = ExpectedException.none();
@@ -704,25 +706,16 @@ public class DescriptorsTest {
             "  optional int32 field1 = 1;\n" +
             "}\n";
 
-      Configuration config = new Configuration.Builder()
-            .messageAnnotation("Foo")
-               .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
-               .identifierType()
-            .annotationMetadataCreator(new AnnotationMetadataCreator<Object, Descriptor>() {
-               @Override
-               public Object create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
-                  return annotation.getDefaultAttributeValue().getValue();
-               }
-            })
-            .fieldAnnotation("Bar")
-               .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
-               .identifierType()
-            .annotationMetadataCreator(new AnnotationMetadataCreator<Object, FieldDescriptor>() {
-               @Override
-               public Object create(FieldDescriptor fieldDescriptor, AnnotationElement.Annotation annotation) {
-                  return annotation.getDefaultAttributeValue().getValue();
-               }
-            })
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Foo", AnnotationElement.AnnotationTarget.MESSAGE)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.IDENTIFIER)
+            .metadataCreator((descriptor, annotation) -> annotation.getDefaultAttributeValue().getValue())
+            .parentBuilder()
+            .annotation("Bar", AnnotationElement.AnnotationTarget.FIELD)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.IDENTIFIER)
+            .metadataCreator((fieldDescriptor, annotation) -> annotation.getDefaultAttributeValue().getValue())
             .build();
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
@@ -748,12 +741,12 @@ public class DescriptorsTest {
 
    @Test
    public void testAnnotationParser() throws Exception {
-      Configuration config = new Configuration.Builder()
-            .messageAnnotation("Indexed")
-            .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
-               .booleanType()
-               .defaultValue(true)
-            .annotationMetadataCreator(new AnnotationMetadataCreator<Boolean, Descriptor>() {
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Indexed", AnnotationElement.AnnotationTarget.MESSAGE)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.BOOLEAN)
+            .defaultValue(true)
+            .metadataCreator(new AnnotationMetadataCreator<Boolean, Descriptor>() {
                @Override
                public Boolean create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
                   return (Boolean) annotation.getDefaultAttributeValue().getValue();
@@ -781,10 +774,10 @@ public class DescriptorsTest {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("org.infinispan.protostream.AnnotationParserException: Attribute 'value' of annotation 'AnnotationWithRequiredAttribute' on M is required");
 
-      Configuration config = new Configuration.Builder()
-            .messageAnnotation("AnnotationWithRequiredAttribute")
-            .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
-            .booleanType()
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("AnnotationWithRequiredAttribute", AnnotationElement.AnnotationTarget.MESSAGE)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.BOOLEAN)
             .build();
 
       String testProto = "/** @AnnotationWithRequiredAttribute */\n" +
@@ -797,11 +790,81 @@ public class DescriptorsTest {
    }
 
    @Test
+   public void testDuplicateAnnotation() throws Exception {
+      exception.expect(AnnotationParserException.class);
+      exception.expectMessage("Error: 1,8: duplicate annotation definition \"Field\"");
+
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.BOOLEAN)
+            .defaultValue(true)
+            .build();
+
+      String testProto = "message M {\n" +
+            "  /** @Field @Field */\n" +
+            "  optional int32 field1 = 1; \n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
+      Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
+
+      //todo [anistor] this is waaay too lazy
+      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+   }
+
+   @Test
+   public void testRepeatedAnnotation() throws Exception {
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
+            .repeatable("Fields")
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.BOOLEAN)
+            .defaultValue(true)
+            .build();
+
+      String testProto = "message M {\n" +
+            "  /** @Field @Field */\n" +
+            "  optional int32 field1 = 1; \n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
+      Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
+
+      Map<String, AnnotationElement.Annotation> annotations = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      assertFalse(annotations.containsKey("Field"));
+      assertTrue(annotations.containsKey("Fields"));
+      List<AnnotationElement.Annotation> innerAnnotations = (List<AnnotationElement.Annotation>) annotations.get("Fields").getDefaultAttributeValue().getValue();
+      assertEquals(2, innerAnnotations.size());
+   }
+
+   @Test
+   public void testAnnotationTarget() throws Exception {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("Annotation 'Field' cannot be applied to message types.");
+
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.BOOLEAN)
+            .defaultValue(true)
+            .build();
+
+      String testProto = "/** @Field */\n" +
+            "message M {\n" +
+            "  optional int32 field1 = 1; \n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
+      parseAndResolve(fileDescriptorSource, config);
+   }
+
+   @Test
    public void testMultipleAnnotationAttribute() throws Exception {
-      Configuration config = new Configuration.Builder()
-            .messageAnnotation("Xyz")
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
             .attribute("attr")
-            .booleanType()
+            .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .multiple(true)
             .build();
@@ -833,10 +896,10 @@ public class DescriptorsTest {
 
    @Test
    public void testArrayAnnotationAttributeNormalizing() throws Exception {
-      Configuration config = new Configuration.Builder()
-            .messageAnnotation("Xyz")
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
             .attribute("attr")
-            .booleanType()
+            .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .multiple(true)
             .build();

@@ -2,7 +2,7 @@ package org.infinispan.protostream.impl.parser;
 
 import java.io.StringWriter;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
@@ -25,8 +25,8 @@ public class TreePrinter extends AnnotationElement.Visitor {
       return out.toString();
    }
 
-   public void printAnnotations(Map<String, AnnotationElement.Annotation> annotations) {
-      for (AnnotationElement.Annotation annotation : annotations.values()) {
+   public void printAnnotations(List<AnnotationElement.Annotation> annotations) {
+      for (AnnotationElement.Annotation annotation : annotations) {
          printTree(annotation);
          out.write('\n');
       }

@@ -69,7 +69,7 @@ public final class ProtoSchemaBuilder {
 
       String packageName = cmd.getOptionValue("package");
 
-      Configuration config = new Configuration.Builder().build();
+      Configuration config = Configuration.builder().build();
       SerializationContext ctx = ProtobufUtil.newSerializationContext(config);
 
       Properties schemas = cmd.getOptionProperties("schema");

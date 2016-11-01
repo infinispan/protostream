@@ -2,11 +2,13 @@ package org.infinispan.protostream.impl.parser;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Map;
+import java.util.List;
 
+import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.impl.Log;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * @author anistor@redhat.com
@@ -16,17 +18,20 @@ public class AnnotationParserTest {
 
    private static final Log log = Log.LogFactory.getLog(AnnotationParserTest.class);
 
+   @org.junit.Rule
+   public ExpectedException exception = ExpectedException.none();
+
    private static final String testDoc = "\n" +
          "some garbage  \n" +
          "\n" +
          "more garb#$#$#$#4age\n" +
          "   @XXX.yyy.zzzz(false)@ABC(x = some.class.or.enum, y=45, z = \"333333\")  \"dd\"\n" +
          "\n" +
-         "@IndexedField2  ccc\n" +
+         "@TestAnnotation2  ccc\n" +
          "\n" +
-         "@IndexedField3(Store.NO) @IndexedField4(x = Store.NO, y = true)\n" +
+         "@TestAnnotation3(Store.NO) @TestAnnotation4(x = Store.NO, y = true)\n" +
          "\n" +
-         "@IndexedField5(store = Store.YES, quickAndDirty = true)   VVV\n" +
+         "@TestAnnotation5(store = Store.YES, quickAndDirty = true)   VVV\n" +
          "\n" +
          "sd sfds fdsf df sdf sdf\n" +
          " junk sfdsf sd junk\n" +
@@ -60,16 +65,16 @@ public class AnnotationParserTest {
          "   y=45,\n" +
          "   z=333333\n" +
          ")\n" +
-         "@IndexedField2(\n" +
+         "@TestAnnotation2(\n" +
          ")\n" +
-         "@IndexedField3(\n" +
+         "@TestAnnotation3(\n" +
          "   value=Store.NO\n" +
          ")\n" +
-         "@IndexedField4(\n" +
+         "@TestAnnotation4(\n" +
          "   x=Store.NO,\n" +
          "   y=true\n" +
          ")\n" +
-         "@IndexedField5(\n" +
+         "@TestAnnotation5(\n" +
          "   store=Store.YES,\n" +
          "   quickAndDirty=true\n" +
          ")\n" +
@@ -105,26 +110,71 @@ public class AnnotationParserTest {
 
    @Test
    public void testEmptyAnnotations() {
-      testAnnotationParsing("", "");
+      testAnnotationParsing("", true, "");
    }
 
    @Test
    public void testSingleAnnotation() {
-      testAnnotationParsing("@Indexed()", "@Indexed(\n)\n");
+      testAnnotationParsing("@Abc()", true, "@Abc(\n)\n");
+      testAnnotationParsing("@Abc", true, "@Abc(\n)\n");
+
+      testAnnotationParsing("@Abc()", false, "@Abc(\n)\n");
+      testAnnotationParsing("@Abc", false, "@Abc(\n)\n");
    }
 
    @Test
    public void testMultipleAnnotations() {
-      testAnnotationParsing(testDoc, expectedOutput);
+      testAnnotationParsing(testDoc, true, expectedOutput);
    }
 
-   private void testAnnotationParsing(String input, String expected) {
-      AnnotationParser parser = new AnnotationParser(input);
-      Map<String, AnnotationElement.Annotation> annotations = parser.parse();
+   @Test
+   public void testAnnotationsMustStartOnAnEmptyLine() {
+      exception.expect(AnnotationParserException.class);
+      exception.expectMessage("Error: 4,7: Annotations must start on an empty line");
+
+      testAnnotationParsing(
+            "some garbage  \n" +
+                  "\n" +
+                  "more garbage\n" +
+                  " aaa  @Abc\n" +
+                  "\n",
+            true,
+            "@Abc(\n)\n");
+   }
+
+   @Test
+   public void testUnexpectedShmoo() {
+      exception.expect(AnnotationParserException.class);
+      exception.expectMessage("Error: 1,1: Unexpected character: x");
+
+      testAnnotationParsing(
+            "xx\n" +
+                  "   @Abc  \n" +
+                  "\n",
+            false,
+            "@Abc(\n)\n");
+   }
+
+   @Test
+   public void testNoShmooExpected() {
+      testAnnotationParsing(
+            "\n   @Abc(x=\n" +
+            "@YYY(a=1))  \n\n",
+            false,
+            "@Abc(\n" +
+                  "   x=@YYY(\n" +
+                  "      a=1\n" +
+                  "   )\n" +
+                  ")\n");
+   }
+
+   private void testAnnotationParsing(String input, boolean expectDocNoise, String expectedOutput) {
+      AnnotationParser parser = new AnnotationParser(input, expectDocNoise);
+      List<AnnotationElement.Annotation> annotations = parser.parse();
       TreePrinter treePrinter = new TreePrinter();
       treePrinter.printAnnotations(annotations);
       String output = treePrinter.getOutput();
       log.debug(output);
-      assertEquals(expected, output);
+      assertEquals(expectedOutput, output);
    }
 }

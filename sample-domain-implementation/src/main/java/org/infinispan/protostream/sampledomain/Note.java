@@ -16,7 +16,7 @@ public class Note {
 
    private User author;
 
-   @ProtoDoc("@IndexedField")
+   @ProtoDoc("@Field")
    @ProtoField(number = 1)
    public String getText() {
       return text;
@@ -26,7 +26,7 @@ public class Note {
       this.text = text;
    }
 
-   @ProtoDoc("@IndexedField")
+   @ProtoDoc("@Field")
    @ProtoField(number = 2)
    public User getAuthor() {
       return author;

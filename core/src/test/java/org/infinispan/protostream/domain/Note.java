@@ -23,11 +23,11 @@ public class Note {
 
    private Date creationDate;
 
-   @ProtoDoc("@IndexedField")
+   @ProtoDoc("@Field")
    @ProtoField(number = 3)
    public Note note;
 
-   @ProtoDoc("@IndexedField")
+   @ProtoDoc("@Field")
    @ProtoField(number = 4, collectionImplementation = ArrayList.class)
    public List<Note> notes;
 
@@ -40,7 +40,7 @@ public class Note {
       this.text = text;
    }
 
-   @ProtoDoc("@IndexedField")
+   @ProtoDoc("@Field")
    @ProtoField(number = 2)
    public User getAuthor() {
       return author;
@@ -50,7 +50,7 @@ public class Note {
       this.author = author;
    }
 
-   @ProtoDoc("@IndexedField")
+   @ProtoDoc("@Field")
    @ProtoField(number = 5, type = Type.UINT64, required = false, defaultValue = "0")
    public Date getCreationDate() {
       return creationDate;

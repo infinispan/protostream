@@ -15,7 +15,7 @@ import org.infinispan.protostream.domain.marshallers.MarshallerRegistration;
 public abstract class AbstractProtoStreamTest {
 
    protected SerializationContext createContext() throws IOException, DescriptorParserException {
-      return createContext(new Configuration.Builder());
+      return createContext(Configuration.builder());
    }
 
    protected SerializationContext createContext(Configuration.Builder cfgBuilder) throws IOException, DescriptorParserException {

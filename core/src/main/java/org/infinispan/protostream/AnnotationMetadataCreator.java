@@ -4,10 +4,13 @@ import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
+ * Creates an application specific alternative representation of an {@link AnnotationElement.Annotation}.
+ *
  * @author anistor@redhat.com
  * @since 2.0
  */
-public interface AnnotationMetadataCreator<MetadataType, AnnotatedDescriptorType extends AnnotatedDescriptor> {
+@FunctionalInterface
+public interface AnnotationMetadataCreator<MetadataOutType, AnnotatedDescriptorType extends AnnotatedDescriptor> {
 
-   MetadataType create(AnnotatedDescriptorType annotatedDescriptor, AnnotationElement.Annotation annotation);
+   MetadataOutType create(AnnotatedDescriptorType annotatedDescriptor, AnnotationElement.Annotation annotation);
 }

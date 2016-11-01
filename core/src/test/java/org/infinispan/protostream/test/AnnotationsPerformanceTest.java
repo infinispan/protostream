@@ -104,7 +104,7 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
    }
 
    private SerializationContext createCtxWithHandWrittenMarshaller() throws IOException {
-      Configuration.Builder cfgBuilder = new Configuration.Builder()
+      Configuration.Builder cfgBuilder = Configuration.builder()
             .setLogOutOfSequenceWrites(false)
             .setLogOutOfSequenceReads(false);
       SerializationContext ctx = createContext(cfgBuilder);
@@ -126,7 +126,7 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
    }
 
    private SerializationContext createCtxWithGeneratedMarshaller() throws IOException {
-      Configuration.Builder cfgBuilder = new Configuration.Builder()
+      Configuration.Builder cfgBuilder = Configuration.builder()
             .setLogOutOfSequenceWrites(false)
             .setLogOutOfSequenceReads(false);
       SerializationContext ctx = createContext(cfgBuilder);

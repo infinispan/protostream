@@ -1,6 +1,5 @@
 package org.infinispan.protostream.impl.parser;
 
-import java.text.MessageFormat;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,6 +9,11 @@ import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
+ * Parses all annotations it encounters and fails on first syntactic error. Everything that looks like a syntactically
+ * correct annotation will be parsed and returned. At this stage there is no validation of what annotation name is
+ * acceptable or not and no validation of attribute value types, multiplicity, etc. These steps are not part of the
+ * syntactic analysis and will be performed later.
+ *
  * @author anistor@redhat.com
  * @since 2.0
  */
@@ -17,18 +21,27 @@ public final class AnnotationParser {
 
    private final AnnotationLexer lexer;
 
-   public AnnotationParser(String input) {
-      this.lexer = new AnnotationLexer(input.toCharArray());
+   /**
+    * Creates a parser for a given input text.
+    *
+    * @param input          the input text to parse
+    * @param expectDocNoise indicates if human readable text is expected to be encountered before the annotations
+    */
+   public AnnotationParser(String input, boolean expectDocNoise) {
+      this.lexer = new AnnotationLexer(input.toCharArray(), expectDocNoise);
    }
 
-   public Map<String, AnnotationElement.Annotation> parse() throws AnnotationParserException {
-      Map<String, AnnotationElement.Annotation> annotations = new LinkedHashMap<>();
+   /**
+    * Parse the text and extract the annotations.
+    *
+    * @return the list of annotations; name uniqueness is not mandatory at this stage
+    * @throws AnnotationParserException if syntax errors are encountered
+    */
+   public List<AnnotationElement.Annotation> parse() throws AnnotationParserException {
+      List<AnnotationElement.Annotation> annotations = new LinkedList<>();
       while (lexer.token != AnnotationTokens.EOF) {
          AnnotationElement.Annotation annotation = parseAnnotation();
-         if (annotations.containsKey(annotation.getName())) {
-            throw syntaxError(annotation.position, "duplicate annotation definition \"{0}\"", annotation.getName());
-         }
-         annotations.put(annotation.getName(), annotation);
+         annotations.add(annotation);
          lexer.skipDocNoise();
       }
       return annotations;
@@ -39,7 +52,7 @@ public final class AnnotationParser {
          lexer.nextToken();
       } else {
          long pos = AnnotationElement.line(lexer.pos) > AnnotationElement.line(lexer.lastPos) ? lexer.lastPos : lexer.pos;
-         throw syntaxError(pos, "{0} expected", token.text);
+         throw new AnnotationParserException(String.format("Error: %s: %s expected", AnnotationElement.positionToString(pos), token.text));
       }
    }
 
@@ -65,7 +78,7 @@ public final class AnnotationParser {
 
    private AnnotationElement.Annotation parseAnnotation() {
       if (lexer.token != AnnotationTokens.AT) {
-         throw syntaxError("annotation expected");
+         throw new AnnotationParserException(String.format("Error: %s: annotation expected", AnnotationElement.positionToString(lexer.pos)));
       }
       long pos = lexer.pos;
       expect(AnnotationTokens.AT);
@@ -84,7 +97,7 @@ public final class AnnotationParser {
                long pos = lexer.pos;
                AnnotationElement.Annotation annotation = parseAnnotation();
                expect(AnnotationTokens.RPAREN);
-               AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.DEFAULT_ATTRIBUTE, annotation);
+               AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE, annotation);
                members.put(attribute.getName(), attribute);
                return members;
             }
@@ -100,7 +113,7 @@ public final class AnnotationParser {
                   break;
                } else {
                   expect(AnnotationTokens.RPAREN);
-                  AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.DEFAULT_ATTRIBUTE, identifier);
+                  AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE, identifier);
                   members.put(attribute.getName(), attribute);
                   return members;
                }
@@ -116,7 +129,7 @@ public final class AnnotationParser {
                long pos = lexer.pos;
                AnnotationElement.Value literal = parseValue(start);
                expect(AnnotationTokens.RPAREN);
-               AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.DEFAULT_ATTRIBUTE, literal);
+               AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE, literal);
                members.put(attribute.getName(), attribute);
                return members;
             }
@@ -127,7 +140,7 @@ public final class AnnotationParser {
             while (lexer.token != AnnotationTokens.RPAREN && lexer.token != AnnotationTokens.EOF) {
                AnnotationElement.Attribute attribute = parseAttribute();
                if (members.containsKey(attribute.getName())) {
-                  throw syntaxError(attribute.position, "duplicate annotation member definition \"{0}\"", attribute.getName());
+                  throw new AnnotationParserException(String.format("Error: %s: duplicate annotation member definition \"%s\"", AnnotationElement.positionToString(attribute.position), attribute.getName()));
                }
                members.put(attribute.getName(), attribute);
                if (lexer.token != AnnotationTokens.RPAREN && lexer.token != AnnotationTokens.EOF) {
@@ -202,13 +215,13 @@ public final class AnnotationParser {
                      break;
                }
             } catch (NumberFormatException e) {
-               throw syntaxError("invalid numeric value: {0}", e.getMessage());
+               throw new AnnotationParserException(String.format("Error: %s: invalid numeric value: %s", AnnotationElement.positionToString(lexer.pos), e.getMessage()));
             }
             AnnotationElement.Literal literal = new AnnotationElement.Literal(pos, value);
             lexer.nextToken();
             return literal;
       }
-      throw syntaxError("literal expected");
+      throw new AnnotationParserException(String.format("Error: %s: literal expected", AnnotationElement.positionToString(lexer.pos)));
    }
 
    private AnnotationElement.Identifier parseIdentifier() {
@@ -231,14 +244,5 @@ public final class AnnotationParser {
       }
       expect(AnnotationTokens.RBRACE);
       return new AnnotationElement.Array(pos, values);
-   }
-
-   private AnnotationParserException syntaxError(long pos, String errorMsg, String... errorArgs) {
-      return new AnnotationParserException("Error: " + AnnotationElement.positionToString(pos)
-                                                 + ": " + MessageFormat.format(errorMsg, errorArgs));
-   }
-
-   private AnnotationParserException syntaxError(String errorMsg, String... errorArgs) {
-      return syntaxError(lexer.pos, errorMsg, errorArgs);
    }
 }

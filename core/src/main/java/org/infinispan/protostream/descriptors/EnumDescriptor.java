@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.protostream.DescriptorParserException;
-import org.infinispan.protostream.config.AnnotationConfig;
+import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 
@@ -45,8 +45,17 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
    }
 
    @Override
-   protected AnnotationConfig<EnumDescriptor> getAnnotationConfig(String annotationName) {
-      return fileDescriptor.configuration.enumAnnotations().get(annotationName);
+   protected AnnotationConfiguration getAnnotationConfig(String annotationName) {
+      AnnotationConfiguration annotationConfiguration = fileDescriptor.configuration.annotationsConfig().annotations().get(annotationName);
+      if (annotationConfiguration == null) {
+         return null;
+      }
+      for (AnnotationElement.AnnotationTarget t : annotationConfiguration.target()) {
+         if (t == AnnotationElement.AnnotationTarget.ENUM) {
+            return annotationConfiguration;
+         }
+      }
+      throw new DescriptorParserException("Annotation '" + annotationName + "' cannot be applied to enum types.");
    }
 
    @Override

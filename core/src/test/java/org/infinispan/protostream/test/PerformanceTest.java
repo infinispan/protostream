@@ -141,7 +141,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private void readWithProtoStream(byte[] bytes, long[] result) throws IOException, DescriptorParserException {
-      Configuration.Builder cfgBuilder = new Configuration.Builder().setLogOutOfSequenceReads(false);
+      Configuration.Builder cfgBuilder = Configuration.builder().setLogOutOfSequenceReads(false);
       SerializationContext ctx = createContext(cfgBuilder);
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 
@@ -191,7 +191,7 @@ public class PerformanceTest extends AbstractProtoStreamTest {
    }
 
    private byte[] writeWithProtoStream(User user, long[] result) throws IOException, DescriptorParserException {
-      Configuration.Builder cfgBuilder = new Configuration.Builder().setLogOutOfSequenceWrites(false);
+      Configuration.Builder cfgBuilder = Configuration.builder().setLogOutOfSequenceWrites(false);
       SerializationContext ctx = createContext(cfgBuilder);
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
 

@@ -10,12 +10,29 @@ import java.util.Map;
  */
 public abstract class AnnotationElement {
 
+   /**
+    * Where can we place that annotation?
+    */
+   public enum AnnotationTarget {
+      MESSAGE, ENUM, FIELD,
+   }
+
+   /**
+    * What type is the attribute?
+    */
+   public enum AttributeType {
+      IDENTIFIER, STRING, CHARACTER, BOOLEAN, INT, LONG, FLOAT, DOUBLE, ANNOTATION
+   }
+
    public static final long UNKNOWN_POSITION = 0;
 
    private static final long LINESHIFT = 32;
 
    private static final long COLUMNMASK = (1L << LINESHIFT) - 1;
 
+   /**
+    * Text position, encoded in the form of a {@code long}. Upper half is the line number, lower half is the column.
+    */
    public final long position;
 
    public static int line(long pos) {
@@ -50,9 +67,9 @@ public abstract class AnnotationElement {
    public static final class Annotation extends Value {
 
       /**
-       * Name of default attribute.
+       * Name of 'default' attribute.
        */
-      public static final String DEFAULT_ATTRIBUTE = "value";
+      public static final String VALUE_DEFAULT_ATTRIBUTE = "value";
 
       private final String name;
 
@@ -78,7 +95,7 @@ public abstract class AnnotationElement {
       }
 
       public Value getDefaultAttributeValue() {
-         return getAttributeValue(DEFAULT_ATTRIBUTE);
+         return getAttributeValue(VALUE_DEFAULT_ATTRIBUTE);
       }
 
       public Value getAttributeValue(String attributeName) {
