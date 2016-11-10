@@ -5,7 +5,7 @@
 
    <groupId>org.infinispan.protostream</groupId>
    <artifactId>parent</artifactId>
-   <version>3.0.7.Final</version>
+   <version>3.0.8-SNAPSHOT</version>
    <packaging>pom</packaging>
 
    <name>Parent for all ProtoStream modules</name>
