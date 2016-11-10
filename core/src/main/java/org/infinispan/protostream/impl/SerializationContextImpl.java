@@ -137,20 +137,22 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @GuardedBy("writeLock")
    private void unregisterFileDescriptorTypes(FileDescriptor fileDescriptor) {
-      for (GenericDescriptor d : fileDescriptor.getTypes().values()) {
-         Integer typeId = d.getTypeId();
-         if (typeId != null) {
-            typeIds.remove(typeId);
-         }
-         if (d instanceof EnumDescriptor) {
-            for (EnumValueDescriptor ev : ((EnumDescriptor) d).getValues()) {
-               enumValueDescriptors.remove(ev.getScopedName());
+      if (fileDescriptor.isResolved()) {
+         for (GenericDescriptor d : fileDescriptor.getTypes().values()) {
+            Integer typeId = d.getTypeId();
+            if (typeId != null) {
+               typeIds.remove(typeId);
+            }
+            if (d instanceof EnumDescriptor) {
+               for (EnumValueDescriptor ev : ((EnumDescriptor) d).getValues()) {
+                  enumValueDescriptors.remove(ev.getScopedName());
+               }
             }
          }
+         genericDescriptors.keySet().removeAll(fileDescriptor.getTypes().keySet());
+         fileDescriptor.markUnresolved();
       }
-      genericDescriptors.keySet().removeAll(fileDescriptor.getTypes().keySet());
       for (FileDescriptor fd : fileDescriptor.getDependants().values()) {
-         fd.markUnresolved();
          unregisterFileDescriptorTypes(fd);
       }
    }
