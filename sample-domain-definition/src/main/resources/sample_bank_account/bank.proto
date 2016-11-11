@@ -8,22 +8,22 @@ package sample_bank_account;
 message User {
 
    /**
-    * @Field(index=Index.YES, store=Store.YES)
+    * @Field(store = Store.YES)
     */
    required int32 id = 1;
 
    /**
-    * @Field()
+    * @Field(store = Store.YES)
     */
    repeated int32 accountIds = 2;
 
    /**
-    * @Field
+    * @Field(store = Store.YES)
     */
    required string name = 3;
 
    /**
-    * @Field
+    * @Field(store = Store.YES)
     */
    required string surname = 4;
 
@@ -34,12 +34,12 @@ message User {
    }
 
    /**
-    * @Field
+    * @Field(store = Store.YES)
     */
    repeated Address addresses = 5;     //a repeated field cannot be marked required
 
    /**
-    * @Field
+    * @Field(store = Store.YES)
     */
    optional int32 age = 6;   // persisting age instead of birth date is not ideal but is ok for our sample code
 
@@ -50,7 +50,7 @@ message User {
    }
 
    /**
-    * @Field
+    * @Field(store = Store.YES)
     */
    optional Gender gender = 7;
 
