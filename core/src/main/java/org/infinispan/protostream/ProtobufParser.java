@@ -5,7 +5,6 @@ import java.io.InputStream;
 
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.WireFormat;
@@ -70,19 +69,19 @@ public final class ProtobufParser {
             case WireFormat.WIRETYPE_LENGTH_DELIMITED: {
                if (fd == null) {
                   byte[] value = in.readByteArray();
-                  tagHandler.onTag(fieldNumber, null, Type.BYTES, JavaType.BYTE_STRING, value);
+                  tagHandler.onTag(fieldNumber, null, value);
                } else if (fd.getType() == Type.STRING) {
                   String value = in.readString();
-                  tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
+                  tagHandler.onTag(fieldNumber, fd, value);
                } else if (fd.getType() == Type.BYTES) {
                   byte[] value = in.readByteArray();
-                  tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
+                  tagHandler.onTag(fieldNumber, fd, value);
                } else if (fd.getType() == Type.MESSAGE) {
                   int length = in.readRawVarint32();
                   int oldLimit = in.pushLimit(length);
-                  tagHandler.onStartNested(fieldNumber, fd.getName(), fd.getMessageType());
+                  tagHandler.onStartNested(fieldNumber, fd);
                   parseMessage(tagHandler, fd.getMessageType(), in);
-                  tagHandler.onEndNested(fieldNumber, fd.getName(), fd.getMessageType());
+                  tagHandler.onEndNested(fieldNumber, fd);
                   in.checkLastTagWas(0);
                   in.popLimit(oldLimit);
                }
@@ -91,15 +90,15 @@ public final class ProtobufParser {
 
             case WireFormat.WIRETYPE_START_GROUP: {
                if (fd != null) {
-                  tagHandler.onStartNested(fieldNumber, null, null);
+                  tagHandler.onStartNested(fieldNumber, null);
                   parseMessage(tagHandler, null, in);
                   in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
-                  tagHandler.onEndNested(fieldNumber, null, null);
+                  tagHandler.onEndNested(fieldNumber, null);
                } else {
-                  tagHandler.onStartNested(fieldNumber, fd.getName(), fd.getMessageType());
+                  tagHandler.onStartNested(fieldNumber, fd);
                   parseMessage(tagHandler, fd.getMessageType(), in);
                   in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
-                  tagHandler.onEndNested(fieldNumber, fd.getName(), fd.getMessageType());
+                  tagHandler.onEndNested(fieldNumber, fd);
                }
                break;
             }
@@ -109,11 +108,11 @@ public final class ProtobufParser {
             case WireFormat.WIRETYPE_VARINT: {
                if (fd == null) {
                   if (wireType == WireFormat.WIRETYPE_FIXED32) {
-                     tagHandler.onTag(fieldNumber, null, null, null, in.readFixed32());
+                     tagHandler.onTag(fieldNumber, null, in.readFixed32());
                   } else if (wireType == WireFormat.WIRETYPE_FIXED64) {
-                     tagHandler.onTag(fieldNumber, null, null, null, in.readFixed64());
+                     tagHandler.onTag(fieldNumber, null, in.readFixed64());
                   } else if (wireType == WireFormat.WIRETYPE_VARINT) {
-                     tagHandler.onTag(fieldNumber, null, null, null, in.readRawVarint64());
+                     tagHandler.onTag(fieldNumber, null, in.readRawVarint64());
                   }
                } else {
                   Object value;
@@ -163,7 +162,7 @@ public final class ProtobufParser {
                      default:
                         throw new IOException("Unexpected field type : " + fd.getType());
                   }
-                  tagHandler.onTag(fieldNumber, fd.getName(), fd.getType(), fd.getJavaType(), value);
+                  tagHandler.onTag(fieldNumber, fd, value);
                }
                break;
             }

@@ -1,25 +1,52 @@
 package org.infinispan.protostream;
 
 
-import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.protostream.descriptors.JavaType;
-import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 
 /**
- * An event based interface for consuming (read only) protobuf streams.
+ * An event based interface for consuming a (read only) protobuf stream containing exactly one top level message.
  *
  * @author anistor@redhat.com
  * @since 1.0
  */
 public interface TagHandler {
 
-   void onStart();
+   /**
+    * Start of top level message. Do whatever required init here.
+    */
+   default void onStart() {
+   }
 
-   void onTag(int fieldNumber, String fieldName, Type type, JavaType javaType, Object tagValue);
+   /**
+    * A field which is a primitive (non-nested) value.
+    *
+    * @param fieldNumber     the field number
+    * @param fieldDescriptor the field descriptor, or null if this is an unknown field.
+    */
+   default void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
+   }
 
-   void onStartNested(int fieldNumber, String fieldName, Descriptor messageDescriptor);
+   /**
+    * Start of a nested message.
+    *
+    * @param fieldNumber     the field number
+    * @param fieldDescriptor a field which is guaranteed to be of type Descriptor, or null if this is an unknown field.
+    */
+   default void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
+   }
 
-   void onEndNested(int fieldNumber, String fieldName, Descriptor messageDescriptor);
+   /**
+    * End of a nested message.
+    *
+    * @param fieldNumber     the field number
+    * @param fieldDescriptor a field which is guaranteed to be of type Descriptor, or null if this is an unknown field.
+    */
+   default void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
+   }
 
-   void onEnd();
+   /**
+    * End of top level message. Cleanup your mess!
+    */
+   default void onEnd() {
+   }
 }
