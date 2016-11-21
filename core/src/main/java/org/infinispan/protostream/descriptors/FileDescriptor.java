@@ -357,6 +357,11 @@ public final class FileDescriptor {
       return fileNamespace.getLocalNamespace().getTypes();
    }
 
+   @Override
+   public String toString() {
+      return "FileDescriptor{name=" + name + '}';
+   }
+
    public static final class Builder {
 
       private String name;

@@ -87,6 +87,8 @@ public interface SerializationContext { //todo [anistor] split this into separat
     */
    GenericDescriptor getDescriptorByTypeId(Integer typeId);
 
+   GenericDescriptor getDescriptorByName(String fullName);
+
    /**
     * Obtains the associated numeric type id, if one was defined.
     *

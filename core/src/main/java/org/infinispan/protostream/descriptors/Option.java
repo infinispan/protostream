@@ -36,4 +36,9 @@ public final class Option {
    public int hashCode() {
       return 31 * name.hashCode() + value.hashCode();
    }
+
+   @Override
+   public String toString() {
+      return "Option{name=" + name + ", value=" + value + '}';
+   }
 }

@@ -22,7 +22,6 @@ import org.junit.rules.ExpectedException;
 
 /**
  * @author anistor@redhat.com
- * @since 2.0
  */
 public class SerializationContextImplTest {
 

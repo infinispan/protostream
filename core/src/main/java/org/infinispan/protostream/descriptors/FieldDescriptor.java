@@ -157,6 +157,15 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       throw new DescriptorParserException("Annotation '" + annotationName + "' cannot be applied to fields.");
    }
 
+   @Override
+   public String toString() {
+      return "FieldDescriptor{" +
+            "label=" + label +
+            ", typeName='" + typeName + '\'' +
+            ", number='" + number + '\'' +
+            '}';
+   }
+
    public static final class Builder {
       private String typeName;
       private int number;

@@ -69,11 +69,14 @@ public class WrappingTest extends AbstractProtoStreamTest {
       assertArrayEquals(testArray, unmarshalledArray);
    }
 
+   private static class UserList extends ArrayList<User> {
+   }
+
    @Test
    public void testMarshallUserList() throws Exception {
       SerializationContext ctx = createContext();
 
-      ctx.registerMarshaller(new MessageMarshaller<ArrayList>() {
+      ctx.registerMarshaller(new MessageMarshaller<UserList>() {
 
          @Override
          public String getTypeName() {
@@ -81,22 +84,22 @@ public class WrappingTest extends AbstractProtoStreamTest {
          }
 
          @Override
-         public Class<? extends ArrayList> getJavaClass() {
-            return ArrayList.class;
+         public Class<? extends UserList> getJavaClass() {
+            return UserList.class;
          }
 
          @Override
-         public ArrayList readFrom(ProtoStreamReader reader) throws IOException {
-            return reader.readCollection("theList", new ArrayList<>(), User.class);
+         public UserList readFrom(ProtoStreamReader reader) throws IOException {
+            return reader.readCollection("theList", new UserList(), User.class);
          }
 
          @Override
-         public void writeTo(ProtoStreamWriter writer, ArrayList list) throws IOException {
+         public void writeTo(ProtoStreamWriter writer, UserList list) throws IOException {
             writer.writeCollection("theList", list, User.class);
          }
       });
 
-      List<User> users = new ArrayList<>();
+      List<User> users = new UserList();
       users.add(createUser(1, "X1", "Y1"));
       users.add(createUser(2, "X2", "Y2"));
       users.add(createUser(3, "X3", "Y3"));

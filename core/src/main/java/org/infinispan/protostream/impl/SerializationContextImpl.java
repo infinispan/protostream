@@ -259,6 +259,21 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
+   public GenericDescriptor getDescriptorByName(String fullName) {
+      GenericDescriptor descriptor;
+      readLock.lock();
+      try {
+         descriptor = genericDescriptors.get(fullName);
+      } finally {
+         readLock.unlock();
+      }
+      if (descriptor == null) {
+         throw new IllegalArgumentException("Descriptor not found : " + fullName);
+      }
+      return descriptor;
+   }
+
+   @Override
    public GenericDescriptor getDescriptorByTypeId(Integer typeId) {
       readLock.lock();
       try {

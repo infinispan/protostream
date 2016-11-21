@@ -39,6 +39,11 @@ public final class OneOfDescriptor {
       this.containingMessage = containingMessage;
    }
 
+   @Override
+   public String toString() {
+      return "OneOfDescriptor{name='" + name + '}';
+   }
+
    public static final class Builder {
 
       private String name;

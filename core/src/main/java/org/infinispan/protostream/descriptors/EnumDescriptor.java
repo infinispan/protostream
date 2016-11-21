@@ -101,6 +101,11 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
       typeId = getProcessedAnnotation(Configuration.TYPE_ID_ANNOTATION);
    }
 
+   @Override
+   public String toString() {
+      return "EnumDescriptor{fullName=" + getFullName() + '}';
+   }
+
    public static final class Builder {
       private String name;
       private String fullName;

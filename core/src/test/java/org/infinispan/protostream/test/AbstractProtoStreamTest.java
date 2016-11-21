@@ -10,7 +10,6 @@ import org.infinispan.protostream.domain.marshallers.MarshallerRegistration;
 
 /**
  * @author anistor@redhat.com
- * @since 1.0
  */
 public abstract class AbstractProtoStreamTest {
 

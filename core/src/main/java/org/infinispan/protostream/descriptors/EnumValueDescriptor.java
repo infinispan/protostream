@@ -72,6 +72,11 @@ public final class EnumValueDescriptor {
       this.fileDescriptor = fileDescriptor;
    }
 
+   @Override
+   public String toString() {
+      return "EnumValueDescriptor{fullName=" + fullName + '}';
+   }
+
    public static final class Builder {
       private String name;
       private int number;

@@ -165,6 +165,11 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       throw new DescriptorParserException("Annotation '" + annotationName + "' cannot be applied to message types.");
    }
 
+   @Override
+   public String toString() {
+      return "Descriptor{fullName=" + getFullName() + '}';
+   }
+
    public static final class Builder {
       private String name, fullName;
       private List<Option> options;
