@@ -2,19 +2,19 @@ syntax = "proto3";
 
 package org.infinispan.protostream;
 
-/*
-   Protobuf messages do not indicate their message type or structure. Readers of protobuf data streams are expected to
-   know what message type to expect next in the stream.
-   WrappedMessage is intended to solve this problem of self-describing messages by allowing the stream reader to detect
-   the type of the message. Still, message structure is not provided as it would not be efficient. The user is expected
-   to have knowledge of the structure once it knows the type.
-
-   @TypeId(1000000)
-*/
+/**
+ * Protobuf messages do not indicate their message type or structure. Readers of protobuf data streams are expected to
+ * know what message type to expect next in the stream.
+ * WrappedMessage is intended to solve this problem of self-describing messages by allowing the stream reader to detect
+ * the type of the message. Still, message structure is not provided as it would not be efficient. The user is expected
+ * to have knowledge of the structure once it knows the type.
+ *
+ * @TypeId(1000000)
+ */
 message WrappedMessage {
 
    oneof ScalarOrMessage {
-      // Exactly one of the following fields is used if the wrapped value is a primitive (scalar) type
+      // Exactly one of the following fields is used if the wrapped value is a primitive (scalar) type.
       double wrappedDouble = 1;
       float wrappedFloat = 2;
       int64 wrappedInt64 = 3;
@@ -31,19 +31,31 @@ message WrappedMessage {
       sint32 wrappedSInt32 = 14;
       sint64 wrappedSInt64 = 15;
 
-      // this is used to store the message bytes if the wrapped value is a message type
-      bytes wrappedMessageBytes = 17;
+      /**
+       * Stores the message bytes if the wrapped value is a message type.
+       */
+      bytes wrappedMessage = 17;
 
-      // this is used if the wrapped value is an enum
+      /**
+       * This is used if the wrapped value is an enum.
+       */
       int32 wrappedEnum = 18;
    }
 
+   /**
+    * Store the type name or type id. This is not used for primitive types.
+    */
    oneof TypeNameOrId {
-      // this field stored the fully qualified type name if the wrapped value is a message or an enum type
+
+      /**
+       * Stores the fully qualified type name if the wrapped value is a message or an enum type.
+       */
       string wrappedDescriptorFullName = 16;
 
-      // this is used as an alternative to wrappedDescriptorFullName if a unique id was assigned to the type with the
-      // @TypeId annotation
+      /**
+       * This is used as an alternative to wrappedDescriptorFullName if a unique id was assigned to the type with the
+       * TypeId annotation.
+       */
       int32 wrappedDescriptorId = 19;
    }
 }

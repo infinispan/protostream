@@ -10,32 +10,138 @@ import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.WireFormat;
 
 /**
+ * A wrapper for messages, enums or primitive types that encodes the type of the inner object/value and also helps keep
+ * track of where the message ends. The need for this wrapper stems from two particular design choices in the Protocol
+ * Buffers encoding.
+ * <p>
+ * 1. The Protocol Buffers encoding format does not contain any description of the message type that follows next in the
+ * data stream, unlike for example the Java serialization format which provides information about classes that are saved
+ * in a Serialization stream in the form of class descriptors which contain the fully qualified name of the class being
+ * serialized. The Protocol Buffers client is expected to know what message type he is expecting to read from the
+ * stream. This knowledge exists in most cases, statically, so this encoding scheme saves a lot of space by not
+ * including redundant type descriptors in the stream by default. For all other use cases where data types are dynamic
+ * you are on your own, but {@link WrappedMessage} is here to help you.
+ * <p>
+ * 2. The Protocol Buffer wire format is also not self-delimiting, so when reading a message we see just a stream of
+ * fields and we are not able to determine when the fields of the current message end and the next message starts. The
+ * protocol assumes that the whole contents of the stream is to be interpreted as a single message. If that's not the
+ * case, then the user must provide his own way of delimiting messages either by using message start/stop markers or by
+ * prefixing each message with its size or any other equivalent mechanism. {@link WrappedMessage} relies on an {@code
+ * int32} size prefix.
+ * <p>
+ * So wherever you cannot statically decide what message type you'll be using and need to defer this until runtime, just
+ * use {@link WrappedMessage}.
+ *
  * @author anistor@redhat.com
  * @since 1.0
  */
 public final class WrappedMessage {
 
+   /**
+    * The fully qualified Protobuf type name of this message.
+    */
    public static final String PROTOBUF_TYPE_NAME = "org.infinispan.protostream.WrappedMessage";
 
-   // field numbers
+   /**
+    * A wrapped double.
+    */
    public static final int WRAPPED_DOUBLE = 1;
+
+   /**
+    * A wrapped float.
+    */
    public static final int WRAPPED_FLOAT = 2;
+
+   /**
+    * A wrapped int64.
+    */
    public static final int WRAPPED_INT64 = 3;
+
+   /**
+    * A wrapped uint64.
+    */
    public static final int WRAPPED_UINT64 = 4;
+
+   /**
+    * A wrapped int32.
+    */
    public static final int WRAPPED_INT32 = 5;
+
+   /**
+    * A wrapped fixed64.
+    */
    public static final int WRAPPED_FIXED64 = 6;
+
+   /**
+    * A wrapped fixed32.
+    */
    public static final int WRAPPED_FIXED32 = 7;
+
+   /**
+    * A wrapped bool.
+    */
    public static final int WRAPPED_BOOL = 8;
+
+   /**
+    * A wrapped string.
+    */
    public static final int WRAPPED_STRING = 9;
+
+   /**
+    * A wrapped bytes.
+    */
    public static final int WRAPPED_BYTES = 10;
+
+   /**
+    * A wrapped uint32.
+    */
    public static final int WRAPPED_UINT32 = 11;
+
+   /**
+    * A wrapped sfixed32.
+    */
    public static final int WRAPPED_SFIXED32 = 12;
+
+   /**
+    * A wrapped sfixed64.
+    */
    public static final int WRAPPED_SFIXED64 = 13;
+
+   /**
+    * A wrapped sint32.
+    */
    public static final int WRAPPED_SINT32 = 14;
+
+   /**
+    * A wrapped sint64.
+    */
    public static final int WRAPPED_SINT64 = 15;
+
+   /**
+    * The name of the fully qualified message or enum descriptor, if the wrapped object is a message or enum.
+    */
    public static final int WRAPPED_DESCRIPTOR_FULL_NAME = 16;
-   public static final int WRAPPED_MESSAGE_BYTES = 17;
+
+   /**
+    * A byte array containing the encoded message.
+    */
+   public static final int WRAPPED_MESSAGE = 17;
+
+   /**
+    * @deprecated Use {@link #WRAPPED_MESSAGE} instead. To be removed in 4.1.
+    */
+   @Deprecated
+   public static final int WRAPPED_MESSAGE_BYTES = WRAPPED_MESSAGE;
+
+   /**
+    * The enum value.
+    */
    public static final int WRAPPED_ENUM = 18;
+
+   /**
+    * The (optional) type id of the wrapped message or enum. This is an alternative to {@link
+    * #WRAPPED_DESCRIPTOR_FULL_NAME}.
+    */
    public static final int WRAPPED_DESCRIPTOR_ID = 19;
 
    /**
@@ -82,8 +188,7 @@ public final class WrappedMessage {
          }
          out.writeEnum(WRAPPED_ENUM, encodedEnum);
       } else {
-         // this is either an unknown primitive type or a message type
-         // try to use a message marshaller
+         // This is either an unknown primitive type or a message type. Try to use a message marshaller.
          BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t.getClass());
          ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
          RawProtoStreamWriter nestedOut = RawProtoStreamWriterImpl.newInstance(buffer);
@@ -96,7 +201,7 @@ public final class WrappedMessage {
          } else {
             out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
          }
-         out.writeBytes(WRAPPED_MESSAGE_BYTES, buffer.getByteBuffer());
+         out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
       }
       out.flush();
    }
@@ -122,7 +227,7 @@ public final class WrappedMessage {
             case WRAPPED_ENUM << 3 | WireFormat.WIRETYPE_VARINT:
                enumValue = in.readEnum();
                break;
-            case WRAPPED_MESSAGE_BYTES << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
+            case WRAPPED_MESSAGE << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                messageBytes = in.readByteArray();
                break;
             case WRAPPED_STRING << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:

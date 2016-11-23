@@ -95,7 +95,7 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
                case WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME:
                   typeName = (String) tagValue;
                   break;
-               case WrappedMessage.WRAPPED_MESSAGE_BYTES:
+               case WrappedMessage.WRAPPED_MESSAGE:
                   wrappedMessage = (byte[]) tagValue;
                   break;
                case WrappedMessage.WRAPPED_ENUM:
