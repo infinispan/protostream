@@ -206,7 +206,7 @@ public final class WrappedMessage {
       out.flush();
    }
 
-   public static Object readMessage(SerializationContext ctx, RawProtoStreamReader in) throws IOException {
+   public static <T> T readMessage(SerializationContext ctx, RawProtoStreamReader in) throws IOException {
       String descriptorFullName = null;
       Integer typeId = null;
       int enumValue = -1;
@@ -288,7 +288,7 @@ public final class WrappedMessage {
          if (readTags != 1) {
             throw new IOException("Invalid message encoding.");
          }
-         return value;
+         return (T) value;
       }
 
       if (descriptorFullName == null && typeId == null || descriptorFullName != null && typeId != null || readTags != 2) {
@@ -302,11 +302,11 @@ public final class WrappedMessage {
       if (messageBytes != null) {
          // it's a Message type
          RawProtoStreamReader nestedInput = RawProtoStreamReaderImpl.newInstance(messageBytes);
-         return marshallerDelegate.unmarshall(null, null, nestedInput);
+         return (T) marshallerDelegate.unmarshall(null, null, nestedInput);
       } else {
          // it's an Enum
          EnumMarshaller marshaller = (EnumMarshaller) marshallerDelegate.getMarshaller();
-         return marshaller.decode(enumValue);
+         return (T) marshaller.decode(enumValue);
       }
    }
 

@@ -14,13 +14,55 @@ import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 /**
  * @author anistor@redhat.com
  */
 public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
+   @Test(expected = InvalidProtocolBufferException.class)
+   public void testFromByteArrayWithExtraPadding() throws Exception {
+      SerializationContext ctx = createContext();
+
+      User user = new User();
+      user.setId(1);
+      user.setName("John");
+      user.setSurname("Batman");
+      user.setGender(User.Gender.MALE);
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
+      user.setAddresses(Arrays.asList(new Address("Old Street", "XYZ42", -12), new Address("Bond Street", "W23", 2)));
+
+      byte[] userBytes = ProtobufUtil.toByteArray(ctx, user);
+      byte[] userBytesWithPadding = new byte[userBytes.length + 20];
+      System.arraycopy(userBytes, 0, userBytesWithPadding, 0, userBytes.length);
+      Arrays.fill(userBytesWithPadding, userBytes.length, userBytes.length + 20, (byte) 42);
+
+      ProtobufUtil.fromByteArray(ctx, userBytesWithPadding, User.class); // this must fail
+   }
+
+   @Test(expected = IllegalStateException.class)
+   public void testFromWrappedByteArrayWithExtraPadding() throws Exception {
+      SerializationContext ctx = createContext();
+
+      User user = new User();
+      user.setId(1);
+      user.setName("John");
+      user.setSurname("Batman");
+      user.setGender(User.Gender.MALE);
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
+      user.setAddresses(Arrays.asList(new Address("Old Street", "XYZ42", -12), new Address("Bond Street", "W23", 2)));
+
+      byte[] userBytes = ProtobufUtil.toWrappedByteArray(ctx, user);
+      byte[] userBytesWithPadding = new byte[userBytes.length + 20];
+      System.arraycopy(userBytes, 0, userBytesWithPadding, 0, userBytes.length);
+      Arrays.fill(userBytesWithPadding, userBytes.length, userBytes.length + 20, (byte) 42);
+
+      ProtobufUtil.fromWrappedByteArray(ctx, userBytesWithPadding); // this must fail
+   }
+
    @Test
-   public void testWrapping() throws Exception {
+   public void testMessageWrapping() throws Exception {
       SerializationContext ctx = createContext();
 
       User user = new User();

@@ -40,6 +40,9 @@ public final class ProtobufUtil {
     */
    private static final String WRAPPING_DEFINITIONS_RES = "/org/infinispan/protostream/message-wrapping.proto";
 
+   private ProtobufUtil() {
+   }
+
    public static SerializationContext newSerializationContext(Configuration configuration) {
       SerializationContextImpl serializationContext = new SerializationContextImpl(configuration);
 
@@ -110,16 +113,16 @@ public final class ProtobufUtil {
     * @return
     * @throws IOException
     */
-   public static Object fromWrappedByteArray(SerializationContext ctx, byte[] bytes) throws IOException {
+   public static <A> A fromWrappedByteArray(SerializationContext ctx, byte[] bytes) throws IOException {
       return fromWrappedByteArray(ctx, bytes, 0, bytes.length);
    }
 
-   public static Object fromWrappedByteArray(SerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
+   public static <A> A fromWrappedByteArray(SerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes, offset, length);
       return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(bais));
    }
 
-   public static Object fromWrappedByteBuffer(SerializationContext ctx, ByteBuffer byteBuffer) throws IOException {
+   public static <A> A fromWrappedByteBuffer(SerializationContext ctx, ByteBuffer byteBuffer) throws IOException {
       return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(byteBuffer));
    }
 

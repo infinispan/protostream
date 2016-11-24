@@ -190,7 +190,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, user);
 
-      User decoded = (User) ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      User decoded = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
       assertEquals(1, decoded.getId());
       assertEquals("John", decoded.getName());
