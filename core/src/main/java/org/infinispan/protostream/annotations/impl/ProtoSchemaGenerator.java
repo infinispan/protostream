@@ -142,11 +142,11 @@ public final class ProtoSchemaGenerator {
       for (Class<?> c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
          if (ptm instanceof ProtoMessageTypeMetadata) {
-            RawProtobufMarshaller marshaller = marshallerCodeGenerator.generateMessageMarshaller((ProtoMessageTypeMetadata) ptm);
+            RawProtobufMarshaller<?> marshaller = marshallerCodeGenerator.generateMessageMarshaller((ProtoMessageTypeMetadata) ptm);
             ptm.setMarshaller(marshaller);
             serializationContext.registerMarshaller(marshaller);
          } else if (ptm instanceof ProtoEnumTypeMetadata) {
-            EnumMarshaller marshaller = marshallerCodeGenerator.generateEnumMarshaller((ProtoEnumTypeMetadata) ptm);
+            EnumMarshaller<?> marshaller = marshallerCodeGenerator.generateEnumMarshaller((ProtoEnumTypeMetadata) ptm);
             ptm.setMarshaller(marshaller);
             serializationContext.registerMarshaller(marshaller);
          }

@@ -23,7 +23,7 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
    private Map<String, ProtoEnumValueMetadata> membersByName;
 
-   public ProtoEnumTypeMetadata(Class<? extends Enum> enumClass) {
+   ProtoEnumTypeMetadata(Class<? extends Enum> enumClass) {
       super(getProtoName(enumClass), enumClass);
    }
 
@@ -82,12 +82,8 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
    public void generateProto(IndentWriter iw) {
       scanMemberAnnotations();
 
-      iw.append('\n');
-      if (documentation != null) {
-         iw.append("/*\n");
-         iw.append(documentation).append('\n');
-         iw.append("*/\n");
-      }
+      iw.append("\n\n");
+      appendDocumentation(iw, documentation);
       iw.append("enum ").append(name);
       if (ProtoSchemaBuilder.generateSchemaDebugComments) {
          iw.append(" /* ").append(javaClass.getCanonicalName()).append(" */");

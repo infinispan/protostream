@@ -86,4 +86,14 @@ class ProtoTypeMetadata {
    public void scanMemberAnnotations() {
       // subclasses must override this
    }
+
+   protected static void appendDocumentation(IndentWriter iw, String documentation) {
+      if (documentation != null) {
+         iw.append("/**\n");
+         for (String s : documentation.split("\\r\\n|\\n|\\r")) {
+            iw.append(" * ").append(s).append('\n');
+         }
+         iw.append(" */\n");
+      }
+   }
 }

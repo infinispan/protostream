@@ -23,7 +23,8 @@ public class Note {
 
    private Date creationDate;
 
-   @ProtoDoc("@Field")
+   @ProtoDoc("First line of documentation.")
+   @ProtoDoc("some foo bar\nand some more\n @Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO)")
    @ProtoField(number = 3)
    public Note note;
 

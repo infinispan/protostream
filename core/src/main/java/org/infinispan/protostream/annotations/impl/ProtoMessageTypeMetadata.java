@@ -38,7 +38,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final Map<Class<?>, ProtoTypeMetadata> innerTypes = new HashMap<>();
 
-   public ProtoMessageTypeMetadata(ProtoSchemaGenerator protoSchemaGenerator, Class<?> messageClass) {
+   ProtoMessageTypeMetadata(ProtoSchemaGenerator protoSchemaGenerator, Class<?> messageClass) {
       super(getProtoName(messageClass), messageClass);
       this.protoSchemaGenerator = protoSchemaGenerator;
 
@@ -86,12 +86,8 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    public void generateProto(IndentWriter iw) {
       scanMemberAnnotations();
 
-      iw.append('\n');
-      if (documentation != null) {
-         iw.append("/*\n");
-         iw.append(documentation).append('\n');
-         iw.append("*/\n");
-      }
+      iw.append("\n\n");
+      appendDocumentation(iw, documentation);
       iw.append("message ").append(name);
       if (ProtoSchemaBuilder.generateSchemaDebugComments) {
          iw.append(" /* ").append(javaClass.getCanonicalName()).append(" */");

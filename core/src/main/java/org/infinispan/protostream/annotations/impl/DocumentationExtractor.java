@@ -14,14 +14,15 @@ final class DocumentationExtractor {
       StringBuilder sb = null;
 
       for (AnnotatedElement element : elements) {
-         ProtoDoc docAnnotation = element.getAnnotation(ProtoDoc.class);
-         if (docAnnotation != null && !docAnnotation.value().isEmpty()) {
-            if (sb == null) {
-               sb = new StringBuilder();
-            } else {
-               sb.append('\n');
+         for (ProtoDoc docAnnotation : element.getAnnotationsByType(ProtoDoc.class)) {
+            if (docAnnotation != null && !docAnnotation.value().isEmpty()) {
+               if (sb == null) {
+                  sb = new StringBuilder();
+               } else {
+                  sb.append('\n');
+               }
+               sb.append(docAnnotation.value());
             }
-            sb.append(docAnnotation.value());
          }
       }
 

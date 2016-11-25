@@ -31,10 +31,10 @@ final class ProtoFieldMetadata {
    private final Method getter;
    private final Method setter;
 
-   public ProtoFieldMetadata(Class<?> declaringClass, int number, String name, Class<?> javaType,
-                             Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
-                             boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
-                             Field field) {
+   ProtoFieldMetadata(Class<?> declaringClass, int number, String name, Class<?> javaType,
+                      Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
+                      boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
+                      Field field) {
       this.declaringClass = declaringClass;
       this.number = number;
       this.name = name;
@@ -53,10 +53,10 @@ final class ProtoFieldMetadata {
       this.documentation = DocumentationExtractor.getDocumentation(field);
    }
 
-   public ProtoFieldMetadata(Class<?> declaringClass, int number, String name, Class<?> javaType,
-                             Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
-                             boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
-                             String propertyName, Method getter, Method setter) {
+   ProtoFieldMetadata(Class<?> declaringClass, int number, String name, Class<?> javaType,
+                      Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
+                      boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
+                      String propertyName, Method getter, Method setter) {
       this.declaringClass = declaringClass;
       this.number = number;
       this.name = name;
@@ -140,11 +140,8 @@ final class ProtoFieldMetadata {
    }
 
    public void generateProto(IndentWriter iw) {
-      if (documentation != null) {
-         iw.append("/*\n");
-         iw.append(documentation).append('\n');
-         iw.append("*/\n");
-      }
+      iw.append('\n');
+      ProtoTypeMetadata.appendDocumentation(iw, documentation);
       if (isRepeated) {
          iw.append("repeated ");
       } else {

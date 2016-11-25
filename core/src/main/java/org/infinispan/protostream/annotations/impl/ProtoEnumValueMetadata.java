@@ -20,7 +20,7 @@ final class ProtoEnumValueMetadata {
 
    private final String documentation;
 
-   public ProtoEnumValueMetadata(int number, String protoName, Field enumField, Enum enumValue) {
+   ProtoEnumValueMetadata(int number, String protoName, Field enumField, Enum enumValue) {
       this.number = number;
       this.protoName = protoName;
       this.enumField = enumField;
@@ -49,12 +49,8 @@ final class ProtoEnumValueMetadata {
    }
 
    public void generateProto(IndentWriter iw) {
-      iw.append('\n');
-      if (documentation != null) {
-         iw.append("/*\n");
-         iw.append(documentation).append('\n');
-         iw.append("*/\n");
-      }
+      iw.append("\n\n");
+      ProtoTypeMetadata.appendDocumentation(iw, documentation);
       iw.append("   ").append(protoName).append(" = ").append(String.valueOf(number));
       if (ProtoSchemaBuilder.generateSchemaDebugComments) {
          iw.append(" /* field = ").append(enumField.getName()).append(" */");

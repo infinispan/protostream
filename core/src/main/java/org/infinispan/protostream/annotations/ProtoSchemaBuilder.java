@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,7 +25,7 @@ import org.infinispan.protostream.config.Configuration;
 /**
  * Generates a Protocol Buffers schema definition file based on a set of @Proto* annotated classes.
  * <p/>
- * See {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link ProtoEnumValue} and {@link
+ * See {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link ProtoEnumValue}, {@link ProtoDoc} and {@link
  * ProtoUnknownFieldSet}.
  *
  * @author anistor@redhat.com
@@ -32,6 +33,16 @@ import org.infinispan.protostream.config.Configuration;
  */
 public final class ProtoSchemaBuilder {
 
+   public static final String FILE_OPT = "f";
+   public static final String FILE_LONG_OPT = "file";
+   public static final String PACKAGE_OPT = "p";
+   public static final String PACKAGE_LONG_OPT = "package";
+   public static final String HELP_OPT = "h";
+   public static final String HELP_LONG_OPT = "help";
+   public static final String MARSHALLER_OPT = "m";
+   public static final String MARSHALLER_LONG_OPT = "marshaller";
+   public static final String SCHEMA_OPT = "s";
+   public static final String SCHEMA_LONG_OPT = "schema";
    /**
     * Set this to {@code true} to enable output of debug comments in the generated protobuf schema.
     */
@@ -44,12 +55,12 @@ public final class ProtoSchemaBuilder {
    private final Set<Class<?>> classes = new HashSet<>();
 
    public static void main(String[] args) throws Exception {
-      Option f = new Option("f", "file", true, "output file name");
-      Option p = new Option("p", "package", true, "Protobuf package name");
+      Option f = new Option(FILE_OPT, FILE_LONG_OPT, true, "output file name");
+      Option p = new Option(PACKAGE_OPT, PACKAGE_LONG_OPT, true, "Protobuf package name");
       p.setRequired(true);
-      Option h = new Option("h", "help", false, "Print usage information");
-      Option m = new Option("m", "marshaller", true, "Register custom marshaller class");
-      Option s = new Option("s", "schema", true, "Register Protobuf schema");
+      Option h = new Option(HELP_OPT, HELP_LONG_OPT, false, "Print usage information");
+      Option m = new Option(MARSHALLER_OPT, MARSHALLER_LONG_OPT, true, "Register custom marshaller class");
+      Option s = new Option(SCHEMA_OPT, SCHEMA_LONG_OPT, true, "Register Protobuf schema");
       s.setArgs(2);
       s.setValueSeparator('=');
       Options options = new Options();
@@ -61,18 +72,18 @@ public final class ProtoSchemaBuilder {
       CommandLineParser parser = new GnuParser();
       CommandLine cmd = parser.parse(options, args);
 
-      if (cmd.hasOption('h')) {
+      if (cmd.hasOption(HELP_OPT)) {
          HelpFormatter formatter = new HelpFormatter();
-         formatter.printHelp("java " + ProtoSchemaBuilder.class.getName(), "Arguments: ", options, "followed by an arbitrary list of class names to process");
+         formatter.printHelp("java " + ProtoSchemaBuilder.class.getName(), "Arguments: ", options, "followed by a list of class names to process");
          return;
       }
 
-      String packageName = cmd.getOptionValue("package");
+      String packageName = cmd.getOptionValue(PACKAGE_LONG_OPT);
 
       Configuration config = Configuration.builder().build();
       SerializationContext ctx = ProtobufUtil.newSerializationContext(config);
 
-      Properties schemas = cmd.getOptionProperties("schema");
+      Properties schemas = cmd.getOptionProperties(SCHEMA_LONG_OPT);
       if (schemas != null) {
          for (String schema : schemas.stringPropertyNames()) {
             String file = schemas.getProperty(schema);
@@ -88,16 +99,19 @@ public final class ProtoSchemaBuilder {
          }
       }
 
-      String[] marshallers = cmd.getOptionValues("marshaller");
+      String[] marshallers = cmd.getOptionValues(MARSHALLER_LONG_OPT);
       if (marshallers != null) {
          for (String marshaller : marshallers) {
-            BaseMarshaller bm = (BaseMarshaller) Class.forName(marshaller).newInstance();
+            BaseMarshaller<?> bm = (BaseMarshaller) Class.forName(marshaller).newInstance();
             ctx.registerMarshaller(bm);
          }
       }
 
+      File file = cmd.hasOption(FILE_LONG_OPT) ? new File(cmd.getOptionValue(FILE_LONG_OPT)) : null;
+      String fileName = file == null ? "generated.proto" : file.getName();
+
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder()
-            .fileName("generated.proto")
+            .fileName(fileName)
             .packageName(packageName);
 
       for (String className : cmd.getArgs()) {
@@ -106,17 +120,12 @@ public final class ProtoSchemaBuilder {
 
       String schema = protoSchemaBuilder.build(ctx);
 
-      if (cmd.hasOption("file")) {
-         String file = cmd.getOptionValue("file");
-         PrintStream out = new PrintStream(new FileOutputStream(file));
-         try {
-            out.println(schema);
-         } finally {
-            out.close();
+      if (file != null) {
+         try (PrintStream out = new PrintStream(new FileOutputStream(file))) {
+            out.print(schema);
          }
-
       } else {
-         System.out.println(schema);
+         System.out.print(schema);
       }
    }
 
