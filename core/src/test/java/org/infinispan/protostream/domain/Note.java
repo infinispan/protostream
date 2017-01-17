@@ -23,6 +23,8 @@ public class Note {
 
    private Date creationDate;
 
+   private byte[] digest;
+
    @ProtoDoc("First line of documentation.")
    @ProtoDoc("some foo bar\nand some more\n @Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO)")
    @ProtoField(number = 3)
@@ -59,5 +61,15 @@ public class Note {
 
    public void setCreationDate(Date creationDate) {
       this.creationDate = creationDate;
+   }
+
+   @ProtoDoc("@Field")
+   @ProtoField(number = 6)
+   public byte[] getDigest() {
+      return digest;
+   }
+
+   public void setDigest(byte[] digest) {
+      this.digest = digest;
    }
 }

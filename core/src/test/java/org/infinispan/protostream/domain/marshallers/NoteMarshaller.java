@@ -22,6 +22,7 @@ public class NoteMarshaller implements MessageMarshaller<Note> {
       Note note2 = reader.readObject("note", Note.class);
       List<Note> notes = reader.readCollection("notes", new ArrayList<>(), Note.class);
       Date creationDate = reader.readDate("creationDate");
+      byte[] digest = reader.readBytes("digest");
 
       Note note = new Note();
       note.setText(text);
@@ -29,6 +30,7 @@ public class NoteMarshaller implements MessageMarshaller<Note> {
       note.note = note2;
       note.notes = notes;
       note.setCreationDate(creationDate);
+      note.setDigest(digest);
       return note;
    }
 
@@ -39,6 +41,7 @@ public class NoteMarshaller implements MessageMarshaller<Note> {
       writer.writeObject("note", note.note, Note.class);
       writer.writeCollection("notes", note.notes, Note.class);
       writer.writeDate("creationDate", note.getCreationDate());
+      writer.writeBytes("digest", note.getDigest());
    }
 
    @Override
