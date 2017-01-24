@@ -1,8 +1,9 @@
 package org.infinispan.protostream;
 
 /**
- * Translates a Java enum into an {@code int} value that is suitable for serializing with protobuf. The integer value
- * must be one of the values defined in the .proto file.
+ * Contract to be implemented by marshallers for enum types. Translates a Java enum into an {@code int} value that is
+ * suitable for serializing with protobuf. The returned integer value must be one of the values defined in the .proto
+ * file. The marshaller implementation must be stateless and thread-safe.
  *
  * @author anistor@redhat.com
  * @since 1.0

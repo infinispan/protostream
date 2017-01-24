@@ -6,6 +6,9 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
+ * Contract to be implemented by marshallers for entity types. The marshaller implementation must be stateless and
+ * thread-safe.
+ *
  * @author anistor@redhat.com
  * @since 1.0
  */
@@ -21,7 +24,7 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
     */
    interface ProtoStreamReader {
 
-      SerializationContext getSerializationContext();
+      ImmutableSerializationContext getSerializationContext();
 
       /**
        * Can't return an {@code int} here because the field might be declared optional and missing so we might need to
@@ -54,9 +57,13 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       <E> E[] readArray(String fieldName, Class<? extends E> elementClass) throws IOException;
    }
 
+   /**
+    * An high-level interface for the wire encoding of a protobuf stream that allows writing named and typed message
+    * fields.
+    */
    interface ProtoStreamWriter {
 
-      SerializationContext getSerializationContext();
+      ImmutableSerializationContext getSerializationContext();
 
       void writeInt(String fieldName, Integer value) throws IOException;
 

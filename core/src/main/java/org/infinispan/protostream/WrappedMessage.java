@@ -157,7 +157,7 @@ public final class WrappedMessage {
       return value;
    }
 
-   public static void writeMessage(SerializationContext ctx, RawProtoStreamWriter out, Object t) throws IOException {
+   public static void writeMessage(ImmutableSerializationContext ctx, RawProtoStreamWriter out, Object t) throws IOException {
       if (t == null) {
          return;
       }
@@ -206,7 +206,7 @@ public final class WrappedMessage {
       out.flush();
    }
 
-   public static <T> T readMessage(SerializationContext ctx, RawProtoStreamReader in) throws IOException {
+   public static <T> T readMessage(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
       String descriptorFullName = null;
       Integer typeId = null;
       int enumValue = -1;

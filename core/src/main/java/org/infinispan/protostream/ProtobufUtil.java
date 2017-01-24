@@ -57,7 +57,7 @@ public final class ProtobufUtil {
       return serializationContext;
    }
 
-   private static <A> void writeTo(SerializationContext ctx, RawProtoStreamWriter out, A t) throws IOException {
+   private static <A> void writeTo(ImmutableSerializationContext ctx, RawProtoStreamWriter out, A t) throws IOException {
       if (t == null) {
          throw new IllegalArgumentException("Object to marshall cannot be null");
       }
@@ -66,41 +66,41 @@ public final class ProtobufUtil {
       out.flush();
    }
 
-   public static void writeTo(SerializationContext ctx, OutputStream out, Object t) throws IOException {
+   public static void writeTo(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
       writeTo(ctx, RawProtoStreamWriterImpl.newInstance(out), t);
    }
 
-   public static byte[] toByteArray(SerializationContext ctx, Object t) throws IOException {
+   public static byte[] toByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       writeTo(ctx, baos, t);
       return baos.toByteArray();
    }
 
-   public static ByteBuffer toByteBuffer(SerializationContext ctx, Object t) throws IOException {
+   public static ByteBuffer toByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       writeTo(ctx, baos, t);
       return baos.getByteBuffer();
    }
 
-   private static <A> A readFrom(SerializationContext ctx, RawProtoStreamReader in, Class<A> clazz) throws IOException {
+   private static <A> A readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in, Class<A> clazz) throws IOException {
       BaseMarshallerDelegate<A> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(clazz);
       return marshallerDelegate.unmarshall(null, null, in);
    }
 
-   public static <A> A readFrom(SerializationContext ctx, InputStream in, Class<A> clazz) throws IOException {
+   public static <A> A readFrom(ImmutableSerializationContext ctx, InputStream in, Class<A> clazz) throws IOException {
       return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(in), clazz);
    }
 
-   public static <A> A fromByteArray(SerializationContext ctx, byte[] bytes, Class<A> clazz) throws IOException {
+   public static <A> A fromByteArray(ImmutableSerializationContext ctx, byte[] bytes, Class<A> clazz) throws IOException {
       return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(bytes), clazz);
    }
 
    //todo [anistor] what happens with remaining trailing bytes? signal error?
-   public static <A> A fromByteArray(SerializationContext ctx, byte[] bytes, int offset, int length, Class<A> clazz) throws IOException {
+   public static <A> A fromByteArray(ImmutableSerializationContext ctx, byte[] bytes, int offset, int length, Class<A> clazz) throws IOException {
       return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(bytes, offset, length), clazz);
    }
 
-   public static <A> A fromByteBuffer(SerializationContext ctx, ByteBuffer byteBuffer, Class<A> clazz) throws IOException {
+   public static <A> A fromByteBuffer(ImmutableSerializationContext ctx, ByteBuffer byteBuffer, Class<A> clazz) throws IOException {
       return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(byteBuffer), clazz);
    }
 
@@ -113,26 +113,26 @@ public final class ProtobufUtil {
     * @return
     * @throws IOException
     */
-   public static <A> A fromWrappedByteArray(SerializationContext ctx, byte[] bytes) throws IOException {
+   public static <A> A fromWrappedByteArray(ImmutableSerializationContext ctx, byte[] bytes) throws IOException {
       return fromWrappedByteArray(ctx, bytes, 0, bytes.length);
    }
 
-   public static <A> A fromWrappedByteArray(SerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
+   public static <A> A fromWrappedByteArray(ImmutableSerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
       ByteArrayInputStream bais = new ByteArrayInputStream(bytes, offset, length);
       return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(bais));
    }
 
-   public static <A> A fromWrappedByteBuffer(SerializationContext ctx, ByteBuffer byteBuffer) throws IOException {
+   public static <A> A fromWrappedByteBuffer(ImmutableSerializationContext ctx, ByteBuffer byteBuffer) throws IOException {
       return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(byteBuffer));
    }
 
-   public static byte[] toWrappedByteArray(SerializationContext ctx, Object t) throws IOException {
+   public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.toByteArray();
    }
 
-   public static ByteBuffer toWrappedByteBuffer(SerializationContext ctx, Object t) throws IOException {
+   public static ByteBuffer toWrappedByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.getByteBuffer();
@@ -162,7 +162,7 @@ public final class ProtobufUtil {
     * @return
     * @throws IOException
     */
-   public static String toCanonicalJSON(SerializationContext ctx, byte[] bytes) throws IOException {
+   public static String toCanonicalJSON(ImmutableSerializationContext ctx, byte[] bytes) throws IOException {
       return toCanonicalJSON(ctx, bytes, true);
    }
 
@@ -175,13 +175,13 @@ public final class ProtobufUtil {
     * @return
     * @throws IOException
     */
-   public static String toCanonicalJSON(SerializationContext ctx, byte[] bytes, boolean prettyPrint) throws IOException {
+   public static String toCanonicalJSON(ImmutableSerializationContext ctx, byte[] bytes, boolean prettyPrint) throws IOException {
       StringBuilder jsonOut = new StringBuilder();
       toCanonicalJSON(ctx, bytes, jsonOut, prettyPrint ? 0 : -1);
       return jsonOut.toString();
    }
 
-   private static void toCanonicalJSON(SerializationContext ctx, byte[] bytes, StringBuilder jsonOut, int initNestingLevel) throws IOException {
+   private static void toCanonicalJSON(ImmutableSerializationContext ctx, byte[] bytes, StringBuilder jsonOut, int initNestingLevel) throws IOException {
       if (bytes.length == 0) {
          // only null values get to be encoded to an empty byte array
          jsonOut.append("null");

@@ -7,9 +7,9 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.jboss.logging.Logger;
@@ -41,7 +41,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    }
 
    @Override
-   public SerializationContext getSerializationContext() {
+   public ImmutableSerializationContext getSerializationContext() {
       return ctx;
    }
 

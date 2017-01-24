@@ -11,10 +11,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
@@ -26,7 +26,7 @@ import org.junit.Test;
 public class UnknownFieldSetImplTest extends AbstractProtoStreamTest {
 
    private byte[] createMarshalledObject() throws IOException {
-      SerializationContext ctx = createContext();
+      ImmutableSerializationContext ctx = createContext();
       User user = new User();
       user.setId(1);
       user.setName("John");

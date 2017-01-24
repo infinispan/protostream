@@ -212,15 +212,15 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public boolean canMarshall(Class clazz) {
+   public boolean canMarshall(Class<?> clazz) {
       return marshallersByClass.containsKey(clazz);
    }
 
    @Override
-   public boolean canMarshall(String descriptorFullName) {
+   public boolean canMarshall(String fullName) {
       readLock.lock();
       try {
-         return genericDescriptors.containsKey(descriptorFullName);
+         return genericDescriptors.containsKey(fullName);
          //TODO the correct implementation should be: return marshallersByName.containsKey(descriptorFullName);
       } finally {
          readLock.unlock();
@@ -228,8 +228,8 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public <T> BaseMarshaller<T> getMarshaller(String descriptorFullName) {
-      return this.<T>getMarshallerDelegate(descriptorFullName).getMarshaller();
+   public <T> BaseMarshaller<T> getMarshaller(String fullName) {
+      return this.<T>getMarshallerDelegate(fullName).getMarshaller();
    }
 
    @Override
@@ -288,12 +288,12 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public Integer getTypeIdByName(String descriptorFullName) {
+   public Integer getTypeIdByName(String fullName) {
       readLock.lock();
       try {
-         GenericDescriptor descriptor = genericDescriptors.get(descriptorFullName);
+         GenericDescriptor descriptor = genericDescriptors.get(fullName);
          if (descriptor == null) {
-            throw new IllegalArgumentException("Unknown type name : " + descriptorFullName);
+            throw new IllegalArgumentException("Unknown type name : " + fullName);
          }
          return descriptor.getTypeId();
       } finally {

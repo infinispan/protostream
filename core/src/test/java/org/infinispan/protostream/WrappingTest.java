@@ -158,7 +158,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
    @Test
    public void testMarshallBytes() throws Exception {
-      SerializationContext ctx = createContext();
+      ImmutableSerializationContext ctx = createContext();
       byte[] value = new byte[]{1, 2, 3, 4};
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, value);
       Object obj = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
@@ -175,7 +175,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
       if (value == null || value.getClass().isArray()) {
          throw new IllegalArgumentException("nulls or arrays are not accepted");
       }
-      SerializationContext ctx = createContext();
+      ImmutableSerializationContext ctx = createContext();
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, value);
       Object obj = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
       assertEquals(value.getClass(), obj.getClass());
@@ -184,7 +184,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
    @Test
    public void testMarshallObject() throws Exception {
-      SerializationContext ctx = createContext();
+      ImmutableSerializationContext ctx = createContext();
 
       User user = createUser(1, "John", "Batman");
 
@@ -210,7 +210,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
    @Test
    public void testMarshallNull() throws Exception {
-      SerializationContext ctx = createContext();
+      ImmutableSerializationContext ctx = createContext();
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, null);
       Object obj = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
       assertNull(obj);
