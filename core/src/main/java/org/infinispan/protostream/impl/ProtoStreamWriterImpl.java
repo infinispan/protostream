@@ -46,26 +46,41 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    }
 
    @Override
+   public void writeInt(String fieldName, int value) throws IOException {
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      checkFieldWrite(fd);
+      switch (fd.getType()) {
+         case INT32:
+            messageContext.out.writeInt32(fd.getNumber(), value);
+            break;
+         case FIXED32:
+            messageContext.out.writeFixed32(fd.getNumber(), value);
+            break;
+         case UINT32:
+            messageContext.out.writeUInt32(fd.getNumber(), value);
+            break;
+         case SFIXED32:
+            messageContext.out.writeSFixed32(fd.getNumber(), value);
+            break;
+         case SINT32:
+            messageContext.out.writeSInt32(fd.getNumber(), value);
+            break;
+         default:
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+   }
+
+
+   @Override
    public void writeInt(String fieldName, Integer value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
             throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
          }
          return;
       }
-
-      writeInt(fieldName, value.intValue());
-   }
-
-   @Override
-   public void writeInt(String fieldName, int value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
-      checkFieldWrite(fd);
-
-      //need to know which exact flavor of write to use depending on wire type
       switch (fd.getType()) {
          case INT32:
             messageContext.out.writeInt32(fd.getNumber(), value);
@@ -88,12 +103,50 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    }
 
    @Override
+   public void writeInts(String fieldName, int[] array) throws IOException {
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      checkRepeatedFieldWrite(fd);
+      if (array == null) {
+         // a repeated field can never be flagged as required
+         return;
+      }
+      final RawProtoStreamWriter out = messageContext.out;
+      final int fieldNumber = fd.getNumber();
+      switch (fd.getType()) {
+         case INT32:
+            for (int value : array) {
+               out.writeInt32(fieldNumber, value);
+            }
+            break;
+         case FIXED32:
+            for (int value : array) {
+               out.writeFixed32(fieldNumber, value);
+            }
+            break;
+         case UINT32:
+            for (int value : array) {
+               out.writeUInt32(fieldNumber, value);
+            }
+            break;
+         case SFIXED32:
+            for (int value : array) {
+               out.writeSFixed32(fieldNumber, value);
+            }
+            break;
+         case SINT32:
+            for (int value : array) {
+               out.writeSInt32(fieldNumber, value);
+            }
+            break;
+         default:
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+   }
+
+   @Override
    public void writeLong(String fieldName, long value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
       checkFieldWrite(fd);
-
-      //need to know which exact flavor of write to use depending on wire type
       switch (fd.getType()) {
          case INT64:
             messageContext.out.writeInt64(fd.getNumber(), value);
@@ -118,150 +171,255 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    @Override
    public void writeLong(String fieldName, Long value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
             throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
          }
          return;
       }
+      switch (fd.getType()) {
+         case INT64:
+            messageContext.out.writeInt64(fd.getNumber(), value);
+            break;
+         case UINT64:
+            messageContext.out.writeUInt64(fd.getNumber(), value);
+            break;
+         case FIXED64:
+            messageContext.out.writeFixed64(fd.getNumber(), value);
+            break;
+         case SFIXED64:
+            messageContext.out.writeSFixed64(fd.getNumber(), value);
+            break;
+         case SINT64:
+            messageContext.out.writeSInt64(fd.getNumber(), value);
+            break;
+         default:
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+   }
 
-      writeLong(fieldName, value.longValue());
+   @Override
+   public void writeLongs(String fieldName, long[] array) throws IOException {
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      checkRepeatedFieldWrite(fd);
+      if (array == null) {
+         // a repeated field can never be flagged as required
+         return;
+      }
+      final RawProtoStreamWriter out = messageContext.out;
+      final int fieldNumber = fd.getNumber();
+      switch (fd.getType()) {
+         case INT64:
+            for (long value : array) {
+               out.writeInt64(fieldNumber, value);
+            }
+            break;
+         case FIXED64:
+            for (long value : array) {
+               out.writeFixed64(fieldNumber, value);
+            }
+            break;
+         case UINT64:
+            for (long value : array) {
+               out.writeUInt64(fieldNumber, value);
+            }
+            break;
+         case SFIXED64:
+            for (long value : array) {
+               out.writeSFixed64(fieldNumber, value);
+            }
+            break;
+         case SINT64:
+            for (long value : array) {
+               out.writeSInt64(fieldNumber, value);
+            }
+            break;
+         default:
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+   }
+
+   @Override
+   public void writeDate(String fieldName, Date value) throws IOException {
+      if (value != null) {
+         writeLong(fieldName, value.getTime());
+      }
    }
 
    @Override
    public void writeDouble(String fieldName, double value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
       checkFieldWrite(fd);
-
       if (fd.getType() != Type.DOUBLE) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
-
       messageContext.out.writeDouble(fd.getNumber(), value);
    }
 
    @Override
    public void writeDouble(String fieldName, Double value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      if (fd.getType() != Type.DOUBLE) {
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+      checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
             throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
          }
          return;
       }
+      messageContext.out.writeDouble(fd.getNumber(), value);
+   }
 
-      writeDouble(fieldName, value.doubleValue());
+   @Override
+   public void writeDoubles(String fieldName, double[] array) throws IOException {
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      if (fd.getType() != Type.DOUBLE) {
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+      checkRepeatedFieldWrite(fd);
+      if (array == null) {
+         // a repeated field can never be flagged as required
+         return;
+      }
+      final RawProtoStreamWriter out = messageContext.out;
+      final int fieldNumber = fd.getNumber();
+      for (double value : array) {
+         out.writeDouble(fieldNumber, value);
+      }
    }
 
    @Override
    public void writeFloat(String fieldName, float value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
-      checkFieldWrite(fd);
-
       if (fd.getType() != Type.FLOAT) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
-
+      checkFieldWrite(fd);
       messageContext.out.writeFloat(fd.getNumber(), value);
    }
 
    @Override
    public void writeFloat(String fieldName, Float value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      if (fd.getType() != Type.FLOAT) {
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+      checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
             throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
          }
          return;
       }
+      messageContext.out.writeFloat(fd.getNumber(), value);
+   }
 
-      writeFloat(fieldName, value.floatValue());
+   @Override
+   public void writeFloats(String fieldName, float[] array) throws IOException {
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      if (fd.getType() != Type.FLOAT) {
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+      checkRepeatedFieldWrite(fd);
+      if (array == null) {
+         // a repeated field can never be flagged as required
+         return;
+      }
+      final RawProtoStreamWriter out = messageContext.out;
+      final int fieldNumber = fd.getNumber();
+      for (float value : array) {
+         out.writeFloat(fieldNumber, value);
+      }
    }
 
    @Override
    public void writeBoolean(String fieldName, boolean value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
-      checkFieldWrite(fd);
-
       if (fd.getType() != Type.BOOL) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
-
+      checkFieldWrite(fd);
       messageContext.out.writeBool(fd.getNumber(), value);
    }
 
    @Override
    public void writeBoolean(String fieldName, Boolean value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      if (fd.getType() != Type.BOOL) {
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+      checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
             throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
          }
          return;
       }
+      messageContext.out.writeBool(fd.getNumber(), value);
+   }
 
-      writeBoolean(fieldName, value.booleanValue());
+   @Override
+   public void writeBooleans(String fieldName, boolean[] array) throws IOException {
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      if (fd.getType() != Type.BOOL) {
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+      }
+      checkRepeatedFieldWrite(fd);
+      if (array == null) {
+         // a repeated field can never be flagged as required
+         return;
+      }
+      final RawProtoStreamWriter out = messageContext.out;
+      final int fieldNumber = fd.getNumber();
+      for (boolean value : array) {
+         out.writeBool(fieldNumber, value);
+      }
    }
 
    @Override
    public void writeString(String fieldName, String value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      checkFieldWrite(fd);
+      if (fd.getType() != Type.STRING) {
+         throw new IllegalArgumentException("Declared field type is not of type string : " + fieldName);
+      }
       if (value == null) {
          if (fd.isRequired()) {
             throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
          }
          return;
       }
-
-      checkFieldWrite(fd);
-
-      if (fd.getType() != Type.STRING) {
-         throw new IllegalArgumentException("Declared field type is not of type String : " + fieldName);
-      }
-
       messageContext.out.writeString(fd.getNumber(), value);
    }
 
    @Override
    public void writeBytes(String fieldName, byte[] value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      checkFieldWrite(fd);
+      if (fd.getType() != Type.BYTES) {
+         throw new IllegalArgumentException("Declared field type is not of type bytes : " + fieldName);
+      }
       if (value == null) {
          if (fd.isRequired()) {
             throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
          }
          return;
       }
-
-      checkFieldWrite(fd);
-
-      if (fd.getType() != Type.BYTES) {
-         throw new IllegalArgumentException("Declared field type is not of type byte[] : " + fieldName);
-      }
-
       messageContext.out.writeBytes(fd.getNumber(), value);
    }
 
    @Override
    public void writeBytes(String fieldName, InputStream input) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      checkFieldWrite(fd);
+      if (fd.getType() != Type.BYTES) {
+         throw new IllegalArgumentException("Declared field type is not of type bytes : " + fieldName);
+      }
       if (input == null) {
          throw new IllegalArgumentException("The input stream cannot be null");
-      }
-
-      checkFieldWrite(fd);
-
-      if (fd.getType() != Type.BYTES) {
-         throw new IllegalArgumentException("Declared field type is not of type byte[] : " + fieldName);
       }
 
       int len = 0;
@@ -286,16 +444,13 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    @Override
    public <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
             throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
          }
          return;
       }
-
-      checkFieldWrite(fd);
-
       if (fd.getType() == Type.GROUP) {
          writeGroup(fd, value, clazz);
       } else if (fd.getType() == Type.MESSAGE) {
@@ -336,231 +491,304 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    @Override
    public <E> void writeCollection(String fieldName, Collection<? super E> collection, Class<E> elementClass) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      checkRepeatedFieldWrite(fd);
       if (collection == null) {
-         // a repeated field is never flagged as required
+         // a repeated field can never be flagged as required
          return;
       }
 
-      checkRepeatedFieldWrite(fd);
-
-      final Type type = fd.getType();
-      if (type == Type.GROUP) {
-         for (Object t : collection) {
-            writeGroup(fd, t, elementClass);
-         }
-      } else if (type == Type.MESSAGE) {
-         for (Object t : collection) {
-            writeMessage(fd, t, elementClass);
-         }
-      } else if (type == Type.ENUM) {
-         for (Object t : collection) {
-            writeEnum(fd, (Enum) t);
-         }
-      } else {
-         final RawProtoStreamWriter out = messageContext.out;
-         final int fieldNumber = fd.getNumber();
-         switch (type) {
-            case DOUBLE:
-               for (Object value : collection) {  //todo check (value != null && value.getClass() == elementClass)
-                  out.writeDouble(fieldNumber, (Double) value);
-               }
-               break;
-            case FLOAT:
-               for (Object value : collection) {
-                  out.writeFloat(fieldNumber, (Float) value);
-               }
-               break;
-            case BOOL:
-               for (Object value : collection) {
-                  out.writeBool(fieldNumber, (Boolean) value);
-               }
-               break;
-            case STRING:
-               for (Object value : collection) {
-                  out.writeString(fieldNumber, (String) value);
-               }
-               break;
-            case BYTES:
-               for (Object value : collection) {
-                  out.writeBytes(fieldNumber, (byte[]) value);
-               }
-               break;
-            case INT64:
-               for (Object value : collection) {
-                  out.writeInt64(fieldNumber, (Long) value);
-               }
-               break;
-            case UINT64:
-               for (Object value : collection) {
-                  out.writeUInt64(fieldNumber, (Long) value);
-               }
-               break;
-            case FIXED64:
-               for (Object value : collection) {
-                  out.writeFixed64(fieldNumber, (Long) value);
-               }
-               break;
-            case SFIXED64:
-               for (Object value : collection) {
-                  out.writeSFixed64(fieldNumber, (Long) value);
-               }
-               break;
-            case SINT64:
-               for (Object value : collection) {
-                  out.writeSInt64(fieldNumber, (Long) value);
-               }
-               break;
-            case INT32:
-               for (Object value : collection) {
-                  out.writeInt32(fieldNumber, (Integer) value);
-               }
-               break;
-            case FIXED32:
-               for (Object value : collection) {
-                  out.writeFixed32(fieldNumber, (Integer) value);
-               }
-               break;
-            case UINT32:
-               for (Object value : collection) {
-                  out.writeUInt32(fieldNumber, (Integer) value);
-               }
-               break;
-            case SFIXED32:
-               for (Object value : collection) {
-                  out.writeSFixed32(fieldNumber, (Integer) value);
-               }
-               break;
-            case SINT32:
-               for (Object value : collection) {
-                  out.writeSInt32(fieldNumber, (Integer) value);
-               }
-               break;
-            default:
-               throw new IllegalStateException("Unexpected field type : " + type);
-         }
+      final RawProtoStreamWriter out = messageContext.out;
+      final int fieldNumber = fd.getNumber();
+      switch (fd.getType()) {
+         case GROUP:
+            for (Object t : collection) {
+               validateElement(t, elementClass);
+               writeGroup(fd, t, elementClass);
+            }
+            break;
+         case MESSAGE:
+            for (Object t : collection) {
+               validateElement(t, elementClass);
+               writeMessage(fd, t, elementClass);
+            }
+            break;
+         case ENUM:
+            for (Object t : collection) {
+               validateElement(t, elementClass);
+               writeEnum(fd, (Enum) t);
+            }
+            break;
+         case DOUBLE:
+            validateElementClass(elementClass, Double.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeDouble(fieldNumber, (Double) value);
+            }
+            break;
+         case FLOAT:
+            validateElementClass(elementClass, Float.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeFloat(fieldNumber, (Float) value);
+            }
+            break;
+         case BOOL:
+            validateElementClass(elementClass, Boolean.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeBool(fieldNumber, (Boolean) value);
+            }
+            break;
+         case STRING:
+            validateElementClass(elementClass, String.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeString(fieldNumber, (String) value);
+            }
+            break;
+         case BYTES:
+            validateElementClass(elementClass, byte[].class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeBytes(fieldNumber, (byte[]) value);
+            }
+            break;
+         case INT64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeInt64(fieldNumber, (Long) value);
+            }
+            break;
+         case UINT64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeUInt64(fieldNumber, (Long) value);
+            }
+            break;
+         case FIXED64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeFixed64(fieldNumber, (Long) value);
+            }
+            break;
+         case SFIXED64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeSFixed64(fieldNumber, (Long) value);
+            }
+            break;
+         case SINT64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeSInt64(fieldNumber, (Long) value);
+            }
+            break;
+         case INT32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeInt32(fieldNumber, (Integer) value);
+            }
+            break;
+         case FIXED32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeFixed32(fieldNumber, (Integer) value);
+            }
+            break;
+         case UINT32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeUInt32(fieldNumber, (Integer) value);
+            }
+            break;
+         case SFIXED32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeSFixed32(fieldNumber, (Integer) value);
+            }
+            break;
+         case SINT32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : collection) {
+               validateElement(value, elementClass);
+               out.writeSInt32(fieldNumber, (Integer) value);
+            }
+            break;
+         default:
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
    }
 
    @Override
    public <E> void writeArray(String fieldName, E[] array, Class<? extends E> elementClass) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
-
+      checkRepeatedFieldWrite(fd);
       if (array == null) {
-         // a repeated field is never flagged as required
+         // a repeated field can never be flagged as required
          return;
       }
 
-      checkRepeatedFieldWrite(fd);
-
-      final Type type = fd.getType();
-      if (type == Type.GROUP) {
-         for (Object t : array) {
-            writeGroup(fd, t, elementClass);
-         }
-      } else if (type == Type.MESSAGE) {
-         for (Object t : array) {
-            writeMessage(fd, t, elementClass);
-         }
-      } else if (type == Type.ENUM) {
-         for (Object t : array) {
-            writeEnum(fd, (Enum) t);
-         }
-      } else {
-         final RawProtoStreamWriter out = messageContext.out;
-         final int fieldNumber = fd.getNumber();
-         switch (type) {
-            case DOUBLE:
-               for (Object value : array) {  //todo check (value != null && value.getClass() == elementClass)
-                  out.writeDouble(fieldNumber, (Double) value);
-               }
-               break;
-            case FLOAT:
-               for (Object value : array) {
-                  out.writeFloat(fieldNumber, (Float) value);
-               }
-               break;
-            case BOOL:
-               for (Object value : array) {
-                  out.writeBool(fieldNumber, (Boolean) value);
-               }
-               break;
-            case STRING:
-               for (Object value : array) {
-                  out.writeString(fieldNumber, (String) value);
-               }
-               break;
-            case BYTES:
-               for (Object value : array) {
-                  out.writeBytes(fieldNumber, (byte[]) value);
-               }
-               break;
-            case INT64:
-               for (Object value : array) {
-                  out.writeInt64(fieldNumber, (Long) value);
-               }
-               break;
-            case UINT64:
-               for (Object value : array) {
-                  out.writeUInt64(fieldNumber, (Long) value);
-               }
-               break;
-            case FIXED64:
-               for (Object value : array) {
-                  out.writeFixed64(fieldNumber, (Long) value);
-               }
-               break;
-            case SFIXED64:
-               for (Object value : array) {
-                  out.writeSFixed64(fieldNumber, (Long) value);
-               }
-               break;
-            case SINT64:
-               for (Object value : array) {
-                  out.writeSInt64(fieldNumber, (Long) value);
-               }
-               break;
-            case INT32:
-               for (Object value : array) {
-                  out.writeInt32(fieldNumber, (Integer) value);
-               }
-               break;
-            case FIXED32:
-               for (Object value : array) {
-                  out.writeFixed32(fieldNumber, (Integer) value);
-               }
-               break;
-            case UINT32:
-               for (Object value : array) {
-                  out.writeUInt32(fieldNumber, (Integer) value);
-               }
-               break;
-            case SFIXED32:
-               for (Object value : array) {
-                  out.writeSFixed32(fieldNumber, (Integer) value);
-               }
-               break;
-            case SINT32:
-               for (Object value : array) {
-                  out.writeSInt32(fieldNumber, (Integer) value);
-               }
-               break;
-            default:
-               throw new IllegalStateException("Unexpected field type : " + type);
-         }
+      final RawProtoStreamWriter out = messageContext.out;
+      final int fieldNumber = fd.getNumber();
+      switch (fd.getType()) {
+         case GROUP:
+            for (Object t : array) {
+               validateElement(t, elementClass);
+               writeGroup(fd, t, elementClass);
+            }
+            break;
+         case MESSAGE:
+            for (Object t : array) {
+               validateElement(t, elementClass);
+               writeMessage(fd, t, elementClass);
+            }
+            break;
+         case ENUM:
+            for (Object t : array) {
+               validateElement(t, elementClass);
+               writeEnum(fd, (Enum) t);
+            }
+            break;
+         case DOUBLE:
+            validateElementClass(elementClass, Double.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeDouble(fieldNumber, (Double) value);
+            }
+            break;
+         case FLOAT:
+            validateElementClass(elementClass, Float.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeFloat(fieldNumber, (Float) value);
+            }
+            break;
+         case BOOL:
+            validateElementClass(elementClass, Boolean.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeBool(fieldNumber, (Boolean) value);
+            }
+            break;
+         case STRING:
+            validateElementClass(elementClass, String.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeString(fieldNumber, (String) value);
+            }
+            break;
+         case BYTES:
+            validateElementClass(elementClass, byte[].class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeBytes(fieldNumber, (byte[]) value);
+            }
+            break;
+         case INT64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeInt64(fieldNumber, (Long) value);
+            }
+            break;
+         case UINT64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeUInt64(fieldNumber, (Long) value);
+            }
+            break;
+         case FIXED64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeFixed64(fieldNumber, (Long) value);
+            }
+            break;
+         case SFIXED64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeSFixed64(fieldNumber, (Long) value);
+            }
+            break;
+         case SINT64:
+            validateElementClass(elementClass, Long.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeSInt64(fieldNumber, (Long) value);
+            }
+            break;
+         case INT32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeInt32(fieldNumber, (Integer) value);
+            }
+            break;
+         case FIXED32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeFixed32(fieldNumber, (Integer) value);
+            }
+            break;
+         case UINT32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeUInt32(fieldNumber, (Integer) value);
+            }
+            break;
+         case SFIXED32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeSFixed32(fieldNumber, (Integer) value);
+            }
+            break;
+         case SINT32:
+            validateElementClass(elementClass, Integer.class);
+            for (Object value : array) {
+               validateElement(value, elementClass);
+               out.writeSInt32(fieldNumber, (Integer) value);
+            }
+            break;
+         default:
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
       }
    }
 
-   @Override
-   public void writeDate(String fieldName, Date value) throws IOException {
-      if (value != null) {
-         writeLong(fieldName, value.getTime());
+   private void validateElementClass(Class<?> elementClass, Class<?> expectedElementClass) {
+      if (elementClass != expectedElementClass) {
+         throw new IllegalArgumentException("elementClass argument should be " + expectedElementClass.getName());
       }
    }
 
+   private void validateElement(Object element, Class<?> elementClass) {
+      if (element == null) {
+         throw new IllegalArgumentException("Collection or array element cannot be null");
+      }
+      if (element.getClass() != elementClass) {
+         throw new IllegalArgumentException("Collection or array element is expected to be an instance of " + elementClass.getName());
+      }
+   }
+
+   /**
+    * Check repeatability and write-once for a non-repeatable field.
+    */
    private void checkFieldWrite(FieldDescriptor fd) {
       if (fd.isRepeated()) {
-         throw new IllegalArgumentException("A repeated field should be written with one of the methods intended for collections or arrays: " + fd.getFullName());
+         throw new IllegalStateException("A repeated field should be written with one of the methods intended for collections or arrays: " + fd.getFullName());
       }
 
       if (!messageContext.markField(fd.getNumber())) {
@@ -574,9 +802,12 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
    }
 
+   /**
+    * Check repeatability and write-once for a repeatable field.
+    */
    private void checkRepeatedFieldWrite(FieldDescriptor fd) {
       if (!fd.isRepeated()) {
-         throw new IllegalArgumentException("This field is not repeated and cannot be written with the methods intended for collections or arrays: " + fd.getFullName());
+         throw new IllegalStateException("This field is not repeated and cannot be written with the methods intended for collections or arrays: " + fd.getFullName());
       }
 
       if (!messageContext.markField(fd.getNumber())) {

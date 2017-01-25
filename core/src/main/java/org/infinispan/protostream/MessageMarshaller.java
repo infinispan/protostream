@@ -32,15 +32,25 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
        */
       Integer readInt(String fieldName) throws IOException;
 
+      int[] readInts(String fieldName) throws IOException;
+
       Long readLong(String fieldName) throws IOException;
+
+      long[] readLongs(String fieldName) throws IOException;
 
       Date readDate(String fieldName) throws IOException;
 
       Float readFloat(String fieldName) throws IOException;
 
+      float[] readFloats(String fieldName) throws IOException;
+
       Double readDouble(String fieldName) throws IOException;
 
+      double[] readDoubles(String fieldName) throws IOException;
+
       Boolean readBoolean(String fieldName) throws IOException;
+
+      boolean[] readBooleans(String fieldName) throws IOException;
 
       String readString(String fieldName) throws IOException;
 
@@ -65,13 +75,17 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       ImmutableSerializationContext getSerializationContext();
 
+      void writeInt(String fieldName, int value) throws IOException;
+
       void writeInt(String fieldName, Integer value) throws IOException;
 
-      void writeInt(String fieldName, int value) throws IOException;
+      void writeInts(String fieldName, int[] values) throws IOException;
 
       void writeLong(String fieldName, long value) throws IOException;
 
       void writeLong(String fieldName, Long value) throws IOException;
+
+      void writeLongs(String fieldName, long[] values) throws IOException;
 
       void writeDate(String fieldName, Date value) throws IOException;
 
@@ -79,13 +93,19 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       void writeDouble(String fieldName, Double value) throws IOException;
 
+      void writeDoubles(String fieldName, double[] values) throws IOException;
+
       void writeFloat(String fieldName, float value) throws IOException;
 
       void writeFloat(String fieldName, Float value) throws IOException;
 
+      void writeFloats(String fieldName, float[] values) throws IOException;
+
       void writeBoolean(String fieldName, boolean value) throws IOException;
 
       void writeBoolean(String fieldName, Boolean value) throws IOException;
+
+      void writeBooleans(String fieldName, boolean[] values) throws IOException;
 
       void writeString(String fieldName, String value) throws IOException;
 

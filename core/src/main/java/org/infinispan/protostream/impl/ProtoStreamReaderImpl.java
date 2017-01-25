@@ -142,36 +142,43 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
    }
 
    private Object convertWireTypeToJavaType(Type type, Object o) {
-      if (type == Type.STRING) {
-         try {
-            o = new String((byte[]) o, "UTF-8");
-         } catch (UnsupportedEncodingException e) {
-            // Hell is freezing
-            throw new RuntimeException("UTF-8 not supported", e);
-         }
-      } else if (type == Type.BYTES) {
-         o = (byte[]) o;
-      } else if (type == Type.INT32
-            || type == Type.UINT32
-            || type == Type.SINT32) {
-         o = ((Long) o).intValue();
-      } else if (type == Type.FIXED32
-            || type == Type.SFIXED32) {
-         //o is an Integer
-         o = (Integer) o;
-      } else if (type == Type.INT64
-            || type == Type.UINT64
-            || type == Type.FIXED64
-            || type == Type.SFIXED64
-            || type == Type.SINT64) {
-         //o is a Long
-         o = (Long) o;
-      } else if (type == Type.BOOL) {
-         o = ((Long) o) != 0;
-      } else if (type == Type.FLOAT) {
-         o = Float.intBitsToFloat((Integer) o);
-      } else if (type == Type.DOUBLE) {
-         o = Double.longBitsToDouble((Long) o);
+      switch (type) {
+         case STRING:
+            try {
+               o = new String((byte[]) o, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+               // Hell is freezing
+               throw new RuntimeException("UTF-8 not supported", e);
+            }
+            break;
+         case BYTES:
+            o = (byte[]) o;
+            break;
+         case INT32:
+         case UINT32:
+         case SINT32:
+            o = ((Long) o).intValue();
+            break;
+         case FIXED32:
+         case SFIXED32:
+            o = (Integer) o;
+            break;
+         case INT64:
+         case UINT64:
+         case FIXED64:
+         case SFIXED64:
+         case SINT64:
+            o = (Long) o;
+            break;
+         case BOOL:
+            o = ((Long) o) != 0;
+            break;
+         case FLOAT:
+            o = Float.intBitsToFloat((Integer) o);
+            break;
+         case DOUBLE:
+            o = Double.longBitsToDouble((Long) o);
+            break;
       }
       return o;
    }
@@ -187,8 +194,28 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
    }
 
    @Override
+   public int[] readInts(String fieldName) throws IOException {
+      List<Integer> values = readCollection(fieldName, new ArrayList<>(), Integer.class);
+      int[] result = new int[values.size()];
+      for (int i = 0; i < values.size(); i++) {
+         result[i] = values.get(i);
+      }
+      return result;
+   }
+
+   @Override
    public Long readLong(String fieldName) throws IOException {
       return (Long) readPrimitive(fieldName, JavaType.LONG);
+   }
+
+   @Override
+   public long[] readLongs(String fieldName) throws IOException {
+      List<Long> values = readCollection(fieldName, new ArrayList<>(), Long.class);
+      long[] result = new long[values.size()];
+      for (int i = 0; i < values.size(); i++) {
+         result[i] = values.get(i);
+      }
+      return result;
    }
 
    @Override
@@ -203,13 +230,43 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
    }
 
    @Override
+   public float[] readFloats(String fieldName) throws IOException {
+      List<Float> values = readCollection(fieldName, new ArrayList<>(), Float.class);
+      float[] result = new float[values.size()];
+      for (int i = 0; i < values.size(); i++) {
+         result[i] = values.get(i);
+      }
+      return result;
+   }
+
+   @Override
    public Double readDouble(String fieldName) throws IOException {
       return (Double) readPrimitive(fieldName, JavaType.DOUBLE);
    }
 
    @Override
+   public double[] readDoubles(String fieldName) throws IOException {
+      List<Double> values = readCollection(fieldName, new ArrayList<>(), Double.class);
+      double[] result = new double[values.size()];
+      for (int i = 0; i < values.size(); i++) {
+         result[i] = values.get(i);
+      }
+      return result;
+   }
+
+   @Override
    public Boolean readBoolean(String fieldName) throws IOException {
       return (Boolean) readPrimitive(fieldName, JavaType.BOOLEAN);
+   }
+
+   @Override
+   public boolean[] readBooleans(String fieldName) throws IOException {
+      List<Boolean> values = readCollection(fieldName, new ArrayList<>(), Boolean.class);
+      boolean[] result = new boolean[values.size()];
+      for (int i = 0; i < values.size(); i++) {
+         result[i] = values.get(i);
+      }
+      return result;
    }
 
    @Override
@@ -326,7 +383,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
       return collection;
    }
 
-   private void readPrimitiveCollection(FieldDescriptor fd, Collection<? super Object> collection, Class elementClass) throws IOException {
+   private void readPrimitiveCollection(FieldDescriptor fd, Collection<? super Object> collection, Class<?> elementClass) throws IOException {
       final int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
       Type type = fd.getType();
 
@@ -403,8 +460,8 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
 
    @Override
    public <E> E[] readArray(String fieldName, Class<? extends E> elementClass) throws IOException {
-      List<E> list = readCollection(fieldName, new ArrayList<E>(), elementClass);
-      return list.toArray((E[]) Array.newInstance(elementClass, list.size()));
+      List<E> values = readCollection(fieldName, new ArrayList<E>(), elementClass);
+      return values.toArray((E[]) Array.newInstance(elementClass, values.size()));
    }
 
    private void checkFieldRead(FieldDescriptor fd, boolean expectRepeated) {
