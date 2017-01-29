@@ -43,8 +43,9 @@ public final class ProtoSchemaBuilder {
    public static final String MARSHALLER_LONG_OPT = "marshaller";
    public static final String SCHEMA_OPT = "s";
    public static final String SCHEMA_LONG_OPT = "schema";
+
    /**
-    * Set this to {@code true} to enable output of debug comments in the generated protobuf schema.
+    * Set this flag to {@code true} to enable output of debug comments in the generated protobuf schema.
     */
    public static boolean generateSchemaDebugComments = false;
 
@@ -132,11 +133,24 @@ public final class ProtoSchemaBuilder {
    public ProtoSchemaBuilder() {
    }
 
+   /**
+    * Set the name of the protobuf schema file to generate. This is mandatory. The resulting file will be registered in
+    * the {@link SerializationContext} with this given name.
+    *
+    * @param fileName the name of the file to generate
+    * @return itself
+    */
    public ProtoSchemaBuilder fileName(String fileName) {
       this.fileName = fileName;
       return this;
    }
 
+   /**
+    * Set the name of the protobuf package to generate. This is optional.
+    *
+    * @param packageName the package name
+    * @return itself
+    */
    public ProtoSchemaBuilder packageName(String packageName) {
       if (packageName.trim().isEmpty()) {
          throw new IllegalArgumentException("packageName cannot be empty");
@@ -145,14 +159,20 @@ public final class ProtoSchemaBuilder {
       return this;
    }
 
+   /**
+    * Add a @ProtoXyz annotated class to be analyzed.
+    *
+    * @param clazz the class to analyze
+    * @return itself
+    */
    public ProtoSchemaBuilder addClass(Class<?> clazz) {
       classes.add(clazz);
       return this;
    }
 
    /**
-    * Builds the Protocol Buffers schema file and marshallers and registers them with  the given {@link
-    * SerializationContext}.
+    * Builds the Protocol Buffers schema file defining the types and generates marshaller implementations for these
+    * types and registers everything with the given {@link SerializationContext}.
     *
     * @param serializationContext
     * @return the generated Protocol Buffers schema file
