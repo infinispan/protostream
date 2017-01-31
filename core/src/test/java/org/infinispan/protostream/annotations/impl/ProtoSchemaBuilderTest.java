@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +15,7 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.testdomain.Simple;
@@ -260,5 +262,122 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
             .packageName("test_package1")
             .addClass(TestCase_DuplicateEnumValueName.E.class)
             .build(ctx);
+   }
+
+   static class MessageWithAllFieldTypes {
+
+      @ProtoField(number = 1, defaultValue = "A")
+      char testField1;
+
+      @ProtoField(number = 2, defaultValue = "A")
+      char[] testField2 = {'a', 'b'};
+
+      @ProtoField(number = 3, defaultValue = "A")
+      Character testField3 = 'a';
+
+      @ProtoField(number = 4, defaultValue = "A")
+      Character[] testField4 = {'a', 'b'};
+
+      @ProtoField(number = 5, defaultValue = "A")
+      boolean testField5;
+
+      @ProtoField(number = 6, defaultValue = "true")
+      boolean[] testField6 = {true, true};
+
+      @ProtoField(number = 7, defaultValue = "true")
+      Boolean testField7 = true;
+
+      @ProtoField(number = 8, defaultValue = "true")
+      Boolean[] testField8 = {true, true};
+
+      @ProtoField(number = 9, defaultValue = "100")
+      short testField9;
+
+      @ProtoField(number = 10, defaultValue = "100")
+      short[] testField10 = {1, 2};
+
+      @ProtoField(number = 11, defaultValue = "100")
+      Short testField11 = 1;
+
+      @ProtoField(number = 12, defaultValue = "100")
+      Short[] testField12 = {1, 2};
+
+      @ProtoField(number = 13, defaultValue = "100.5")
+      float testField13;
+
+      @ProtoField(number = 14, defaultValue = "100.5")
+      float[] testField14 = {3.14f, 3.15f};
+
+      @ProtoField(number = 15, defaultValue = "100.5")
+      Float testField15 = 3.14f;
+
+      @ProtoField(number = 16, defaultValue = "100.5")
+      Float[] testField16 = {3.14f, 3.15f};
+
+      @ProtoField(number = 17, defaultValue = "100.5")
+      double testField17;
+
+      @ProtoField(number = 18, defaultValue = "100.5")
+      double[] testField18;
+
+      @ProtoField(number = 19, defaultValue = "100.5")
+      Double testField19 = 3.14;
+
+      @ProtoField(number = 20, defaultValue = "100.5")
+      Double[] testField20 = {3.14, 3.15};
+
+      @ProtoField(number = 21, defaultValue = "100")
+      int testField21;
+
+      @ProtoField(number = 22, defaultValue = "100")
+      int[] testField22;
+
+      @ProtoField(number = 23, defaultValue = "100")
+      Integer testField23 = 1;
+
+      @ProtoField(number = 24, defaultValue = "100")
+      Integer[] testField24 = {1, 2};
+
+      @ProtoField(number = 25, defaultValue = "100")
+      long testField25;
+
+      @ProtoField(number = 26, defaultValue = "100")
+      long[] testField26 = {1, 2};
+
+      @ProtoField(number = 27, defaultValue = "100")
+      Long testField27 = 1L;
+
+      @ProtoField(number = 28, defaultValue = "100")
+      Long[] testField28 = {1L, 2L};
+
+      @ProtoField(number = 29, defaultValue = "xyz")
+      String testField29 = "test";
+
+      @ProtoField(number = 30, defaultValue = "xyz")
+      String[] testField30 = {"one", "two"};
+
+      @ProtoField(number = 31/*, defaultValue = "1"*/)
+      Date testField31 = new Date(100);
+
+      @ProtoField(number = 32/*, defaultValue = "1"*/)
+      Date[] testField32 = {new Date(100), new Date(200)};
+
+      @ProtoField(number = 33, defaultValue = "33")
+      byte[] testField33 = {1, 2, 3};
+
+//      @ProtoField(number = 34, defaultValue = "34")
+      Byte[] testField34 = {1, 2, 3};
+   }
+
+   @Test
+   public void testAllFieldTypes() throws Exception {
+      SerializationContext ctx = createContext();
+      new ProtoSchemaBuilder()
+            .fileName("test.proto")
+            .addClass(MessageWithAllFieldTypes.class)
+            .build(ctx);
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new MessageWithAllFieldTypes());
+      ProtobufUtil.fromWrappedByteArray(ctx, bytes);
    }
 }

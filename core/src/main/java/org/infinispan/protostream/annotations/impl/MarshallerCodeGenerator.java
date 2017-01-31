@@ -298,7 +298,7 @@ final class MarshallerCodeGenerator {
             case SINT64:
                iw.append("{\n");
                iw.inc();
-               iw.append(fieldMetadata.getJavaType().getName()).append(" v = ").append(box("$2." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata.getJavaType())).append(";\n");
+               iw.append(fieldMetadata.getJavaType().getName()).append(" v = ").append(box(convert("$2." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata), fieldMetadata.getJavaType())).append(";\n");
                genSetField(iw, fieldMetadata);
                iw.dec();
                iw.append("}\n");
@@ -390,6 +390,12 @@ final class MarshallerCodeGenerator {
                v = defaultValue + "D";
             } else if (defaultValue instanceof Float) {
                v = defaultValue + "F";
+            } else if (defaultValue instanceof Character) {
+               v = "'" + defaultValue + "'";
+            } else if (defaultValue instanceof Short) {
+               v = "(short) " + defaultValue;
+            } else if (defaultValue instanceof Byte) {
+               v = "(byte) " + defaultValue;
             } else {
                v = defaultValue.toString();
             }
@@ -397,9 +403,9 @@ final class MarshallerCodeGenerator {
                String c = makeCollectionLocalVar(fieldMetadata);
                String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
                iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(collectionImpl).append("();\n");
-               iw.append(c).append(".add(").append(v).append(");\n");
+               iw.append(c).append(".add(").append(box(v, defaultValue.getClass())).append(");\n");
             } else {
-               iw.append("o.").append(createSetter(fieldMetadata, v)).append(";\n");
+               iw.append("o.").append(createSetter(fieldMetadata, box(v, fieldMetadata.getJavaType()))).append(";\n");
             }
             iw.dec();
             iw.append("}\n");
@@ -671,6 +677,15 @@ final class MarshallerCodeGenerator {
       return (isWrite ? "write" : "read") + suffix;
    }
 
+   private String convert(String v, ProtoFieldMetadata fieldMetadata) {
+      if (fieldMetadata.getJavaType() == Character.class) {
+         return "(char) " + v;
+      } else if (fieldMetadata.getJavaType() == Short.class) {
+         return "(short) " + v;
+      }
+      return v;
+   }
+
    private Class<?> box(Class<?> clazz) {
       if (clazz == Float.TYPE) {
          return Float.class;
@@ -686,7 +701,10 @@ final class MarshallerCodeGenerator {
          return Short.class;
       } else if (clazz == Byte.TYPE) {
          return Byte.class;
+      } else if (clazz == Character.TYPE) {
+         return Character.class;
       }
+      // if no boxing is required then return null to indicate this
       return null;
    }
 
@@ -714,6 +732,8 @@ final class MarshallerCodeGenerator {
             return "new java.lang.Short(" + v + ")";
          } else if (clazz == Byte.class) {
             return "new java.lang.Byte(" + v + ")";
+         } else if (clazz == Character.class) {
+            return "new java.lang.Character(" + v + ")";
          }
       }
       return v;
@@ -736,6 +756,8 @@ final class MarshallerCodeGenerator {
          return v + ".shortValue()";
       } else if (clazz == Byte.class) {
          return v + ".byteValue()";
+      } else if (clazz == Character.class) {
+         return v + ".charValue()";
       }
       return v;
    }

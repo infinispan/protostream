@@ -364,13 +364,13 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          ProtoEnumTypeMetadata protoEnumTypeMetadata = (ProtoEnumTypeMetadata) protoSchemaGenerator.scanAnnotations(fieldType);
          ProtoEnumValueMetadata enumVal = protoEnumTypeMetadata.getMemberByName(defaultValue);
          if (enumVal == null) {
-            throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of " + clazz + ": " + defaultValue + " is not a member of " + protoEnumTypeMetadata.getFullName());
+            throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of type " + fieldType.getName() + " of class " + clazz.getName() + ": " + defaultValue + " is not a member of " + protoEnumTypeMetadata.getFullName());
          }
          return enumVal;
       }
       if (fieldType == Character.class || fieldType == Character.TYPE) {
          if (defaultValue.length() > 1) {
-            throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of " + clazz + ": " + defaultValue);
+            throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of type " + fieldType.getName() + " of class " + clazz.getName() + ": " + defaultValue);
          }
          return defaultValue.charAt(0);
       }
@@ -400,7 +400,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             return Long.valueOf(defaultValue);
          }
       } catch (NumberFormatException e) {
-         throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of " + clazz + ": " + defaultValue, e);
+         throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of type " + fieldType.getName() + " of class " + clazz.getName() + ": " + defaultValue, e);
       }
 
       throw new ProtoSchemaBuilderException("No default value is allowed for field '" + fieldName + "' of " + clazz);
@@ -447,7 +447,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException(javaType + " is not a protobuf marshallable enum type");
                }
                return Type.ENUM;
-            } else if (javaType == String.class || javaType == Character.class || javaType == Character.TYPE) {
+            } else if (javaType == String.class) {
                return Type.STRING;
             } else if (javaType == Double.class || javaType == Double.TYPE) {
                return Type.DOUBLE;
@@ -455,9 +455,10 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                return Type.FLOAT;
             } else if (javaType == Long.class || javaType == Long.TYPE) {
                return Type.INT64;
-            } else if (javaType == Integer.class || javaType == Integer.TYPE || javaType == Short.class || javaType == Short.TYPE) {
-               return Type.INT32;
-            } else if (javaType == Byte.class || javaType == Byte.TYPE) {
+            } else if (javaType == Integer.class || javaType == Integer.TYPE ||
+                  javaType == Short.class || javaType == Short.TYPE ||
+                  javaType == Byte.class || javaType == Byte.TYPE ||
+                  javaType == Character.class || javaType == Character.TYPE) {
                return Type.INT32;
             } else if (javaType == Boolean.class || javaType == Boolean.TYPE) {
                return Type.BOOL;

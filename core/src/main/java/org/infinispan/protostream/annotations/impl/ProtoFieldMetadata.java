@@ -205,10 +205,16 @@ final class ProtoFieldMetadata {
       iw.append(' ').append(name).append(" = ").append(String.valueOf(number));
       Object defaultValue = getDefaultValue();
       if (defaultValue != null) {
-         String v = defaultValue instanceof ProtoEnumValueMetadata ?
-               ((ProtoEnumValueMetadata) defaultValue).getProtoName() :
-               (defaultValue instanceof Date ?
-                      Long.toString(((Date) defaultValue).getTime()) : defaultValue.toString());
+         String v;
+         if (defaultValue instanceof ProtoEnumValueMetadata) {
+            v = ((ProtoEnumValueMetadata) defaultValue).getProtoName();
+         } else if (defaultValue instanceof Date) {
+            v = Long.toString(((Date) defaultValue).getTime());
+         } else if (defaultValue instanceof Character) {
+            v = Integer.toString(((Character) defaultValue));
+         } else {
+            v = defaultValue.toString();
+         }
          iw.append(" [default = ").append(v).append(']');
       }
 
