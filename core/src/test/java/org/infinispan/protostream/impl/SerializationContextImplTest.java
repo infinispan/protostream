@@ -102,6 +102,23 @@ public class SerializationContextImplTest {
    }
 
    @Test
+   public void testUnregisterFileWithErrors() throws Exception {
+      SerializationContextImpl ctx = createContext();
+      FileDescriptorSource source = FileDescriptorSource.fromString("test.proto", "kabooom")
+            .withProgressCallback(new FileDescriptorSource.ProgressCallback() {
+               @Override
+               public void handleError(String fileName, DescriptorParserException ex) {
+               }
+
+               @Override
+               public void handleSuccess(String fileName) {
+               }
+            });
+      ctx.registerProtoFiles(source);
+      ctx.unregisterProtoFile("test.proto");
+   }
+
+   @Test
    public void testFileCanExistWithSemanticErrors() throws Exception {
       SerializationContextImpl ctx = createContext();
       FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "import \"no_such_file.proto\";");

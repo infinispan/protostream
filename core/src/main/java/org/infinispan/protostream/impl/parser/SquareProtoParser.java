@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl.parser;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -38,23 +39,45 @@ public final class SquareProtoParser implements DescriptorParser {
       Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<>(input.size());
       for (Map.Entry<String, char[]> entry : input.entrySet()) {
          String fileName = entry.getKey();
+         ProtoFile protoFile = null;
          try {
-            ProtoFile protoFile = ProtoParser.parse(fileName, new CharArrayReader(entry.getValue()));
-            FileDescriptor fileDescriptor = PROTOFILE_MAPPER.map(protoFile);
-            fileDescriptor.setConfiguration(configuration);
-            fileDescriptorMap.put(fileName, fileDescriptor);
+            protoFile = ProtoParser.parse(fileName, new CharArrayReader(entry.getValue()));
          } catch (IOException e) {
-            reportParsingError(fileName, new DescriptorParserException("Internal parsing error : " + e.getMessage()), fileDescriptorSource);
+            reportParsingError(fileDescriptorSource, fileName, new DescriptorParserException("Internal parsing error : " + e.getMessage()));
          } catch (DescriptorParserException e) {
-            reportParsingError(fileName, e, fileDescriptorSource);
+            reportParsingError(fileDescriptorSource, fileName, e);
          } catch (RuntimeException e) {
-            reportParsingError(fileName, new DescriptorParserException(e), fileDescriptorSource);
+            reportParsingError(fileDescriptorSource, fileName, new DescriptorParserException(e));
          }
+         FileDescriptor fileDescriptor = protoFile != null ? PROTOFILE_MAPPER.map(protoFile) : makeErrorStub(fileName);
+         fileDescriptor.setConfiguration(configuration);
+         fileDescriptorMap.put(fileName, fileDescriptor);
       }
       return fileDescriptorMap;
    }
 
-   private void reportParsingError(String fileName, DescriptorParserException dpe, FileDescriptorSource fileDescriptorSource) {
+   /**
+    * Create an empty FileDescriptor that has just a name and an error status.
+    */
+   private FileDescriptor makeErrorStub(String fileName) {
+      FileDescriptor stub = new FileDescriptor.Builder()
+            .withName(fileName)
+            .withPackageName(null)
+            .withMessageTypes(Collections.emptyList())
+            .withEnumTypes(Collections.emptyList())
+            .withExtendDescriptors(Collections.emptyList())
+            .withOptions(Collections.emptyList())
+            .withDependencies(Collections.emptyList())
+            .withPublicDependencies(Collections.emptyList())
+            .build();
+      stub.markError();
+      return stub;
+   }
+
+   /**
+    * Report the error to the callback if any, or just throw it otherwise.
+    */
+   private void reportParsingError(FileDescriptorSource fileDescriptorSource, String fileName, DescriptorParserException dpe) {
       if (fileDescriptorSource.getProgressCallback() == null) {
          throw dpe;
       }

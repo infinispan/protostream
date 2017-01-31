@@ -33,9 +33,11 @@ public final class FileDescriptorSource {
 
    public interface ProgressCallback {
 
-      void handleError(String fileName, DescriptorParserException exception);
+      default void handleError(String fileName, DescriptorParserException exception) {
+      }
 
-      void handleSuccess(String fileName);
+      default void handleSuccess(String fileName) {
+      }
    }
 
    public FileDescriptorSource withProgressCallback(ProgressCallback progressCallback) throws IOException {

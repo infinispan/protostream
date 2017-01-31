@@ -108,6 +108,10 @@ public final class FileDescriptor {
       status = Status.UNRESOLVED;
    }
 
+   public void markError() {
+      status = Status.ERROR;
+   }
+
    /**
     * Transition form ERROR status to UNRESOLVED and propagate to all dependant FileDescriptors. All internal state used
     * during type reference resolution is cleared for this file and dependants.
