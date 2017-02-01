@@ -49,7 +49,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       try {
          javaClass.getDeclaredConstructor();
       } catch (NoSuchMethodException e) {
-         throw new ProtoSchemaBuilderException("The class " + javaClass + " must have a public no-argument constructor.");
+         throw new ProtoSchemaBuilderException("The class " + javaClass.getCanonicalName() + " must be instantiable using a public no-argument constructor.");
       }
    }
 
@@ -134,7 +134,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    private void checkConstructor() {
       Constructor<?> ctor;
       try {
-         ctor = javaClass.getConstructor();
+         ctor = javaClass.getDeclaredConstructor();
       } catch (NoSuchMethodException e) {
          throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " must have a non-private no argument constructor");
       }
