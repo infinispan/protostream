@@ -1,5 +1,6 @@
 package org.infinispan.protostream.sampledomain;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -22,6 +23,8 @@ public class User {
    private Integer age;
    private Gender gender;
    private String notes;
+   private Instant creationDate;
+   private Instant passwordExpirationDate;
 
    private UnknownFieldSet unknownFieldSet;
 
@@ -89,6 +92,22 @@ public class User {
       this.notes = notes;
    }
 
+   public Instant getCreationDate() {
+      return creationDate;
+   }
+
+   public void setCreationDate(Instant creationDate) {
+      this.creationDate = creationDate;
+   }
+
+   public Instant getPasswordExpirationDate() {
+      return passwordExpirationDate;
+   }
+
+   public void setPasswordExpirationDate(Instant passwordExpirationDate) {
+      this.passwordExpirationDate = passwordExpirationDate;
+   }
+
    public UnknownFieldSet getUnknownFieldSet() {
       return unknownFieldSet;
    }
@@ -108,6 +127,8 @@ public class User {
             ", age=" + age +
             ", gender=" + gender +
             ", notes=" + notes +
+            ", creationDate=" + creationDate +
+            ", passwordExpirationDate=" + passwordExpirationDate +
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }

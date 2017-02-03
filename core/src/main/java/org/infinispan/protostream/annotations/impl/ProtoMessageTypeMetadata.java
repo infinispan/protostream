@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -399,6 +400,9 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          if (Date.class.isAssignableFrom(fieldType)) {
             return Long.valueOf(defaultValue);
          }
+         if (Instant.class.isAssignableFrom(fieldType)) {
+            return Long.valueOf(defaultValue);
+         }
       } catch (NumberFormatException e) {
          throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of type " + fieldType.getName() + " of class " + clazz.getName() + ": " + defaultValue, e);
       }
@@ -464,6 +468,8 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                return Type.BOOL;
             } else if (Date.class.isAssignableFrom(javaType)) {
                return Type.FIXED64;
+            } else if (Instant.class.isAssignableFrom(javaType)) {
+               return Type.FIXED64;
             } else {
                ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
                if (m.isEnum()) {
@@ -515,7 +521,8 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case FIXED64:
          case SFIXED64:
          case SINT64:
-            if (javaType != Long.class && javaType != Long.TYPE && !Date.class.isAssignableFrom(javaType))
+            if (javaType != Long.class && javaType != Long.TYPE
+                  && !Date.class.isAssignableFrom(javaType) && !Instant.class.isAssignableFrom(javaType))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getName() + " vs " + type);
             break;
       }

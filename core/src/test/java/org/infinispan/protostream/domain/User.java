@@ -4,6 +4,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +32,8 @@ public class User extends BaseMessage implements Externalizable {   // implement
    private Integer age;
    private Gender gender;
    private String notes;
+   private Instant creationDate;
+   private Instant passwordExpirationDate;
 
    @ProtoField(number = 1, required = true)
    public int getId() {
@@ -104,6 +107,24 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.notes = notes;
    }
 
+   @ProtoField(number = 9)
+   public Instant getCreationDate() {
+      return creationDate;
+   }
+
+   public void setCreationDate(Instant creationDate) {
+      this.creationDate = creationDate;
+   }
+
+   @ProtoField(number = 10)
+   public Instant getPasswordExpirationDate() {
+      return passwordExpirationDate;
+   }
+
+   public void setPasswordExpirationDate(Instant passwordExpirationDate) {
+      this.passwordExpirationDate = passwordExpirationDate;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -115,6 +136,8 @@ public class User extends BaseMessage implements Externalizable {   // implement
             ", age=" + age +
             ", gender=" + gender +
             ", notes=" + notes +
+            ", creationDate=" + creationDate +
+            ", passwordExpirationDate=" + passwordExpirationDate +
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }
@@ -148,6 +171,18 @@ public class User extends BaseMessage implements Externalizable {   // implement
       }
       out.writeInt(gender.ordinal());
       out.writeUTF(notes);
+      if (creationDate != null) {
+         out.writeBoolean(true);
+         out.writeLong(creationDate.toEpochMilli());
+      } else {
+         out.writeBoolean(false);
+      }
+      if (passwordExpirationDate != null) {
+         out.writeBoolean(true);
+         out.writeLong(passwordExpirationDate.toEpochMilli());
+      } else {
+         out.writeBoolean(false);
+      }
    }
 
    @Override
@@ -180,5 +215,15 @@ public class User extends BaseMessage implements Externalizable {   // implement
       }
       gender = User.Gender.values()[in.readInt()];
       notes = in.readUTF();
+      if (in.readBoolean()) {
+         creationDate = Instant.ofEpochMilli(in.readLong());
+      } else {
+         creationDate = null;
+      }
+      if (in.readBoolean()) {
+         passwordExpirationDate = Instant.ofEpochMilli(in.readLong());
+      } else {
+         passwordExpirationDate = null;
+      }
    }
 }

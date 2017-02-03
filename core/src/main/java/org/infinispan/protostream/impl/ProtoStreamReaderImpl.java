@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -222,6 +223,12 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
    public Date readDate(String fieldName) throws IOException {
       Long tstamp = readLong(fieldName);
       return tstamp == null ? null : new Date(tstamp);
+   }
+
+   @Override
+   public Instant readInstant(String fieldName) throws IOException {
+      Long tstamp = readLong(fieldName);
+      return tstamp == null ? null : Instant.ofEpochMilli(tstamp);
    }
 
    @Override

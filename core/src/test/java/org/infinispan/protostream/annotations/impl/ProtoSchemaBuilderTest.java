@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -362,11 +363,17 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       @ProtoField(number = 32/*, defaultValue = "1"*/)
       Date[] testField32 = {new Date(100), new Date(200)};
 
-      @ProtoField(number = 33, defaultValue = "33")
-      byte[] testField33 = {1, 2, 3};
+      @ProtoField(number = 34/*, defaultValue = "1"*/)
+      Instant testField34 = Instant.ofEpochMilli(100);
 
-//      @ProtoField(number = 34, defaultValue = "34")
-      Byte[] testField34 = {1, 2, 3};
+      @ProtoField(number = 35/*, defaultValue = "1"*/)
+      Instant[] testField35 = {Instant.ofEpochMilli(100), Instant.ofEpochMilli(200)};
+
+      @ProtoField(number = 36, defaultValue = "36")
+      byte[] testField36 = {1, 2, 3};
+
+      //@ProtoField(number = 37, defaultValue = "37")
+      Byte[] testField37 = {1, 2, 3};
    }
 
    @Test

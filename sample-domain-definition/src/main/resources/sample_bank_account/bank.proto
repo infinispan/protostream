@@ -55,6 +55,13 @@ message User {
    optional Gender gender = 7;
 
    optional string notes = 8;
+
+   /**
+    * @Field(store = Store.YES)
+    */
+   optional fixed64 creationDate = 9;
+
+   optional fixed64 passwordExpirationDate = 10;
 }
 
 /**

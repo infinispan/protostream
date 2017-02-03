@@ -2,6 +2,7 @@ package org.infinispan.protostream.annotations.impl;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.time.Instant;
 import java.util.Date;
 
 import org.infinispan.protostream.EnumMarshaller;
@@ -381,6 +382,8 @@ final class MarshallerCodeGenerator {
             String v;
             if (Date.class.isAssignableFrom(fieldMetadata.getJavaType())) {
                v = box(defaultValue + "L", fieldMetadata.getJavaType());
+            } else if (Instant.class.isAssignableFrom(fieldMetadata.getJavaType())) {
+               v = box(defaultValue + "L", fieldMetadata.getJavaType());
             } else if (defaultValue instanceof ProtoEnumValueMetadata) {
                Enum enumValue = ((ProtoEnumValueMetadata) defaultValue).getEnumValue();
                v = enumValue.getDeclaringClass().getName() + "." + enumValue.name();
@@ -718,6 +721,8 @@ final class MarshallerCodeGenerator {
                throw new ProtoSchemaBuilderException("Type " + clazz + " is not a valid Date type because it does not have a constructor that accepts a 'long' timestamp parameter");
             }
             return "new " + clazz.getName() + "(" + v + ")";
+         } else if (Instant.class.isAssignableFrom(clazz)) {
+            return "java.time.Instant.ofEpochMilli(" + v + ")";
          } else if (clazz == Float.class) {
             return "new java.lang.Float(" + v + ")";
          } else if (clazz == Double.class) {
@@ -742,6 +747,8 @@ final class MarshallerCodeGenerator {
    private String unbox(String v, Class<?> clazz) {
       if (Date.class.isAssignableFrom(clazz)) {
          return v + ".getTime()";
+      } else if (Instant.class.isAssignableFrom(clazz)) {
+         return v + ".toEpochMilli()";    
       } else if (clazz == Float.class) {
          return v + ".floatValue()";
       } else if (clazz == Double.class) {

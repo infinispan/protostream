@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -244,6 +245,13 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeDate(String fieldName, Date value) throws IOException {
       if (value != null) {
          writeLong(fieldName, value.getTime());
+      }
+   }
+
+   @Override
+   public void writeInstant(String fieldName, Instant value) throws IOException {
+      if (value != null) {
+         writeLong(fieldName, value.toEpochMilli());
       }
    }
 

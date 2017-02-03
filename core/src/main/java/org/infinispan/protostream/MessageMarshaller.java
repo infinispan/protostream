@@ -2,6 +2,7 @@ package org.infinispan.protostream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 
@@ -39,6 +40,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       long[] readLongs(String fieldName) throws IOException;
 
       Date readDate(String fieldName) throws IOException;
+
+      Instant readInstant(String fieldName) throws IOException;
 
       Float readFloat(String fieldName) throws IOException;
 
@@ -88,6 +91,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       void writeLongs(String fieldName, long[] values) throws IOException;
 
       void writeDate(String fieldName, Date value) throws IOException;
+
+      void writeInstant(String fieldName, Instant value) throws IOException;
 
       void writeDouble(String fieldName, double value) throws IOException;
 
