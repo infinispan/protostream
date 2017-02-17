@@ -51,7 +51,8 @@ public class ResolutionContext {
          log.debugf(dpe, "File has errors : %s", fileDescriptor.getName());
       }
 
-      fileDescriptor.status = FileDescriptor.Status.ERROR;
+      // name resolving errors are not fatal
+      fileDescriptor.markError();
       if (progressCallback == null) {
          throw dpe;
       }

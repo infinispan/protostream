@@ -70,7 +70,7 @@ public final class SquareProtoParser implements DescriptorParser {
             .withDependencies(Collections.emptyList())
             .withPublicDependencies(Collections.emptyList())
             .build();
-      stub.markError();
+      stub.markFatalError();
       return stub;
    }
 

@@ -61,7 +61,7 @@ public final class FileDescriptor {
     * The validation status of a .proto file. Only {@link Status#RESOLVED} files contribute to the current state (known
     * types) of the {@link org.infinispan.protostream.SerializationContext}.
     */
-   enum Status {
+   private enum Status {
 
       /**
        * Not processed yet.
@@ -74,12 +74,25 @@ public final class FileDescriptor {
       RESOLVED,
 
       /**
-       * An error was encountered during processing.
+       * A possibly recoverable error was encountered during processing.
        */
-      ERROR
+      ERROR,
+
+      /**
+       * An unrecoverable error was encountered during processing.
+       */
+      FATAL_ERROR;
+
+      boolean isResolved() {
+         return this == RESOLVED;
+      }
+
+      boolean isError() {
+         return this == ERROR || this == FATAL_ERROR;
+      }
    }
 
-   Status status = Status.UNRESOLVED;
+   private Status status = Status.UNRESOLVED;
 
    private FileDescriptor(Builder builder) {
       this.name = builder.name;
@@ -101,11 +114,15 @@ public final class FileDescriptor {
    }
 
    public boolean isResolved() {
-      return status == Status.RESOLVED;
+      return status.isResolved();
    }
 
    public void markUnresolved() {
       status = Status.UNRESOLVED;
+   }
+
+   public void markFatalError() {
+      status = Status.FATAL_ERROR;
    }
 
    public void markError() {
@@ -117,8 +134,8 @@ public final class FileDescriptor {
     * during type reference resolution is cleared for this file and dependants.
     */
    public void clearErrors() {
-      if (status != Status.RESOLVED) {
-         status = Status.UNRESOLVED;
+      if (status != Status.RESOLVED && status != Status.FATAL_ERROR) {
+         markUnresolved();
          fileNamespace = null;
          extendDescriptors.clear();
 
@@ -157,7 +174,7 @@ public final class FileDescriptor {
       try {
          List<FileDescriptor> pubDeps = resolveImports(publicDependencies, resolutionContext, processedFiles);
          List<FileDescriptor> deps = resolveImports(dependencies, resolutionContext, processedFiles);
-         if (status == Status.ERROR) {
+         if (status.isError()) {
             // no point going further if any of the imported files have errors
             return;
          }
@@ -228,7 +245,7 @@ public final class FileDescriptor {
             }
             fd.resolveDependencies(resolutionContext, processedFiles);
          }
-         if (fd.status == Status.ERROR) {
+         if (fd.status.isError()) {
             resolutionContext.handleError(this, new DescriptorParserException("File " + name + " imports a file (" + fd.getName() + ") that has errors"));
             continue;
          }

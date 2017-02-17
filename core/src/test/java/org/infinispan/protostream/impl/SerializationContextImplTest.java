@@ -7,10 +7,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -48,8 +48,8 @@ public class SerializationContextImplTest {
             "   required b.A ma = 1;\n" +
             "}";
 
-      final Map<String, DescriptorParserException> failed = new HashMap<>();
-      final Set<String> successful = new HashSet<>();
+      Map<String, DescriptorParserException> failed = new HashMap<>();
+      List<String> successful = new ArrayList<>();
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource()
             .addProtoFile("file1.proto", file1)
             .addProtoFile("file2.proto", file2)
@@ -104,18 +104,31 @@ public class SerializationContextImplTest {
    @Test
    public void testUnregisterFileWithErrors() throws Exception {
       SerializationContextImpl ctx = createContext();
+      Map<String, Throwable> errors = new HashMap<>();
+      List<String> successful = new ArrayList<>();
       FileDescriptorSource source = FileDescriptorSource.fromString("test.proto", "kabooom")
             .withProgressCallback(new FileDescriptorSource.ProgressCallback() {
                @Override
                public void handleError(String fileName, DescriptorParserException ex) {
+                  errors.put(fileName, ex);
                }
 
                @Override
                public void handleSuccess(String fileName) {
+                  successful.add(fileName);
                }
             });
       ctx.registerProtoFiles(source);
+
+      assertTrue(successful.isEmpty());
+      assertEquals(1, errors.size());
+      assertTrue(errors.containsKey("test.proto"));
+      assertEquals("java.lang.IllegalStateException: Syntax error in test.proto at 1:8: unexpected label: kabooom", errors.get("test.proto").getMessage());
+      assertTrue(ctx.getFileDescriptors().containsKey("test.proto"));
+      assertFalse(ctx.getFileDescriptors().get("test.proto").isResolved());
       ctx.unregisterProtoFile("test.proto");
+
+      assertFalse(ctx.getFileDescriptors().containsKey("test.proto"));
    }
 
    @Test
