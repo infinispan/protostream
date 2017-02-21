@@ -79,30 +79,34 @@ public final class FileDescriptor {
       ERROR,
 
       /**
-       * An unrecoverable error was encountered during processing.
+       * An unrecoverable parsing error was encountered during processing.
        */
-      FATAL_ERROR;
+      PARSING_ERROR;
 
       boolean isResolved() {
          return this == RESOLVED;
       }
 
       boolean isError() {
-         return this == ERROR || this == FATAL_ERROR;
+         return this == ERROR || this == PARSING_ERROR;
       }
    }
 
-   private Status status = Status.UNRESOLVED;
+   private Status status;
+
+   private DescriptorParserException parsingException;
 
    private FileDescriptor(Builder builder) {
-      this.name = builder.name;
-      this.packageName = builder.packageName;
-      this.dependencies = Collections.unmodifiableList(builder.dependencies);
-      this.publicDependencies = Collections.unmodifiableList(builder.publicDependencies);
-      this.options = Collections.unmodifiableList(builder.options);
-      this.enumTypes = Collections.unmodifiableList(builder.enumTypes);
-      this.messageTypes = Collections.unmodifiableList(builder.messageTypes);
-      this.extendTypes = Collections.unmodifiableList(builder.extendDescriptors);
+      name = builder.name;
+      packageName = builder.packageName;
+      dependencies = Collections.unmodifiableList(builder.dependencies);
+      publicDependencies = Collections.unmodifiableList(builder.publicDependencies);
+      options = Collections.unmodifiableList(builder.options);
+      enumTypes = Collections.unmodifiableList(builder.enumTypes);
+      messageTypes = Collections.unmodifiableList(builder.messageTypes);
+      extendTypes = Collections.unmodifiableList(builder.extendDescriptors);
+      parsingException = builder.parsingException;
+      status = parsingException != null ? Status.PARSING_ERROR : Status.UNRESOLVED;
    }
 
    public void setConfiguration(Configuration configuration) {
@@ -121,12 +125,11 @@ public final class FileDescriptor {
       status = Status.UNRESOLVED;
    }
 
-   public void markFatalError() {
-      status = Status.FATAL_ERROR;
-   }
-
-   public void markError() {
-      status = Status.ERROR;
+   void markError() {
+      // parsing errors are fatal and final, so should not be overwritten
+      if (status != Status.PARSING_ERROR) {
+         status = Status.ERROR;
+      }
    }
 
    /**
@@ -134,7 +137,7 @@ public final class FileDescriptor {
     * during type reference resolution is cleared for this file and dependants.
     */
    public void clearErrors() {
-      if (status != Status.RESOLVED && status != Status.FATAL_ERROR) {
+      if (status != Status.RESOLVED && status != Status.PARSING_ERROR) {
          markUnresolved();
          fileNamespace = null;
          extendDescriptors.clear();
@@ -163,6 +166,11 @@ public final class FileDescriptor {
    }
 
    private void resolveDependencies(ResolutionContext resolutionContext, Set<String> processedFiles) throws DescriptorParserException {
+      if (status == Status.PARSING_ERROR) {
+         resolutionContext.handleError(this, parsingException);
+         return;
+      }
+
       if (status != Status.UNRESOLVED) {
          return;
       }
@@ -387,12 +395,13 @@ public final class FileDescriptor {
 
       private String name;
       private String packageName;
-      private List<String> dependencies = new ArrayList<>();
-      private List<String> publicDependencies = new ArrayList<>();
-      private List<Option> options;
-      private List<EnumDescriptor> enumTypes;
-      private List<Descriptor> messageTypes;
-      private List<ExtendDescriptor> extendDescriptors;
+      private List<String> dependencies = Collections.emptyList();
+      private List<String> publicDependencies = Collections.emptyList();
+      private List<Option> options = Collections.emptyList();
+      private List<EnumDescriptor> enumTypes = Collections.emptyList();
+      private List<Descriptor> messageTypes = Collections.emptyList();
+      private List<ExtendDescriptor> extendDescriptors = Collections.emptyList();
+      private DescriptorParserException parsingException;
 
       public Builder withName(String name) {
          this.name = name;
@@ -431,6 +440,11 @@ public final class FileDescriptor {
 
       public Builder withMessageTypes(List<Descriptor> messageTypes) {
          this.messageTypes = messageTypes;
+         return this;
+      }
+
+      public Builder withParsingException(DescriptorParserException parsingException) {
+         this.parsingException = parsingException;
          return this;
       }
 

@@ -93,6 +93,90 @@ public class SerializationContextImplTest {
    }
 
    @Test
+   public void testTwoFilesWithErrorsAtOnce() throws Exception {
+      SerializationContextImpl ctx = createContext();
+      Map<String, Throwable> errors = new HashMap<>();
+      List<String> successful = new ArrayList<>();
+      FileDescriptorSource source = FileDescriptorSource.fromString("test1.proto", "kabooom1")
+            .addProtoFile("test2.proto", "kabooom2")
+            .withProgressCallback(new FileDescriptorSource.ProgressCallback() {
+               @Override
+               public void handleError(String fileName, DescriptorParserException ex) {
+                  errors.put(fileName, ex);
+               }
+
+               @Override
+               public void handleSuccess(String fileName) {
+                  successful.add(fileName);
+               }
+            });
+      ctx.registerProtoFiles(source);
+
+      assertTrue(successful.isEmpty());
+      assertEquals(2, errors.size());
+      assertTrue(errors.containsKey("test1.proto"));
+      assertTrue(errors.containsKey("test2.proto"));
+      assertEquals("java.lang.IllegalStateException: Syntax error in test1.proto at 1:9: unexpected label: kabooom1", errors.get("test1.proto").getMessage());
+      assertEquals("java.lang.IllegalStateException: Syntax error in test2.proto at 1:9: unexpected label: kabooom2", errors.get("test2.proto").getMessage());
+      assertTrue(ctx.getFileDescriptors().containsKey("test1.proto"));
+      assertTrue(ctx.getFileDescriptors().containsKey("test2.proto"));
+      assertFalse(ctx.getFileDescriptors().get("test1.proto").isResolved());
+      assertFalse(ctx.getFileDescriptors().get("test2.proto").isResolved());
+   }
+
+   @Test
+   public void testTwoFilesWithErrorsSeparately() throws Exception {
+      SerializationContextImpl ctx = createContext();
+
+      Map<String, Throwable> errors1 = new HashMap<>();
+      List<String> successful1 = new ArrayList<>();
+      FileDescriptorSource source1 = FileDescriptorSource.fromString("test1.proto", "kabooom1")
+            .withProgressCallback(new FileDescriptorSource.ProgressCallback() {
+               @Override
+               public void handleError(String fileName, DescriptorParserException ex) {
+                  errors1.put(fileName, ex);
+               }
+
+               @Override
+               public void handleSuccess(String fileName) {
+                  successful1.add(fileName);
+               }
+            });
+      Map<String, Throwable> errors2 = new HashMap<>();
+      List<String> successful2 = new ArrayList<>();
+      FileDescriptorSource source2 = FileDescriptorSource.fromString("test2.proto", "kabooom2")
+            .withProgressCallback(new FileDescriptorSource.ProgressCallback() {
+               @Override
+               public void handleError(String fileName, DescriptorParserException ex) {
+                  errors2.put(fileName, ex);
+               }
+
+               @Override
+               public void handleSuccess(String fileName) {
+                  successful2.add(fileName);
+               }
+            });
+
+      ctx.registerProtoFiles(source1);
+      ctx.registerProtoFiles(source2);
+
+      assertTrue(successful1.isEmpty());
+      assertTrue(successful2.isEmpty());
+      assertEquals(1, errors1.size());
+      assertEquals(2, errors2.size());
+      assertTrue(errors1.containsKey("test1.proto"));
+      assertTrue(errors2.containsKey("test1.proto"));
+      assertTrue(errors2.containsKey("test2.proto"));
+      assertEquals("java.lang.IllegalStateException: Syntax error in test1.proto at 1:9: unexpected label: kabooom1", errors1.get("test1.proto").getMessage());
+      assertEquals("java.lang.IllegalStateException: Syntax error in test1.proto at 1:9: unexpected label: kabooom1", errors2.get("test1.proto").getMessage());
+      assertEquals("java.lang.IllegalStateException: Syntax error in test2.proto at 1:9: unexpected label: kabooom2", errors2.get("test2.proto").getMessage());
+      assertTrue(ctx.getFileDescriptors().containsKey("test1.proto"));
+      assertTrue(ctx.getFileDescriptors().containsKey("test2.proto"));
+      assertFalse(ctx.getFileDescriptors().get("test1.proto").isResolved());
+      assertFalse(ctx.getFileDescriptors().get("test2.proto").isResolved());
+   }
+
+   @Test
    public void testUnregisterMissingFiles() throws Exception {
       exception.expect(IllegalArgumentException.class);
       exception.expectMessage("File test.proto does not exist");
@@ -148,6 +232,9 @@ public class SerializationContextImplTest {
       assertFalse(fileDescriptor.isResolved());
    }
 
+   /**
+    * Test that files with syntax errors DO NOT get registered if there is no progress callback present.
+    */
    @Test
    public void testFileCannotExistWithParsingErrors() throws Exception {
       SerializationContextImpl ctx = createContext();
@@ -162,6 +249,21 @@ public class SerializationContextImplTest {
 
       FileDescriptor fileDescriptor = ctx.getFileDescriptors().get("file1.proto");
       assertNull(fileDescriptor);
+   }
+
+   /**
+    * Test that files with syntax errors DO get registered if there is a progress callback present.
+    */
+   @Test
+   public void testFileCanExistWithParsingErrors() throws Exception {
+      SerializationContextImpl ctx = createContext();
+      FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "this is bogus")
+            .withProgressCallback(new FileDescriptorSource.ProgressCallback() {
+            });
+      ctx.registerProtoFiles(source);
+      FileDescriptor fileDescriptor = ctx.getFileDescriptors().get("file1.proto");
+      assertNotNull(fileDescriptor);
+      assertFalse(fileDescriptor.isResolved());
    }
 
    @Test
