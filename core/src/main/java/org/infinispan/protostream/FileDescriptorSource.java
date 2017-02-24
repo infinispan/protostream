@@ -31,6 +31,10 @@ public final class FileDescriptorSource {
 
    private ProgressCallback progressCallback;
 
+   /**
+    * A callback interface that receives status notifications during the processing of files defined by a {@link
+    * FileDescriptorSource}.
+    */
    public interface ProgressCallback {
 
       default void handleError(String fileName, DescriptorParserException exception) {
@@ -170,9 +174,9 @@ public final class FileDescriptorSource {
          resourcePath = resourcePath.substring(1);
       }
       ClassLoader[] classLoaders = {userClassLoader,
-                                    FileDescriptorSource.class.getClassLoader(),
-                                    ClassLoader.getSystemClassLoader(),
-                                    Thread.currentThread().getContextClassLoader()};
+            FileDescriptorSource.class.getClassLoader(),
+            ClassLoader.getSystemClassLoader(),
+            Thread.currentThread().getContextClassLoader()};
       InputStream is = null;
       for (ClassLoader cl : classLoaders) {
          if (cl != null) {

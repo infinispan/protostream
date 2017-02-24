@@ -162,7 +162,9 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       return "FieldDescriptor{" +
             "label=" + label +
             ", typeName='" + typeName + '\'' +
+            ", name='" + name + '\'' +
             ", number='" + number + '\'' +
+            ", defaultValue=" + defaultValue +
             '}';
    }
 

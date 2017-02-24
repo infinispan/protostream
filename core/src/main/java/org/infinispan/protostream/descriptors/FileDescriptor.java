@@ -388,7 +388,11 @@ public final class FileDescriptor {
 
    @Override
    public String toString() {
-      return "FileDescriptor{name=" + name + '}';
+      return "FileDescriptor{" +
+            "name='" + name + '\'' +
+            ", packageName='" + packageName + '\'' +
+            ", status=" + status +
+            '}';
    }
 
    public static final class Builder {

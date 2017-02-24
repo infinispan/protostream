@@ -9,6 +9,7 @@ message User {
 
    /**
     * @Field(store = Store.YES)
+    * @SortableField
     */
    required int32 id = 1;
 
@@ -19,17 +20,34 @@ message User {
 
    /**
     * @Field(store = Store.YES)
+    * @SortableField
     */
    required string name = 3;
 
    /**
-    * @Field(store = Store.YES)
+    * @Field(store = Store.YES, indexNullAs = "_null_")
+    * @SortableField
     */
-   required string surname = 4;
+   optional string surname = 4;
 
+   /**
+    * @Indexed
+    */
    message Address {
+
+      /**
+       * @Field(store = Store.YES)
+       */
       required string street = 1;
+
+      /**
+       * @Field(store = Store.YES)
+       */
       required string postCode = 2;
+
+      /**
+       * @Field(store = Store.YES)
+       */
       required int32 number = 3;
    }
 
@@ -39,7 +57,8 @@ message User {
    repeated Address addresses = 5;     //a repeated field cannot be marked required
 
    /**
-    * @Field(store = Store.YES)
+    * @Field(store = Store.NO, indexNullAs = "-1")
+    * @SortableField
     */
    optional int32 age = 6;   // persisting age instead of birth date is not ideal but is ok for our sample code
 
@@ -71,11 +90,13 @@ message Account {
 
    /**
     * @Field(store = Store.YES)
+    * @SortableField
     */
    required int32 id = 1;
 
    /**
     * @Field(store = Store.YES)
+    * @SortableField
     */
    optional string description = 2 [default = "Checking account"];
 
@@ -84,9 +105,20 @@ message Account {
     */
    required fixed64 creationDate = 3;
 
+   /**
+    * @Indexed
+    */
    message Limits {
+
+       /**
+        * @Field(store = Store.YES)
+        */
        optional double maxDailyLimit = 1;
-       optional double maxTransactionLimit = 2; 
+
+       /**
+        * @Field(store = Store.YES)
+        */
+       optional double maxTransactionLimit = 2;
    }
 
    /**
@@ -107,16 +139,19 @@ message Transaction {
 
    /**
     * @Field(store = Store.YES)
+    * @SortableField
     */
    required int32 id = 1;
 
    /**
     * @Field
+    * @SortableField
     */
    optional string description = 2;
 
    /**
     * @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "standard"))
+    * @SortableField
     */
    optional string longDescription = 3;
 
@@ -140,18 +175,21 @@ message Transaction {
     */
    required bool isDebit = 7;
 
+   /**
+    * No annotations here. This is left unindexed on purpose.
+    */
    required bool isValid = 8;
 }
 
 /**
- *
+ * An array of int.
  */
 message int_array {
    repeated int32 theArray = 1;
 }
 
 /**
- *
+ * A list of User messages.
  */
 message user_list {
    repeated User theList = 1;
