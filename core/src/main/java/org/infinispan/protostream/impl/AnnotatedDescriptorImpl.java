@@ -107,17 +107,15 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
 
             annotations = _annotations.isEmpty() ? Collections.emptyMap() : _annotations;
 
-            Map<String, Object> _processedAnnotations = new LinkedHashMap<>();
+            processedAnnotations = new LinkedHashMap<>();
             for (AnnotationElement.Annotation annotation : annotations.values()) {
                AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation.getName());
                if (annotationConfig != null && annotationConfig.metadataCreator() != null) {
                   AnnotationMetadataCreator<Object, AnnotatedDescriptor> annotationMetadataCreator = (AnnotationMetadataCreator<Object, AnnotatedDescriptor>) annotationConfig.metadataCreator();
                   Object metadataForAnnotation = annotationMetadataCreator.create(this, annotation);
-                  _processedAnnotations.put(annotation.getName(), metadataForAnnotation);
+                  processedAnnotations.put(annotation.getName(), metadataForAnnotation);
                }
             }
-
-            processedAnnotations = _processedAnnotations.isEmpty() ? Collections.emptyMap() : _processedAnnotations;
          } else {
             annotations = Collections.emptyMap();
             processedAnnotations = Collections.emptyMap();
