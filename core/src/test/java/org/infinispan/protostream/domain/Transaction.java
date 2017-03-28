@@ -13,6 +13,7 @@ public class Transaction extends BaseMessage {
    private int id;
    private String description;
    private String longDescription;
+   private String notes;
    private int accountId;
    private Date date;
    private BigDecimal amount;
@@ -41,6 +42,14 @@ public class Transaction extends BaseMessage {
 
    public void setLongDescription(String longDescription) {
       this.longDescription = longDescription;
+   }
+
+   public String getNotes() {
+      return notes;
+   }
+
+   public void setNotes(String notes) {
+      this.notes = notes;
    }
 
    public int getAccountId() {
@@ -93,6 +102,7 @@ public class Transaction extends BaseMessage {
             "id=" + id +
             ", description='" + description + '\'' +
             ", longDescription='" + longDescription + '\'' +
+            ", notes='" + notes + '\'' +
             ", accountId=" + accountId +
             ", date=" + date +
             ", amount=" + amount +

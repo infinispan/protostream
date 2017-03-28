@@ -134,6 +134,7 @@ message Account {
 
 /**
  * @Indexed
+ * @Analyzer(definition = "standard")
  */
 message Transaction {
 
@@ -150,35 +151,41 @@ message Transaction {
    optional string description = 2;
 
    /**
-    * @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "standard"))
+    * @Field(store = Store.YES, analyze = Analyze.YES))
     * @SortableField
     */
    optional string longDescription = 3;
 
    /**
-    * @Field(store = Store.YES)
+    * @Field(store = Store.YES, analyze = Analyze.YES))
+    * @Analyzer(definition = "ngram")
     */
-   required int32 accountId = 4;
+   optional string notes = 4;
 
    /**
     * @Field(store = Store.YES)
     */
-   required fixed64 date = 5;  // there is no native Date type in protobuf so we have to store it as a long
+   required int32 accountId = 5;
 
    /**
     * @Field(store = Store.YES)
     */
-   required double amount = 6; // how do I store a BigDecimal? maybe as a byte array ..
+   required fixed64 date = 6;  // there is no native Date type in protobuf so we have to store it as a long
 
    /**
     * @Field(store = Store.YES)
     */
-   required bool isDebit = 7;
+   required double amount = 7; // how do I store a BigDecimal? maybe as a byte array ..
+
+   /**
+    * @Field(store = Store.YES)
+    */
+   required bool isDebit = 8;
 
    /**
     * No annotations here. This is left unindexed on purpose.
     */
-   required bool isValid = 8;
+   required bool isValid = 9;
 }
 
 /**

@@ -26,6 +26,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
       int id = reader.readInt("id");
       String description = reader.readString("description");
       String longDescription = reader.readString("longDescription");
+      String notes = reader.readString("notes");
       int accountId = reader.readInt("accountId");
       Date date = reader.readDate("date");
       double amount = reader.readDouble("amount");
@@ -36,6 +37,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
       transaction.setId(id);
       transaction.setDescription(description);
       transaction.setLongDescription(longDescription);
+      transaction.setNotes(notes);
       transaction.setAccountId(accountId);
       transaction.setDate(date);
       transaction.setAmount(amount);
@@ -49,6 +51,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
       writer.writeInt("id", transaction.getId());
       writer.writeString("description", transaction.getDescription());
       writer.writeString("longDescription", transaction.getLongDescription());
+      writer.writeString("notes", transaction.getNotes());
       writer.writeInt("accountId", transaction.getAccountId());
       writer.writeLong("date", transaction.getDate().getTime());
       writer.writeDouble("amount", transaction.getAmount());
