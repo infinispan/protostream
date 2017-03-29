@@ -21,6 +21,8 @@ import org.infinispan.protostream.impl.parser.AnnotationParser;
  */
 public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
 
+   private static final Log log = Log.LogFactory.getLog(AnnotatedDescriptorImpl.class);
+
    protected final String name;
 
    protected String fullName;
@@ -112,7 +114,13 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation.getName());
                if (annotationConfig != null && annotationConfig.metadataCreator() != null) {
                   AnnotationMetadataCreator<Object, AnnotatedDescriptor> annotationMetadataCreator = (AnnotationMetadataCreator<Object, AnnotatedDescriptor>) annotationConfig.metadataCreator();
-                  Object metadataForAnnotation = annotationMetadataCreator.create(this, annotation);
+                  Object metadataForAnnotation;
+                  try {
+                     metadataForAnnotation = annotationMetadataCreator.create(this, annotation);
+                  } catch (Exception ex) {
+                     log.error("Exception encountered while processing annotations", ex);
+                     throw ex;
+                  }
                   processedAnnotations.put(annotation.getName(), metadataForAnnotation);
                }
             }
