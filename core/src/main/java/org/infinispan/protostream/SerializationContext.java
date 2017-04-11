@@ -38,4 +38,30 @@ public interface SerializationContext extends ImmutableSerializationContext {
     * @param marshaller the marshaller instance
     */
    void registerMarshaller(BaseMarshaller<?> marshaller);
+
+   void unregisterMarshaller(BaseMarshaller<?> marshaller);
+
+   void registerMarshallerProvider(MarshallerProvider marshallerProvider);
+
+   void unregisterMarshallerProvider(MarshallerProvider marshallerProvider);
+
+   /**
+    * Interface to be implemented for dynamic lookup of marshallers.
+    */
+   interface MarshallerProvider {
+
+      /**
+       * Get marshaller given a type name.
+       *
+       * @return the marshaller instance or {@code null} if the types cannot be marshalled by this provider
+       */
+      BaseMarshaller<?> getMarshaller(String typeName);
+
+      /**
+       * Get marshaller given a Java class.
+       *
+       * @return the marshaller instance or {@code null} if the java class cannot be marshalled by this provider
+       */
+      BaseMarshaller<?> getMarshaller(Class<?> javaClass);
+   }
 }

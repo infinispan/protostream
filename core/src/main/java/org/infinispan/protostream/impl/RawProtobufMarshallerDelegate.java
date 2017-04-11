@@ -17,7 +17,7 @@ final class RawProtobufMarshallerDelegate<T> implements BaseMarshallerDelegate<T
 
    private final SerializationContextImpl ctx;
 
-   public RawProtobufMarshallerDelegate(SerializationContextImpl ctx, RawProtobufMarshaller<T> marshaller) {
+   RawProtobufMarshallerDelegate(SerializationContextImpl ctx, RawProtobufMarshaller<T> marshaller) {
       this.ctx = ctx;
       this.marshaller = marshaller;
    }

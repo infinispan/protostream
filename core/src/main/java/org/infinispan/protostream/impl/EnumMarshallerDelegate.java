@@ -25,12 +25,11 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
 
    private final Set<Integer> definedValues;
 
-   public EnumMarshallerDelegate(EnumMarshaller<T> enumMarshaller, EnumDescriptor enumDescriptor) {
+   EnumMarshallerDelegate(EnumMarshaller<T> enumMarshaller, EnumDescriptor enumDescriptor) {
       this.enumMarshaller = enumMarshaller;
       this.enumDescriptor = enumDescriptor;
-      List<EnumValueDescriptor> enumValues = enumDescriptor.getValues();
-      definedValues = new HashSet<>(enumValues.size());
-      for (EnumValueDescriptor evd : enumValues) {
+      definedValues = new HashSet<>(enumDescriptor.getValues().size());
+      for (EnumValueDescriptor evd : enumDescriptor.getValues()) {
          definedValues.add(evd.getNumber());
       }
    }
@@ -38,14 +37,6 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
    @Override
    public EnumMarshaller<T> getMarshaller() {
       return enumMarshaller;
-   }
-
-   public EnumDescriptor getEnumDescriptor() {
-      return enumDescriptor;
-   }
-
-   public Set<Integer> getDefinedValues() {
-      return definedValues;
    }
 
    @Override

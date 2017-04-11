@@ -20,29 +20,35 @@ public interface ImmutableSerializationContext {
     */
    Map<String, FileDescriptor> getFileDescriptors();
 
-   Descriptor getMessageDescriptor(String fullName);
+   /**
+    * @throws IllegalArgumentException if the descriptor is not found or is not a message
+    */
+   Descriptor getMessageDescriptor(String fullTypeName);
 
-   EnumDescriptor getEnumDescriptor(String fullName);
+   /**
+    * @throws IllegalArgumentException if the descriptor is not found or is not an enum
+    */
+   EnumDescriptor getEnumDescriptor(String fullTypeName);
 
    /**
     * Checks if the given type (message or enum) can be marshalled. This checks that a marshaller was registered for
     * it.
     *
-    * @param clazz the object or enum class to check
+    * @param javaClass the object or enum class to check
     * @return {@code true} if a marshaller exists, {@code false} otherwise
     */
-   boolean canMarshall(Class<?> clazz);
+   boolean canMarshall(Class<?> javaClass);
 
    /**
     * Checks if the given type (message or enum) can be marshalled. This checks that the type name was defined and a
     * marshaller was registered for it.
     *
-    * @param fullName the fully qualified name of the protobuf definition to check
+    * @param fullTypeName the fully qualified name of the protobuf definition to check
     * @return {@code true} if a marshaller exists, {@code false} otherwise
     */
-   boolean canMarshall(String fullName);
+   boolean canMarshall(String fullTypeName);
 
-   <T> BaseMarshaller<T> getMarshaller(String fullName);
+   <T> BaseMarshaller<T> getMarshaller(String fullTypeName);
 
    <T> BaseMarshaller<T> getMarshaller(Class<T> clazz);
 
@@ -58,11 +64,11 @@ public interface ImmutableSerializationContext {
    /**
     * Obtains the associated numeric type id, if one was defined.
     *
-    * @param fullName the fully qualified type name
+    * @param fullTypeName the fully qualified type name
     * @return the type id or {@code null} if no type id is associated with the type
     * @throws IllegalArgumentException if the given type name is unknown
     */
-   Integer getTypeIdByName(String fullName);
+   Integer getTypeIdByName(String fullTypeName);
 
    /**
     * Obtains the type name associated with a numeric type id.
@@ -73,5 +79,5 @@ public interface ImmutableSerializationContext {
     */
    GenericDescriptor getDescriptorByTypeId(Integer typeId);
 
-   GenericDescriptor getDescriptorByName(String fullName);
+   GenericDescriptor getDescriptorByName(String fullTypeName);
 }

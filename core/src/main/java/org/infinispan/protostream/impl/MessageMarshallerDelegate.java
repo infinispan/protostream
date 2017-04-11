@@ -30,7 +30,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
 
    private final Map<String, FieldDescriptor> fieldsByName;
 
-   public MessageMarshallerDelegate(SerializationContextImpl ctx, MessageMarshaller<T> marshaller, Descriptor messageDescriptor) {
+   MessageMarshallerDelegate(SerializationContextImpl ctx, MessageMarshaller<T> marshaller, Descriptor messageDescriptor) {
       this.ctx = ctx;
       this.marshaller = marshaller;
       this.messageDescriptor = messageDescriptor;

@@ -7,14 +7,21 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.RawProtobufMarshaller;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.junit.Test;
@@ -90,6 +97,82 @@ public class SerializationContextImplTest {
       } catch (IllegalStateException e) {
          assertEquals("File file2.proto is not resolved yet", e.getMessage());
       }
+   }
+
+   @Test
+   public void testMarshallerProvider() throws Exception {
+      SerializationContextImpl ctx = createContext();
+
+      String file = "package test;\n" +
+            "message X {\n" +
+            "   optional int32 f = 1;\n" +
+            "}";
+
+      class X {
+
+         Integer f;
+
+         X(Integer f) {
+            this.f = f;
+         }
+      }
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
+      ctx.registerProtoFiles(fileDescriptorSource);
+
+      ctx.registerMarshallerProvider(new SerializationContext.MarshallerProvider() {
+         @Override
+         public BaseMarshaller<?> getMarshaller(String typeName) {
+            if (typeName.equals("test.X")) {
+               return makeMarshaller();
+            }
+            return null;
+         }
+
+         @Override
+         public BaseMarshaller<?> getMarshaller(Class<?> javaClass) {
+            if (javaClass == X.class) {
+               return makeMarshaller();
+            }
+            return null;
+         }
+
+         private BaseMarshaller<?> makeMarshaller() {
+            return new RawProtobufMarshaller<X>() {
+
+               @Override
+               public X readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
+                  Integer f = null;
+                  if (in.readTag() == WireFormat.makeTag(1, WireFormat.WIRETYPE_VARINT)) {
+                     f = in.readInt32();
+                  }
+                  return new X(f);
+               }
+
+               @Override
+               public void writeTo(ImmutableSerializationContext ctx, RawProtoStreamWriter out, X x) throws IOException {
+                  out.writeInt32(1, x.f);
+               }
+
+               @Override
+               public Class<X> getJavaClass() {
+                  return X.class;
+               }
+
+               @Override
+               public String getTypeName() {
+                  return "test.X";
+               }
+            };
+         }
+      });
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new X(1234));
+      Object out = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertTrue(out instanceof X);
+      assertNotNull(((X) out).f);
+      assertEquals(1234, ((X) out).f.intValue());
    }
 
    @Test

@@ -195,9 +195,10 @@ public final class WrappedMessage {
          marshallerDelegate.marshall(null, t, null, nestedOut);
          nestedOut.flush();
 
-         Integer typeId = ctx.getTypeIdByName(marshallerDelegate.getMarshaller().getTypeName());
+         String typeName = marshallerDelegate.getMarshaller().getTypeName();
+         Integer typeId = ctx.getTypeIdByName(typeName);
          if (typeId == null) {
-            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, marshallerDelegate.getMarshaller().getTypeName());
+            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, typeName);
          } else {
             out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
          }
@@ -343,12 +344,12 @@ public final class WrappedMessage {
       }
 
       @Override
-      public WrappedMessage readFrom(SerializationContext ctx, RawProtoStreamReader in) throws IOException {
+      public WrappedMessage readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
          return new WrappedMessage(readMessage(ctx, in));
       }
 
       @Override
-      public void writeTo(SerializationContext ctx, RawProtoStreamWriter out, WrappedMessage wrappedMessage) throws IOException {
+      public void writeTo(ImmutableSerializationContext ctx, RawProtoStreamWriter out, WrappedMessage wrappedMessage) throws IOException {
          writeMessage(ctx, out, wrappedMessage.value);
       }
    }

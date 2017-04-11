@@ -60,6 +60,8 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<>();
 
+   private final Map<MarshallerProvider, MarshallerProvider> marshallerProviders = new ConcurrentHashMap<>();
+
    public SerializationContextImpl(Configuration configuration) {
       if (configuration == null) {
          throw new IllegalArgumentException("configuration cannot be null");
@@ -158,15 +160,15 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public Descriptor getMessageDescriptor(String fullName) {
+   public Descriptor getMessageDescriptor(String fullTypeName) {
       readLock.lock();
       try {
-         GenericDescriptor descriptor = genericDescriptors.get(fullName);
+         GenericDescriptor descriptor = genericDescriptors.get(fullTypeName);
          if (descriptor == null) {
-            throw new IllegalArgumentException("Message descriptor not found : " + fullName);
+            throw new IllegalArgumentException("Message descriptor not found : " + fullTypeName);
          }
          if (!(descriptor instanceof Descriptor)) {
-            throw new IllegalArgumentException(fullName + " is not a message type");
+            throw new IllegalArgumentException(fullTypeName + " is not a message type");
          }
          return (Descriptor) descriptor;
       } finally {
@@ -175,15 +177,15 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public EnumDescriptor getEnumDescriptor(String fullName) {
+   public EnumDescriptor getEnumDescriptor(String fullTypeName) {
       readLock.lock();
       try {
-         GenericDescriptor descriptor = genericDescriptors.get(fullName);
+         GenericDescriptor descriptor = genericDescriptors.get(fullTypeName);
          if (descriptor == null) {
-            throw new IllegalArgumentException("Enum descriptor not found : " + fullName);
+            throw new IllegalArgumentException("Enum descriptor not found : " + fullTypeName);
          }
          if (!(descriptor instanceof EnumDescriptor)) {
-            throw new IllegalArgumentException(fullName + " is not an enum type");
+            throw new IllegalArgumentException(fullTypeName + " is not an enum type");
          }
          return (EnumDescriptor) descriptor;
       } finally {
@@ -193,6 +195,15 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public void registerMarshaller(BaseMarshaller<?> marshaller) {
+      if (marshaller == null) {
+         throw new IllegalArgumentException("marshaller argument cannot be null");
+      }
+      BaseMarshallerDelegate<?> marshallerDelegate = makeMarshallerDelegate(marshaller);
+      marshallersByName.put(marshaller.getTypeName(), marshallerDelegate);
+      marshallersByClass.put(marshaller.getJavaClass(), marshallerDelegate);
+   }
+
+   private BaseMarshallerDelegate<?> makeMarshallerDelegate(BaseMarshaller<?> marshaller) {
       // we try to validate first that a message descriptor exists
       BaseMarshallerDelegate<?> marshallerDelegate;
       if (marshaller instanceof EnumMarshaller) {
@@ -207,29 +218,60 @@ public final class SerializationContextImpl implements SerializationContext {
          Descriptor messageDescriptor = getMessageDescriptor(marshaller.getTypeName());
          marshallerDelegate = new MessageMarshallerDelegate<>(this, (MessageMarshaller<?>) marshaller, messageDescriptor);
       }
-      marshallersByName.put(marshaller.getTypeName(), marshallerDelegate);
-      marshallersByClass.put(marshaller.getJavaClass(), marshallerDelegate);
+      return marshallerDelegate;
    }
 
    @Override
-   public boolean canMarshall(Class<?> clazz) {
-      return marshallersByClass.containsKey(clazz);
+   public void unregisterMarshaller(BaseMarshaller<?> marshaller) {
+      if (marshaller == null) {
+         throw new IllegalArgumentException("marshaller argument cannot be null");
+      }
+      BaseMarshallerDelegate<?> marshallerDelegate = marshallersByName.get(marshaller.getTypeName());
+      if (marshallerDelegate == null || marshallerDelegate.getMarshaller() != marshaller) {
+         throw new IllegalArgumentException("The given marshaller is not registered");
+      }
+      marshallersByName.remove(marshaller.getTypeName());
+      marshallersByClass.remove(marshaller.getJavaClass());
    }
 
    @Override
-   public boolean canMarshall(String fullName) {
+   public void registerMarshallerProvider(MarshallerProvider marshallerProvider) {
+      if (marshallerProvider == null) {
+         throw new IllegalArgumentException("marshallerProvider argument cannot be null");
+      }
+      marshallerProviders.put(marshallerProvider, marshallerProvider);
+   }
+
+   @Override
+   public void unregisterMarshallerProvider(MarshallerProvider marshallerProvider) {
+      if (marshallerProvider == null) {
+         throw new IllegalArgumentException("marshallerProvider argument cannot be null");
+      }
+      marshallerProviders.remove(marshallerProvider);
+   }
+
+   @Override
+   public boolean canMarshall(Class<?> javaClass) {
+      return marshallersByClass.containsKey(javaClass) || getMarshallerFromProvider(javaClass) != null;
+   }
+
+   @Override
+   public boolean canMarshall(String fullTypeName) {
       readLock.lock();
       try {
-         return genericDescriptors.containsKey(fullName);
-         //TODO the correct implementation should be: return marshallersByName.containsKey(descriptorFullName);
+         if (genericDescriptors.containsKey(fullTypeName)) { //TODO the correct implementation should be: marshallersByName.containsKey(fullName)
+            return true;
+         }
       } finally {
          readLock.unlock();
       }
+
+      return getMarshallerFromProvider(fullTypeName) != null;
    }
 
    @Override
-   public <T> BaseMarshaller<T> getMarshaller(String fullName) {
-      return this.<T>getMarshallerDelegate(fullName).getMarshaller();
+   public <T> BaseMarshaller<T> getMarshaller(String fullTypeName) {
+      return this.<T>getMarshallerDelegate(fullTypeName).getMarshaller();
    }
 
    @Override
@@ -240,17 +282,49 @@ public final class SerializationContextImpl implements SerializationContext {
    public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(String descriptorFullName) {
       BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) marshallersByName.get(descriptorFullName);
       if (marshallerDelegate == null) {
-         throw new IllegalArgumentException("No marshaller registered for " + descriptorFullName);
+         BaseMarshaller<?> marshaller = getMarshallerFromProvider(descriptorFullName);
+         if (marshaller == null) {
+            throw new IllegalArgumentException("No marshaller registered for " + descriptorFullName);
+         }
+         marshallerDelegate = (BaseMarshallerDelegate<T>) makeMarshallerDelegate(marshaller);
       }
       return marshallerDelegate;
    }
 
-   public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> clazz) {
-      BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) marshallersByClass.get(clazz);
+   public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> javaClass) {
+      BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) marshallersByClass.get(javaClass);
       if (marshallerDelegate == null) {
-         throw new IllegalArgumentException("No marshaller registered for " + clazz);
+         BaseMarshaller<?> marshaller = getMarshallerFromProvider(javaClass);
+         if (marshaller == null) {
+            throw new IllegalArgumentException("No marshaller registered for " + javaClass.getName());
+         }
+         marshallerDelegate = (BaseMarshallerDelegate<T>) makeMarshallerDelegate(marshaller);
       }
       return marshallerDelegate;
+   }
+
+   private BaseMarshaller<?> getMarshallerFromProvider(Class<?> javaClass) {
+      if (!marshallerProviders.isEmpty()) {
+         for (MarshallerProvider mp : marshallerProviders.keySet()) {
+            BaseMarshaller<?> marshaller = mp.getMarshaller(javaClass);
+            if (marshaller != null) {
+               return marshaller;
+            }
+         }
+      }
+      return null;
+   }
+
+   private BaseMarshaller<?> getMarshallerFromProvider(String fullTypeName) {
+      if (!marshallerProviders.isEmpty()) {
+         for (MarshallerProvider mp : marshallerProviders.keySet()) {
+            BaseMarshaller<?> marshaller = mp.getMarshaller(fullTypeName);
+            if (marshaller != null) {
+               return marshaller;
+            }
+         }
+      }
+      return null;
    }
 
    @Override
@@ -259,16 +333,16 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public GenericDescriptor getDescriptorByName(String fullName) {
+   public GenericDescriptor getDescriptorByName(String fullTypeName) {
       GenericDescriptor descriptor;
       readLock.lock();
       try {
-         descriptor = genericDescriptors.get(fullName);
+         descriptor = genericDescriptors.get(fullTypeName);
       } finally {
          readLock.unlock();
       }
       if (descriptor == null) {
-         throw new IllegalArgumentException("Descriptor not found : " + fullName);
+         throw new IllegalArgumentException("Descriptor not found : " + fullTypeName);
       }
       return descriptor;
    }
@@ -288,12 +362,12 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public Integer getTypeIdByName(String fullName) {
+   public Integer getTypeIdByName(String fullTypeName) {
       readLock.lock();
       try {
-         GenericDescriptor descriptor = genericDescriptors.get(fullName);
+         GenericDescriptor descriptor = genericDescriptors.get(fullTypeName);
          if (descriptor == null) {
-            throw new IllegalArgumentException("Unknown type name : " + fullName);
+            throw new IllegalArgumentException("Unknown type name : " + fullTypeName);
          }
          return descriptor.getTypeId();
       } finally {

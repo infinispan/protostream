@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Date;
 
 import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
@@ -73,7 +74,7 @@ final class MarshallerCodeGenerator {
       getTypeNameMethod = rawProtobufMarshallerInterface.getMethod("getTypeName", "()Ljava/lang/String;");
       String rawProtobufInputStreamName = RawProtoStreamReader.class.getName().replace('.', '/');
       String rawProtobufOutputStreamName = RawProtoStreamWriter.class.getName().replace('.', '/');
-      String serializationContextName = SerializationContext.class.getName().replace('.', '/');
+      String serializationContextName = ImmutableSerializationContext.class.getName().replace('.', '/');
       readFromMethod = rawProtobufMarshallerInterface.getMethod("readFrom", "(L" + serializationContextName + ";L" + rawProtobufInputStreamName + ";)Ljava/lang/Object;");
       writeToMethod = rawProtobufMarshallerInterface.getMethod("writeTo", "(L" + serializationContextName + ";L" + rawProtobufOutputStreamName + ";Ljava/lang/Object;)V");
       decodeMethod = enumMarshallerInterface.getMethod("decode", "(I)Ljava/lang/Enum;");
