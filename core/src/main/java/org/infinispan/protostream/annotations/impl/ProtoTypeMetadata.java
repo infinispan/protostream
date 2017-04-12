@@ -19,7 +19,7 @@ class ProtoTypeMetadata {
 
    protected ProtoMessageTypeMetadata outerType;
 
-   public ProtoTypeMetadata(BaseMarshaller marshaller) {
+   ProtoTypeMetadata(BaseMarshaller<?> marshaller) {
       this.marshaller = marshaller;
       this.name = marshaller.getTypeName();
       this.javaClass = marshaller.getJavaClass();

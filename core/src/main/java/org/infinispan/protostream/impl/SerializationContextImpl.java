@@ -192,20 +192,20 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public <T> void registerMarshaller(BaseMarshaller<T> marshaller) {
+   public void registerMarshaller(BaseMarshaller<?> marshaller) {
       // we try to validate first that a message descriptor exists
-      BaseMarshallerDelegate marshallerDelegate;
+      BaseMarshallerDelegate<?> marshallerDelegate;
       if (marshaller instanceof EnumMarshaller) {
          if (!marshaller.getJavaClass().isEnum()) {
             throw new IllegalArgumentException("Invalid enum marshaller (the produced class is not an Enum) : " + marshaller);
          }
          EnumDescriptor enumDescriptor = getEnumDescriptor(marshaller.getTypeName());
-         marshallerDelegate = new EnumMarshallerDelegate((EnumMarshaller) marshaller, enumDescriptor);
+         marshallerDelegate = new EnumMarshallerDelegate<>((EnumMarshaller<?>) marshaller, enumDescriptor);
       } else if (marshaller instanceof RawProtobufMarshaller) {
-         marshallerDelegate = new RawProtobufMarshallerDelegate(this, (RawProtobufMarshaller) marshaller);
+         marshallerDelegate = new RawProtobufMarshallerDelegate<>(this, (RawProtobufMarshaller<?>) marshaller);
       } else {
          Descriptor messageDescriptor = getMessageDescriptor(marshaller.getTypeName());
-         marshallerDelegate = new MessageMarshallerDelegate(this, (MessageMarshaller) marshaller, messageDescriptor);
+         marshallerDelegate = new MessageMarshallerDelegate<>(this, (MessageMarshaller<?>) marshaller, messageDescriptor);
       }
       marshallersByName.put(marshaller.getTypeName(), marshallerDelegate);
       marshallersByClass.put(marshaller.getJavaClass(), marshallerDelegate);
