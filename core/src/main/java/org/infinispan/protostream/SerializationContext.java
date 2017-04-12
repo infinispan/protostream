@@ -36,7 +36,6 @@ public interface SerializationContext extends ImmutableSerializationContext {
     * Register a type marshaller.
     *
     * @param marshaller the marshaller instance
-    * @param <T>        the Java type of the object being handled by the marshaller
     */
-   <T> void registerMarshaller(BaseMarshaller<T> marshaller);
+   void registerMarshaller(BaseMarshaller<?> marshaller);
 }
