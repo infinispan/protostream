@@ -77,7 +77,7 @@ public final class ProtobufParser {
                   byte[] value = in.readByteArray();
                   tagHandler.onTag(fieldNumber, fd, value);
                } else if (fd.getType() == Type.MESSAGE) {
-                  int length = in.readRawVarint32();
+                  int length = in.readUInt32();
                   int oldLimit = in.pushLimit(length);
                   tagHandler.onStartNested(fieldNumber, fd);
                   parseMessage(tagHandler, fd.getMessageType(), in);
@@ -92,12 +92,12 @@ public final class ProtobufParser {
                if (fd != null) {
                   tagHandler.onStartNested(fieldNumber, null);
                   parseMessage(tagHandler, null, in);
-                  in.checkLastTagWas(WireType.makeTag(fieldNumber, WireType.END_GROUP));
+                  in.checkLastTagWas(WireType.makeTag(fieldNumber, WireType.WIRETYPE_END_GROUP));
                   tagHandler.onEndNested(fieldNumber, null);
                } else {
                   tagHandler.onStartNested(fieldNumber, fd);
                   parseMessage(tagHandler, fd.getMessageType(), in);
-                  in.checkLastTagWas(WireType.makeTag(fieldNumber, WireType.END_GROUP));
+                  in.checkLastTagWas(WireType.makeTag(fieldNumber, WireType.WIRETYPE_END_GROUP));
                   tagHandler.onEndNested(fieldNumber, fd);
                }
                break;
@@ -112,7 +112,7 @@ public final class ProtobufParser {
                   } else if (wireType == WireType.FIXED64) {
                      tagHandler.onTag(fieldNumber, null, in.readFixed64());
                   } else {
-                     tagHandler.onTag(fieldNumber, null, in.readRawVarint64());
+                     tagHandler.onTag(fieldNumber, null, in.readUInt64());
                   }
                } else {
                   Object value;

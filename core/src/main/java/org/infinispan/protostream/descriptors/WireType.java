@@ -25,6 +25,10 @@ public enum WireType {
    public static final int WIRETYPE_END_GROUP = 4;
    public static final int WIRETYPE_FIXED32 = 5;
 
+   public static final int FIXED_32_SIZE = 4;
+   public static final int FIXED_64_SIZE = 8;
+   public static final int MAX_VARINT_SIZE = 10;
+
    /**
     * The lower 3 bits of the 32 bit tag are used for encoding the wire type.
     */
@@ -70,6 +74,10 @@ public enum WireType {
     */
    public static int makeTag(int fieldNumber, WireType wireType) {
       return (fieldNumber << TAG_TYPE_NUM_BITS) | wireType.value;
+   }
+
+   public static int makeTag(int fieldNumber, int wireType) {
+      return (fieldNumber << TAG_TYPE_NUM_BITS) | wireType;
    }
 
    /**

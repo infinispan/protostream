@@ -333,7 +333,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             }
             case MESSAGE: {
                String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-               iw.append("int length = $in.readRawVarint32();\n");
+               iw.append("int length = $in.readUInt32();\n");
                iw.append("int oldLimit = $in.pushLimit(length);\n");
                if (noFactory || fieldMetadata.isRepeated()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');

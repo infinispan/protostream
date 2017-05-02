@@ -88,7 +88,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
          case START_GROUP:
             UnknownFieldSetImpl unknownFieldSet = new UnknownFieldSetImpl();
             unknownFieldSet.readAllFields(input);
-            input.checkLastTagWas(WireType.makeTag(WireType.getTagFieldNumber(tag), WireType.END_GROUP));
+            input.checkLastTagWas(WireType.makeTag(WireType.getTagFieldNumber(tag), WireType.WIRETYPE_END_GROUP));
             getField(tag).addLast(unknownFieldSet);
             return true;
 
@@ -156,9 +156,9 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
             break;
          case START_GROUP:
             for (UnknownFieldSetImpl value : (Deque<UnknownFieldSetImpl>) values) {
-               output.writeUInt32NoTag(tag);
+               output.writeVarint32(tag);
                value.writeTo(output);
-               output.writeTag(fieldNumber, WireType.END_GROUP);
+               output.writeTag(fieldNumber, WireType.WIRETYPE_END_GROUP);
             }
             break;
          default:

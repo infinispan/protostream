@@ -33,7 +33,7 @@ public final class WireFormat {
    /**
     * Given a tag value, determines the field number (the upper 29 bits).
     */
-   public static int getTagFieldNumber(final int tag) {
+   public static int getTagFieldNumber(int tag) {
       return tag >>> 3;
    }
 

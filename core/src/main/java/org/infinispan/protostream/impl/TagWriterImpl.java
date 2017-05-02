@@ -3,6 +3,8 @@ package org.infinispan.protostream.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,15 +13,18 @@ import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.WireType;
 
-import com.google.protobuf.CodedOutputStream;
-
 /**
  * @author anistor@redhat.com
  * @since 3.0
  */
 public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.WriteContext {
 
-   private final CodedOutputStream delegate;
+   private static final Charset UTF8 = StandardCharsets.UTF_8;
+
+   private static final int DEFAULT_BUFFER_SIZE = 4096;
+
+   // all writes are delegated to a protocol decoder
+   private final Encoder encoder;
 
    private final SerializationContextImpl serCtx;
 
@@ -29,159 +34,176 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    // lazily initialized
    private ProtoStreamWriterImpl writer = null;
 
-   private TagWriterImpl(SerializationContextImpl serCtx, CodedOutputStream delegate) {
+   private TagWriterImpl(SerializationContextImpl serCtx, Encoder encoder) {
       this.serCtx = serCtx;
-      this.delegate = delegate;
+      this.encoder = encoder;
    }
 
    public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parentCtx, OutputStream output) {
       TagWriterImpl parent = (TagWriterImpl) parentCtx;
-      TagWriterImpl nestedCtx = new TagWriterImpl(parent.serCtx, CodedOutputStream.newInstance(output));
+      TagWriterImpl nestedCtx = new TagWriterImpl(parent.serCtx, Encoder.newInstance(output, DEFAULT_BUFFER_SIZE));
       nestedCtx.params = parent.params;
       nestedCtx.writer = parent.writer;
       return nestedCtx;
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(output));
+      return new TagWriterImpl((SerializationContextImpl) serCtx, Encoder.newInstance(output, DEFAULT_BUFFER_SIZE));
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output, int bufferSize) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(output, bufferSize));
+      return new TagWriterImpl((SerializationContextImpl) serCtx, Encoder.newInstance(output, bufferSize));
    }
 
-   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, byte[] flatArray) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(flatArray));
+   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf) {
+      return new TagWriterImpl((SerializationContextImpl) serCtx, Encoder.newInstance(buf, 0, buf.length));
    }
 
-   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, byte[] flatArray, int offset, int length) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(flatArray, offset, length));
+   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf, int offset, int length) {
+      return new TagWriterImpl((SerializationContextImpl) serCtx, Encoder.newInstance(buf, offset, length));
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, ByteBuffer byteBuffer) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(byteBuffer));
-   }
-
-   @Override
-   public void writeTag(int number, int wireType) throws IOException {
-      writeTag(number, WireType.fromValue(wireType));
-   }
-
-   @Override
-   public void writeTag(int number, WireType wireType) throws IOException {
-      delegate.writeTag(number, wireType.value);
-   }
-
-   @Override
-   public void writeUInt32NoTag(int value) throws IOException {
-      delegate.writeUInt32NoTag(value);
-   }
-
-   @Override
-   public void writeUInt64NoTag(long value) throws IOException {
-      delegate.writeUInt64NoTag(value);
-   }
-
-   @Override
-   public void writeString(int number, String value) throws IOException {
-      delegate.writeString(number, value);
-   }
-
-   @Override
-   public void writeInt32(int number, int value) throws IOException {
-      delegate.writeInt32(number, value);
-   }
-
-   @Override
-   public void writeInt64(int number, long value) throws IOException {
-      delegate.writeInt64(number, value);
-   }
-
-   @Override
-   public void writeFixed32(int number, int value) throws IOException {
-      delegate.writeFixed32(number, value);
-   }
-
-   @Override
-   public void writeUInt32(int number, int value) throws IOException {
-      delegate.writeUInt32(number, value);
-   }
-
-   @Override
-   public void writeSFixed32(int number, int value) throws IOException {
-      delegate.writeSFixed32(number, value);
-   }
-
-   @Override
-   public void writeSInt32(int number, int value) throws IOException {
-      delegate.writeSInt32(number, value);
-   }
-
-   @Override
-   public void writeEnum(int number, int value) throws IOException {
-      delegate.writeEnum(number, value);
+      return new TagWriterImpl((SerializationContextImpl) serCtx, Encoder.newInstance(byteBuffer));
    }
 
    @Override
    public void flush() throws IOException {
-      delegate.flush();
+      encoder.flush();
    }
 
    @Override
-   public void writeBool(int number, boolean value) throws IOException {
-      delegate.writeBool(number, value);
+   public void writeTag(int number, int wireType) throws IOException {
+      encoder.writeVarint32(WireType.makeTag(number, wireType));
    }
 
    @Override
-   public void writeDouble(int number, double value) throws IOException {
-      delegate.writeDouble(number, value);
+   public void writeTag(int number, WireType wireType) throws IOException {
+      encoder.writeVarint32(WireType.makeTag(number, wireType));
    }
 
    @Override
-   public void writeFloat(int number, float value) throws IOException {
-      delegate.writeFloat(number, value);
+   public void writeVarint32(int value) throws IOException {
+      encoder.writeVarint32(value);
    }
 
    @Override
-   public void writeBytes(int number, ByteBuffer value) throws IOException {
-      final int off = value.arrayOffset();
-      final int len = value.limit() - off;
-      delegate.writeByteArray(number, value.array(), off, len);
+   public void writeVarint64(long value) throws IOException {
+      encoder.writeVarint64(value);
    }
 
    @Override
-   public void writeBytes(int number, byte[] value) throws IOException {
-      delegate.writeByteArray(number, value);
+   public void writeString(int number, String value) throws IOException {
+      // TODO [anistor] This is expensive! What can we do to make it more efficient?
+      // Also, when just count bytes for message size we do a useless first conversion, and another one will follow later.
+
+      // Charset.encode is not able to encode directly into our own buffers!
+      ByteBuffer utf8buffer = UTF8.encode(value);
+
+      encoder.writeLengthDelimitedField(number, utf8buffer.remaining());
+      encoder.writeBytes(utf8buffer);
    }
 
    @Override
-   public void writeBytes(int number, byte[] value, int offset, int length) throws IOException {
-      delegate.writeByteArray(number, value, offset, length);
+   public void writeInt32(int number, int value) throws IOException {
+      encoder.writeInt32(number, value);
+   }
+
+   @Override
+   public void writeUInt32(int number, int value) throws IOException {
+      encoder.writeUInt32Field(number, value);
+   }
+
+   @Override
+   public void writeSInt32(int number, int value) throws IOException {
+      encoder.writeSInt32(number, value);
+   }
+
+   @Override
+   public void writeFixed32(int number, int value) throws IOException {
+      encoder.writeFixed32Field(number, value);
+   }
+
+   @Override
+   public void writeSFixed32(int number, int value) throws IOException {
+      writeFixed32(number, value);
+   }
+
+   @Override
+   public void writeInt64(int number, long value) throws IOException {
+      encoder.writeUInt64Field(number, value);
    }
 
    @Override
    public void writeUInt64(int number, long value) throws IOException {
-      delegate.writeUInt64(number, value);
-   }
-
-   @Override
-   public void writeFixed64(int number, long value) throws IOException {
-      delegate.writeFixed64(number, value);
-   }
-
-   @Override
-   public void writeSFixed64(int number, long value) throws IOException {
-      delegate.writeSFixed64(number, value);
+      encoder.writeUInt64Field(number, value);
    }
 
    @Override
    public void writeSInt64(int number, long value) throws IOException {
-      delegate.writeSInt64(number, value);
+      encoder.writeSInt64(number, value);
+   }
+
+   @Override
+   public void writeFixed64(int number, long value) throws IOException {
+      encoder.writeFixed64Field(number, value);
+   }
+
+   @Override
+   public void writeSFixed64(int number, long value) throws IOException {
+      writeFixed64(number, value);
+   }
+
+   @Override
+   public void writeEnum(int number, int value) throws IOException {
+      writeInt32(number, value);
+   }
+
+   @Override
+   public void writeBool(int number, boolean value) throws IOException {
+      encoder.writeBoolField(number, value);
+   }
+
+   @Override
+   public void writeDouble(int number, double value) throws IOException {
+      encoder.writeDouble(number, value);
+   }
+
+   @Override
+   public void writeFloat(int number, float value) throws IOException {
+      encoder.writeFloat(number, value);
+   }
+
+   @Override
+   public void writeBytes(int number, ByteBuffer value) throws IOException {
+      encoder.writeLengthDelimitedField(number, value.remaining());
+      encoder.writeBytes(value);
+   }
+
+   @Override
+   public void writeBytes(int number, byte[] value) throws IOException {
+      writeBytes(number, value, 0, value.length);
+   }
+
+   @Override
+   public void writeBytes(int number, byte[] value, int offset, int length) throws IOException {
+      encoder.writeLengthDelimitedField(number, length);
+      encoder.writeBytes(value, offset, length);
+   }
+
+   @Override
+   public void writeRawByte(byte value) throws IOException {
+      encoder.writeByte(value);
    }
 
    @Override
    public void writeRawBytes(byte[] value, int offset, int length) throws IOException {
-      delegate.writeRawBytes(value, offset, length);
+      encoder.writeBytes(value, offset, length);
+   }
+
+   @Override
+   public void writeRawBytes(ByteBuffer value) throws IOException {
+      encoder.writeBytes(value);
    }
 
    @Override

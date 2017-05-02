@@ -11,37 +11,42 @@ import org.infinispan.protostream.descriptors.WireType;
  */
 public interface TagWriter extends RawProtoStreamWriter {
 
+   // start low level ops
    void flush() throws IOException;
 
    void writeTag(int number, int wireType) throws IOException;
 
    void writeTag(int number, WireType wireType) throws IOException;
 
-   void writeUInt32NoTag(int value) throws IOException;
+   void writeVarint32(int value) throws IOException;
 
-   void writeUInt64NoTag(long value) throws IOException;
+   void writeVarint64(long value) throws IOException;
 
+   void writeRawBytes(byte[] value, int offset, int length) throws IOException;
+   // end low level ops
+
+   // start high level ops
    void writeString(int number, String value) throws IOException;
 
    void writeInt32(int number, int value) throws IOException;
 
-   void writeFixed32(int number, int value) throws IOException;
-
    void writeUInt32(int number, int value) throws IOException;
 
-   void writeSFixed32(int number, int value) throws IOException;
-
    void writeSInt32(int number, int value) throws IOException;
+
+   void writeFixed32(int number, int value) throws IOException;
+
+   void writeSFixed32(int number, int value) throws IOException;
 
    void writeInt64(int number, long value) throws IOException;
 
    void writeUInt64(int number, long value) throws IOException;
 
+   void writeSInt64(int number, long value) throws IOException;
+
    void writeFixed64(int number, long value) throws IOException;
 
    void writeSFixed64(int number, long value) throws IOException;
-
-   void writeSInt64(int number, long value) throws IOException;
 
    void writeEnum(int number, int value) throws IOException;
 
@@ -56,6 +61,5 @@ public interface TagWriter extends RawProtoStreamWriter {
    void writeBytes(int number, byte[] value) throws IOException;
 
    void writeBytes(int number, byte[] value, int offset, int length) throws IOException;
-
-   void writeRawBytes(byte[] value, int offset, int length) throws IOException;
+   // end high level ops
 }

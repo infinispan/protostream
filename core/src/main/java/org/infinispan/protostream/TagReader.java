@@ -41,8 +41,6 @@ public interface TagReader extends RawProtoStreamReader {
 
    long readSFixed64() throws IOException;
 
-   long readRawVarint64() throws IOException;
-
    int readInt32() throws IOException;
 
    int readUInt32() throws IOException;
@@ -53,9 +51,7 @@ public interface TagReader extends RawProtoStreamReader {
 
    int readSFixed32() throws IOException;
 
-   int readRawVarint32() throws IOException;
-
-   int pushLimit(int byteLimit) throws IOException;
+   int pushLimit(int limit) throws IOException;
 
    void popLimit(int oldLimit);
 }

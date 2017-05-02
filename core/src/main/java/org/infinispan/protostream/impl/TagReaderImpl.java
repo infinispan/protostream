@@ -10,15 +10,14 @@ import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;
 
-import com.google.protobuf.CodedInputStream;
-
 /**
  * @author anistor@redhat.com
  * @since 3.0
  */
 public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.ReadContext {
 
-   private final CodedInputStream delegate;
+   // all read are delegated to a protocol decoder
+   private final Decoder decoder;
 
    private final SerializationContextImpl serCtx;
 
@@ -28,14 +27,14 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    // lazily initialized
    private ProtoStreamReaderImpl reader = null;
 
-   private TagReaderImpl(SerializationContextImpl serCtx, CodedInputStream delegate) {
+   private TagReaderImpl(SerializationContextImpl serCtx, Decoder decoder) {
       this.serCtx = serCtx;
-      this.delegate = delegate;
+      this.decoder = decoder;
    }
 
    public static TagReaderImpl newNestedInstance(ProtobufTagMarshaller.ReadContext parentCtx, InputStream input) {
       TagReaderImpl parent = (TagReaderImpl) parentCtx;
-      TagReaderImpl nestedCtx = new TagReaderImpl(parent.getSerializationContext(), CodedInputStream.newInstance(input));
+      TagReaderImpl nestedCtx = new TagReaderImpl(parent.getSerializationContext(), Decoder.newInstance(input, Decoder.DEFAULT_BUFFER_SIZE));
       nestedCtx.params = parent.params;
       nestedCtx.reader = parent.reader;
       return nestedCtx;
@@ -43,155 +42,141 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
    public static TagReaderImpl newNestedInstance(ProtobufTagMarshaller.ReadContext parentCtx, byte[] buf) {
       TagReaderImpl parent = (TagReaderImpl) parentCtx;
-      TagReaderImpl nestedCtx = new TagReaderImpl(parent.getSerializationContext(), CodedInputStream.newInstance(buf));
+      TagReaderImpl nestedCtx = new TagReaderImpl(parent.getSerializationContext(), Decoder.newInstance(buf, 0, buf.length));
       nestedCtx.params = parent.params;
       nestedCtx.reader = parent.reader;
       return nestedCtx;
    }
 
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, InputStream input) {
-      return new TagReaderImpl((SerializationContextImpl) serCtx, CodedInputStream.newInstance(input));
-   }
-
-   public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf) {
-      return new TagReaderImpl((SerializationContextImpl) serCtx, CodedInputStream.newInstance(buf));
-   }
-
-   public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf, int off, int len) {
-      return new TagReaderImpl((SerializationContextImpl) serCtx, CodedInputStream.newInstance(buf, off, len));
+      return new TagReaderImpl((SerializationContextImpl) serCtx, Decoder.newInstance(input, Decoder.DEFAULT_BUFFER_SIZE));
    }
 
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, ByteBuffer buf) {
-      return new TagReaderImpl((SerializationContextImpl) serCtx, CodedInputStream.newInstance(buf));
+      return new TagReaderImpl((SerializationContextImpl) serCtx, Decoder.newInstance(buf));
+   }
+
+   public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf) {
+      return new TagReaderImpl((SerializationContextImpl) serCtx, Decoder.newInstance(buf, 0, buf.length));
+   }
+
+   public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf, int offset, int length) {
+      return new TagReaderImpl((SerializationContextImpl) serCtx, Decoder.newInstance(buf, offset, length));
    }
 
    @Override
    public boolean isAtEnd() throws IOException {
-      return delegate.isAtEnd();
+      return decoder.isAtEnd();
    }
 
    @Override
    public int readTag() throws IOException {
-      return delegate.readTag();
+      return decoder.readTag();
    }
 
    @Override
    public void checkLastTagWas(int tag) throws IOException {
-      if (tag == 0 && delegate.isAtEnd()) {
-         // this extra condition patches the broken behaviour of Protobuf lib regarding invalid end tag
-         return;
-      }
-      delegate.checkLastTagWas(tag);
+      decoder.checkLastTagWas(tag);
    }
 
    @Override
    public boolean skipField(int tag) throws IOException {
-      return delegate.skipField(tag);
-   }
-
-   @Override
-   public double readDouble() throws IOException {
-      return delegate.readDouble();
-   }
-
-   @Override
-   public float readFloat() throws IOException {
-      return delegate.readFloat();
+      return decoder.skipField(tag);
    }
 
    @Override
    public long readUInt64() throws IOException {
-      return delegate.readUInt64();
+      return decoder.readVarint64();
    }
 
    @Override
    public long readInt64() throws IOException {
-      return delegate.readInt64();
+      return decoder.readVarint64();
    }
 
    @Override
    public int readInt32() throws IOException {
-      return delegate.readInt32();
+      return decoder.readVarint32();
    }
 
    @Override
    public long readFixed64() throws IOException {
-      return delegate.readFixed64();
+      return decoder.readFixed64();
    }
 
    @Override
    public int readFixed32() throws IOException {
-      return delegate.readFixed32();
+      return decoder.readFixed32();
+   }
+
+   @Override
+   public double readDouble() throws IOException {
+      return decoder.readDouble();
+   }
+
+   @Override
+   public float readFloat() throws IOException {
+      return decoder.readFloat();
    }
 
    @Override
    public boolean readBool() throws IOException {
-      return delegate.readBool();
+      return decoder.readBool();
    }
 
    @Override
    public String readString() throws IOException {
-      return delegate.readString();
+      return decoder.readString();
    }
 
    @Override
    public byte[] readByteArray() throws IOException {
-      return delegate.readByteArray();
+      return decoder.readByteArray();
    }
 
    @Override
    public ByteBuffer readByteBuffer() throws IOException {
-      return delegate.readByteBuffer();
+      return decoder.readByteBuffer();
    }
 
    @Override
    public int readUInt32() throws IOException {
-      return delegate.readUInt32();
+      return decoder.readVarint32();
    }
 
    @Override
    public int readEnum() throws IOException {
-      return delegate.readEnum();
+      return decoder.readVarint32();
    }
 
    @Override
    public int readSFixed32() throws IOException {
-      return delegate.readSFixed32();
+      return decoder.readFixed32();
    }
 
    @Override
    public long readSFixed64() throws IOException {
-      return delegate.readSFixed64();
+      return decoder.readFixed64();
    }
 
    @Override
    public int readSInt32() throws IOException {
-      return delegate.readSInt32();
+      return decoder.readSInt32();
    }
 
    @Override
    public long readSInt64() throws IOException {
-      return delegate.readSInt64();
+      return decoder.readSInt64();
    }
 
    @Override
-   public int readRawVarint32() throws IOException {
-      return delegate.readRawVarint32();
-   }
-
-   @Override
-   public long readRawVarint64() throws IOException {
-      return delegate.readRawVarint64();
-   }
-
-   @Override
-   public int pushLimit(int byteLimit) throws IOException {
-      return delegate.pushLimit(byteLimit);
+   public int pushLimit(int limit) throws IOException {
+      return decoder.pushLimit(limit);
    }
 
    @Override
    public void popLimit(int oldLimit) {
-      delegate.popLimit(oldLimit);
+      decoder.popLimit(oldLimit);
    }
 
    @Override

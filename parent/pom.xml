@@ -254,7 +254,7 @@
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${version.protobuf}</version>
-                <optional>true</optional>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
