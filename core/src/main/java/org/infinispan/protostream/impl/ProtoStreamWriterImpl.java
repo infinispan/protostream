@@ -460,8 +460,8 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       input.close();
 
       TagWriter out = messageContext.out;
-      out.writeTag(fd.getNumber(), WireType.LENGTH_DELIMITED);
-      out.writeUInt32NoTag(len);
+      out.writeTag(fd.getNumber(), WireType.WIRETYPE_LENGTH_DELIMITED);
+      out.writeVarint32(len);
       for (byte[] chunk : chunks) {
          out.writeRawBytes(buffer, 0, chunk == buffer ? bufLen : CHUNK_SIZE);
       }
@@ -520,9 +520,9 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    private void writeGroup(FieldDescriptor fd, Object value, Class<?> clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = serCtx.getMarshallerDelegate(clazz);
-      messageContext.out.writeTag(fd.getNumber(), WireType.START_GROUP);
+      messageContext.out.writeTag(fd.getNumber(), WireType.WIRETYPE_START_GROUP);
       marshallerDelegate.marshall(messageContext.out, fd, value);
-      messageContext.out.writeTag(fd.getNumber(), WireType.END_GROUP);
+      messageContext.out.writeTag(fd.getNumber(), WireType.WIRETYPE_END_GROUP);
    }
 
    private <T extends Enum<T>> void writeEnum(FieldDescriptor fd, T value) throws IOException {

@@ -32,12 +32,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
             <groupId>com.squareup</groupId>
             <artifactId>protoparser</artifactId>
             <optional>true</optional>
@@ -166,19 +160,7 @@
                                     <exclude>com.fasterxml.jackson.core:jackson-core:jar:</exclude>
                                 </excludes>
                             </artifactSet>
-                            <filters>
-                                <filter>
-                                    <artifact>com.google.protobuf:protobuf-java:jar:</artifact>
-                                    <excludes>
-                                        <exclude>google/protobuf/**</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
                             <relocations>
-                                <relocation>
-                                    <pattern>com.google.protobuf</pattern>
-                                    <shadedPattern>protostream.com.google.protobuf</shadedPattern>
-                                </relocation>
                                 <relocation>
                                     <pattern>com.squareup</pattern>
                                     <shadedPattern>protostream.com.squareup</shadedPattern>

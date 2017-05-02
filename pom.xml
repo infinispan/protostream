@@ -16,6 +16,10 @@
     <name>ProtoStream - aggregator</name>
     <description>Aggregator module for the ProtoStream project. Builds the distribution of the project.</description>
 
+    <prerequisites>
+        <maven>3.5.4</maven>
+    </prerequisites>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

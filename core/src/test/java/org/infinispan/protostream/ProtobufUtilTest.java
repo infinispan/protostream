@@ -30,14 +30,13 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
  * @author anistor@redhat.com
  */
 public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
-   @Test(expected = InvalidProtocolBufferException.class)
+   @Test(expected = MalformedProtobufException.class)
    public void testFromByteArrayWithExtraPadding() throws Exception {
       ImmutableSerializationContext ctx = createContext();
 

@@ -357,10 +357,10 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
       A a;
       if (fd.getType() == Type.GROUP) {
          a = marshallerDelegate.unmarshall(ctx ,fd);
-         in.checkLastTagWas(WireType.makeTag(fd.getNumber(), WireType.END_GROUP));
+         in.checkLastTagWas(WireType.makeTag(fd.getNumber(), WireType.WIRETYPE_END_GROUP));
       } else if (fd.getType() == Type.MESSAGE) {
          if (length < 0) {
-            length = in.readRawVarint32();
+            length = in.readUInt32();
          }
          int oldLimit = in.pushLimit(length);
          a = marshallerDelegate.unmarshall(ctx, fd);

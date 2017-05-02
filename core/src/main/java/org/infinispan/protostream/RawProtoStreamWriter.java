@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import org.infinispan.protostream.descriptors.WireType;
 
 /**
+ * Interface for direct write access to the protobuf data stream.
+ *
  * @author anistor@redhat.com
  * @since 3.0
  * @deprecated replaced by {@link TagWriter}. To be removed in 5.0.
@@ -19,9 +21,17 @@ public interface RawProtoStreamWriter {
 
    void writeTag(int number, WireType wireType) throws IOException;
 
-   void writeUInt32NoTag(int value) throws IOException;
+   default void writeUInt32NoTag(int value) throws IOException {
+      writeVarint32(value);
+   }
 
-   void writeUInt64NoTag(long value) throws IOException;
+   void writeVarint32(int value) throws IOException;
+
+   default void writeUInt64NoTag(long value) throws IOException {
+      writeVarint64(value);
+   }
+
+   void writeVarint64(long value) throws IOException;
 
    void writeString(int number, String value) throws IOException;
 
@@ -53,11 +63,21 @@ public interface RawProtoStreamWriter {
 
    void writeFloat(int number, float value) throws IOException;
 
+   /**
+    * Write field tag and all remaining bytes from current buffer position.
+    */
    void writeBytes(int number, ByteBuffer value) throws IOException;
 
    void writeBytes(int number, byte[] value) throws IOException;
 
    void writeBytes(int number, byte[] value, int offset, int length) throws IOException;
 
+   void writeRawByte(byte value) throws IOException;
+
    void writeRawBytes(byte[] value, int offset, int length) throws IOException;
+
+   /**
+    * Write all remaining bytes from current buffer position.
+    */
+   void writeRawBytes(ByteBuffer value) throws IOException;
 }

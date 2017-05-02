@@ -232,7 +232,7 @@ public class SerializationContextImplTest {
                public X read(ReadContext ctx) throws IOException {
                   Integer f = null;
                   TagReader in = ctx.getReader();
-                  if (in.readTag() == WireType.makeTag(1, WireType.VARINT)) {
+                  if (in.readTag() == WireType.makeTag(1, WireType.WIRETYPE_VARINT)) {
                      f = in.readInt32();
                   }
                   return new X(f);

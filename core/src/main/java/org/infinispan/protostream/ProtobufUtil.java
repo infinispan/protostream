@@ -15,8 +15,6 @@ import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.TagReaderImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;
 
-import com.google.protobuf.CodedOutputStream;
-
 /**
  * This is the entry point to the ProtoStream library. This class provides methods to write and read Java objects
  * to/from a Protobuf encoded data stream. Also provides conversion to and from canonical JSON.
@@ -143,7 +141,7 @@ public final class ProtobufUtil {
    }
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
-      toWrappedStream(ctx, out, t, CodedOutputStream.DEFAULT_BUFFER_SIZE);
+      toWrappedStream(ctx, out, t, 4096);
    }
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t, int bufferSize) throws IOException {
