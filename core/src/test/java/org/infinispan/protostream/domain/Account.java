@@ -1,5 +1,6 @@
 package org.infinispan.protostream.domain;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -10,11 +11,16 @@ import org.infinispan.protostream.BaseMessage;
  */
 public class Account extends BaseMessage {
 
+   public enum Currency {
+      EUR, GBP, USD, BRL
+   }
+
    private int id;
    private String description;
    private Date creationDate;
    private Limits limits;
    private List<byte[]> blurb;
+   private Currency[] currencies;
 
    public static class Limits extends BaseMessage {
 
@@ -87,6 +93,14 @@ public class Account extends BaseMessage {
       this.blurb = blurb;
    }
 
+   public Currency[] getCurrencies() {
+      return currencies;
+   }
+
+   public void setCurrencies(Currency[] currencies) {
+      this.currencies = currencies;
+   }
+
    @Override
    public String toString() {
       return "Account{" +
@@ -95,6 +109,7 @@ public class Account extends BaseMessage {
             ", creationDate='" + creationDate + '\'' +
             ", limits=" + limits +
             ", blurb=" + blurb +
+            ", currencies=" + Arrays.toString(currencies) +
             ", unknownFieldSet='" + unknownFieldSet + '\'' +
             '}';
    }

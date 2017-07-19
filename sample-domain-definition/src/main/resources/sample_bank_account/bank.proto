@@ -130,6 +130,16 @@ message Account {
     * @Field(store = Store.YES)
     */
    repeated bytes blurb = 5;
+
+    /* @TypeId(43) */
+   enum Currency {
+      EUR = 0;
+      GBP = 1;
+      USD = 2;
+      BRL = 3;
+   }
+
+   repeated Currency currencies = 6;
 }
 
 /**

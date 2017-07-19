@@ -30,6 +30,7 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
       Date creationDate = reader.readDate("creationDate");
       Account.Limits limits = reader.readObject("limits", Account.Limits.class);
       List<byte[]> blurb = reader.readCollection("blurb", new ArrayList<>(), byte[].class);
+      Account.Currency[] currencies = reader.readArray("currencies", Account.Currency.class);
 
       Account account = new Account();
       account.setId(id);
@@ -37,6 +38,7 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
       account.setCreationDate(creationDate);
       account.setLimits(limits);
       account.setBlurb(blurb);
+      account.setCurrencies(currencies);
       return account;
    }
 
@@ -47,5 +49,6 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
       writer.writeDate("creationDate", account.getCreationDate());
       writer.writeObject("limits", account.getLimits(), Account.Limits.class);
       writer.writeCollection("blurb", account.getBlurb(), byte[].class);
+      writer.writeArray("currencies", account.getCurrencies(), Account.Currency.class);
    }
 }
