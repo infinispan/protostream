@@ -62,6 +62,7 @@ public class MarshallingTest extends AbstractProtoStreamTest {
       Account account = new Account();
       account.setId(1);
       account.setDescription("test account");
+      account.setCurrencies(new Account.Currency[]{Account.Currency.BRL});
       Date creationDate = new Date();
       account.setCreationDate(creationDate);
       List<byte[]> blurb = new ArrayList<>();
@@ -82,5 +83,6 @@ public class MarshallingTest extends AbstractProtoStreamTest {
       assertEquals(0, decoded.getBlurb().get(0).length);
       assertEquals(3, decoded.getBlurb().get(1).length);
       assertArrayEquals(new byte[]{1, 2, 3}, decoded.getBlurb().get(1));
+      assertArrayEquals(new Account.Currency[]{Account.Currency.BRL}, decoded.getCurrencies());
    }
 }
