@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 
+import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtoStreamReader;
@@ -366,14 +367,30 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
       //todo validate type is compatible with readCollection
       final int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
 
+      EnumMarshaller<?> enumMarshaller;
+      if (elementClass.isEnum()) {
+         enumMarshaller = ((EnumMarshallerDelegate) ctx.getMarshallerDelegate(elementClass)).getMarshaller();
+      } else {
+         enumMarshaller = null;
+      }
+
       while (true) {
          Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
          if (o == null) {
             break;
          }
-         byte[] byteArray = (byte[]) o;
-         RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(byteArray);
-         collection.add(readNestedObject(fd, elementClass, in, byteArray.length));
+
+         E e;
+
+         if (enumMarshaller != null) {
+            e = (E) enumMarshaller.decode(((Number) o).intValue());
+         } else {
+            byte[] byteArray = (byte[]) o;
+            RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(byteArray);
+            e = readNestedObject(fd, elementClass, in, byteArray.length);
+         }
+
+         collection.add(e);
       }
 
       while (true) {

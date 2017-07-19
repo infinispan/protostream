@@ -22,5 +22,6 @@ public class MarshallerRegistration {
       ctx.registerMarshaller(new AccountMarshaller());
       ctx.registerMarshaller(new LimitsMarshaller());
       ctx.registerMarshaller(new TransactionMarshaller());
+      ctx.registerMarshaller(new CurrencyMarshaller());
    }
 }
