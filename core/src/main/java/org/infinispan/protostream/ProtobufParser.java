@@ -53,7 +53,7 @@ public final class ProtobufParser {
    }
 
    private void parseInternal(TagHandler tagHandler, Descriptor messageDescriptor, RawProtoStreamReader in) throws IOException {
-      tagHandler.onStart();
+      tagHandler.onStart(messageDescriptor);
       parseMessage(tagHandler, messageDescriptor, in);
       tagHandler.onEnd();
    }

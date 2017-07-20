@@ -3,6 +3,8 @@ package org.infinispan.protostream.domain;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.infinispan.protostream.BaseMessage;
 
@@ -42,6 +44,20 @@ public class Account extends BaseMessage {
 
       public void setMaxTransactionLimit(Double maxTransactionLimit) {
          this.maxTransactionLimit = maxTransactionLimit;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         Limits limits = (Limits) o;
+         return Objects.equals(maxDailyLimit, limits.maxDailyLimit) &&
+               Objects.equals(maxTransactionLimit, limits.maxTransactionLimit);
+      }
+
+      @Override
+      public int hashCode() {
+         return Objects.hash(maxDailyLimit, maxTransactionLimit);
       }
 
       @Override
@@ -89,6 +105,14 @@ public class Account extends BaseMessage {
       return blurb;
    }
 
+   private boolean blurbEquals(List<byte[]> otherBlurbs) {
+      if ((otherBlurbs == null && blurb == null) ||
+            otherBlurbs == null || blurb == null ||
+            otherBlurbs.size() != blurb.size()) return false;
+      for (int i = 0; i < blurb.size(); i++) if (!Arrays.equals(blurb.get(i), otherBlurbs.get(i))) return false;
+      return true;
+   }
+
    public void setBlurb(List<byte[]> blurb) {
       this.blurb = blurb;
    }
@@ -102,14 +126,32 @@ public class Account extends BaseMessage {
    }
 
    @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Account account = (Account) o;
+      return id == account.id &&
+            Objects.equals(description, account.description) &&
+            Objects.equals(creationDate, account.creationDate) &&
+            Objects.equals(limits, account.limits) &&
+            blurbEquals(account.blurb) &&
+            Arrays.equals(currencies, account.currencies);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(id, description, creationDate, limits, blurb, currencies);
+   }
+
+   @Override
    public String toString() {
       return "Account{" +
             "id=" + id +
             ", description='" + description + '\'' +
             ", creationDate='" + creationDate + '\'' +
             ", limits=" + limits +
-            ", blurb=" + blurb +
-            ", currencies=" + Arrays.toString(currencies) +
+            ", blurb=" + blurb.stream().map(Arrays::toString).collect(Collectors.toList()) +
+            ", currencies='" + Arrays.toString(currencies) + '\'' +
             ", unknownFieldSet='" + unknownFieldSet + '\'' +
             '}';
    }

@@ -31,7 +31,6 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
       Account.Limits limits = reader.readObject("limits", Account.Limits.class);
       List<byte[]> blurb = reader.readCollection("blurb", new ArrayList<>(), byte[].class);
       Account.Currency[] currencies = reader.readArray("currencies", Account.Currency.class);
-
       Account account = new Account();
       account.setId(id);
       account.setDescription(description);

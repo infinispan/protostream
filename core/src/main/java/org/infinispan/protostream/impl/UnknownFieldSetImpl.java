@@ -222,4 +222,11 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
       in.readFully(bytes);
       readAllFields(RawProtoStreamReaderImpl.newInstance(bytes));
    }
+
+   @Override
+   public String toString() {
+      return "UnknownFieldSetImpl{" +
+            "fields=" + fields +
+            '}';
+   }
 }

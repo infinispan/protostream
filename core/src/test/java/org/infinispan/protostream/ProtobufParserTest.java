@@ -41,23 +41,23 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
 
       TagHandler messageHandler = new TagHandler() {
          @Override
-         public void onStart() {
-            log.debugf("\tonStart");
+         public void onStart(GenericDescriptor descriptor) {
+            log.debugf("\tonStart %s", descriptor);
          }
 
          @Override
          public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
-            log.debugf("\tonTag %d %s %s", fieldNumber, fieldDescriptor.getFullName(), tagValue);
+            log.debugf("\tonTag %d %s %s", fieldNumber, fieldDescriptor != null ? fieldDescriptor.getFullName() : null, tagValue);
          }
 
          @Override
          public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
-            log.debugf("\tonStartNested %d %s", fieldNumber, fieldDescriptor.getFullName());
+            log.debugf("\tonStartNested %d %s", fieldNumber, fieldDescriptor != null ? fieldDescriptor.getFullName() : null);
          }
 
          @Override
          public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
-            log.debugf("\tonEndNested %d %s", fieldNumber, fieldDescriptor.getFullName());
+            log.debugf("\tonEndNested %d %s", fieldNumber, fieldDescriptor != null ? fieldDescriptor.getFullName() : null);
          }
 
          @Override
@@ -77,13 +77,13 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
          }
 
          @Override
-         public void onStart() {
-            log.debug("onStart");
+         public void onStart(GenericDescriptor descriptor) {
+            log.debugf("onStart %s" + descriptor);
          }
 
          @Override
          public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
-            log.debugf("onTag %d %s %s", fieldNumber, fieldDescriptor.getFullName(), tagValue);
+            log.debugf("onTag %d %s %s", fieldNumber, fieldDescriptor != null ? fieldDescriptor.getFullName() : null, tagValue);
             if (fieldDescriptor == null) {
                // ignore unknown fields
                return;
@@ -116,7 +116,7 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
                case WrappedMessage.WRAPPED_SFIXED64:
                case WrappedMessage.WRAPPED_SINT32:
                case WrappedMessage.WRAPPED_SINT64:
-                  messageHandler.onStart();
+                  messageHandler.onStart(null);
                   messageHandler.onTag(fieldNumber, fieldDescriptor, tagValue);
                   messageHandler.onEnd();
                   break;
@@ -125,12 +125,12 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
 
          @Override
          public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
-            log.debugf("onStartNested %d %s", fieldNumber, fieldDescriptor.getFullName());
+            log.debugf("onStartNested %d %s", fieldNumber, fieldDescriptor != null ? fieldDescriptor.getFullName() : null);
          }
 
          @Override
          public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
-            log.debugf("onEndNested %d %s", fieldNumber, fieldDescriptor.getFullName());
+            log.debugf("onEndNested %d %s", fieldNumber, fieldDescriptor != null ? fieldDescriptor.getFullName() : null);
          }
 
          @Override
@@ -139,7 +139,7 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
                EnumDescriptor enumDescriptor = (EnumDescriptor) getDescriptor();
                String enumConstantName = enumDescriptor.findValueByNumber(wrappedEnum).getName();
                FieldDescriptor fd = wrapperDescriptor.findFieldByNumber(WrappedMessage.WRAPPED_ENUM);
-               messageHandler.onStart();
+               messageHandler.onStart(enumDescriptor);
                messageHandler.onTag(WrappedMessage.WRAPPED_ENUM, fd, enumConstantName);
                messageHandler.onEnd();
             } else if (wrappedMessage != null) {

@@ -49,6 +49,8 @@ message User {
        * @Field(store = Store.YES)
        */
       required int32 number = 3;
+
+      required bool isCommercial = 4;
    }
 
    /**

@@ -25,11 +25,13 @@ public class AddressMarshaller implements MessageMarshaller<Address> {
       String street = reader.readString("street");
       String postCode = reader.readString("postCode");
       int number = reader.readInt("number");
+      Boolean isCommercial = reader.readBoolean("isCommercial");
 
       Address address = new Address();
       address.setStreet(street);
       address.setPostCode(postCode);
       address.setNumber(number);
+      address.setCommercial(isCommercial);
       return address;
    }
 
@@ -38,6 +40,7 @@ public class AddressMarshaller implements MessageMarshaller<Address> {
       writer.writeString("street", address.getStreet());
       writer.writeString("postCode", address.getPostCode());
       writer.writeInt("number", address.getNumber());
+      writer.writeBoolean("isCommercial", address.isCommercial());
    }
 }
 

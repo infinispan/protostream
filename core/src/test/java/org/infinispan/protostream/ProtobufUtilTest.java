@@ -1,12 +1,23 @@
 package org.infinispan.protostream;
 
+import static org.infinispan.protostream.domain.Account.Currency.BRL;
+import static org.infinispan.protostream.domain.Account.Currency.USD;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+
+import javax.xml.bind.DatatypeConverter;
 
 import org.infinispan.protostream.domain.Account;
 import org.infinispan.protostream.domain.Address;
@@ -82,6 +93,120 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    @Test
+   public void testWithInvalidJson() throws Exception {
+      Throwable error = testFromJson("john");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("Invalid JSON"));
+   }
+
+   @Test
+   public void testWithInvalidMetaField() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"inexistent\",\"street\":\"Abbey Rd\",\"postCode\":\"NW89AY\",\"number\":\"true\"}");
+      assertNotNull(error);
+   }
+
+   @Test
+   public void testWithMismatchedFieldType() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User.Address\",\"street\":\"Abbey Rd\",\"postCode\":\"NW89AY\",\"number\":\"true\"}");
+      assertTrue(error instanceof NumberFormatException);
+   }
+
+   @Test
+   public void testWithMismatchedArrayType() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User\",\"id\":[1,2,3],\"accountIds\":[12,24],\"name\":\"John\",\"surname\":\"Batman\",\"gender\":\"MALE\"}");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("not an array"));
+   }
+
+   @Test
+   public void testWithMismatchedMessageType() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User\",\"id\":1,\"accountIds\":[12,24],\"name\":{\"name\":\"John\"},\"surname\":\"Batman\",\"gender\":\"MALE\"}");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("Field 'name' is not an object"));
+   }
+
+   @Test
+   public void testWithMismatchedArrayType2() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User\",\"id\":1,\"accountIds\":[12,24],\"name\":[1,2,3],\"surname\":\"Batman\",\"gender\":\"MALE\"}");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("Field 'name' is not an array"));
+   }
+
+   @Test
+   public void testMissingRequiredField() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User.Address\",\"street\":\"Abbey Rd\",\"postCode\":\"NW89AY\",\"number\": 12}");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("Required field 'isCommercial' missing"));
+   }
+
+   @Test
+   public void testWithDifferentFieldOrder() throws Exception {
+      SerializationContext ctx = createContext();
+      String json = "{\"_type\":\"sample_bank_account.Account\",\"limits\":{\"maxDailyLimit\":1.5,\"maxTransactionLimit\":3.5},\"description\":\"test account\",\"creationDate\":\"1500508800000\",\"blurb\":[\"\",\"ew==\",\"AQIDBA==\"],\"currencies\":[\"USD\",\"BRL\"],\"id\":1}";
+      byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+
+      Account account = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertEquals(createAccount(), account);
+   }
+
+   @Test
+   public void testWithMalformedJson() throws Exception {
+      Throwable error = testFromJson("{'_type':'sample_bank_account.User.Address','street':'Abbey Rd',}");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("Invalid JSON"));
+   }
+
+   @Test
+   public void testWithInvalidTopLevelObject() throws Exception {
+      Throwable error = testFromJson("[{\"a\":1}]");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("Invalid top level object"));
+   }
+
+   @Test
+   public void testWithMissingTypeSpecialField() throws Exception {
+      Throwable error = testFromJson("{ \"street\":\"Abbey Rd\" }");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("should contain a top level field '_type'"));
+   }
+
+   @Test
+   public void testWithMissingValueSpecialField() throws Exception {
+      Throwable error = testFromJson("{ \"_type\":\"double\", \"person\": true }");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("should contain a top level field '_value'"));
+   }
+
+   @Test
+   public void testWithInvalidField() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User.Address\",\"rua\":\"Abbey Rd\",\"postCode\":\"NW89AY\",\"number\":3}");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("field 'rua' was not found"));
+   }
+
+   @Test
+   public void testWithInvalidEnumField() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User\",\"id\":1,\"accountIds\":[1,3],\"name\":\"John\",\"surname\":\"Batman\",\"gender\":\"NOT SURE\"}");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("Invalid enum value 'NOT SURE'"));
+   }
+
+   @Test
+   public void testWithNullEnumValue() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.Account.Currency\",\"_value\": null}");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("Invalid enum value 'null'"));
+   }
+
+   @Test
+   public void testWithWrongTypeEnumValue() throws Exception {
+      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.Account.Currency\",\"_value\":true}");
+      assertTrue(error instanceof IllegalStateException);
+      assertTrue(error.getMessage().contains("Invalid enum value 'true'"));
+   }
+
+   @Test
    public void testCanonicalJSON() throws Exception {
       ImmutableSerializationContext ctx = createContext();
 
@@ -91,53 +216,77 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       user.setSurname("Batman");
       user.setGender(User.Gender.MALE);
       user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
-      user.setAddresses(Arrays.asList(new Address("Old Street", "XYZ42", -12), new Address("Bond Street", "W23", 2)));
+      user.setAddresses(Arrays.asList(new Address("Old Street", "XYZ42", -12, false), new Address("Bond Street", "W23", 2, true)));
 
-      byte[] userBytes = ProtobufUtil.toWrappedByteArray(ctx, user);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, userBytes));
+      Address address = new Address("Abbey Rd", "NW89AY", 3);
 
+      Account account = createAccount();
+
+      testJsonConversion(ctx, address);
+      testJsonConversion(ctx, 3.14);
+      testJsonConversion(ctx, 777L);
+      testJsonConversion(ctx, 3.14f);
+      testJsonConversion(ctx, 1);
+      testJsonConversion(ctx, null);
+      testJsonConversion(ctx, true);
+      testJsonConversion(ctx, "Merry Christmas, you filthy animal. And a Happy New Year!");
+      testJsonConversion(ctx, User.Gender.FEMALE);
+      testJsonConversion(ctx, account);
+      testJsonConversion(ctx, user);
+   }
+
+   @Test
+   public void testArrayfEnum() throws Exception {
+      Account account = createAccount();
+      SerializationContext context = createContext();
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(context, account);
+
+      Account acc = ProtobufUtil.fromWrappedByteArray(context, bytes);
+      assertEquals(acc, account);
+   }
+
+   private Account createAccount() {
       Account account = new Account();
       account.setId(1);
       account.setDescription("test account");
-      Date creationDate = new Date();
+      Account.Limits limits = new Account.Limits();
+      limits.setMaxDailyLimit(1.5);
+      limits.setMaxTransactionLimit(3.5);
+      account.setLimits(limits);
+      Date creationDate = Date.from(LocalDate.of(2017, 7, 20).atStartOfDay().toInstant(ZoneOffset.UTC));
       account.setCreationDate(creationDate);
       List<byte[]> blurb = new ArrayList<>();
       blurb.add(new byte[0]);
       blurb.add(new byte[]{123});
       blurb.add(new byte[]{1, 2, 3, 4});
       account.setBlurb(blurb);
-
-      byte[] accountBytes = ProtobufUtil.toWrappedByteArray(ctx, account);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, accountBytes));
-
-      byte[] wrappedUserBytes = ProtobufUtil.toWrappedByteArray(ctx, new WrappedMessage(user));
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, wrappedUserBytes));
-
-      byte[] nullBytes = ProtobufUtil.toWrappedByteArray(ctx, null);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, nullBytes));
-
-      byte[] booleanBytes = ProtobufUtil.toWrappedByteArray(ctx, true);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, booleanBytes));
-
-      byte[] enumBytes = ProtobufUtil.toWrappedByteArray(ctx, User.Gender.FEMALE);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, enumBytes));
-
-      byte[] floatBytes = ProtobufUtil.toWrappedByteArray(ctx, 3.14f);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, floatBytes));
-
-      byte[] doubleBytes = ProtobufUtil.toWrappedByteArray(ctx, 3.14);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, doubleBytes));
-
-      byte[] doubleNaNBytes = ProtobufUtil.toWrappedByteArray(ctx, Double.NaN);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, doubleNaNBytes));
-
-      byte[] intBytes = ProtobufUtil.toWrappedByteArray(ctx, 1);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, intBytes));
-
-      byte[] longBytes = ProtobufUtil.toWrappedByteArray(ctx, 777L);
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, longBytes));
-
-      byte[] stringBytes = ProtobufUtil.toWrappedByteArray(ctx, "Merry Christmas, you filthy animal. And a Happy New Year!");
-      System.out.printf("Canonical JSON out:%s\n", ProtobufUtil.toCanonicalJSON(ctx, stringBytes, false));
+      account.setCurrencies(new Account.Currency[]{USD, BRL});
+      return account;
    }
+
+   private Throwable testFromJson(String json) throws IOException {
+      ImmutableSerializationContext ctx = createContext();
+      try {
+         ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      } catch (Throwable e) {
+         return e;
+      }
+      return null;
+   }
+
+   private <T> void testJsonConversion(ImmutableSerializationContext ctx, T object, boolean prettyPrint) throws IOException {
+      byte[] marshalled = ProtobufUtil.toWrappedByteArray(ctx, object);
+      String json = ProtobufUtil.toCanonicalJSON(ctx, marshalled, prettyPrint);
+      System.out.printf("Canonical JSON out:%s\n", json);
+      byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      System.out.println(DatatypeConverter.printHexBinary(marshalled));
+      System.out.println(DatatypeConverter.printHexBinary(bytes));
+      assertEquals(object, ProtobufUtil.fromWrappedByteArray(ctx, bytes));
+      assertArrayEquals(marshalled, bytes);
+   }
+
+   private <T> void testJsonConversion(ImmutableSerializationContext ctx, T object) throws IOException {
+      testJsonConversion(ctx, object, false);
+   }
+
 }
