@@ -1,6 +1,7 @@
 package org.infinispan.protostream.domain;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -71,5 +72,17 @@ public class Note {
 
    public void setDigest(byte[] digest) {
       this.digest = digest;
+   }
+
+   @Override
+   public String toString() {
+      return "Note{" +
+            "text='" + text + '\'' +
+            ", author=" + author +
+            ", creationDate=" + creationDate +
+            ", digest=" + Arrays.toString(digest) +
+            ", note=" + note +
+            ", notes=" + notes +
+            '}';
    }
 }

@@ -43,4 +43,3 @@ public class AddressMarshaller implements MessageMarshaller<Address> {
       writer.writeBoolean("isCommercial", address.isCommercial());
    }
 }
-

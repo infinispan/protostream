@@ -2,6 +2,7 @@ package org.infinispan.protostream.sampledomain;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.protostream.UnknownFieldSet;
@@ -131,5 +132,27 @@ public class User {
             ", passwordExpirationDate=" + passwordExpirationDate +
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      User user = (User) o;
+      return id == user.id &&
+            Objects.equals(name, user.name) &&
+            Objects.equals(surname, user.surname) &&
+            Objects.equals(accountIds, user.accountIds) &&
+            Objects.equals(addresses, user.addresses) &&
+            Objects.equals(age, user.age) &&
+            gender == user.gender &&
+            Objects.equals(notes, user.notes) &&
+            Objects.equals(creationDate, user.creationDate) &&
+            Objects.equals(passwordExpirationDate, user.passwordExpirationDate);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(id, name, surname, accountIds, addresses, age, gender, notes, creationDate, passwordExpirationDate);
    }
 }

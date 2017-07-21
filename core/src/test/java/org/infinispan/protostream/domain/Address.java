@@ -22,13 +22,13 @@ public class Address extends BaseMessage implements Externalizable {  // impleme
    }
 
    public Address(String street, String postCode, int number) {
-      this.street = street;
-      this.postCode = postCode;
-      this.number = number;
+      this(street, postCode, number, false);
    }
 
    public Address(String street, String postCode, int number, boolean isCommercial) {
-      this(street, postCode, number);
+      this.street = street;
+      this.postCode = postCode;
+      this.number = number;
       this.isCommercial = isCommercial;
    }
 
@@ -56,6 +56,14 @@ public class Address extends BaseMessage implements Externalizable {  // impleme
       this.number = number;
    }
 
+   public boolean isCommercial() {
+      return isCommercial;
+   }
+
+   public void setCommercial(boolean isCommercial) {
+      this.isCommercial = isCommercial;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -65,14 +73,6 @@ public class Address extends BaseMessage implements Externalizable {  // impleme
             isCommercial == address.isCommercial &&
             Objects.equals(street, address.street) &&
             Objects.equals(postCode, address.postCode);
-   }
-
-   public void setCommercial(boolean commercial) {
-      this.isCommercial = commercial;
-   }
-
-   public boolean isCommercial() {
-      return isCommercial;
    }
 
    @Override
@@ -86,7 +86,7 @@ public class Address extends BaseMessage implements Externalizable {  // impleme
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
             ", number='" + number + '\'' +
-            ", isCommertial='" + isCommercial + '\'' +
+            ", isCommercial='" + isCommercial + '\'' +
             ", unknownFieldSet='" + unknownFieldSet + '\'' +
             '}';
    }

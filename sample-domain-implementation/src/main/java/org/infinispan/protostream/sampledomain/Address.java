@@ -1,5 +1,7 @@
 package org.infinispan.protostream.sampledomain;
 
+import java.util.Objects;
+
 import org.infinispan.protostream.BaseMessage;
 
 /**
@@ -10,14 +12,20 @@ public class Address extends BaseMessage {
    private String street;
    private String postCode;
    private int number;
+   private boolean isCommercial;
 
    public Address() {
    }
 
    public Address(String street, String postCode, int number) {
+      this(street, postCode, number, false);
+   }
+
+   public Address(String street, String postCode, int number, boolean isCommercial) {
       this.street = street;
       this.postCode = postCode;
       this.number = number;
+      this.isCommercial = isCommercial;
    }
 
    public String getStreet() {
@@ -44,12 +52,37 @@ public class Address extends BaseMessage {
       this.number = number;
    }
 
+   public boolean isCommercial() {
+      return isCommercial;
+   }
+
+   public void setCommercial(boolean isCommercial) {
+      this.isCommercial = isCommercial;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Address address = (Address) o;
+      return number == address.number &&
+            isCommercial == address.isCommercial &&
+            Objects.equals(street, address.street) &&
+            Objects.equals(postCode, address.postCode);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(street, postCode, number);
+   }
+
    @Override
    public String toString() {
       return "Address{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
-              ", number='" + number + '\'' +
+            ", number='" + number + '\'' +
+            ", isCommercial='" + isCommercial + '\'' +
             ", unknownFieldSet='" + unknownFieldSet + '\'' +
             '}';
    }

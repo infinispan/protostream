@@ -105,16 +105,16 @@ public class Account extends BaseMessage {
       return blurb;
    }
 
+   public void setBlurb(List<byte[]> blurb) {
+      this.blurb = blurb;
+   }
+
    private boolean blurbEquals(List<byte[]> otherBlurbs) {
       if ((otherBlurbs == null && blurb == null) ||
             otherBlurbs == null || blurb == null ||
             otherBlurbs.size() != blurb.size()) return false;
       for (int i = 0; i < blurb.size(); i++) if (!Arrays.equals(blurb.get(i), otherBlurbs.get(i))) return false;
       return true;
-   }
-
-   public void setBlurb(List<byte[]> blurb) {
-      this.blurb = blurb;
    }
 
    public Currency[] getCurrencies() {
