@@ -1,9 +1,9 @@
 # ProtoStream
 [![Build Status](https://travis-ci.org/infinispan/protostream.svg?branch=master)](https://travis-ci.org/infinispan/protostream)
-[![Maven Central](https://img.shields.io/badge/maven%20central-3.1.0.Final-brightgreen.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|3.1.0.Final|)
+[![Maven Central](https://img.shields.io/badge/maven%20central-4.1.0.Final-brightgreen.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|4.1.0.Final|)
 [![Javadoc](https://javadoc-emblem.rhcloud.com/doc/org.infinispan.protostream/protostream/badge.svg)](http://www.javadoc.io/doc/org.infinispan.protostream/protostream)
 
-ProtoStream is a serialization library based on [Protobuf](https://github.com/google/protobuf). It is open source software released under the
+ProtoStream is a serialization library based on [Protobuf](https://github.com/google/protobuf) data format. It is open source software released under the
 [Apache License, v2.0](http://www.apache.org/licenses/LICENSE-2.0.html "The Apache License, v2.0").
 ProtoStream is part of the [Infinispan](https://github.com/infinispan/infinispan) data grid platform. For more information about Infinispan visit the project's
 website on [http://www.infinispan.org](http://www.infinispan.org "The Infinispan project page")
@@ -18,7 +18,7 @@ Add this dependency to your pom.xml file:
 <dependency>
    <groupId>org.infinispan.protostream</groupId>
    <artifactId>protostream</artifactId>
-   <version>3.1.0.Final</version>
+   <version>4.1.0.Final</version>
 </dependency>
 ```
 
