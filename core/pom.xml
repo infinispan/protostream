@@ -159,6 +159,10 @@
                                     <shadedPattern>protostream.com.google.protobuf</shadedPattern>
                                 </relocation>
                                 <relocation>
+                                    <pattern>com.google.gson</pattern>
+                                    <shadedPattern>protostream.com.google.gson</shadedPattern>
+                                </relocation>
+                                <relocation>
                                     <pattern>com.squareup</pattern>
                                     <shadedPattern>protostream.com.squareup</shadedPattern>
                                 </relocation>
@@ -210,6 +214,7 @@
                                 </_exportcontents>
                                 <Import-Package>
                                     !com.google.protobuf,
+                                    !com.google.gson,
                                     !com.squareup.protoparser,
                                     !javassist,
                                     !net.jcip.annotations,
