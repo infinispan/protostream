@@ -52,6 +52,7 @@ import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 
+import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.MalformedJsonException;
@@ -64,6 +65,8 @@ import com.google.gson.stream.MalformedJsonException;
  * @since 1.0
  */
 public final class ProtobufUtil {
+
+   private static final Gson GSON = new Gson();
 
    /**
     * Classpath location of the message-wrapping.proto resource file.
@@ -655,6 +658,10 @@ public final class ProtobufUtil {
             }
          }
 
+         private String escape(String tagValue) {
+            return GSON.toJson(tagValue);
+         }
+
          @Override
          public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
             if (fieldDescriptor == null) {
@@ -670,6 +677,8 @@ public final class ProtobufUtil {
 
             switch (fieldDescriptor.getType()) {
                case STRING:
+                  jsonOut.append(escape((String) tagValue));
+                  break;
                case INT64:
                case SINT64:
                case UINT64:

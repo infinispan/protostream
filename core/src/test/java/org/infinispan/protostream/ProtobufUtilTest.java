@@ -17,8 +17,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.infinispan.protostream.domain.Account;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
@@ -236,6 +234,18 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    @Test
+   public void testEscaping() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+
+      String unescapedString = "This is a line.\nThis is another line.\tA tab later in the same line";
+
+      byte[] marshalled = ProtobufUtil.toWrappedByteArray(ctx, unescapedString);
+      String json = ProtobufUtil.toCanonicalJSON(ctx, marshalled, false);
+
+      assertEquals("{\"_type\":\"string\",\"_value\":\"This is a line.\\nThis is another line.\\tA tab later in the same line\"}", json);
+   }
+
+   @Test
    public void testArrayfEnum() throws Exception {
       Account account = createAccount();
       SerializationContext context = createContext();
@@ -277,10 +287,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    private <T> void testJsonConversion(ImmutableSerializationContext ctx, T object, boolean prettyPrint) throws IOException {
       byte[] marshalled = ProtobufUtil.toWrappedByteArray(ctx, object);
       String json = ProtobufUtil.toCanonicalJSON(ctx, marshalled, prettyPrint);
-      System.out.printf("Canonical JSON out:%s\n", json);
       byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
-      System.out.println(DatatypeConverter.printHexBinary(marshalled));
-      System.out.println(DatatypeConverter.printHexBinary(bytes));
       assertEquals(object, ProtobufUtil.fromWrappedByteArray(ctx, bytes));
       assertArrayEquals(marshalled, bytes);
    }
