@@ -30,6 +30,8 @@ public class Account extends BaseMessage {
 
       private Double maxTransactionLimit;
 
+      private String[] payees;
+
       public Double getMaxDailyLimit() {
          return maxDailyLimit;
       }
@@ -44,6 +46,14 @@ public class Account extends BaseMessage {
 
       public void setMaxTransactionLimit(Double maxTransactionLimit) {
          this.maxTransactionLimit = maxTransactionLimit;
+      }
+
+      public String[] getPayees() {
+         return payees;
+      }
+
+      public void setPayees(String[] payees) {
+         this.payees = payees;
       }
 
       @Override
@@ -65,6 +75,7 @@ public class Account extends BaseMessage {
          return "Limits{" +
                "maxDailyLimit=" + maxDailyLimit +
                ", maxTransactionLimit=" + maxTransactionLimit +
+               ", payees=" + Arrays.toString(payees) +
                '}';
       }
    }
