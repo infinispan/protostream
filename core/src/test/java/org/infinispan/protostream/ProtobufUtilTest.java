@@ -6,6 +6,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -23,12 +24,16 @@ import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
  * @author anistor@redhat.com
  */
 public class ProtobufUtilTest extends AbstractProtoStreamTest {
+
+   private static final Gson GSON = new Gson();
 
    @Test(expected = InvalidProtocolBufferException.class)
    public void testFromByteArrayWithExtraPadding() throws Exception {
@@ -262,6 +267,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       Account.Limits limits = new Account.Limits();
       limits.setMaxDailyLimit(1.5);
       limits.setMaxTransactionLimit(3.5);
+      limits.setPayees(new String[]{"Madoff", "Ponzi"});
       account.setLimits(limits);
       Date creationDate = Date.from(LocalDate.of(2017, 7, 20).atStartOfDay().toInstant(ZoneOffset.UTC));
       account.setCreationDate(creationDate);
@@ -287,6 +293,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    private <T> void testJsonConversion(ImmutableSerializationContext ctx, T object, boolean prettyPrint) throws IOException {
       byte[] marshalled = ProtobufUtil.toWrappedByteArray(ctx, object);
       String json = ProtobufUtil.toCanonicalJSON(ctx, marshalled, prettyPrint);
+      assertValid(json);
       byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
       assertEquals(object, ProtobufUtil.fromWrappedByteArray(ctx, bytes));
       assertArrayEquals(marshalled, bytes);
@@ -294,6 +301,14 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
    private <T> void testJsonConversion(ImmutableSerializationContext ctx, T object) throws IOException {
       testJsonConversion(ctx, object, false);
+   }
+
+   private void assertValid(String json) {
+      try {
+         GSON.fromJson(json, Object.class);
+      } catch (JsonSyntaxException e) {
+         fail("Invalid json found:" + json);
+      }
    }
 
 }

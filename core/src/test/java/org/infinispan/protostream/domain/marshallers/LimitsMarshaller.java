@@ -24,10 +24,12 @@ public class LimitsMarshaller implements MessageMarshaller<Account.Limits> {
    public Account.Limits readFrom(ProtoStreamReader reader) throws IOException {
       double maxDailyLimit = reader.readDouble("maxDailyLimit");
       double maxTransactionLimit = reader.readDouble("maxTransactionLimit");
+      String[] payees = reader.readArray("payees", String.class);
 
       Account.Limits account = new Account.Limits();
       account.setMaxDailyLimit(maxDailyLimit);
       account.setMaxTransactionLimit(maxTransactionLimit);
+      account.setPayees(payees);
       return account;
    }
 
@@ -35,5 +37,6 @@ public class LimitsMarshaller implements MessageMarshaller<Account.Limits> {
    public void writeTo(ProtoStreamWriter writer, Account.Limits limits) throws IOException {
       writer.writeDouble("maxDailyLimit", limits.getMaxDailyLimit());
       writer.writeDouble("maxTransactionLimit", limits.getMaxTransactionLimit());
+      writer.writeArray("payees", limits.getPayees(), String.class);
    }
 }

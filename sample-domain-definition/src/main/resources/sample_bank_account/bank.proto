@@ -121,6 +121,11 @@ message Account {
         * @Field(store = Store.YES)
         */
        optional double maxTransactionLimit = 2;
+
+       /**
+       * @Field(store = Store.YES)
+       */
+       repeated string payees = 3;
    }
 
    /**
