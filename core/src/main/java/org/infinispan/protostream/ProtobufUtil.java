@@ -740,6 +740,9 @@ public final class ProtobufUtil {
 
          @Override
          public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
+            if (nestingLevel.repeatedFieldDescriptor != null) {
+               endArraySlot();
+            }
             if (prettyPrint) {
                nestingLevel.indent--;
                indent();
