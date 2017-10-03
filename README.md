@@ -1,5 +1,5 @@
 # ProtoStream
-[![Build Status](https://travis-ci.org/infinispan/protostream.svg?branch=master)](https://travis-ci.org/infinispan/protostream)
+[![Build Status](https://travis-ci.org/infinispan/protostream.svg?branch=3.0.x)](https://travis-ci.org/infinispan/protostream)
 [![Maven Central](https://img.shields.io/badge/maven%20central-3.0.7.Final-brightgreen.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|3.0.7.Final|)
 [![Javadoc](https://javadoc-emblem.rhcloud.com/doc/org.infinispan.protostream/protostream/badge.svg)](http://www.javadoc.io/doc/org.infinispan.protostream/protostream)
 
