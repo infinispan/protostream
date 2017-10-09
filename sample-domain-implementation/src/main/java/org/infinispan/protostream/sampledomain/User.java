@@ -2,6 +2,7 @@ package org.infinispan.protostream.sampledomain;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.protostream.UnknownFieldSet;
@@ -18,6 +19,7 @@ public class User {
    private int id;
    private String name;
    private String surname;
+   private String salutation;
    private Set<Integer> accountIds;
    private List<Address> addresses;
    private Integer age;
@@ -58,6 +60,14 @@ public class User {
 
    public void setSurname(String surname) {
       this.surname = surname;
+   }
+
+   public String getSalutation() {
+      return salutation;
+   }
+
+   public void setSalutation(String salutation) {
+      this.salutation = salutation;
    }
 
    public List<Address> getAddresses() {
@@ -122,6 +132,7 @@ public class User {
             "id=" + id +
             ", name='" + name + '\'' +
             ", surname='" + surname + '\'' +
+            ", salutation='" + salutation + '\'' +
             ", accountIds=" + accountIds +
             ", addresses=" + addresses +
             ", age=" + age +
@@ -131,5 +142,28 @@ public class User {
             ", passwordExpirationDate=" + passwordExpirationDate +
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      User user = (User) o;
+      return id == user.id &&
+            Objects.equals(name, user.name) &&
+            Objects.equals(surname, user.surname) &&
+            Objects.equals(salutation, user.salutation) &&
+            Objects.equals(accountIds, user.accountIds) &&
+            Objects.equals(addresses, user.addresses) &&
+            Objects.equals(age, user.age) &&
+            gender == user.gender &&
+            Objects.equals(notes, user.notes) &&
+            Objects.equals(creationDate, user.creationDate) &&
+            Objects.equals(passwordExpirationDate, user.passwordExpirationDate);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(id, name, surname, salutation, accountIds, addresses, age, gender, notes, creationDate, passwordExpirationDate);
    }
 }

@@ -31,6 +31,11 @@ message User {
    optional string surname = 4;
 
    /**
+    * @Field(store = Store.YES, indexNullAs = "_null_")
+    */   
+   optional string salutation = 5;
+
+   /**
     * @Indexed
     */
    message Address {
@@ -54,13 +59,13 @@ message User {
    /**
     * @Field(store = Store.YES)
     */
-   repeated Address addresses = 5;     //a repeated field cannot be marked required
+   repeated Address addresses = 6;     //a repeated field cannot be marked required
 
    /**
     * @Field(store = Store.NO, indexNullAs = "-1")
     * @SortableField
     */
-   optional int32 age = 6;   // persisting age instead of birth date is not ideal but is ok for our sample code
+   optional int32 age = 7;   // persisting age instead of birth date is not ideal but is ok for our sample code
 
    /* @TypeId(41) */
    enum Gender {
@@ -71,16 +76,16 @@ message User {
    /**
     * @Field(store = Store.YES)
     */
-   optional Gender gender = 7;
+   optional Gender gender = 8;
 
-   optional string notes = 8;
+   optional string notes = 9;
 
    /**
-    * @Field(store = Store.YES)
+    * @Field(store = Store.YES, indexNullAs = "-1")
     */
-   optional fixed64 creationDate = 9;
+   optional fixed64 creationDate = 10;
 
-   optional fixed64 passwordExpirationDate = 10;
+   optional fixed64 passwordExpirationDate = 11;
 }
 
 /**

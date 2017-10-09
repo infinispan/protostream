@@ -33,8 +33,10 @@ public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetH
       int id = reader.readInt("id");
       Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<>(), Integer.class);
 
+      // Read them out of order. It still works but logs a warning!
       String surname = reader.readString("surname");
       String name = reader.readString("name");
+      String salutation = reader.readString("salutation");
 
       List<Address> addresses = reader.readCollection("addresses", new ArrayList<>(), Address.class);
 
@@ -49,6 +51,7 @@ public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetH
       user.setAccountIds(accountIds);
       user.setName(name);
       user.setSurname(surname);
+      user.setSalutation(salutation);
       user.setAge(age);
       user.setGender(gender);
       user.setAddresses(addresses);
@@ -64,6 +67,7 @@ public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetH
       writer.writeCollection("accountIds", user.getAccountIds(), Integer.class);
       writer.writeString("name", user.getName());
       writer.writeString("surname", user.getSurname());
+      writer.writeString("salutation", user.getSalutation());
       writer.writeCollection("addresses", user.getAddresses(), Address.class);
       writer.writeInt("age", user.getAge());
       writer.writeEnum("gender", user.getGender(), User.Gender.class);

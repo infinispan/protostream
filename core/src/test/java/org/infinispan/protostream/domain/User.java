@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.protostream.BaseMessage;
@@ -27,6 +28,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
    private int id;
    private String name;
    private String surname;
+   private String salutation;
    private Set<Integer> accountIds;
    private List<Address> addresses;
    private Integer age;
@@ -71,7 +73,16 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.surname = surname;
    }
 
-   @ProtoField(number = 5, collectionImplementation = ArrayList.class)
+   @ProtoField(number = 5, required = true)
+   public String getSalutation() {
+      return salutation;
+   }
+
+   public void setSalutation(String salutation) {
+      this.salutation = salutation;
+   }
+
+   @ProtoField(number = 6, collectionImplementation = ArrayList.class)
    public List<Address> getAddresses() {
       return addresses;
    }
@@ -80,7 +91,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.addresses = addresses;
    }
 
-   @ProtoField(number = 6)
+   @ProtoField(number = 7)
    public Integer getAge() {
       return age;
    }
@@ -89,7 +100,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.age = age;
    }
 
-   @ProtoField(number = 7)
+   @ProtoField(number = 8)
    public Gender getGender() {
       return gender;
    }
@@ -98,7 +109,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.gender = gender;
    }
 
-   @ProtoField(number = 8)
+   @ProtoField(number = 9)
    public String getNotes() {
       return notes;
    }
@@ -107,7 +118,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.notes = notes;
    }
 
-   @ProtoField(number = 9)
+   @ProtoField(number = 10)
    public Instant getCreationDate() {
       return creationDate;
    }
@@ -116,7 +127,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       this.creationDate = creationDate;
    }
 
-   @ProtoField(number = 10)
+   @ProtoField(number = 11)
    public Instant getPasswordExpirationDate() {
       return passwordExpirationDate;
    }
@@ -131,6 +142,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
             "id=" + id +
             ", name='" + name + '\'' +
             ", surname='" + surname + '\'' +
+            ", salutation='" + salutation + '\'' +
             ", accountIds=" + accountIds +
             ", addresses=" + addresses +
             ", age=" + age +
@@ -147,6 +159,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       out.writeInt(id);
       out.writeUTF(name);
       out.writeUTF(surname);
+      out.writeUTF(salutation);
       if (accountIds == null) {
          out.writeInt(-1);
       } else {
@@ -190,6 +203,7 @@ public class User extends BaseMessage implements Externalizable {   // implement
       id = in.readInt();
       name = in.readUTF();
       surname = in.readUTF();
+      salutation = in.readUTF();
       int numAccountIds = in.readInt();
       if (numAccountIds == -1) {
          accountIds = null;
@@ -225,5 +239,28 @@ public class User extends BaseMessage implements Externalizable {   // implement
       } else {
          passwordExpirationDate = null;
       }
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      User user = (User) o;
+      return id == user.id &&
+            Objects.equals(name, user.name) &&
+            Objects.equals(surname, user.surname) &&
+            Objects.equals(salutation, user.salutation) &&
+            Objects.equals(accountIds, user.accountIds) &&
+            Objects.equals(addresses, user.addresses) &&
+            Objects.equals(age, user.age) &&
+            gender == user.gender &&
+            Objects.equals(notes, user.notes) &&
+            Objects.equals(creationDate, user.creationDate) &&
+            Objects.equals(passwordExpirationDate, user.passwordExpirationDate);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(id, name, surname, salutation, accountIds, addresses, age, gender, notes, creationDate, passwordExpirationDate);
    }
 }
