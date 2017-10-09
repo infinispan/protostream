@@ -19,6 +19,7 @@ public class User {
    private int id;
    private String name;
    private String surname;
+   private String salutation;
    private Set<Integer> accountIds;
    private List<Address> addresses;
    private Integer age;
@@ -59,6 +60,14 @@ public class User {
 
    public void setSurname(String surname) {
       this.surname = surname;
+   }
+
+   public String getSalutation() {
+      return salutation;
+   }
+
+   public void setSalutation(String salutation) {
+      this.salutation = salutation;
    }
 
    public List<Address> getAddresses() {
@@ -123,6 +132,7 @@ public class User {
             "id=" + id +
             ", name='" + name + '\'' +
             ", surname='" + surname + '\'' +
+            ", salutation='" + salutation + '\'' +
             ", accountIds=" + accountIds +
             ", addresses=" + addresses +
             ", age=" + age +
@@ -142,6 +152,7 @@ public class User {
       return id == user.id &&
             Objects.equals(name, user.name) &&
             Objects.equals(surname, user.surname) &&
+            Objects.equals(salutation, user.salutation) &&
             Objects.equals(accountIds, user.accountIds) &&
             Objects.equals(addresses, user.addresses) &&
             Objects.equals(age, user.age) &&
@@ -153,6 +164,6 @@ public class User {
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, name, surname, accountIds, addresses, age, gender, notes, creationDate, passwordExpirationDate);
+      return Objects.hash(id, name, surname, salutation, accountIds, addresses, age, gender, notes, creationDate, passwordExpirationDate);
    }
 }
