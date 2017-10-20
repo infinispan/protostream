@@ -38,7 +38,7 @@ public interface AnnotationConfiguration {
        */
       Builder metadataCreator(AnnotationMetadataCreator<?, ? extends AnnotatedDescriptor> annotationMetadataCreator);
 
-      Builder repeatable(String containingAnnotationName);
+      Builder repeatable(String containerAnnotationName);
 
       /**
        * Create a new annotation with the given name and return its builder to continue configure it.
