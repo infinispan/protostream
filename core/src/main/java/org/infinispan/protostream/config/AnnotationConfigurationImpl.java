@@ -115,15 +115,18 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
       }
 
       @Override
-      public Builder repeatable(String repeatable) {
-         if (name.equals(repeatable)) {
-            throw new IllegalArgumentException("The name of the container annotation ('"
-                  + repeatable + "') cannot be identical to the name of this annotation: '" + name + "'");
+      public Builder repeatable(String containerAnnotationName) {
+         if (containerAnnotationName == null) {
+            throw new IllegalArgumentException("containerAnnotationName cannot be null");
          }
-         this.repeatable = repeatable;
+         if (name.equals(containerAnnotationName)) {
+            throw new IllegalArgumentException("The name of the container annotation ('"
+                  + containerAnnotationName + "') cannot be identical to the name of this annotation: '" + name + "'");
+         }
+         this.repeatable = containerAnnotationName;
 
          // auto-define the container annotation
-         parentBuilder.annotation(repeatable, target)
+         parentBuilder.annotation(containerAnnotationName, target)
                .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
                .type(AnnotationElement.AttributeType.ANNOTATION)
                .allowedValues(name)
