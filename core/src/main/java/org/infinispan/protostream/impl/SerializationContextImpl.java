@@ -1,6 +1,7 @@
 package org.infinispan.protostream.impl;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -75,10 +76,11 @@ public final class SerializationContextImpl implements SerializationContext {
       return configuration;
    }
 
+   @Override
    public Map<String, FileDescriptor> getFileDescriptors() {
       readLock.lock();
       try {
-         return new HashMap<>(fileDescriptors);
+         return Collections.unmodifiableMap(new HashMap<>(fileDescriptors));
       } finally {
          readLock.unlock();
       }
