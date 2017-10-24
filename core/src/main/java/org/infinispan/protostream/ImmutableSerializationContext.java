@@ -14,9 +14,9 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
 public interface ImmutableSerializationContext {
 
    /**
-    * Obtain the registered file descriptors.
+    * Obtain the currently registered file descriptors.
     *
-    * @return a copy of the internal map of descriptors
+    * @return an immutable copy of the internal map of descriptors
     */
    Map<String, FileDescriptor> getFileDescriptors();
 
