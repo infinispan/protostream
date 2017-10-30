@@ -1,9 +1,7 @@
 package org.infinispan.protostream.impl;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
@@ -28,18 +26,12 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
 
    private final FieldDescriptor[] fieldDescriptors;
 
-   private final Map<String, FieldDescriptor> fieldsByName;
-
    MessageMarshallerDelegate(SerializationContextImpl ctx, MessageMarshaller<T> marshaller, Descriptor messageDescriptor) {
       this.ctx = ctx;
       this.marshaller = marshaller;
       this.messageDescriptor = messageDescriptor;
       List<FieldDescriptor> fields = messageDescriptor.getFields();
       fieldDescriptors = fields.toArray(new FieldDescriptor[fields.size()]);
-      fieldsByName = new HashMap<>(fieldDescriptors.length);
-      for (FieldDescriptor fd : fieldDescriptors) {
-         fieldsByName.put(fd.getName(), fd);
-      }
    }
 
    @Override
@@ -47,16 +39,12 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
       return marshaller;
    }
 
-   public Descriptor getMessageDescriptor() {
+   Descriptor getMessageDescriptor() {
       return messageDescriptor;
    }
 
-   public FieldDescriptor[] getFieldDescriptors() {
-      return fieldDescriptors;
-   }
-
-   public FieldDescriptor getFieldByName(String fieldName) throws IOException {
-      FieldDescriptor fd = fieldsByName.get(fieldName);
+   FieldDescriptor getFieldByName(String fieldName) throws IOException {
+      FieldDescriptor fd = messageDescriptor.findFieldByName(fieldName);
       if (fd == null) {
          throw new IOException("Unknown field name : " + fieldName);
       }
@@ -81,7 +69,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
 
       if (unknownFieldSet != null) {
          // validate that none of the unknown fields are actually declared by the known descriptor
-         for (FieldDescriptor fd : getFieldDescriptors()) {
+         for (FieldDescriptor fd : fieldDescriptors) {
             if (unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType()))) {
                throw new IOException("Field " + fd.getFullName() + " is a known field so it is illegal to be present in the unknown field set");
             }
@@ -91,7 +79,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
       }
 
       // validate that all the required fields were written either by the marshaller or by the UnknownFieldSet
-      for (FieldDescriptor fd : getFieldDescriptors()) {
+      for (FieldDescriptor fd : fieldDescriptors) {
          if (fd.isRequired() && !messageContext.isFieldMarked(fd.getNumber())
                && (unknownFieldSet == null || !unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType())))) {
             throw new IllegalStateException("Required field \"" + fd.getFullName()
@@ -123,7 +111,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
       }
 
       // check that all required fields were seen in the stream, even if not actually read (because are unknown)
-      for (FieldDescriptor fd : getFieldDescriptors()) {
+      for (FieldDescriptor fd : fieldDescriptors) {
          if (fd.isRequired()
                && !messageContext.isFieldMarked(fd.getNumber())
                && !messageContext.unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType()))) {
