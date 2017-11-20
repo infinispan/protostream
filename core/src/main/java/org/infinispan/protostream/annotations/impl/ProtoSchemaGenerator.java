@@ -132,13 +132,7 @@ public final class ProtoSchemaGenerator {
    }
 
    private void generateMarshallers() throws Exception {
-      ClassPool cp = new ClassPool(ClassPool.getDefault());
-      for (Class<?> c : classes) {
-         cp.appendClassPath(new ClassClassPath(c));
-      }
-      cp.appendClassPath(new LoaderClassPath(getClass().getClassLoader()));
-
-      MarshallerCodeGenerator marshallerCodeGenerator = new MarshallerCodeGenerator(packageName, cp);
+      MarshallerCodeGenerator marshallerCodeGenerator = new MarshallerCodeGenerator(packageName, getClassPool());
       for (Class<?> c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
          if (ptm instanceof ProtoMessageTypeMetadata) {
@@ -151,6 +145,21 @@ public final class ProtoSchemaGenerator {
             serializationContext.registerMarshaller(marshaller);
          }
       }
+   }
+
+   private ClassPool getClassPool() {
+      ClassLoader classLoader = getClass().getClassLoader();
+      ClassPool cp = new ClassPool(ClassPool.getDefault()) {
+         @Override
+         public ClassLoader getClassLoader() {
+            return classLoader;
+         }
+      };
+      for (Class<?> c : classes) {
+         cp.appendClassPath(new ClassClassPath(c));
+      }
+      cp.appendClassPath(new LoaderClassPath(classLoader));
+      return cp;
    }
 
    protected ProtoTypeMetadata scanAnnotations(Class<?> javaType) {
