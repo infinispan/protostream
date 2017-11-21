@@ -5,7 +5,7 @@
 
     <groupId>org.infinispan.protostream</groupId>
     <artifactId>parent</artifactId>
-    <version>4.1.1.Final</version>
+    <version>4.1.2.Final</version>
     <packaging>pom</packaging>
 
     <name>Parent for all ProtoStream modules</name>
