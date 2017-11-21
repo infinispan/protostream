@@ -13,7 +13,7 @@ package org.infinispan.protostream;
  */
 message WrappedMessage {
 
-   oneof ScalarOrMessage {
+   oneof scalarOrMessage {
       // Exactly one of the following fields is used if the wrapped value is a primitive (scalar) type.
       double wrappedDouble = 1;
       float wrappedFloat = 2;
@@ -45,7 +45,7 @@ message WrappedMessage {
    /**
     * Store the type name or type id. This is not used for primitive types.
     */
-   oneof TypeNameOrId {
+   oneof typeNameOrId {
 
       /**
        * Stores the fully qualified type name if the wrapped value is a message or an enum type.
