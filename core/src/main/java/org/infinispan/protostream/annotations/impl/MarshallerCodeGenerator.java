@@ -44,7 +44,7 @@ final class MarshallerCodeGenerator {
    /**
     * A numeric id that is appended to generated class names to avoid potential collisions.
     */
-   private static long nextId = 0;
+   private static volatile long nextId = 0;
 
    private final ClassPool cp;
    private final CtClass ioException;
@@ -105,26 +105,31 @@ final class MarshallerCodeGenerator {
 
       CtMethod ctDecodeMethod = new CtMethod(decodeMethod, marshallerImpl, null);
       ctDecodeMethod.setModifiers(ctDecodeMethod.getModifiers() | Modifier.FINAL);
-      String decodeSrc = generateDecodeMethod(petm);
-      log.tracef("%s %s", ctDecodeMethod, decodeSrc);
+      String decodeSrc = generateEnumDecodeMethod(petm);
+      if (log.isTraceEnabled()) {
+         log.tracef("%s %s", ctDecodeMethod, decodeSrc);
+      }
       ctDecodeMethod.setBody(decodeSrc);
       marshallerImpl.addMethod(ctDecodeMethod);
 
       CtMethod ctEncodeMethod = new CtMethod(encodeMethod, marshallerImpl, null);
       ctEncodeMethod.setModifiers(ctEncodeMethod.getModifiers() | Modifier.FINAL);
-      String encodeSrc = generateEncodeMethod(petm);
-      log.tracef("%s %s", ctEncodeMethod, encodeSrc);
+      String encodeSrc = generateEnumEncodeMethod(petm);
+      if (log.isTraceEnabled()) {
+         log.tracef("%s %s", ctEncodeMethod, encodeSrc);
+      }
       ctEncodeMethod.setBody(encodeSrc);
       marshallerImpl.addMethod(ctEncodeMethod);
 
       marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
-      EnumMarshaller marshallerInstance = (EnumMarshaller) marshallerImpl.toClass().newInstance();
+      Class<?> generatedMarshallerClass = marshallerImpl.toClass();
+      EnumMarshaller marshallerInstance = (EnumMarshaller) generatedMarshallerClass.newInstance();
       marshallerImpl.detach();
       return marshallerInstance;
    }
 
-   private String generateDecodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
+   private String generateEnumDecodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
@@ -141,7 +146,7 @@ final class MarshallerCodeGenerator {
       return iw.toString();
    }
 
-   private String generateEncodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
+   private String generateEnumEncodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
@@ -199,7 +204,9 @@ final class MarshallerCodeGenerator {
       ctGetTypeNameMethod.setExceptionTypes(new CtClass[]{ioException});
       ctReadFromMethod.setModifiers(ctReadFromMethod.getModifiers() | Modifier.FINAL);
       String readFromSrc = generateReadFromMethod(messageTypeMetadata);
-      log.tracef("%s %s", ctReadFromMethod, readFromSrc);
+      if (log.isTraceEnabled()) {
+         log.tracef("%s %s", ctReadFromMethod, readFromSrc);
+      }
       ctReadFromMethod.setBody(readFromSrc);
       marshallerImpl.addMethod(ctReadFromMethod);
 
@@ -207,13 +214,16 @@ final class MarshallerCodeGenerator {
       ctWriteToMethod.setExceptionTypes(new CtClass[]{ioException});
       ctWriteToMethod.setModifiers(ctWriteToMethod.getModifiers() | Modifier.FINAL);
       String writeToSrc = generateWriteToMethod(messageTypeMetadata);
-      log.tracef("%s %s", ctWriteToMethod, writeToSrc);
+      if (log.isTraceEnabled()) {
+         log.tracef("%s %s", ctWriteToMethod, writeToSrc);
+      }
       ctWriteToMethod.setBody(writeToSrc);
       marshallerImpl.addMethod(ctWriteToMethod);
 
       marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
-      RawProtobufMarshaller marshallerInstance = (RawProtobufMarshaller) marshallerImpl.toClass().newInstance();
+      Class<?> generatedMarshallerClass = marshallerImpl.toClass();
+      RawProtobufMarshaller marshallerInstance = (RawProtobufMarshaller) generatedMarshallerClass.newInstance();
       marshallerImpl.detach();
       return marshallerInstance;
    }
@@ -749,7 +759,7 @@ final class MarshallerCodeGenerator {
       if (Date.class.isAssignableFrom(clazz)) {
          return v + ".getTime()";
       } else if (Instant.class.isAssignableFrom(clazz)) {
-         return v + ".toEpochMilli()";    
+         return v + ".toEpochMilli()";
       } else if (clazz == Float.class) {
          return v + ".floatValue()";
       } else if (clazz == Double.class) {
