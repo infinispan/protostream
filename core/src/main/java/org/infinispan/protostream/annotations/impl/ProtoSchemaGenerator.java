@@ -28,6 +28,18 @@ public final class ProtoSchemaGenerator {
 
    private static final Log log = Log.LogFactory.getLog(ProtoSchemaGenerator.class);
 
+   private static final boolean IS_OSGI_CONTEXT;
+
+   static {
+      boolean isOSGi = false;
+      try {
+         isOSGi = MarshallerCodeGenerator.class.getClassLoader() instanceof org.osgi.framework.BundleReference;
+      } catch (NoClassDefFoundError ex) {
+         // Ignore
+      }
+      IS_OSGI_CONTEXT = isOSGi;
+   }
+
    private final SerializationContext serializationContext;
 
    private final String fileName;
@@ -102,7 +114,10 @@ public final class ProtoSchemaGenerator {
       }
 
       String protoFile = iw.toString();
-      log.tracef("Generated proto file:\n%s", protoFile);
+
+      if (log.isTraceEnabled()) {
+         log.tracef("Generated proto file:\n%s", protoFile);
+      }
 
       serializationContext.registerProtoFiles(FileDescriptorSource.fromString(fileName, protoFile));
 
@@ -152,7 +167,7 @@ public final class ProtoSchemaGenerator {
       ClassPool cp = new ClassPool(ClassPool.getDefault()) {
          @Override
          public ClassLoader getClassLoader() {
-            return classLoader;
+            return IS_OSGI_CONTEXT ? classLoader : super.getClassLoader();
          }
       };
       for (Class<?> c : classes) {
