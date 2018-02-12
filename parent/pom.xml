@@ -96,16 +96,16 @@
         <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
 
         <version.java>1.8</version.java>
-        <version.maven.compiler>3.5.1</version.maven.compiler>
+        <version.maven.compiler>3.6.1</version.maven.compiler>
         <version.maven.javadoc>2.10.4</version.maven.javadoc>
         <version.maven.source>3.0.1</version.maven.source>
         <version.maven.resources>3.0.1</version.maven.resources>
         <version.maven.antrun>1.8</version.maven.antrun>
         <version.maven.nexus-staging>1.6.7</version.maven.nexus-staging>
-        <version.maven.surefire>2.19.1</version.maven.surefire>
+        <version.maven.surefire>2.20.1</version.maven.surefire>
         <version.maven.bundle>2.4.0</version.maven.bundle>
         <version.maven.buildhelper>1.10</version.maven.buildhelper>
-        <version.maven.animalsniffer>1.15</version.maven.animalsniffer>
+        <version.maven.animalsniffer>1.16</version.maven.animalsniffer>
         <version.maven.shade>2.4.3</version.maven.shade>
 
         <version.protobuf>3.0.2</version.protobuf>
@@ -116,7 +116,7 @@
         <version.jboss.logging>3.3.0.Final</version.jboss.logging>
         <version.jboss.logging.processor>1.2.1.Final</version.jboss.logging.processor>
         <version.log4j>1.2.17</version.log4j>
-        <version.jboss.marshalling>1.4.11.Final</version.jboss.marshalling>
+        <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
         <version.javassist>3.20.0-GA</version.javassist>
         <version.osgi>4.3.1</version.osgi>
         <version.commons-cli>1.2</version.commons-cli>
