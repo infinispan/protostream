@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines the documentation text of the generated message/enum type or field.
+ * Defines the documentation text of the generated message type, enum type or field.
  *
  * @author anistor@redhat.com
  * @since 3.0
@@ -19,5 +19,8 @@ import java.lang.annotation.Target;
 @Repeatable(ProtoDocs.class)
 public @interface ProtoDoc {
 
+   /**
+    * The documentation text.
+    */
    String value();
 }

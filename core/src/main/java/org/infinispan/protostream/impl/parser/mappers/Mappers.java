@@ -17,6 +17,7 @@ import com.squareup.protoparser.ExtendElement;
 import com.squareup.protoparser.FieldElement;
 import com.squareup.protoparser.MessageElement;
 import com.squareup.protoparser.OneOfElement;
+import com.squareup.protoparser.OptionElement;
 
 /**
  * Mappers and utilities used by the conversion of the protoparser model to protostream descriptors.
@@ -42,7 +43,7 @@ final class Mappers {
    public static final ListMapper<EnumConstantElement, EnumValueDescriptor> ENUM_VALUE_LIST_MAPPER = ListMapper.forMapper(ENUM_VALUE_MAPPER);
    public static final ListMapper<ExtendElement, ExtendDescriptor> EXTEND_LIST_MAPPER = ListMapper.forMapper(EXTEND_MAPPER);
    public static final ListMapper<MessageElement, Descriptor> MESSAGE_LIST_MAPPER = ListMapper.forMapper(MESSAGE_TYPE_MAPPER);
-   public static final ListMapper<com.squareup.protoparser.OptionElement, Option> OPTION_LIST_MAPPER = ListMapper.forMapper(OPTION_MAPPER);
+   public static final ListMapper<OptionElement, Option> OPTION_LIST_MAPPER = ListMapper.forMapper(OPTION_MAPPER);
 
    @SuppressWarnings(value = "unchecked")
    static <T> List<T> filter(List<? super T> input, Class<T> ofType) {

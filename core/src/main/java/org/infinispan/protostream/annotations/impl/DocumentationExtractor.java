@@ -10,6 +10,9 @@ import org.infinispan.protostream.annotations.ProtoDoc;
  */
 final class DocumentationExtractor {
 
+   /**
+    * Collect and concatenate the description text from the ProtoDoc.value of the given elements.
+    */
    public static String getDocumentation(AnnotatedElement... elements) {
       StringBuilder sb = null;
 

@@ -35,7 +35,7 @@ final class AnnotationLexer {
     */
    private boolean expectDocNoise;
 
-   public AnnotationLexer(char[] input, boolean expectDocNoise) {
+   AnnotationLexer(char[] input, boolean expectDocNoise) {
       this.expectDocNoise = expectDocNoise;
       buf = input;
       buflen = input.length;

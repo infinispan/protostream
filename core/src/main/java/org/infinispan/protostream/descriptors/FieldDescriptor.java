@@ -91,7 +91,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
          return null;
       }
       if (!getJavaType().isScalar()) {
-         throw new UnsupportedOperationException("FieldDescriptor.getDefaultValue() called on an embedded message field.");
+         throw new UnsupportedOperationException("FieldDescriptor.getDefaultValue() called on an embedded message field (only scalars can have a default value).");
       }
       return getJavaType().fromString(defaultValue);
    }
@@ -126,7 +126,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
 
    void setContainingMessage(Descriptor containingMessage) {
       this.containingMessage = containingMessage;
-      this.fullName = containingMessage.getFullName().concat(".").concat(name);
+      this.fullName = containingMessage.getFullName() + '.' + name;
    }
 
    void setMessageType(Descriptor descriptor) {

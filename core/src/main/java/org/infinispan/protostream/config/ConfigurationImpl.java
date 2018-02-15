@@ -4,8 +4,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.protostream.AnnotationMetadataCreator;
-import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
@@ -22,10 +20,10 @@ final class ConfigurationImpl implements Configuration {
 
    private ConfigurationImpl(boolean logOutOfSequenceReads,
                              boolean logOutOfSequenceWrites,
-                             Map<String, AnnotationConfigurationImpl> anotations) {
+                             Map<String, AnnotationConfigurationImpl> annotations) {
       this.logOutOfSequenceReads = logOutOfSequenceReads;
       this.logOutOfSequenceWrites = logOutOfSequenceWrites;
-      this.annotationsConfig = new AnnotationsConfigImpl(anotations);
+      this.annotationsConfig = new AnnotationsConfigImpl(annotations);
    }
 
    @Override
@@ -132,12 +130,7 @@ final class ConfigurationImpl implements Configuration {
                .annotation(TYPE_ID_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE, AnnotationElement.AnnotationTarget.ENUM)
                .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
                .type(AnnotationElement.AttributeType.INT)
-               .metadataCreator(new AnnotationMetadataCreator<Integer, AnnotatedDescriptor>() {
-                  @Override
-                  public Integer create(AnnotatedDescriptor annotatedDescriptor, AnnotationElement.Annotation annotation) {
-                     return (Integer) annotation.getDefaultAttributeValue().getValue();
-                  }
-               });
+               .metadataCreator((annotatedDescriptor, annotation) -> annotation.getDefaultAttributeValue().getValue());
 
          AnnotationsConfigBuilderImpl annotationsConfig = (AnnotationsConfigBuilderImpl) annotationsConfig();
          Map<String, AnnotationConfigurationImpl> annotations = new HashMap<>(annotationsConfig.annotationBuilders.size());

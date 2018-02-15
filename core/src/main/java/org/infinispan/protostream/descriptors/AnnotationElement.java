@@ -11,10 +11,10 @@ import java.util.Map;
 public abstract class AnnotationElement {
 
    /**
-    * Where can we place that annotation?
+    * On what kind of descriptor can we place that annotation?
     */
    public enum AnnotationTarget {
-      MESSAGE, ENUM, FIELD,
+      MESSAGE, ENUM, FIELD
    }
 
    /**
@@ -136,6 +136,10 @@ public abstract class AnnotationElement {
       }
    }
 
+   /**
+    * An identifier is a bit like a string literal but it does not have the quotation marks and it cannot contain
+    * white space.
+    */
    public static final class Identifier extends Value {
 
       private final String identifier;
@@ -187,7 +191,7 @@ public abstract class AnnotationElement {
    }
 
    /**
-    * A String, Character, Boolean or a Number.
+    * A constant value of type: {@link String}, {@link Character}, {@link Boolean} or {@link Number}.
     */
    public static final class Literal extends Value {
 
