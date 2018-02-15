@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Aggregator for source protofiles.
+ * Aggregator for source protofiles to be passed to {@link SerializationContext#registerProtoFiles(FileDescriptorSource)}.
  *
  * @author gustavonalle
  * @author anistor@redhat.com
@@ -44,7 +44,14 @@ public final class FileDescriptorSource {
       }
    }
 
-   public FileDescriptorSource withProgressCallback(ProgressCallback progressCallback) throws IOException {
+   /**
+    * Set the ProgressCallback. A {@code null} callback indicates that errors are to be reported immediately and the
+    * operation should be aborted on first error.
+    *
+    * @param progressCallback the callback, can be {@code null}
+    * @return this object
+    */
+   public FileDescriptorSource withProgressCallback(ProgressCallback progressCallback) {
       this.progressCallback = progressCallback;
       return this;
    }

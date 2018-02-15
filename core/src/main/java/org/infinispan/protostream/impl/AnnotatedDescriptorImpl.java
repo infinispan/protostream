@@ -28,7 +28,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
    protected String fullName;
 
    /**
-    * The documentation comment.
+    * The (optional) documentation comment.
     */
    protected final String documentation;
 
@@ -38,14 +38,14 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
    protected Map<String, AnnotationElement.Annotation> annotations = null;
 
    /**
-    * The metadata that was created by the {@link org.infinispan.protostream.AnnotationMetadataCreator} from the found
-    * annotations.
+    * The annotation metadata objects created by the {@link org.infinispan.protostream.AnnotationMetadataCreator} based
+    * on the annotations found in the documentation text.
     */
    protected Map<String, Object> processedAnnotations = null;
 
    protected AnnotatedDescriptorImpl(String name, String fullName, String documentation) {
       if (name.indexOf('.') != -1) {
-         throw new DescriptorParserException("Definition names should not be qualified : " + name);
+         throw new DescriptorParserException("Definition names must not be qualified : " + name);
       }
       this.name = name;
       this.fullName = fullName;
@@ -53,72 +53,85 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
    }
 
    @Override
-   public String getName() {
+   public final String getName() {
       return name;
    }
 
    @Override
-   public String getFullName() {
+   public final String getFullName() {
       return fullName;
    }
 
    @Override
-   public String getDocumentation() {
+   public final String getDocumentation() {
       return documentation;
    }
 
+   /**
+    * Extract annotations by parsing the documentation comment and run the configured {@link AnnotationMetadataCreator}s.
+    *
+    * @throws AnnotationParserException if annotation parsing fails
+    */
    private void processAnnotations() throws AnnotationParserException {
+      // we are lazily processing the annotations, if there is a documentation text attached to this element
       if (annotations == null) {
          if (documentation != null) {
             AnnotationParser parser = new AnnotationParser(documentation, true);
             List<AnnotationElement.Annotation> parsedAnnotations = parser.parse();
             Map<String, AnnotationElement.Annotation> _annotations = new LinkedHashMap<>();
-            Map<String, AnnotationElement.Annotation> containers = new LinkedHashMap<>();
+            Map<String, AnnotationElement.Annotation> _containers = new LinkedHashMap<>();
             for (AnnotationElement.Annotation annotation : parsedAnnotations) {
                AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation.getName());
-               // unknown annotations are ignored from validation
-               if (annotationConfig != null) {
+               if (annotationConfig == null) {
+                  // unknown annotations are ignored
+                  log.warnf("Encountered and ignored and unknown annotation \"%s\" on %s", annotation.getName(), fullName);
+               } else {
                   validateAttributes(annotation, annotationConfig);
 
                   // convert single values to arrays if needed and set the default values for missing attributes
                   normalizeValues(annotation, annotationConfig);
-               }
 
-               if (_annotations.containsKey(annotation.getName()) || containers.containsKey(annotation.getName())) {
-                  if (annotationConfig != null && annotationConfig.repeatable() != null) {
-                     AnnotationElement.Annotation container = containers.get(annotation.getName());
-                     if (container == null) {
-                        List<AnnotationElement.Value> values = new LinkedList<>();
-                        values.add(_annotations.remove(annotation.getName()));
-                        values.add(annotation);
-                        AnnotationElement.Attribute value = new AnnotationElement.Attribute(annotation.position, AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE, new AnnotationElement.Array(annotation.position, values));
-                        container = new AnnotationElement.Annotation(annotation.position, annotationConfig.repeatable(), Collections.singletonMap(value.getName(), value));
-                        containers.put(annotation.getName(), container);
-                        _annotations.put(container.getName(), container);
+                  if (_annotations.containsKey(annotation.getName()) || _containers.containsKey(annotation.getName())) {
+                     // did we just find a repeated annotation?
+                     if (annotationConfig.repeatable() != null) {
+                        AnnotationElement.Annotation container = _containers.get(annotation.getName());
+                        if (container == null) {
+                           List<AnnotationElement.Value> values = new LinkedList<>();
+                           values.add(_annotations.remove(annotation.getName()));
+                           values.add(annotation);
+                           AnnotationElement.Attribute value = new AnnotationElement.Attribute(annotation.position, AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE, new AnnotationElement.Array(annotation.position, values));
+                           container = new AnnotationElement.Annotation(annotation.position, annotationConfig.repeatable(), Collections.singletonMap(value.getName(), value));
+                           _containers.put(annotation.getName(), container);
+                           _annotations.put(container.getName(), container);
+                        } else {
+                           AnnotationElement.Array value = (AnnotationElement.Array) container.getAttributeValue(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE);
+                           value.getValues().add(annotation);
+                        }
                      } else {
-                        AnnotationElement.Array value = (AnnotationElement.Array) container.getAttributeValue(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE);
-                        value.getValues().add(annotation);
+                        // it's just a duplicate, not a proper 'repeated' annotation
+                        throw new AnnotationParserException(String.format("Error: %s: duplicate annotation definition \"%s\" on %s",
+                              AnnotationElement.positionToString(annotation.position), annotation.getName(), fullName));
                      }
                   } else {
-                     throw new AnnotationParserException(String.format("Error: %s: duplicate annotation definition \"%s\"", AnnotationElement.positionToString(annotation.position), annotation.getName()));
+                     _annotations.put(annotation.getName(), annotation);
                   }
-               } else {
-                  _annotations.put(annotation.getName(), annotation);
                }
             }
 
-            annotations = _annotations.isEmpty() ? Collections.emptyMap() : _annotations;
+            // annotations are now completely parsed and validated
+            annotations = _annotations.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(_annotations);
 
+            // create metadata based on the annotations
             processedAnnotations = new LinkedHashMap<>();
             for (AnnotationElement.Annotation annotation : annotations.values()) {
                AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation.getName());
-               if (annotationConfig != null && annotationConfig.metadataCreator() != null) {
-                  AnnotationMetadataCreator<Object, AnnotatedDescriptor> annotationMetadataCreator = (AnnotationMetadataCreator<Object, AnnotatedDescriptor>) annotationConfig.metadataCreator();
+               AnnotationMetadataCreator<Object, AnnotatedDescriptor> creator = (AnnotationMetadataCreator<Object, AnnotatedDescriptor>) annotationConfig.metadataCreator();
+               if (creator != null) {
                   Object metadataForAnnotation;
                   try {
-                     metadataForAnnotation = annotationMetadataCreator.create(this, annotation);
+                     metadataForAnnotation = creator.create(this, annotation);
                   } catch (Exception ex) {
-                     log.error("Exception encountered while processing annotations", ex);
+                     log.errorf(ex, "Exception encountered while processing annotation \"%s\" on %s", annotation.getName(), fullName);
                      throw ex;
                   }
                   processedAnnotations.put(annotation.getName(), metadataForAnnotation);
@@ -267,7 +280,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
    }
 
    /**
-    * Subclasses are responsible for fetching the AnnotationConfig from the appropriate place.
+    * Subclasses are responsible for fetching the {@link AnnotationConfiguration} from the appropriate place.
     */
    protected abstract AnnotationConfiguration getAnnotationConfig(String annotationName);
 

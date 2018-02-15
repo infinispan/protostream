@@ -4,6 +4,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -12,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -41,7 +41,7 @@ public class DescriptorsTest {
    public ExpectedException exception = ExpectedException.none();
 
    @Test
-   public void testGroupsAreNotSupported() throws Exception {
+   public void testGroupsAreNotSupported() {
       // groups are a deprecated feature and are not supported
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Syntax error in file1.proto at 2:33: expected ';'");
@@ -68,7 +68,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testInputFromString() throws Exception {
+   public void testInputFromString() {
       String file1 = "package test1;\n" +
             "enum E1 {\n" +
             "   V1 = 1;\n" +
@@ -92,7 +92,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testInvalidImport() throws Exception {
+   public void testInvalidImport() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Import 'invalid.proto' not found");
 
@@ -106,7 +106,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testCyclicImport() throws Exception {
+   public void testCyclicImport() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Cyclic import detected at test1.proto, import test2.proto");
 
@@ -127,7 +127,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testIndirectlyImportSameFile() throws Exception {
+   public void testIndirectlyImportSameFile() {
       String file1 = "import public \"test2.proto\";\n" +
             "import public \"test3.proto\";" +
             "message M1 { optional M4 a = 1; }";
@@ -148,7 +148,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateImport() throws Exception {
+   public void testDuplicateImport() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate import : file1.proto");
 
@@ -165,7 +165,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testEnumConstantNameClashesWithEnumTypeName() throws Exception {
+   public void testEnumConstantNameClashesWithEnumTypeName() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum constant 'E' clashes with enum type name: test1.E");
 
@@ -181,7 +181,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateEnumConstantName() throws Exception {
+   public void testDuplicateEnumConstantName() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum constant 'A' is already defined in test1.E");
 
@@ -197,7 +197,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testEnumConstantNameClashesWithContainingEnumTypeName() throws Exception {
+   public void testEnumConstantNameClashesWithContainingEnumTypeName() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum constant 'E' clashes with enum type name: test1.E");
 
@@ -213,7 +213,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateEnumConstantValue() throws Exception {
+   public void testDuplicateEnumConstantValue() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("java.lang.IllegalStateException: Duplicate tag 1 in test1.E");
 
@@ -230,7 +230,7 @@ public class DescriptorsTest {
 
    @Ignore("Test disabled due to https://issues.jboss.org/browse/IPROTO-14")
    @Test
-   public void testAllowAliasOfEnumConstantValue() throws Exception {
+   public void testAllowAliasOfEnumConstantValue() {
       String file1 = "package test1;\n" +
             "enum E {\n" +
             "   option allow_alias = true;\n" +
@@ -275,7 +275,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeInFile1() throws Exception {
+   public void testDuplicateTypeInFile1() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file1.proto");
 
@@ -294,7 +294,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeInFile2() throws Exception {
+   public void testDuplicateTypeInFile2() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file1.proto");
 
@@ -313,7 +313,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeInFile3() throws Exception {
+   public void testDuplicateTypeInFile3() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate definition of test.E1 in test_proto_path/file1.proto");
 
@@ -332,7 +332,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testNestedMessageWithSameName() throws Exception {
+   public void testNestedMessageWithSameName() {
       String file1 = "package test;\n" +
             "message M1 {\n" +
             "  required string a = 1;\n" +
@@ -350,7 +350,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeInMessage1() throws Exception {
+   public void testDuplicateTypeInMessage1() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate definition of test.M1.M2 in test_proto_path/file1.proto");
 
@@ -368,7 +368,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeInMessage2() throws Exception {
+   public void testDuplicateTypeInMessage2() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate definition of test.M1.E1 in test_proto_path/file1.proto");
 
@@ -386,7 +386,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeInMessage3() throws Exception {
+   public void testDuplicateTypeInMessage3() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate definition of test.M1.E1 in test_proto_path/file1.proto");
 
@@ -404,7 +404,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeInPackage1() throws Exception {
+   public void testDuplicateTypeInPackage1() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file1.proto and test_proto_path/file2.proto");
 
@@ -426,7 +426,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeInPackage2() throws Exception {
+   public void testDuplicateTypeInPackage2() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file1.proto and test_proto_path/file2.proto");
 
@@ -448,7 +448,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeIdInSameFile() throws Exception {
+   public void testDuplicateTypeIdInSameFile() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate type id 10 for type test1.M2. Already used by test1.M1");
 
@@ -469,7 +469,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateTypeIdInImportedFile() throws Exception {
+   public void testDuplicateTypeIdInImportedFile() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate type id 10 for type test2.M2. Already used by test1.M1");
 
@@ -494,7 +494,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testNotImportedInSamePackage() throws Exception {
+   public void testNotImportedInSamePackage() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Field type M1 not found");
 
@@ -516,7 +516,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testNotImportedInAnotherPackage() throws Exception {
+   public void testNotImportedInAnotherPackage() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Field type test1.M1 not found");
 
@@ -538,7 +538,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testEmptyPackageName() throws Exception {
+   public void testEmptyPackageName() {
       // package name cannot be empty
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Syntax error in file1.proto at 1:9: expected a word");
@@ -555,9 +555,9 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDefinitionNameWithDots1() throws Exception {
+   public void testDefinitionNameWithDots1() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Definition names should not be qualified : somePackage.M1");
+      exception.expectMessage("Definition names must not be qualified : somePackage.M1");
 
       String file1 = "package test;\n" +
             "message somePackage.M1 {\n" +
@@ -571,9 +571,9 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDefinitionNameWithDots2() throws Exception {
+   public void testDefinitionNameWithDots2() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Definition names should not be qualified : somePackage.E1");
+      exception.expectMessage("Definition names must not be qualified : somePackage.E1");
 
       String file1 = "package testPackage;\n" +
             "enum somePackage.E1 {\n" +
@@ -587,7 +587,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testPublicImport() throws Exception {
+   public void testPublicImport() {
       String file1 = "message M1 {\n" +
             "  required string a = 1;\n" +
             "}";
@@ -615,7 +615,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testPrivateImport() throws Exception {
+   public void testPrivateImport() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Field type M1 not found");
 
@@ -639,7 +639,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testImportAndPackage() throws Exception {
+   public void testImportAndPackage() {
       String file1 = "package p;\n" +
             "message A {\n" +
             "   optional int32 f1 = 1;\n" +
@@ -664,7 +664,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDocComment() throws Exception {
+   public void testDocComment() {
       String file1 = "package test1;\n" +
             "/**  \n" +
             " *    some doc text \n" +
@@ -693,7 +693,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDocAnnotations() throws Exception {
+   public void testDocAnnotations() {
       String file1 = "package test1;\n" +
             "/**  \n" +
             " *  @Foo(fooValue) \n" +
@@ -746,12 +746,7 @@ public class DescriptorsTest {
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
-            .metadataCreator(new AnnotationMetadataCreator<Boolean, Descriptor>() {
-               @Override
-               public Boolean create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
-                  return (Boolean) annotation.getDefaultAttributeValue().getValue();
-               }
-            })
+            .metadataCreator((descriptor, annotation) -> annotation.getDefaultAttributeValue().getValue())
             .build();
 
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromResources("/sample_bank_account/bank.proto");
@@ -770,7 +765,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testAnnotationParserMissingRequiredAttribute() throws Exception {
+   public void testAnnotationParserMissingRequiredAttribute() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("org.infinispan.protostream.AnnotationParserException: Attribute 'value' of annotation 'AnnotationWithRequiredAttribute' on M is required");
 
@@ -790,7 +785,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testDuplicateAnnotation() throws Exception {
+   public void testDuplicateAnnotation() {
       exception.expect(AnnotationParserException.class);
       exception.expectMessage("Error: 1,8: duplicate annotation definition \"Field\"");
 
@@ -814,7 +809,86 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testRepeatedAnnotation() throws Exception {
+   public void testUndefinedAnnotation() {
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.BOOLEAN)
+            .defaultValue(true)
+            .build();
+
+      String testProto = "message M {\n" +
+            "  /** @SomeAnnotation(x=777, y=\"YES\") @Field */\n" +
+            "  optional int32 field1 = 1; \n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
+      Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
+
+      //todo [anistor] The processing of annotations is waaay too lazy
+      AnnotationElement.Annotation someAnnotation = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations().get("SomeAnnotation");
+      assertNull(someAnnotation);
+
+      AnnotationElement.Annotation fieldAnnotation = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations().get("Field");
+      assertNotNull(fieldAnnotation);
+      assertEquals("Field", fieldAnnotation.getName());
+   }
+
+   @Test
+   public void testDuplicateUndefinedAnnotation() {
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.BOOLEAN)
+            .defaultValue(true)
+            .build();
+
+      String testProto = "message M {\n" +
+            "  /** @SomeAnnotation @SomeAnnotation @Field */\n" +
+            "  optional int32 field1 = 1; \n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
+      Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
+
+      //todo [anistor] The processing of annotations is waaay too lazy
+      AnnotationElement.Annotation someAnnotation = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations().get("SomeAnnotation");
+
+      // 'SomeAnnotation' annotation is not defined, but we accept it silently
+      assertNull(someAnnotation);
+
+      AnnotationElement.Annotation fieldAnnotation = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations().get("Field");
+      assertNotNull(fieldAnnotation);
+      assertEquals("Field", fieldAnnotation.getName());
+   }
+
+   @Test
+   public void testBrokenUndefinedAnnotation() {
+      exception.expect(AnnotationParserException.class);
+      exception.expectMessage("Error: 2,21: ')' expected");
+
+      Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.BOOLEAN)
+            .defaultValue(true)
+            .build();
+
+      String testProto = "message M {\n" +
+            "  /** Here we have an annotation that fails to parse\n" +
+            "  @SomeAnnotation(777 @Field */\n" +
+            "  optional int32 field1 = 1; \n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
+      Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
+
+      //todo [anistor] The processing of annotations is waaay too lazy
+      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+   }
+
+   @Test
+   public void testRepeatedAnnotation() {
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
             .repeatable("Fields")
@@ -839,7 +913,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testAnnotationTarget() throws Exception {
+   public void testAnnotationTarget() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Annotation 'Field' cannot be applied to message types.");
 
@@ -860,7 +934,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testMultipleAnnotationAttribute() throws Exception {
+   public void testMultipleAnnotationAttribute() {
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
             .attribute("attr")
@@ -895,7 +969,7 @@ public class DescriptorsTest {
    }
 
    @Test
-   public void testArrayAnnotationAttributeNormalizing() throws Exception {
+   public void testArrayAnnotationAttributeNormalizing() {
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
             .attribute("attr")
@@ -1063,7 +1137,7 @@ public class DescriptorsTest {
    }
 
    private File asFile(String resourcePath) {
-      URL resource = this.getClass().getClassLoader().getResource(resourcePath);
+      URL resource = getClass().getClassLoader().getResource(resourcePath);
       if (resource != null) {
          return new File(resource.getPath());
       }

@@ -13,7 +13,7 @@ import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 
 /**
- * Represents a message declaration in a proto file.
+ * Represents a message type declaration in a proto file.
  *
  * @author gustavonalle
  * @author anistor@redhat.com
@@ -38,9 +38,9 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       this.fields = unmodifiableList(builder.fields);
       addFields(builder.fields);
       this.oneofs = unmodifiableList(builder.oneofs);
-      for (OneOfDescriptor oneof : oneofs) {
-         addFields(oneof.getFields());
-         oneof.setContainingMessage(this);
+      for (OneOfDescriptor oneOf : oneofs) {
+         addFields(oneOf.getFields());
+         oneOf.setContainingMessage(this);
       }
       this.nestedTypes = unmodifiableList(builder.nestedTypes);
       this.enumTypes = unmodifiableList(builder.enumTypes);
