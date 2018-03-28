@@ -133,8 +133,9 @@ public final class FileDescriptor {
    }
 
    /**
-    * Transition form ERROR status to UNRESOLVED and propagate to all dependant FileDescriptors. All internal state used
-    * during type reference resolution is cleared for this file and dependants.
+    * Clear resolving errors of unresolved files. Parsing errors are not cleared. Transitions from ERROR status back to
+    * UNRESOLVED and propagates this recursively to all dependant FileDescriptors. All internal state acquired during
+    * type reference resolution is cleared for this file and dependants (recursively).
     */
    public void clearErrors() {
       if (status != Status.RESOLVED && status != Status.PARSING_ERROR) {

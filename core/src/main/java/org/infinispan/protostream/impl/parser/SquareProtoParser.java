@@ -2,8 +2,10 @@ package org.infinispan.protostream.impl.parser;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
@@ -12,6 +14,7 @@ import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.impl.parser.mappers.ProtofileMapper;
 
+import com.squareup.protoparser.OptionElement;
 import com.squareup.protoparser.ProtoFile;
 import com.squareup.protoparser.ProtoParser;
 
@@ -40,6 +43,7 @@ public final class SquareProtoParser implements DescriptorParser {
          String fileName = entry.getKey();
          try {
             ProtoFile protoFile = ProtoParser.parse(fileName, new CharArrayReader(entry.getValue()));
+            checkUniqueFileOptions(protoFile);
             FileDescriptor fileDescriptor = PROTOFILE_MAPPER.map(protoFile);
             fileDescriptor.setConfiguration(configuration);
             fileDescriptorMap.put(fileName, fileDescriptor);
@@ -50,6 +54,15 @@ public final class SquareProtoParser implements DescriptorParser {
          }
       }
       return fileDescriptorMap;
+   }
+
+   private void checkUniqueFileOptions(ProtoFile protoFile) {
+      Set<String> optionNames = new HashSet<>(protoFile.options().size());
+      for (OptionElement optionElement : protoFile.options()) {
+         if (!optionNames.add(optionElement.name())) {
+            throw new DescriptorParserException(protoFile.filePath() + ": Option \"" + optionElement.name() + "\" was already set.");
+         }
+      }
    }
 
    /**
