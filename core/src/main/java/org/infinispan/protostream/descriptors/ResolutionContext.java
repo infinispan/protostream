@@ -46,6 +46,23 @@ public class ResolutionContext {
       this.allEnumValueDescriptors = allEnumValueDescriptors;
    }
 
+   public void resolve() {
+      // clear errors and put in unresolved state whatever is not already resolved
+      for (FileDescriptor fileDescriptor : fileDescriptorMap.values()) {
+         fileDescriptor.clearErrors();
+      }
+
+      // resolve imports and types for all files
+      for (FileDescriptor fileDescriptor : fileDescriptorMap.values()) {
+         fileDescriptor.resolveDependencies(this);
+      }
+
+      // clear errors and leave in unresolved state whatever could not be resolved
+      for (FileDescriptor fileDescriptor : fileDescriptorMap.values()) {
+         fileDescriptor.clearErrors();
+      }
+   }
+
    void handleError(FileDescriptor fileDescriptor, DescriptorParserException dpe) {
       if (log.isDebugEnabled()) {
          log.debugf(dpe, "File has errors : %s", fileDescriptor.getName());

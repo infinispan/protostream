@@ -1,6 +1,5 @@
 package org.infinispan.protostream.impl;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -87,7 +86,7 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException {
+   public void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException {
       if (log.isDebugEnabled()) {
          log.debugf("Registering proto files : %s", source.getFileDescriptors().keySet());
       }
@@ -103,21 +102,9 @@ public final class SerializationContextImpl implements SerializationContext {
          }
          fileDescriptors.putAll(fileDescriptorMap);
 
-         // clear errors and put in unresolved state whatever is not resolved already
-         for (FileDescriptor fileDescriptor : fileDescriptors.values()) {
-            fileDescriptor.clearErrors();
-         }
-
          // resolve imports and types for all files
          ResolutionContext resolutionContext = new ResolutionContext(source.getProgressCallback(), fileDescriptors, genericDescriptors, typeIds, enumValueDescriptors);
-         for (FileDescriptor fileDescriptor : fileDescriptors.values()) {
-            fileDescriptor.resolveDependencies(resolutionContext);
-         }
-
-         // clear errors and leave in unresolved state whatever could not be resolved
-         for (FileDescriptor fileDescriptor : fileDescriptors.values()) {
-            fileDescriptor.clearErrors();
-         }
+         resolutionContext.resolve();
       } finally {
          writeLock.unlock();
       }

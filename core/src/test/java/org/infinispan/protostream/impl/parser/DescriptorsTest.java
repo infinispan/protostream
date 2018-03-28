@@ -1,4 +1,4 @@
-package org.infinispan.protostream.impl.parser.impl;
+package org.infinispan.protostream.impl.parser;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -28,7 +28,6 @@ import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.ResolutionContext;
 import org.infinispan.protostream.descriptors.Type;
-import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -1001,6 +1000,21 @@ public class DescriptorsTest {
       assertEquals(true, values.get(0));
    }
 
+   @Test
+   public void testDuplicateOptionInFile() {
+      exception.expect(DescriptorParserException.class);
+      exception.expectMessage("test_proto_path/file1.proto: Option \"custom_option\" was already set.");
+
+      String file1 = "package test;\n" +
+            "option custom_option = true;\n" +
+            "option custom_option = true;\n";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
+
+      parseAndResolve(fileDescriptorSource);
+   }
+
    private Map<String, FileDescriptor> parseAndResolve(FileDescriptorSource fileDescriptorSource, Configuration config) {
       // parse the input
       SquareProtoParser protoParser = new SquareProtoParser(config);
@@ -1009,9 +1023,7 @@ public class DescriptorsTest {
       // resolve imports and types
       ResolutionContext resolutionContext = new ResolutionContext(null, fileDescriptorMap,
             new HashMap<>(), new HashMap<>(), new HashMap<>());
-      for (FileDescriptor fileDescriptor : fileDescriptorMap.values()) {
-         fileDescriptor.resolveDependencies(resolutionContext);
-      }
+      resolutionContext.resolve();
 
       return fileDescriptorMap;
    }
