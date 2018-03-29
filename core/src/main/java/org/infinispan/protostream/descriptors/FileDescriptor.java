@@ -362,6 +362,15 @@ public final class FileDescriptor {
       return options;
    }
 
+   public Option getOption(String name) {
+      for (Option o : options) {
+         if (o.getName().equals(name)) {
+            return o;
+         }
+      }
+      return null;
+   }
+
    public List<EnumDescriptor> getEnumTypes() {
       return enumTypes;
    }

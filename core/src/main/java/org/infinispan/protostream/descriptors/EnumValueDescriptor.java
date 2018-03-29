@@ -45,6 +45,15 @@ public final class EnumValueDescriptor {
       return options;
    }
 
+   public Option getOption(String name) {
+      for (Option o : options) {
+         if (o.getName().equals(name)) {
+            return o;
+         }
+      }
+      return null;
+   }
+
    public String getFullName() {
       return fullName;
    }
