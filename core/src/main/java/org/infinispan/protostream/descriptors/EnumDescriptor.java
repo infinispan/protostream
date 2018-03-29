@@ -81,6 +81,15 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
       return options;
    }
 
+   public Option getOption(String name) {
+      for (Option o : options) {
+         if (o.getName().equals(name)) {
+            return o;
+         }
+      }
+      return null;
+   }
+
    public List<EnumValueDescriptor> getValues() {
       return values;
    }

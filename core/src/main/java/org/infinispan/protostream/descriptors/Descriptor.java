@@ -78,6 +78,15 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       return options;
    }
 
+   public Option getOption(String name) {
+      for (Option o : options) {
+         if (o.getName().equals(name)) {
+            return o;
+         }
+      }
+      return null;
+   }
+
    public List<FieldDescriptor> getFields() {
       return fields;
    }
