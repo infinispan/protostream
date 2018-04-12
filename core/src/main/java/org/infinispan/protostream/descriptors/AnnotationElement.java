@@ -62,12 +62,18 @@ public abstract class AnnotationElement {
       }
 
       public abstract Object getValue();
+
+      /**
+       * All {@code Values} must override {@code toString()} in a sensible manner.
+       */
+      @Override
+      public abstract String toString();
    }
 
    public static final class Annotation extends Value {
 
       /**
-       * Name of 'default' attribute.
+       * The name of the default attribute.
        */
       public static final String VALUE_DEFAULT_ATTRIBUTE = "value";
 
@@ -94,6 +100,20 @@ public abstract class AnnotationElement {
          return this;
       }
 
+      @Override
+      public String toString() {
+         StringBuilder sb = new StringBuilder();
+         sb.append('(');
+         for (Attribute a : attributes.values()) {
+            if (sb.length() > 1) {
+               sb.append(", ");
+            }
+            sb.append(a);
+         }
+         sb.append(')');
+         return "@" + name + sb;
+      }
+
       public Value getDefaultAttributeValue() {
          return getAttributeValue(VALUE_DEFAULT_ATTRIBUTE);
       }
@@ -106,6 +126,7 @@ public abstract class AnnotationElement {
          return attribute.value;
       }
 
+      @Override
       public void acceptVisitor(Visitor visitor) {
          visitor.visit(this);
       }
@@ -131,8 +152,14 @@ public abstract class AnnotationElement {
          return value;
       }
 
+      @Override
       public void acceptVisitor(Visitor visitor) {
          visitor.visit(this);
+      }
+
+      @Override
+      public String toString() {
+         return name + "=" + value;
       }
    }
 
@@ -158,8 +185,14 @@ public abstract class AnnotationElement {
          return identifier;
       }
 
+      @Override
       public void acceptVisitor(Visitor visitor) {
          visitor.visit(this);
+      }
+
+      @Override
+      public String toString() {
+         return identifier;
       }
    }
 
@@ -185,8 +218,23 @@ public abstract class AnnotationElement {
          return valueList;
       }
 
+      @Override
       public void acceptVisitor(Visitor visitor) {
          visitor.visit(this);
+      }
+
+      @Override
+      public String toString() {
+         StringBuilder sb = new StringBuilder();
+         sb.append('[');
+         for (Value v : values) {
+            if (sb.length() > 1) {
+               sb.append(", ");
+            }
+            sb.append(v);
+         }
+         sb.append(']');
+         return sb.toString();
       }
    }
 
@@ -199,6 +247,9 @@ public abstract class AnnotationElement {
 
       public Literal(long pos, Object value) {
          super(pos);
+         if (value == null) {
+            throw new IllegalArgumentException("value cannot be null");
+         }
          this.value = value;
       }
 
@@ -207,8 +258,20 @@ public abstract class AnnotationElement {
          return value;
       }
 
+      @Override
       public void acceptVisitor(Visitor visitor) {
          visitor.visit(this);
+      }
+
+      @Override
+      public String toString() {
+         if (value instanceof String) {
+            return "\"" + value + "\"";
+         }
+         if (value instanceof Character) {
+            return "'" + value + "'";
+         }
+         return value.toString();
       }
    }
 
@@ -216,7 +279,7 @@ public abstract class AnnotationElement {
       visitor.visit(this);
    }
 
-   public static abstract class Visitor {
+   public static class Visitor {
 
       public void visit(Annotation tree) {
          visit((AnnotationElement) tree);

@@ -171,82 +171,83 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
       }
    }
 
-   private void validateAttribute(AnnotationElement.Annotation annotation, AnnotationElement.Attribute attribute, AnnotationAttributeConfiguration attributeConfig, AnnotationElement.Value value) {
+   private void validateAttribute(AnnotationElement.Annotation annotation, AnnotationElement.Attribute attribute,
+                                  AnnotationAttributeConfiguration attributeConfig, AnnotationElement.Value value) {
       // validate declared type vs parsed type
       switch (attributeConfig.type()) {
          case IDENTIFIER:
             if (!(value instanceof AnnotationElement.Identifier)) {
                throw new AnnotationParserException("Value of attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
-                     + "' on " + getFullName() + " must be an identifier");
+                     + "' on " + getFullName() + " must be an identifier. Current value is : " + value);
             }
             if (attributeConfig.allowedValues() != null && !attributeConfig.allowedValues().contains(value.getValue())) {
                throw new AnnotationParserException("Annotation attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
                      + "' on " + getFullName() + " should have one of the values : "
-                     + attributeConfig.allowedValues());
+                     + attributeConfig.allowedValues() + ". Current value is : " + value);
             }
             break;
          case STRING:
             if (!(value instanceof AnnotationElement.Literal) || !(value.getValue() instanceof String)) {
                throw new AnnotationParserException("Value of attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
-                     + "' on " + getFullName() + " must be a String");
+                     + "' on " + getFullName() + " must be a String. Current value is : " + value);
             }
             if (attributeConfig.allowedValues() != null && !attributeConfig.allowedValues().contains(value.getValue())) {
                throw new AnnotationParserException("Annotation attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
                      + "' on " + getFullName() + " should have one of the values : "
-                     + attributeConfig.allowedValues());
+                     + attributeConfig.allowedValues() + ". Current value is : " + value);
             }
             break;
          case CHARACTER:
             if (!(value instanceof AnnotationElement.Literal) || !(value.getValue() instanceof Character)) {
                throw new AnnotationParserException("Value of attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
-                     + "' on " + getFullName() + " must be a char");
+                     + "' on " + getFullName() + " must be a char. Current value is : " + value);
             }
             break;
          case BOOLEAN:
             if (!(value instanceof AnnotationElement.Literal) || !(value.getValue() instanceof Boolean)) {
                throw new AnnotationParserException("Value of attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
-                     + "' on " + getFullName() + " must be a boolean");
+                     + "' on " + getFullName() + " must be a boolean. Current value is : " + value);
             }
             break;
          case INT:
             if (!(value instanceof AnnotationElement.Literal) || !(value.getValue() instanceof Integer)) {
                throw new AnnotationParserException("Value of attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
-                     + "' on " + getFullName() + " must be an int");
+                     + "' on " + getFullName() + " must be an int. Current value is : " + value);
             }
             break;
          case LONG:
             if (!(value instanceof AnnotationElement.Literal) || !(value.getValue() instanceof Long)) {
                throw new AnnotationParserException("Value of attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
-                     + "' on " + getFullName() + " must be a long");
+                     + "' on " + getFullName() + " must be a long. Current value is : " + value);
             }
             break;
          case FLOAT:
             if (!(value instanceof AnnotationElement.Literal) || !(value.getValue() instanceof Float)) {
                throw new AnnotationParserException("Value of attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
-                     + "' on " + getFullName() + " must be a float");
+                     + "' on " + getFullName() + " must be a float. Current value is : " + value);
             }
             break;
          case DOUBLE:
             if (!(value instanceof AnnotationElement.Literal) || !(value.getValue() instanceof Double)) {
                throw new AnnotationParserException("Value of attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
-                     + "' on " + getFullName() + " must be a double");
+                     + "' on " + getFullName() + " must be a double. Current value is : " + value);
             }
             break;
          case ANNOTATION:
             if (!(value instanceof AnnotationElement.Annotation)) {
                throw new AnnotationParserException("Value of attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
-                     + "' on " + getFullName() + " must be an annotation");
+                     + "' on " + getFullName() + " must be an annotation. Current value is : " + value);
             }
       }
    }
