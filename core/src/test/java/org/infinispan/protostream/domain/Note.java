@@ -26,6 +26,8 @@ public class Note {
 
    private byte[] digest;
 
+   private byte[] blurb;
+
    @ProtoDoc("First line of documentation.")
    @ProtoDoc("some foo bar\nand some more\n @Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO)")
    @ProtoField(number = 3)
@@ -55,7 +57,7 @@ public class Note {
    }
 
    @ProtoDoc("@Field")
-   @ProtoField(number = 5, type = Type.UINT64, required = false, defaultValue = "0")
+   @ProtoField(number = 5, type = Type.UINT64, defaultValue = "0")
    public Date getCreationDate() {
       return creationDate;
    }
@@ -74,6 +76,16 @@ public class Note {
       this.digest = digest;
    }
 
+   @ProtoDoc("@Field")
+   @ProtoField(number = 7, required = true)
+   public byte[] getBlurb() {
+      return blurb;
+   }
+
+   public void setBlurb(byte[] blurb) {
+      this.blurb = blurb;
+   }
+
    @Override
    public String toString() {
       return "Note{" +
@@ -81,6 +93,7 @@ public class Note {
             ", author=" + author +
             ", creationDate='" + creationDate + '\'' +
             ", digest=" + Arrays.toString(digest) +
+            ", blurb=" + Arrays.toString(blurb) +
             ", note=" + note +
             ", notes=" + notes +
             '}';

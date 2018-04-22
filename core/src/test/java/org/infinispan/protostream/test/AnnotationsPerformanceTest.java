@@ -56,15 +56,18 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
       note.setText("Lorem Ipsum");
       note.setCreationDate(new Date());
       note.setDigest(new byte[10]);
+      note.setBlurb(new byte[3]);
       note.setAuthor(user);
 
       Note note2 = new Note();
       note2.setText("Lorem Ipsum");
       note2.setAuthor(user);
+      note2.setBlurb(new byte[3]);
 
       Note note3 = new Note();
       note3.setText("Lorem Ipsum");
       note3.setAuthor(user);
+      note3.setBlurb(new byte[3]);
 
       note.note = note2;
       note.notes = Collections.singletonList(note3);
@@ -120,6 +123,7 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
             "    repeated Note notes = 4;\n" +
             "    optional uint64 creationDate = 5 [default = 0];\n" +
             "    optional bytes digest = 6;\n" +
+            "    required bytes blurb = 7;\n" +
             "}\n";
 
       ctx.registerProtoFiles(FileDescriptorSource.fromString("note.proto", file));

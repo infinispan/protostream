@@ -523,7 +523,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             suffix = "Message";
             break;
          case BYTES:
-            suffix = "Bytes";
+            suffix = isWrite ? "Bytes" : "ByteArray";
             break;
          case UINT32:
             suffix = "UInt32";

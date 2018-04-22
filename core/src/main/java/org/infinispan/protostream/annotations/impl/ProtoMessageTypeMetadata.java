@@ -209,8 +209,13 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   fieldName = field.getName();
                }
 
-               boolean isArray = field.getType().isArray();
-               boolean isRepeated = isRepeated(field.getType());
+               Type protobufType = annotation.type();
+               if (field.getType() == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
+                  // MESSAGE is the default, so stands for undefined too.
+                  protobufType = Type.BYTES;
+               }
+               boolean isArray = isArray(field.getType(), protobufType);
+               boolean isRepeated = isRepeated(field.getType(), protobufType);
                boolean isRequired = annotation.required();
                if (isRepeated && isRequired) {
                   throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required.");
@@ -231,7 +236,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                XClass collectionImplementation = getCollectionImplementation(clazz, field.getType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
 
-               Type protobufType = getProtobufType(javaType, annotation.type());
+               protobufType = getProtobufType(javaType, protobufType);
                ProtoTypeMetadata protoTypeMetadata = null;
                if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
@@ -332,8 +337,13 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   fieldName = propertyName;
                }
 
-               boolean isArray = getter.getReturnType().isArray();
-               boolean isRepeated = isRepeated(getter.getReturnType());
+               Type protobufType = annotation.type();
+               if (getter.getReturnType() == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
+                  // MESSAGE is the default, so stands for undefined too.
+                  protobufType = Type.BYTES;
+               }
+               boolean isArray = isArray(getter.getReturnType(), protobufType);
+               boolean isRepeated = isRepeated(getter.getReturnType(), protobufType);
                boolean isRequired = annotation.required();
                if (isRepeated && isRequired) {
                   throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required.");
@@ -354,7 +364,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                XClass collectionImplementation = getCollectionImplementation(clazz, getter.getReturnType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
 
-               Type protobufType = getProtobufType(javaType, annotation.type());
+               protobufType = getProtobufType(javaType, protobufType);
                ProtoTypeMetadata protoTypeMetadata = null;
                if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
@@ -557,7 +567,9 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case FIXED32:
          case SFIXED32:
          case SINT32:
-            if (javaType != typeFactory.fromClass(Integer.class) && javaType != typeFactory.fromClass(int.class))
+            if (javaType != typeFactory.fromClass(Integer.class) && javaType != typeFactory.fromClass(int.class)
+                  && javaType != typeFactory.fromClass(Short.class) && javaType != typeFactory.fromClass(short.class)
+                  && javaType != typeFactory.fromClass(Byte.class) && javaType != typeFactory.fromClass(byte.class))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case INT64:
@@ -573,8 +585,20 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return declaredType;
    }
 
-   private boolean isRepeated(XClass type) {
-      return type.isArray() || type.isAssignableTo(typeFactory.fromClass(Collection.class));
+   private boolean isArray(XClass javaType, Type type) {
+      if (type == Type.BYTES && javaType == typeFactory.fromClass(byte[].class)) {
+         // A byte[] mapped to BYTES needs special handling. This will not be mapped to a repeatable field.
+         return false;
+      }
+      return javaType.isArray();
+   }
+
+   private boolean isRepeated(XClass javaType, Type type) {
+      if (type == Type.BYTES && javaType == typeFactory.fromClass(byte[].class)) {
+         // A byte[] mapped to BYTES needs special handling. This will not be mapped to a repeatable field.
+         return false;
+      }
+      return javaType.isArray() || javaType.isAssignableTo(typeFactory.fromClass(Collection.class));
    }
 
    private XMethod findGetter(String propertyName, XClass propertyType) {
