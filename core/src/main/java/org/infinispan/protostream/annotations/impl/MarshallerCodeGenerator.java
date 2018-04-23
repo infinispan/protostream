@@ -691,11 +691,17 @@ final class MarshallerCodeGenerator {
       return (isWrite ? "write" : "read") + suffix;
    }
 
+   /**
+    * Cast the given value if necessary. This is usually needed for the types that are represented as an int32 because
+    * of protobuf's lack of support for integral types of 8 and 16 bits.
+    */
    private String convert(String v, ProtoFieldMetadata fieldMetadata) {
       if (fieldMetadata.getJavaType() == Character.class) {
          return "(char) " + v;
       } else if (fieldMetadata.getJavaType() == Short.class) {
          return "(short) " + v;
+      } else if (fieldMetadata.getJavaType() == Byte.class) {
+         return "(byte) " + v;
       }
       return v;
    }
