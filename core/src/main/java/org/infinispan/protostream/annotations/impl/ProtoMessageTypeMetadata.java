@@ -55,7 +55,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       ProtoMessage protoMessageAnnotation = messageClass.getAnnotation(ProtoMessage.class);
       if (annotation != null) {
          if (protoMessageAnnotation != null) {
-            throw new IllegalStateException("@ProtoMessage annotation cannot be used together with @ProtoName: " + messageClass.getName());
+            throw new ProtoSchemaBuilderException("@ProtoMessage annotation cannot be used together with @ProtoName: " + messageClass.getName());
          }
          return annotation.value().isEmpty() ? messageClass.getSimpleName() : annotation.value();
       }
@@ -94,7 +94,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       appendDocumentation(iw, documentation);
       iw.append("message ").append(name);
       if (ProtoSchemaBuilder.generateSchemaDebugComments) {
-         iw.append(" /* ").append(javaClass.getCanonicalName()).append(" */");
+         iw.append(" /* ").append(getJavaClassName()).append(" */");
       }
       iw.append(" {\n");
 
@@ -142,15 +142,15 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    private void checkInstantiability() {
       // ensure the class is not abstract
       if (Modifier.isAbstract(javaClass.getModifiers())) {
-         throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + javaClass.getName());
+         throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + getJavaClassName());
       }
       // ensure it is not a local or anonymous class
       if (javaClass.getEnclosingMethod() != null || javaClass.getEnclosingConstructor() != null) {
-         throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + javaClass.getName() + " must be instantiable using a non-private no-argument constructor.");
+         throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
       // ensure the class is not a non-static inner class
       if (javaClass.getEnclosingClass() != null && !Modifier.isStatic(javaClass.getModifiers())) {
-         throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + javaClass.getName() + " must be instantiable using a non-private no-argument constructor.");
+         throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
       // ensure the class has a non-private no-argument constructor
       Constructor<?> ctor = null;
@@ -159,7 +159,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       } catch (NoSuchMethodException ignored) {
       }
       if (ctor == null || Modifier.isPrivate(ctor.getModifiers())) {
-         throw new ProtoSchemaBuilderException("The class " + javaClass.getName() + " must must be instantiable using a non-private no-argument constructor.");
+         throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must must be instantiable using a non-private no-argument constructor.");
       }
    }
 
@@ -206,7 +206,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                boolean isRepeated = isRepeated(field.getType());
                boolean isRequired = annotation.required();
                if (isRepeated && isRequired) {
-                  throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz + " cannot be marked required.");
+                  throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required.");
                }
                Class<?> javaType = annotation.javaType();
                if (javaType == void.class) {
@@ -217,13 +217,13 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   }
                }
                if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
-                  throw new ProtoSchemaBuilderException("The type " + javaType.getName() + " of field '" + fieldName + "' of " + clazz + " should not be abstract.");
+                  throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, annotation.defaultValue());
 
                if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
-                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz + " should be marked required or should have a default value.");
+                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " should be marked required or should have a default value.");
                }
 
                Class<?> collectionImplementation = getCollectionImplementation(clazz, field.getType(), annotation.collectionImplementation(), fieldName, isRepeated);
@@ -333,7 +333,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                boolean isRepeated = isRepeated(getter.getReturnType());
                boolean isRequired = annotation.required();
                if (isRepeated && isRequired) {
-                  throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz + " cannot be marked required.");
+                  throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required.");
                }
                Class<?> javaType = annotation.javaType();
                if (javaType == void.class) {
@@ -344,13 +344,13 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   }
                }
                if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
-                  throw new ProtoSchemaBuilderException("The type " + javaType.getName() + " of field '" + fieldName + "' of " + clazz + " should not be abstract.");
+                  throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, annotation.defaultValue());
 
                if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
-                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz + " should be marked required or should have a default value.");
+                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " should be marked required or should have a default value.");
                }
 
                Class<?> collectionImplementation = getCollectionImplementation(clazz, getter.getReturnType(), annotation.collectionImplementation(), fieldName, isRepeated);
@@ -394,13 +394,13 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          ProtoEnumTypeMetadata protoEnumTypeMetadata = (ProtoEnumTypeMetadata) protoSchemaGenerator.scanAnnotations(fieldType);
          ProtoEnumValueMetadata enumVal = protoEnumTypeMetadata.getMemberByName(defaultValue);
          if (enumVal == null) {
-            throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of type " + fieldType.getName() + " of class " + clazz.getName() + ": " + defaultValue + " is not a member of " + protoEnumTypeMetadata.getFullName());
+            throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName() + ": " + defaultValue + " is not a member of " + protoEnumTypeMetadata.getFullName() + " enum");
          }
          return enumVal;
       }
       if (fieldType == Character.class || fieldType == Character.TYPE) {
          if (defaultValue.length() > 1) {
-            throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of type " + fieldType.getName() + " of class " + clazz.getName() + ": " + defaultValue);
+            throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName() + ": " + defaultValue);
          }
          return defaultValue.charAt(0);
       }
@@ -433,10 +433,10 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             return Long.valueOf(defaultValue);
          }
       } catch (NumberFormatException e) {
-         throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of type " + fieldType.getName() + " of class " + clazz.getName() + ": " + defaultValue, e);
+         throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName() + ": " + defaultValue, e);
       }
 
-      throw new ProtoSchemaBuilderException("No default value is allowed for field '" + fieldName + "' of " + clazz);
+      throw new ProtoSchemaBuilderException("No default value is allowed for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName());
    }
 
    private Class<?> getCollectionImplementation(Class<?> clazz, Class<?> fieldType, Class<?> configuredCollection, String fieldName, boolean isRepeated) {
@@ -447,24 +447,24 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             collectionImplementation = fieldType;
          }
          if (!Collection.class.isAssignableFrom(collectionImplementation)) {
-            throw new ProtoSchemaBuilderException("The collection class of repeated field '" + fieldName + "' of " + clazz + " must implement java.util.Collection.");
+            throw new ProtoSchemaBuilderException("The collection class of repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " must implement java.util.Collection.");
          }
          if (Modifier.isAbstract(collectionImplementation.getModifiers())) {
-            throw new ProtoSchemaBuilderException("The collection class (" + collectionImplementation.getName() + ") of repeated field '" + fieldName + "' of " + clazz + " must not be abstract. Please specify an appropriate class in collectionImplementation member.");
+            throw new ProtoSchemaBuilderException("The collection class (" + collectionImplementation.getCanonicalName() + ") of repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " must not be abstract. Please specify an appropriate class in collectionImplementation member.");
          }
          try {
             collectionImplementation.getDeclaredConstructor();
          } catch (NoSuchMethodException e) {
-            throw new ProtoSchemaBuilderException("The collection class ('" + collectionImplementation.getName() + "') of repeated field '"
-                  + fieldName + "' of " + clazz + " must have a public no-argument constructor.");
+            throw new ProtoSchemaBuilderException("The collection class ('" + collectionImplementation.getCanonicalName() + "') of repeated field '"
+                  + fieldName + "' of " + clazz.getCanonicalName() + " must have a public no-argument constructor.");
          }
          if (!fieldType.isAssignableFrom(collectionImplementation)) {
-            throw new ProtoSchemaBuilderException("The collection implementation class ('" + collectionImplementation.getName() + "') of repeated field '"
-                  + fieldName + "' of " + clazz + " is not assignable to this field's type.");
+            throw new ProtoSchemaBuilderException("The collection implementation class ('" + collectionImplementation.getCanonicalName() + "') of repeated field '"
+                  + fieldName + "' of " + clazz.getCanonicalName() + " is not assignable to this field's type.");
          }
       } else {
          if (configuredCollection != Collection.class) {
-            throw new ProtoSchemaBuilderException("Specifying the collection implementation class is only allowed for repeated/collection fields: '" + fieldName + "' of " + clazz);
+            throw new ProtoSchemaBuilderException("Specifying the collection implementation class is only allowed for repeated/collection fields: '" + fieldName + "' of " + clazz.getCanonicalName());
          }
          collectionImplementation = null;
       }
@@ -474,10 +474,11 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    private Type getProtobufType(Class<?> javaType, Type type) {
       switch (type) {
          case MESSAGE:
+            // MESSAGE means either 'unspecified' or MESSAGE
             if (javaType.isEnum()) {
                ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
                if (!m.isEnum()) {
-                  throw new ProtoSchemaBuilderException(javaType + " is not a Protobuf marshallable enum type");
+                  throw new ProtoSchemaBuilderException(javaType.getCanonicalName() + " is not a Protobuf marshallable enum type");
                }
                return Type.ENUM;
             } else if (javaType == String.class) {
@@ -502,40 +503,40 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             } else {
                ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
                if (m.isEnum()) {
-                  throw new ProtoSchemaBuilderException(javaType + " is not a Protobuf marshallable message type");
+                  throw new ProtoSchemaBuilderException(javaType.getCanonicalName() + " is not a Protobuf marshallable message type");
                }
             }
             break;
          case ENUM:
             if (!javaType.isEnum()) {
-               throw new ProtoSchemaBuilderException(javaType + " is not a Protobuf marshallable enum type");
+               throw new ProtoSchemaBuilderException(javaType.getCanonicalName() + " is not a Protobuf marshallable enum type");
             }
             break;
          case GROUP:
             ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
             if (m.isEnum()) {
-               throw new ProtoSchemaBuilderException(javaType + " is not a Protobuf marshallable message type");
+               throw new ProtoSchemaBuilderException(javaType.getCanonicalName() + " is not a Protobuf marshallable message type");
             }
             break;
          case STRING:
             if (javaType != String.class)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
             break;
          case BYTES:
             if (javaType != byte[].class)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
             break;
          case DOUBLE:
             if (javaType != Double.class && javaType != Double.TYPE)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
             break;
          case FLOAT:
             if (javaType != Float.class && javaType != Float.TYPE)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
             break;
          case BOOL:
             if (javaType != Boolean.class && javaType != Boolean.TYPE)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
             break;
          case INT32:
          case UINT32:
@@ -543,7 +544,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case SFIXED32:
          case SINT32:
             if (javaType != Integer.class && javaType != Integer.TYPE)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
             break;
          case INT64:
          case UINT64:
@@ -552,7 +553,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case SINT64:
             if (javaType != Long.class && javaType != Long.TYPE
                   && !Date.class.isAssignableFrom(javaType) && !Instant.class.isAssignableFrom(javaType))
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
             break;
       }
       return type;
@@ -573,11 +574,11 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          getter = javaClass.getMethod(methodName);
       } catch (NoSuchMethodException e) {
          throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
-               + "' of type " + propertyType + " in class " + javaClass.getName());
+               + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
       }
       if (!getter.getReturnType().equals(propertyType)) {
          throw new ProtoSchemaBuilderException("No suitable getter method found for property '" + propertyName
-               + "' of type " + propertyType + " in class " + javaClass.getName()
+               + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
                + ". The candidate method does not have a suitable return type: " + getter);
       }
       return getter;
@@ -590,11 +591,11 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          setter = javaClass.getMethod(methodName, propertyType);
       } catch (NoSuchMethodException e) {
          throw new ProtoSchemaBuilderException("No setter method found for property '" + propertyName
-               + "' of type " + propertyType + " in class " + javaClass.getName());
+               + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
       }
       if (!setter.getReturnType().equals(Void.TYPE)) {
          throw new ProtoSchemaBuilderException("No suitable setter method found for property '" + propertyName
-               + "' of type " + propertyType + " in class " + javaClass.getName()
+               + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
                + ". The candidate method does not have a suitable return type: " + setter);
       }
       return setter;

@@ -114,7 +114,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    @Test
    public void testAbstractClass() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
-      exception.expectMessage("The type org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$MessageWithAbstractFieldType$AbstractType of field 'testField1' of class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$MessageWithAbstractFieldType should not be abstract.");
+      exception.expectMessage("The type org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.MessageWithAbstractFieldType.AbstractType of field 'testField1' of org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.MessageWithAbstractFieldType should not be abstract.");
 
       SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
@@ -980,7 +980,10 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       @ProtoField(number = 2)
       Integer[] testField2;
 
-      @ProtoField(number = 3, collectionImplementation = ArrayList.class)
+      static class MyArrayList extends ArrayList {
+      }
+
+      @ProtoField(number = 3, collectionImplementation = MyArrayList.class)
       List<Integer> testField3;
 
       @ProtoField(number = 4)

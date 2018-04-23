@@ -108,7 +108,7 @@ public final class ProtoSchemaGenerator {
          //todo [anistor] this list of scanned classes should include all interfaces and base classes not just the ones for which a proto definition was generated
          for (ProtoTypeMetadata ptm : metadataByClass.values()) {
             if (ptm instanceof ProtoEnumTypeMetadata || ptm instanceof ProtoMessageTypeMetadata) {
-               iw.append("//   ").append(ptm.getJavaClass().getCanonicalName()).append('\n');
+               iw.append("//   ").append(ptm.getJavaClassName()).append('\n');
             }
          }
       }
@@ -221,7 +221,7 @@ public final class ProtoSchemaGenerator {
       ProtoTypeMetadata existing = metadataByTypeName.get(fullName);
       if (existing != null) {
          throw new ProtoSchemaBuilderException("Duplicate type definition. Type '" + fullName + "' is defined by "
-               + protoTypeMetadata.getJavaClass().getName() + " and also by " + existing.getJavaClass().getName());
+               + protoTypeMetadata.getJavaClassName() + " and also by " + existing.getJavaClassName());
       }
       metadataByTypeName.put(fullName, protoTypeMetadata);
       metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);

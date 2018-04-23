@@ -793,7 +793,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    private void validateElementClass(Class<?> elementClass, Class<?> expectedElementClass) {
       if (elementClass != expectedElementClass) {
-         throw new IllegalArgumentException("elementClass argument should be " + expectedElementClass.getName());
+         throw new IllegalArgumentException("elementClass argument should be " + expectedElementClass.getCanonicalName());
       }
    }
 
@@ -802,7 +802,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          throw new IllegalArgumentException("Collection or array element cannot be null");
       }
       if (element.getClass() != elementClass) {
-         throw new IllegalArgumentException("Collection or array element is expected to be an instance of " + elementClass.getName());
+         throw new IllegalArgumentException("Collection or array element is expected to be an instance of " + elementClass.getCanonicalName());
       }
    }
 

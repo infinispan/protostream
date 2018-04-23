@@ -86,6 +86,11 @@ final class ProtoFieldMetadata implements HasProtoSchema {
       return javaType;
    }
 
+   public String getJavaTypeName() {
+      String canonicalName = javaType.getCanonicalName();
+      return canonicalName != null ? canonicalName : javaType.getName();
+   }
+
    public Class<?> getCollectionImplementation() {
       return collectionImplementation;
    }
