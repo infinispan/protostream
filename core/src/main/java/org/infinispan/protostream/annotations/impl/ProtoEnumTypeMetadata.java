@@ -12,6 +12,9 @@ import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.impl.Log;
 
 /**
+ * A {@link ProtoTypeMetadata} for an enum type created based on annotations during the current execution of {@link
+ * org.infinispan.protostream.annotations.ProtoSchemaBuilder}.
+ *
  * @author anistor@redhat.com
  * @since 3.0
  */
@@ -40,10 +43,10 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
             if (f.isEnumConstant()) {
                ProtoEnumValue annotation = f.getAnnotation(ProtoEnumValue.class);
                if (annotation == null) {
-                  throw new ProtoSchemaBuilderException("Enum members must have the @ProtoEnumValue annotation: " + javaClass.getName() + '.' + f.getName());
+                  throw new ProtoSchemaBuilderException("Enum members must have the @ProtoEnumValue annotation: " + getJavaClassName() + '.' + f.getName());
                }
                if (membersByNumber.containsKey(annotation.number())) {
-                  throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + annotation.number() + " on annotation member: " + javaClass.getName() + '.' + f.getName());
+                  throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + annotation.number() + " on annotation member: " + getJavaClassName() + '.' + f.getName());
                }
                String name = annotation.name();
                if (name.isEmpty()) {
@@ -59,7 +62,7 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
             }
          }
          if (membersByNumber.isEmpty()) {
-            throw new ProtoSchemaBuilderException("Members of enum " + javaClass.getCanonicalName() + " must be @ProtoEnum annotated");
+            throw new ProtoSchemaBuilderException("Members of enum " + getJavaClassName() + " must be @ProtoEnum annotated");
          }
          membersByName = new HashMap<>(membersByNumber.size());
          for (ProtoEnumValueMetadata enumVal : membersByNumber.values()) {
@@ -86,7 +89,7 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       appendDocumentation(iw, documentation);
       iw.append("enum ").append(name);
       if (ProtoSchemaBuilder.generateSchemaDebugComments) {
-         iw.append(" /* ").append(javaClass.getCanonicalName()).append(" */");
+         iw.append(" /* ").append(getJavaClassName()).append(" */");
       }
       iw.append(" {\n");
       iw.inc();

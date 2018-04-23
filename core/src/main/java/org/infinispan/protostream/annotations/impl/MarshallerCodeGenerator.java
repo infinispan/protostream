@@ -141,7 +141,7 @@ final class MarshallerCodeGenerator {
       iw.append("switch ($1) {\n");
       iw.inc();
       for (ProtoEnumValueMetadata value : enumTypeMetadata.getMembers().values()) {
-         iw.append("case ").append(String.valueOf(value.getNumber())).append(": return ").append(enumTypeMetadata.getJavaClass().getName()).append(".").append(value.getEnumValue().name()).append(";\n");
+         iw.append("case ").append(String.valueOf(value.getNumber())).append(": return ").append(enumTypeMetadata.getJavaClassName()).append(".").append(value.getEnumValue().name()).append(";\n");
       }
       iw.append("default: return null;\n");
       iw.dec();
@@ -160,7 +160,7 @@ final class MarshallerCodeGenerator {
       for (ProtoEnumValueMetadata value : enumTypeMetadata.getMembers().values()) {
          iw.append("case ").append(String.valueOf(value.getEnumValue().ordinal())).append(": return ").append(String.valueOf(value.getNumber())).append(";\n");
       }
-      iw.append("default: throw new IllegalArgumentException(\"Unexpected ").append(enumTypeMetadata.getJavaClass().getName()).append(" value : \" + $1.name());\n");
+      iw.append("default: throw new IllegalArgumentException(\"Unexpected ").append(enumTypeMetadata.getJavaClassName()).append(" enum value : \" + $1.name());\n");
       iw.dec();
       iw.append("}\n");
       iw.dec();
@@ -184,7 +184,7 @@ final class MarshallerCodeGenerator {
    }
 
    private String makeMarshallerDelegateFieldName(ProtoFieldMetadata fieldMetadata) {
-      return "__md$" + fieldMetadata.getJavaType().getCanonicalName().replace('.', '$');
+      return "__md$" + fieldMetadata.getJavaTypeName().replace('.', '$');
    }
 
    /**
@@ -204,7 +204,7 @@ final class MarshallerCodeGenerator {
 
       addMarshallerDelegateFields(marshallerImpl, messageTypeMetadata);
 
-      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + entityClass.getName() + ".class; }", marshallerImpl));
+      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + messageTypeMetadata.getJavaClass().getName() + ".class; }", marshallerImpl));
       marshallerImpl.addMethod(CtMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(messageTypeMetadata.getFullName()) + "\"; }", marshallerImpl));
 
       CtMethod ctReadFromMethod = new CtMethod(readFromMethod, marshallerImpl, null);
@@ -274,7 +274,7 @@ final class MarshallerCodeGenerator {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
-      iw.append("final ").append(messageTypeMetadata.getJavaClass().getName()).append(" o = new ").append(messageTypeMetadata.getJavaClass().getName()).append("();\n");
+      iw.append("final ").append(messageTypeMetadata.getJavaClassName()).append(" o = new ").append(messageTypeMetadata.getJavaClassName()).append("();\n");
       int requiredFields = 0;
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          if (fieldMetadata.isRequired() && fieldMetadata.getDefaultValue() == null) {
@@ -321,7 +321,7 @@ final class MarshallerCodeGenerator {
             case SINT64:
                iw.append("{\n");
                iw.inc();
-               iw.append(fieldMetadata.getJavaType().getName()).append(" v = ").append(box(convert("$2." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata), fieldMetadata.getJavaType())).append(";\n");
+               iw.append(fieldMetadata.getJavaTypeName()).append(" v = ").append(box(convert("$2." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata), fieldMetadata.getJavaType())).append(";\n");
                genSetField(iw, fieldMetadata);
                iw.dec();
                iw.append("}\n");
@@ -330,7 +330,7 @@ final class MarshallerCodeGenerator {
                iw.append("{\n");
                iw.inc();
                initMarshallerDelegateField(iw, fieldMetadata);
-               iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") readMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2);\n");
+               iw.append(fieldMetadata.getJavaTypeName()).append(" v = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2);\n");
                iw.append("$2.checkLastTagWas(").append(String.valueOf(fieldMetadata.getNumber() << 3 | org.infinispan.protostream.impl.WireFormat.WIRETYPE_END_GROUP)).append(");\n");
                genSetField(iw, fieldMetadata);
                iw.dec();
@@ -342,7 +342,7 @@ final class MarshallerCodeGenerator {
                initMarshallerDelegateField(iw, fieldMetadata);
                iw.append("int length = $2.readRawVarint32();\n");
                iw.append("int oldLimit = $2.pushLimit(length);\n");
-               iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") readMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2);\n");
+               iw.append(fieldMetadata.getJavaTypeName()).append(" v = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2);\n");
                iw.append("$2.checkLastTagWas(0);\n");
                iw.append("$2.popLimit(oldLimit);\n");
                genSetField(iw, fieldMetadata);
@@ -354,7 +354,7 @@ final class MarshallerCodeGenerator {
                iw.inc();
                initMarshallerDelegateField(iw, fieldMetadata);
                iw.append("int enumVal = $2.readEnum();\n");
-               iw.append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") ((").append(PROTOSTREAM_PACKAGE).append(".EnumMarshaller) $1.getMarshaller(").append(fieldMetadata.getJavaType().getName()).append(".class)).decode(enumVal);\n");
+               iw.append(fieldMetadata.getJavaTypeName()).append(" v = (").append(fieldMetadata.getJavaTypeName()).append(") ((").append(PROTOSTREAM_PACKAGE).append(".EnumMarshaller) $1.getMarshaller(").append(fieldMetadata.getJavaTypeName()).append(".class)).decode(enumVal);\n");
                iw.append("if (v == null) {\n");
                if (getUnknownFieldSetFieldStatement != null) {
                   iw.inc();
@@ -372,7 +372,7 @@ final class MarshallerCodeGenerator {
                iw.append("}\n");
                break;
             default:
-               throw new IllegalStateException("Unknown field type " + fieldMetadata.getProtobufType());
+               throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
          }
          iw.append("break;\n");
          iw.dec();
@@ -442,12 +442,12 @@ final class MarshallerCodeGenerator {
             if (fieldMetadata.isArray()) {
                iw.append("if (").append(c).append(" != null) { ");
                if (fieldMetadata.getJavaType().isPrimitive()) {
-                  iw.append(fieldMetadata.getJavaType().getName()).append("[] _c = new ").append(fieldMetadata.getJavaType().getName()).append("[").append(c).append(".size()]; ");
+                  iw.append(fieldMetadata.getJavaTypeName()).append("[] _c = new ").append(fieldMetadata.getJavaTypeName()).append("[").append(c).append(".size()]; ");
                   Class<?> boxedType = box(fieldMetadata.getJavaType());
                   iw.append("for (int i = 0; i < _c.length; i++) _c[i] = ").append(unbox("((" + boxedType.getName() + ")" + c + ".get(i))", boxedType)).append("; ");
                   c = "_c";
                } else {
-                  c = "(" + fieldMetadata.getJavaType().getName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaType().getName() + "[0])";
+                  c = "(" + fieldMetadata.getJavaTypeName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaTypeName() + "[0])";
                }
             }
             iw.append("o.").append(createSetter(fieldMetadata, c)).append(';');
@@ -515,7 +515,7 @@ final class MarshallerCodeGenerator {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
-      iw.append("final ").append(messageTypeMetadata.getJavaClass().getName()).append(" o = (").append(messageTypeMetadata.getJavaClass().getName()).append(") $3;\n");
+      iw.append("final ").append(messageTypeMetadata.getJavaClassName()).append(" o = (").append(messageTypeMetadata.getJavaClassName()).append(") $3;\n");
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          iw.append("{\n");
          iw.inc();
@@ -523,12 +523,12 @@ final class MarshallerCodeGenerator {
          iw.append("final ");
          if (fieldMetadata.isRepeated()) {
             if (fieldMetadata.isArray()) {
-               iw.append(fieldMetadata.getJavaType().getName()).append("[]");
+               iw.append(fieldMetadata.getJavaTypeName()).append("[]");
             } else {
                iw.append("java.util.Collection");
             }
          } else {
-            iw.append(fieldMetadata.getJavaType().getName());
+            iw.append(fieldMetadata.getJavaTypeName());
          }
          iw.append(' ').append(v).append(" = o.").append(createGetter(fieldMetadata)).append(";\n");
          if (fieldMetadata.isRequired()) {
@@ -551,11 +551,11 @@ final class MarshallerCodeGenerator {
             if (fieldMetadata.isArray()) {
                iw.append("for (int i = 0; i < c.length; i++) {\n");
                iw.inc();
-               iw.append("final ").append(fieldMetadata.getJavaType().getName()).append(" v = c[i];\n");
+               iw.append("final ").append(fieldMetadata.getJavaTypeName()).append(" v = c[i];\n");
             } else {
                iw.append("for (java.util.Iterator it = c.iterator(); it.hasNext(); ) {\n");
                iw.inc();
-               iw.append("final ").append(fieldMetadata.getJavaType().getName()).append(" v = (").append(fieldMetadata.getJavaType().getName()).append(") it.next();\n");
+               iw.append("final ").append(fieldMetadata.getJavaTypeName()).append(" v = (").append(fieldMetadata.getJavaTypeName()).append(") it.next();\n");
             }
          }
          switch (fieldMetadata.getProtobufType()) {
@@ -603,7 +603,7 @@ final class MarshallerCodeGenerator {
                iw.append("}\n");
                break;
             default:
-               throw new IllegalStateException("Unknown field type " + fieldMetadata.getProtobufType());
+               throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
          }
          if (fieldMetadata.isRepeated()) {
             iw.dec();
@@ -635,7 +635,7 @@ final class MarshallerCodeGenerator {
       }
       iw.append("((").append(PROTOSTREAM_PACKAGE)
             .append(".impl.SerializationContextImpl) $1).getMarshallerDelegate(")
-            .append(fieldMetadata.getJavaType().getName()).append(".class);\n");
+            .append(fieldMetadata.getJavaTypeName()).append(".class);\n");
    }
 
    private String makeStreamIOMethodName(ProtoFieldMetadata fieldMetadata, boolean isWrite) {
@@ -696,7 +696,7 @@ final class MarshallerCodeGenerator {
             suffix = "SInt64";
             break;
          default:
-            throw new IllegalStateException("Unknown field type " + fieldMetadata.getProtobufType());
+            throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
       }
 
       return (isWrite ? "write" : "read") + suffix;
@@ -717,6 +717,9 @@ final class MarshallerCodeGenerator {
       return v;
    }
 
+   /**
+    * Return the corresponding 'boxed' Class given a Class, or {@code null} if no type change is required.
+    */
    private Class<?> box(Class<?> clazz) {
       if (clazz == Float.TYPE) {
          return Float.class;
@@ -739,6 +742,9 @@ final class MarshallerCodeGenerator {
       return null;
    }
 
+   /**
+    * Boxes a given value. The Class parameter can be {@code null} to indicate that no boxing should actually be performed.
+    */
    private String box(String v, Class<?> clazz) {
       if (clazz != null) {
          if (Date.class.isAssignableFrom(clazz)) {
@@ -746,7 +752,7 @@ final class MarshallerCodeGenerator {
                // just check this type really has a constructor that accepts a long timestamp param
                clazz.getConstructor(Long.TYPE);
             } catch (NoSuchMethodException e) {
-               throw new ProtoSchemaBuilderException("Type " + clazz + " is not a valid Date type because it does not have a constructor that accepts a 'long' timestamp parameter");
+               throw new ProtoSchemaBuilderException("Type " + clazz.getCanonicalName() + " is not a valid Date type because it does not have a constructor that accepts a 'long' timestamp parameter");
             }
             return "new " + clazz.getName() + "(" + v + ")";
          } else if (Instant.class.isAssignableFrom(clazz)) {

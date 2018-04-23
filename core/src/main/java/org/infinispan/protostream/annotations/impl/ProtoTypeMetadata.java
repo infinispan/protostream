@@ -61,6 +61,11 @@ class ProtoTypeMetadata {
       return javaClass;
    }
 
+   public String getJavaClassName() {
+      String canonicalName = javaClass.getCanonicalName();
+      return canonicalName != null ? canonicalName : javaClass.getName();
+   }
+
    public BaseMarshaller getMarshaller() {
       return marshaller;
    }

@@ -107,9 +107,9 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
     * Abstract field types in a message class are not accepted.
     */
    @Test
-   public void tesAbstractClass() throws Exception {
+   public void testAbstractClass() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
-      exception.expectMessage("The type org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$MessageWithAbstractFieldType$AbstractType of field 'testField1' of class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$MessageWithAbstractFieldType should not be abstract.");
+      exception.expectMessage("The type org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.MessageWithAbstractFieldType.AbstractType of field 'testField1' of org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.MessageWithAbstractFieldType should not be abstract.");
 
       SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
