@@ -392,9 +392,9 @@ final class MarshallerCodeGenerator {
             iw.inc();
             String v;
             if (Date.class.isAssignableFrom(fieldMetadata.getJavaType())) {
-               v = box(defaultValue + "L", fieldMetadata.getJavaType());
+               v = defaultValue + "L";
             } else if (Instant.class.isAssignableFrom(fieldMetadata.getJavaType())) {
-               v = box(defaultValue + "L", fieldMetadata.getJavaType());
+               v = defaultValue + "L";
             } else if (defaultValue instanceof ProtoEnumValueMetadata) {
                Enum enumValue = ((ProtoEnumValueMetadata) defaultValue).getEnumValue();
                v = enumValue.getDeclaringClass().getName() + "." + enumValue.name();

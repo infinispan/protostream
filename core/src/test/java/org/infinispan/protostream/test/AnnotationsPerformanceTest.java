@@ -44,6 +44,7 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
       user.setId(1);
       user.setName("John");
       user.setSurname("Batman");
+      user.setSalutation("Sir");
       user.setGender(User.Gender.MALE);
       user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
       List<Address> addresses = new ArrayList<>();

@@ -357,16 +357,16 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       @ProtoField(number = 30, defaultValue = "xyz")
       String[] testField30 = {"one", "two"};
 
-      @ProtoField(number = 31/*, defaultValue = "1"*/)
+      @ProtoField(number = 31, defaultValue = "1")
       Date testField31 = new Date(100);
 
-      @ProtoField(number = 32/*, defaultValue = "1"*/)
+      @ProtoField(number = 32, defaultValue = "1")
       Date[] testField32 = {new Date(100), new Date(200)};
 
-      @ProtoField(number = 33/*, defaultValue = "1"*/)
+      @ProtoField(number = 33, defaultValue = "1")
       Instant testField33 = Instant.ofEpochMilli(100);
 
-      @ProtoField(number = 34/*, defaultValue = "1"*/)
+      @ProtoField(number = 34, defaultValue = "1")
       Instant[] testField34 = {Instant.ofEpochMilli(100), Instant.ofEpochMilli(200)};
 
       @ProtoField(number = 35, defaultValue = "35")
@@ -707,7 +707,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       private Date testField81 = new Date(100);
 
-      @ProtoField(number = 81/*, defaultValue = "1"*/)
+      @ProtoField(number = 81, defaultValue = "1")
       public Date getTestField81() {
          return testField81;
       }
@@ -718,7 +718,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       private Date[] testField82 = {new Date(100), new Date(200)};
 
-      @ProtoField(number = 82/*, defaultValue = "1"*/)
+      @ProtoField(number = 82, defaultValue = "1")
       public Date[] getTestField82() {
          return testField82;
       }
@@ -729,7 +729,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       private Instant testField83 = Instant.ofEpochMilli(100);
 
-      @ProtoField(number = 83/*, defaultValue = "1"*/)
+      @ProtoField(number = 83, defaultValue = "1")
       public Instant getTestField83() {
          return testField83;
       }
@@ -740,7 +740,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       private Instant[] testField84 = {Instant.ofEpochMilli(100), Instant.ofEpochMilli(200)};
 
-      @ProtoField(number = 84/*, defaultValue = "1"*/)
+      @ProtoField(number = 84, defaultValue = "1")
       public Instant[] getTestField84() {
          return testField84;
       }
