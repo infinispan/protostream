@@ -1,6 +1,8 @@
 package org.infinispan.protostream.annotations.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
@@ -228,7 +230,9 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 
-               Object defaultValue = getDefaultValue(clazz, fieldName, javaType, annotation.defaultValue());
+               protobufType = getProtobufType(javaType, protobufType);
+
+               Object defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation.defaultValue());
 
                if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
                   throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " should be marked required or should have a default value.");
@@ -236,7 +240,6 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                XClass collectionImplementation = getCollectionImplementation(clazz, field.getType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
 
-               protobufType = getProtobufType(javaType, protobufType);
                ProtoTypeMetadata protoTypeMetadata = null;
                if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
@@ -356,7 +359,9 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 
-               Object defaultValue = getDefaultValue(clazz, fieldName, javaType, annotation.defaultValue());
+               protobufType = getProtobufType(javaType, protobufType);
+
+               Object defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation.defaultValue());
 
                if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
                   throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " should be marked required or should have a default value.");
@@ -364,7 +369,6 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                XClass collectionImplementation = getCollectionImplementation(clazz, getter.getReturnType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
 
-               protobufType = getProtobufType(javaType, protobufType);
                ProtoTypeMetadata protoTypeMetadata = null;
                if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
@@ -408,12 +412,16 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
    }
 
-   private Object getDefaultValue(XClass clazz, String fieldName, XClass fieldType, String defaultValue) {
+   /**
+    * Parses the value from string form (coming from proto schema) to an actual Java instance value, according to its
+    * type.
+    */
+   private Object getDefaultValue(XClass clazz, String fieldName, XClass fieldType, Type protobufType, String defaultValue) {
       if (defaultValue == null || defaultValue.isEmpty()) {
          return null;
       }
       if (fieldType == typeFactory.fromClass(String.class)) {
-         return "\"" + defaultValue + "\"";
+         return defaultValue;
       }
       if (fieldType.isEnum()) {
          ProtoTypeMetadata protoEnumTypeMetadata = protoSchemaGenerator.scanAnnotations(fieldType);
@@ -460,8 +468,38 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       } catch (NumberFormatException e) {
          throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName() + ": " + defaultValue, e);
       }
+      if (protobufType == Type.BYTES) {
+         if (fieldType == typeFactory.fromClass(byte[].class)) {
+            return cescape(defaultValue);
+         } else {
+            throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName() + ": " + defaultValue);
+         }
+      }
 
       throw new ProtoSchemaBuilderException("No default value is allowed for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName());
+   }
+
+   /**
+    * C-style escaping using 3 digit octal escapes ({@code "\xxx"}) for all non-ASCII chars.
+    */
+   static byte[] cescape(String s) {
+      return cescape(s.getBytes(StandardCharsets.UTF_8));
+   }
+
+   static byte[] cescape(byte[] bytes) {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(bytes.length);
+      for (byte b : bytes) {
+         int ub = Byte.toUnsignedInt(b);
+         if (ub < 32 || ub > 127) {  // printable 7-bit chars are fine, the rest of all non-US-ASCII chars get escaped !
+            baos.write('\\');
+            baos.write('0' + ((ub >> 6) & 0x7));  // 3 digit octal code
+            baos.write('0' + ((ub >> 3) & 0x7));
+            baos.write('0' + (ub & 0x7));
+         } else {
+            baos.write(ub);
+         }
+      }
+      return baos.toByteArray();
    }
 
    private XClass getCollectionImplementation(XClass clazz, XClass fieldType, XClass configuredCollection, String fieldName, boolean isRepeated) {

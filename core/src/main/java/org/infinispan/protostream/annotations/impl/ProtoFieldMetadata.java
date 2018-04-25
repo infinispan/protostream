@@ -1,6 +1,7 @@
 package org.infinispan.protostream.annotations.impl;
 
 import java.lang.reflect.Executable;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
@@ -215,6 +216,10 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
             v = Long.toString(((Date) defaultValue).getTime());
          } else if (defaultValue instanceof Character) {
             v = Integer.toString(((Character) defaultValue));
+         } else if (defaultValue instanceof byte[]) {
+            v = "\"" + new String(ProtoMessageTypeMetadata.cescape((byte[]) defaultValue), StandardCharsets.ISO_8859_1) + "\"";
+         } else if (defaultValue instanceof String) {
+            v = "\"" + defaultValue + "\"";
          } else {
             v = defaultValue.toString();
          }

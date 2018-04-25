@@ -239,28 +239,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          if (defaultValue != null) {
             iw.append("if (!").append(makeFieldWasSetFlag(fieldMetadata)).append(") {\n");
             iw.inc();
-            String v;
-            if (fieldMetadata.getJavaType().isAssignableTo(typeFactory.fromClass(Date.class))) {
-               v = defaultValue + "L";
-            } else if (fieldMetadata.getJavaType().isAssignableTo(typeFactory.fromClass(Instant.class))) {
-               v = defaultValue + "L";
-            } else if (defaultValue instanceof ProtoEnumValueMetadata) {
-               v = ((ProtoEnumValueMetadata) defaultValue).getJavaEnumName();
-            } else if (defaultValue instanceof Long) {
-               v = defaultValue + "L";
-            } else if (defaultValue instanceof Double) {
-               v = defaultValue + "D";
-            } else if (defaultValue instanceof Float) {
-               v = defaultValue + "F";
-            } else if (defaultValue instanceof Character) {
-               v = "'" + defaultValue + "'";
-            } else if (defaultValue instanceof Short) {
-               v = "(short) " + defaultValue;
-            } else if (defaultValue instanceof Byte) {
-               v = "(byte) " + defaultValue;
-            } else {
-               v = defaultValue.toString();
-            }
+            String v = toJavaLiteral(defaultValue, fieldMetadata.getJavaType());
             if (fieldMetadata.isRepeated()) {
                String c = makeCollectionLocalVar(fieldMetadata);
                if (noDefaults) {
@@ -333,6 +312,50 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.dec();
       iw.append("}\n");
       return iw.toString();
+   }
+
+   /**
+    * Converts a given {@code value} instance to a Java language literal of type {@code javaType}. The input value is
+    * expected to conform to the given type (no checks are performed).
+    */
+   private String toJavaLiteral(Object value, XClass javaType) {
+      String v;
+      if (javaType.isAssignableTo(typeFactory.fromClass(Date.class))) {
+         v = value + "L";
+      } else if (javaType.isAssignableTo(typeFactory.fromClass(Instant.class))) {
+         v = value + "L";
+      } else if (value instanceof ProtoEnumValueMetadata) {
+         v = ((ProtoEnumValueMetadata) value).getJavaEnumName();
+      } else if (value instanceof Long) {
+         v = value + "L";
+      } else if (value instanceof Double) {
+         v = value + "D";
+      } else if (value instanceof Float) {
+         v = value + "F";
+      } else if (value instanceof Character) {
+         v = "'" + value + "'";
+      } else if (value instanceof String) {
+         v = "\"" + value + "\"";
+      } else if (value instanceof Short) {
+         v = "(short) " + value;
+      } else if (value instanceof Byte) {
+         v = "(byte) " + value;
+      } else if (value instanceof byte[]) {
+         StringBuilder sb = new StringBuilder();
+         sb.append("new byte[] {");
+         byte[] bytes = (byte[]) value;
+         for (int i = 0; i < bytes.length; i++) {
+            if (i > 0) {
+               sb.append(", ");
+            }
+            sb.append(bytes[i]);
+         }
+         sb.append('}');
+         v = sb.toString();
+      } else {
+         v = value.toString();
+      }
+      return v;
    }
 
    private void genSetField(IndentWriter iw, ProtoFieldMetadata fieldMetadata) {
@@ -591,7 +614,8 @@ public abstract class AbstractMarshallerCodeGenerator {
    }
 
    /**
-    * Boxes a given value. The Class parameter can be {@code null} to indicate that no boxing should actually be performed.
+    * Boxes a given value. The Class parameter can be {@code null} to indicate that no boxing should actually be
+    * performed.
     */
    private String box(String v, XClass clazz) {
       if (clazz != null) {

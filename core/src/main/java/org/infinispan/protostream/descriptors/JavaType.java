@@ -1,9 +1,10 @@
 package org.infinispan.protostream.descriptors;
 
 /**
- * Java mappings of the Protobuf field types
+ * Java mappings of the Protobuf field types.
  *
  * @author gustavonalle
+ * @author anistor@redhat.com
  * @since 2.0
  */
 public enum JavaType {
@@ -69,9 +70,4 @@ public enum JavaType {
     * @return an Object with the correct java type or null in case of composite value
     */
    abstract Object fromString(String input);
-
-   boolean isScalar() {
-      return !this.equals(MESSAGE) && !this.equals(ENUM) && !this.equals(BYTE_STRING);
-   }
-
 }

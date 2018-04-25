@@ -101,11 +101,11 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    }
 
    public Object getDefaultValue() {
+      if (getJavaType() == JavaType.MESSAGE) {
+         throw new UnsupportedOperationException("FieldDescriptor.getDefaultValue() called on an embedded message field (only scalars can have a default value).");
+      }
       if (!hasDefaultValue()) {
          return null;
-      }
-      if (!getJavaType().isScalar()) {
-         throw new UnsupportedOperationException("FieldDescriptor.getDefaultValue() called on an embedded message field (only scalars can have a default value).");
       }
       return getJavaType().fromString(defaultValue);
    }
