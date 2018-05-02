@@ -32,6 +32,9 @@ enum AnnotationTokens {
       this.text = text;
    }
 
+   /**
+    * Returns the token represented by the given string or {@code null} if not recognized (an identifier maybe).
+    */
    static AnnotationTokens byName(String name) {
       if (name.length() == 1) {
          switch (name.charAt(0)) {

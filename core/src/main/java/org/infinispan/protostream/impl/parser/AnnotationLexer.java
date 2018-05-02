@@ -11,44 +11,61 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
  */
 final class AnnotationLexer {
 
+   /**
+    * Last recognized token.
+    */
    AnnotationTokens token;
    long pos;
    long lastPos;
-   String name;
+
+   /**
+    * The actual identifier, if last recognized token is {@link AnnotationTokens#IDENTIFIER}, or {@code null} otherwise.
+    */
+   String identifier;
 
    // a temporary buffer used for accumulating the current token
-   private char[] sbuf = new char[128];
-   private int sp;
+   private final StringBuilder sb = new StringBuilder(32);
 
-   private final char[] buf;
-   private final int buflen;
-   private int bp = -1;
+   /**
+    * The input buffer.
+    */
+   private final char[] input;
+   private int inputPos = -1;
 
-   private char ch = 0;
+   /**
+    * The current input char.
+    */
+   private char ch = '\0';
    private int line = 1;
    private int col = 0;
+
+   /**
+    * Indicates if all scanned characters on current line up to current char are whitespace.
+    */
    private boolean leadingWhitespace = true;
 
    /**
     * Do we expect to encounter non-syntactically correct text which is probably human readable documentation
     * surrounding the annotations?
     */
-   private boolean expectDocNoise;
+   private final boolean expectDocNoise;
 
    AnnotationLexer(char[] input, boolean expectDocNoise) {
+      this.input = input;
       this.expectDocNoise = expectDocNoise;
-      buf = input;
-      buflen = input.length;
       scanNextChar();
       skipDocNoise();
    }
 
+   /**
+    * Skip characters until we stumble on an annotation.
+    */
    public void skipDocNoise() {
       if (token == AnnotationTokens.AT || token == AnnotationTokens.EOF) {
          return;
       }
 
-      sp = 0;
+      sb.setLength(0);
       do {
          switch (ch) {
             case ' ':
@@ -82,7 +99,7 @@ final class AnnotationLexer {
                   throw new AnnotationParserException(String.format("Error: %d,%d: Annotations must start on an empty line", line, col));
                }
                // intentional fall-through
-            case 0:
+            case '\0':
                nextToken();
                return;
             default:
@@ -92,31 +109,22 @@ final class AnnotationLexer {
                   throw new AnnotationParserException(String.format("Error: %d,%d: Unexpected character: %c", line, col, ch));
                }
          }
-      } while (bp != buflen);
+      } while (inputPos != input.length);
 
       token = AnnotationTokens.EOF;
    }
 
    private void scanNextChar() {
-      if (ch != 0 && !Character.isWhitespace(ch)) {
+      if (ch != '\0' && !Character.isWhitespace(ch)) {
          leadingWhitespace = false;
       }
-      bp++;
-      if (bp == buflen) {
-         ch = 0;
+      inputPos++;
+      if (inputPos == input.length) {
+         ch = '\0';
       } else {
-         ch = buf[bp];
+         ch = input[inputPos];
          col++;
       }
-   }
-
-   private void putChar(char c) {
-      if (sp == sbuf.length) {
-         char newSbuf[] = new char[sbuf.length * 2];
-         System.arraycopy(sbuf, 0, newSbuf, 0, sbuf.length);
-         sbuf = newSbuf;
-      }
-      sbuf[sp++] = c;
    }
 
    private void scanLiteralChar() {
@@ -124,61 +132,61 @@ final class AnnotationLexer {
          scanNextChar();
          switch (ch) {
             case 'b':
-               putChar('\b');
+               sb.append('\b');
                scanNextChar();
                break;
             case 't':
-               putChar('\t');
+               sb.append('\t');
                scanNextChar();
                break;
             case 'n':
-               putChar('\n');
+               sb.append('\n');
                scanNextChar();
                break;
             case 'f':
-               putChar('\f');
+               sb.append('\f');
                scanNextChar();
                break;
             case 'r':
-               putChar('\r');
+               sb.append('\r');
                scanNextChar();
                break;
             case '\'':
-               putChar('\'');
+               sb.append('\'');
                scanNextChar();
                break;
             case '"':
-               putChar('"');
+               sb.append('"');
                scanNextChar();
                break;
             case '\\':
-               putChar('\\');
+               sb.append('\\');
                scanNextChar();
                break;
             default:
                throw new AnnotationParserException(String.format("Error: %d,%d: illegal escape character: %c", line, col, ch));
          }
-      } else if (bp != buflen) {
-         putChar(ch);
+      } else if (inputPos != input.length) {
+         sb.append(ch);
          scanNextChar();
       }
    }
 
    private void scanDecimal() {
       while (Character.digit(ch, 10) >= 0) {
-         putChar(ch);
+         sb.append(ch);
          scanNextChar();
       }
       if (ch == 'e' || ch == 'E') {
-         putChar(ch);
+         sb.append(ch);
          scanNextChar();
          if (ch == '+' || ch == '-') {
-            putChar(ch);
+            sb.append(ch);
             scanNextChar();
          }
          if ('0' <= ch && ch <= '9') {
             do {
-               putChar(ch);
+               sb.append(ch);
                scanNextChar();
             } while ('0' <= ch && ch <= '9');
          } else {
@@ -198,11 +206,11 @@ final class AnnotationLexer {
 
    private void scanNumber() {
       while (Character.digit(ch, 10) >= 0) {
-         putChar(ch);
+         sb.append(ch);
          scanNextChar();
       }
       if (ch == '.') {
-         putChar(ch);
+         sb.append(ch);
          scanNextChar();
          scanDecimal();
       } else if (ch == 'e' || ch == 'E' || ch == 'f' || ch == 'F' || ch == 'd' || ch == 'D') {
@@ -217,32 +225,38 @@ final class AnnotationLexer {
 
    private void scanIdentifier() {
       do {
-         putChar(ch);
-         if (++bp == buflen) {
-            ch = 0;
+         sb.append(ch);
+         if (++inputPos == input.length) {
+            ch = '\0';
             break;
          }
-         ch = buf[bp];
+         ch = input[inputPos];
          col++;
       }
       while (ch == '_' || ch == '$' || ch >= '0' && ch <= '9' || ch >= 'A' && ch <= 'Z' || ch >= 'a' && ch <= 'z'
-            || ch > 128 && Character.isJavaIdentifierPart(ch));
-      name = new String(sbuf, 0, sp);
-      AnnotationTokens tok = AnnotationTokens.byName(name);
-      token = tok == null ? AnnotationTokens.IDENTIFIER : tok;
+            || ch > 127 && Character.isJavaIdentifierPart(ch));
+      String keywordOrIdentifier = sb.toString();
+      AnnotationTokens tok = AnnotationTokens.byName(keywordOrIdentifier);
+      if (tok == null) {
+         token = AnnotationTokens.IDENTIFIER;
+         identifier = keywordOrIdentifier;
+      } else {
+         token = tok;
+         identifier = null;
+      }
    }
 
-   public int mark() {
-      return bp;
+   public int getBufferPos() {
+      return inputPos;
    }
 
    public String getText(int startIndex, int endIndex) {
-      return new String(buf, startIndex, endIndex - startIndex);
+      return new String(input, startIndex, endIndex - startIndex);
    }
 
    public void nextToken() {
       lastPos = AnnotationElement.makePosition(line, col);
-      sp = 0;
+      sb.setLength(0);
       while (true) {
          pos = AnnotationElement.makePosition(line, col);
          switch (ch) {
@@ -277,7 +291,7 @@ final class AnnotationLexer {
             case '.':
                scanNextChar();
                if ('0' <= ch && ch <= '9') {
-                  putChar('.');
+                  sb.append('.');
                   scanDecimal();
                } else {
                   token = AnnotationTokens.DOT;
@@ -370,7 +384,7 @@ final class AnnotationLexer {
                return;
             case '"':
                scanNextChar();
-               while (ch != '"' && ch != '\r' && ch != '\n' && bp < buflen) {
+               while (ch != '"' && ch != '\r' && ch != '\n' && inputPos < input.length) {
                   scanLiteralChar();
                }
                if (ch == '"') {
@@ -407,7 +421,7 @@ final class AnnotationLexer {
                scanNextChar();
                continue;
             default:
-               if (ch == 0 && bp == buflen) {
+               if (ch == '\0' && inputPos == input.length) {
                   token = AnnotationTokens.EOF;
                } else if (Character.isJavaIdentifierStart(ch)) {
                   scanIdentifier();

@@ -47,6 +47,9 @@ public final class AnnotationParser {
       return annotations;
    }
 
+   /**
+    * Matches the expected token or fails throwing an AnnotationParserException.
+    */
    private void expect(AnnotationTokens token) {
       if (lexer.token == token) {
          lexer.nextToken();
@@ -58,9 +61,9 @@ public final class AnnotationParser {
 
    private String identifier() {
       if (lexer.token == AnnotationTokens.IDENTIFIER) {
-         String name = lexer.name;
+         String identifier = lexer.identifier;
          lexer.nextToken();
-         return name;
+         return identifier;
       } else {
          expect(AnnotationTokens.IDENTIFIER);
          return null;
@@ -68,12 +71,12 @@ public final class AnnotationParser {
    }
 
    private String qualifiedIdentifier() {
-      String qualIdent = identifier();
+      StringBuilder qualIdent = new StringBuilder(identifier());
       while (lexer.token == AnnotationTokens.DOT) {
          lexer.nextToken();
-         qualIdent = qualIdent + "." + identifier();
+         qualIdent.append(".").append(identifier());
       }
-      return qualIdent;
+      return qualIdent.toString();
    }
 
    private AnnotationElement.Annotation parseAnnotation() {
@@ -90,7 +93,7 @@ public final class AnnotationParser {
    private Map<String, AnnotationElement.Attribute> parseAttributes() {
       LinkedHashMap<String, AnnotationElement.Attribute> members = new LinkedHashMap<>();
       if (lexer.token == AnnotationTokens.LPAREN) {
-         int start = lexer.mark();
+         int start = lexer.getBufferPos();
          expect(AnnotationTokens.LPAREN);
          switch (lexer.token) {
             case AT: {
@@ -105,7 +108,7 @@ public final class AnnotationParser {
                long pos = lexer.pos;
                AnnotationElement.Identifier identifier = parseIdentifier();
                if (lexer.token == AnnotationTokens.EQ) {
-                  start = lexer.mark();
+                  start = lexer.getBufferPos();
                   expect(AnnotationTokens.EQ);
                   AnnotationElement.Value value = parseValue(start);
                   AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, identifier.getIdentifier(), value);
@@ -157,7 +160,7 @@ public final class AnnotationParser {
    private AnnotationElement.Attribute parseAttribute() {
       long pos = lexer.pos;
       String name = identifier();
-      int start = lexer.mark();
+      int start = lexer.getBufferPos();
       expect(AnnotationTokens.EQ);
       AnnotationElement.Value value = parseValue(start);
       return new AnnotationElement.Attribute(pos, name, value);
@@ -184,7 +187,7 @@ public final class AnnotationParser {
          case TRUE:
          case FALSE:
             AnnotationTokens tok = lexer.token;
-            String text = lexer.getText(start, lexer.mark());
+            String text = lexer.getText(start, lexer.getBufferPos());
             Object value = null;
             try {
                switch (tok) {
@@ -231,13 +234,13 @@ public final class AnnotationParser {
    }
 
    private AnnotationElement.Array parseArray() {
-      int start = lexer.mark();
+      int start = lexer.getBufferPos();
       long pos = lexer.pos;
       expect(AnnotationTokens.LBRACE);
       List<AnnotationElement.Value> values = new LinkedList<>();
       while (lexer.token != AnnotationTokens.RBRACE && lexer.token != AnnotationTokens.EOF) {
          values.add(parseValue(start));
-         start = lexer.mark();
+         start = lexer.getBufferPos();
          if (lexer.token != AnnotationTokens.RBRACE && lexer.token != AnnotationTokens.EOF) {
             expect(AnnotationTokens.COMMA);
          }
