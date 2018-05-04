@@ -442,13 +442,28 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
       try {
          if (fieldType == typeFactory.fromClass(Integer.class) || fieldType == typeFactory.fromClass(int.class)) {
-            return Integer.valueOf(defaultValue);
+            int v = parseInt(defaultValue);
+            if (v < 0 && protobufType.isUnsigned()) {
+               throw new ProtoSchemaBuilderException("Field '" + fieldName + "' of unsigned Protobuf type " + protobufType + " from class " + clazz.getCanonicalName() + " does not allow a negative default value : " + defaultValue);
+            }
+            return v;
          }
          if (fieldType == typeFactory.fromClass(Long.class) || fieldType == typeFactory.fromClass(long.class)) {
-            return Long.valueOf(defaultValue);
+            long v = parseLong(defaultValue);
+            if (v < 0 && protobufType.isUnsigned()) {
+               throw new ProtoSchemaBuilderException("Field '" + fieldName + "' of unsigned Protobuf type " + protobufType + " from class " + clazz.getCanonicalName() + " does not allow a negative default value : " + defaultValue);
+            }
+            return v;
          }
          if (fieldType == typeFactory.fromClass(Short.class) || fieldType == typeFactory.fromClass(short.class)) {
-            return Short.valueOf(defaultValue);
+            int v = parseInt(defaultValue);
+            if (v < 0 && protobufType.isUnsigned()) {
+               throw new ProtoSchemaBuilderException("Field '" + fieldName + "' of unsigned Protobuf type " + protobufType + " from class " + clazz.getCanonicalName() + " does not allow a negative default value : " + defaultValue);
+            }
+            if (v < Short.MIN_VALUE || v > Short.MAX_VALUE) {
+               throw new NumberFormatException("Value out of range for \"" + protobufType + "\": \"" + defaultValue);
+            }
+            return (short) v;
          }
          if (fieldType == typeFactory.fromClass(Double.class) || fieldType == typeFactory.fromClass(double.class)) {
             return Double.valueOf(defaultValue);
@@ -457,13 +472,20 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             return Float.valueOf(defaultValue);
          }
          if (fieldType == typeFactory.fromClass(Byte.class) || fieldType == typeFactory.fromClass(byte.class)) {
-            return Byte.valueOf(defaultValue);
+            int v = parseInt(defaultValue);
+            if (v < 0 && protobufType.isUnsigned()) {
+               throw new ProtoSchemaBuilderException("Field '" + fieldName + "' of unsigned Protobuf type " + protobufType + " from class " + clazz.getCanonicalName() + " does not allow a negative default value : " + defaultValue);
+            }
+            if (v < Byte.MIN_VALUE || v > Byte.MAX_VALUE) {
+               throw new NumberFormatException("Value out of range for \"" + protobufType + "\": \"" + defaultValue);
+            }
+            return (byte) v;
          }
          if (fieldType.isAssignableTo(typeFactory.fromClass(Date.class))) {
-            return Long.valueOf(defaultValue);
+            return Long.parseUnsignedLong(defaultValue);
          }
          if (fieldType.isAssignableTo(typeFactory.fromClass(Instant.class))) {
-            return Long.valueOf(defaultValue);
+            return Long.parseUnsignedLong(defaultValue);
          }
       } catch (NumberFormatException e) {
          throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName() + ": " + defaultValue, e);
@@ -500,6 +522,78 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          }
       }
       return baos.toByteArray();
+   }
+
+   private long parseLong(String value) {
+      if (value == null) {
+         throw new IllegalArgumentException("value argument cannot be null");
+      }
+      if (value.isEmpty()) {
+         throw new NumberFormatException("Empty input string");
+      }
+      String s = value;
+      boolean isNegative = false;
+
+      if (s.charAt(0) == '-') {
+         isNegative = true;
+         s = s.substring(1);
+      }
+
+      int radix;
+      if (s.length() > 1 && s.charAt(0) == '0') {
+         if (s.length() > 2 && (s.charAt(1) == 'x' || s.charAt(1) == 'X')) {
+            radix = 16;
+            s = s.substring(2);
+         } else {
+            radix = 8;
+            s = s.substring(1);
+         }
+      } else {
+         radix = 10;
+      }
+
+      try {
+         long v = Long.parseUnsignedLong(s, radix);
+         return isNegative ? -v : v;
+      } catch (NumberFormatException e) {
+         throw new NumberFormatException("For input string: \"" + value + "\"");
+      }
+   }
+
+   private int parseInt(String value) {
+      if (value == null) {
+         throw new IllegalArgumentException("value argument cannot be null");
+      }
+      if (value.isEmpty()) {
+         throw new NumberFormatException("Empty input string");
+      }
+      String s = value;
+      boolean isNegative = false;
+
+      if (s.charAt(0) == '-') {
+         isNegative = true;
+         s = s.substring(1);
+      }
+
+      int radix;
+      if (s.length() > 1 && s.charAt(0) == '0') {
+         if (s.length() > 2 && (s.charAt(1) == 'x' || s.charAt(1) == 'X')) {
+            radix = 16;
+            s = s.substring(2);
+         } else {
+            radix = 8;
+            s = s.substring(1);
+         }
+      } else {
+         radix = 10;
+      }
+
+      try {
+         int v = Integer.parseUnsignedInt(s, radix);
+         return isNegative ? -v : v;
+      } catch (NumberFormatException e) {
+         throw new NumberFormatException("For input string: \"" + value + "\"");
+      }
    }
 
    private XClass getCollectionImplementation(XClass clazz, XClass fieldType, XClass configuredCollection, String fieldName, boolean isRepeated) {

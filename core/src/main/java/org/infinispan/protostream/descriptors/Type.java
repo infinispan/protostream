@@ -63,4 +63,16 @@ public enum Type {
    public int getWireType() {
       return wireType;
    }
+
+   public boolean isUnsigned() {
+      return this == UINT32 ||
+            this == UINT64 ||
+            this == FIXED32 ||
+            this == FIXED64;
+   }
+
+   @Override
+   public String toString() {
+      return name().toLowerCase();
+   }
 }

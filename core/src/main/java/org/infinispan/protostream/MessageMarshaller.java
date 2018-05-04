@@ -49,7 +49,7 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       int[] readInts(String fieldName) throws IOException;
 
-      Long readLong(String fieldName) throws IOException;
+      Long readLong(String fieldName) throws IOException;  //TODO implement 'type-based' default values where a default value was not specified in schema
 
       long[] readLongs(String fieldName) throws IOException;
 
