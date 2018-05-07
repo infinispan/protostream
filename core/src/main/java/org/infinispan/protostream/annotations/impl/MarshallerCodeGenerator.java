@@ -692,8 +692,8 @@ final class MarshallerCodeGenerator {
    }
 
    /**
-    * Cast the given value if necessary. This is usually needed for the types that are represented as an int32 because
-    * of protobuf's lack of support for integral types of 8 and 16 bits.
+    * Cast the given value if necessary. This is usually needed for the types that we are forced to represent as 32 bit
+    * integers because of protobuf's lack of support for integral types of 8 and 16 bits.
     */
    private String convert(String v, ProtoFieldMetadata fieldMetadata) {
       if (fieldMetadata.getJavaType() == Character.class) {
