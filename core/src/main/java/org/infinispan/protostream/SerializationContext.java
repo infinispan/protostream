@@ -5,8 +5,8 @@ import java.io.IOException;
 import org.infinispan.protostream.config.Configuration;
 
 /**
- * A repository for protobuf definitions and marshallers. All marshalling operations happen in the context of a {@code
- * SerializationContext}.
+ * A repository for Protobuf type definitions and their marshallers. All marshalling operations happen in the context of
+ * a {@code SerializationContext}.
  *
  * @author anistor@redhat.com
  * @since 1.0
@@ -28,7 +28,7 @@ public interface SerializationContext extends ImmutableSerializationContext {
    void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException;
 
    /**
-    * Unregisters a file. Types from dependant files are removed too.
+    * Unregisters a file. Types from all dependant files are removed too and their status is set to
     */
    void unregisterProtoFile(String fileName);
 
@@ -46,19 +46,21 @@ public interface SerializationContext extends ImmutableSerializationContext {
    void unregisterMarshallerProvider(MarshallerProvider marshallerProvider);
 
    /**
-    * Interface to be implemented for dynamic lookup of marshallers.
+    * Interface to be implemented for dynamic lookup of marshallers. The marshaller instances returned by the provider
+    * are never cached internally by Protostream and a new invocation is performed each time the marshaller for a type
+    * is needed. The provider is responsible for caching the marshaller instance if this is suitable and worthwhile.
     */
    interface MarshallerProvider {
 
       /**
-       * Get marshaller given a type name.
+       * Get a marshaller instance for the given type name.
        *
        * @return the marshaller instance or {@code null} if the types cannot be marshalled by this provider
        */
       BaseMarshaller<?> getMarshaller(String typeName);
 
       /**
-       * Get marshaller given a Java class.
+       * Get a marshaller instance for the given Java class.
        *
        * @return the marshaller instance or {@code null} if the java class cannot be marshalled by this provider
        */

@@ -8,6 +8,10 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 
 /**
+ * A repository of Protobuf type definitions and their marshallers. All marshalling operations happen in the context of
+ * a {@link SerializationContext}. The {@link ImmutableSerializationContext} is a super-interface that contains strictly
+ * read-only methods while its descendant {@link SerializationContext} provides methods to mutate the context.
+ *
  * @author anistor@redhat.com
  * @since 4.0
  */
@@ -40,7 +44,7 @@ public interface ImmutableSerializationContext {
    boolean canMarshall(Class<?> javaClass);
 
    /**
-    * Checks if the given type (message or enum) can be marshalled. This checks that the type name was defined and a
+    * Checks if the given type (message or enum) can be marshalled. This checks that the Protobuf type was defined and a
     * marshaller was registered for it.
     *
     * @param fullTypeName the fully qualified name of the protobuf definition to check
@@ -48,12 +52,26 @@ public interface ImmutableSerializationContext {
     */
    boolean canMarshall(String fullTypeName);
 
+   /**
+    * Obtains the marshaller associated with a Protobuf type name.
+    *
+    * @param fullTypeName the type name
+    * @return the marshaller
+    * @throws IllegalArgumentException if the given type name is unknown
+    */
    <T> BaseMarshaller<T> getMarshaller(String fullTypeName);
 
+   /**
+    * Obtains the marshaller associated with a Java type.
+    *
+    * @param clazz the class
+    * @return the marshaller
+    * @throws IllegalArgumentException if the given Java type is unknown
+    */
    <T> BaseMarshaller<T> getMarshaller(Class<T> clazz);
 
    /**
-    * Obtains the type name associated with a numeric type id.
+    * Obtains the Protobuf type name associated with a numeric type id.
     *
     * @param typeId the numeric type id
     * @return the fully qualified type name
@@ -62,7 +80,7 @@ public interface ImmutableSerializationContext {
    String getTypeNameById(Integer typeId);
 
    /**
-    * Obtains the associated numeric type id, if one was defined.
+    * Obtains the associated numeric type id for a Protobuf type name, if a numeric id was defined.
     *
     * @param fullTypeName the fully qualified type name
     * @return the type id or {@code null} if no type id is associated with the type
@@ -71,13 +89,20 @@ public interface ImmutableSerializationContext {
    Integer getTypeIdByName(String fullTypeName);
 
    /**
-    * Obtains the type name associated with a numeric type id.
+    * Obtains the descriptor associated with a numeric type id.
     *
     * @param typeId the numeric type id
-    * @return the fully qualified type name
+    * @return the descriptor
     * @throws IllegalArgumentException if the given type id is unknown
     */
    GenericDescriptor getDescriptorByTypeId(Integer typeId);
 
+   /**
+    * Obtains the descriptor associated with a type name.
+    *
+    * @param fullTypeName the numeric type id
+    * @return the descriptor
+    * @throws IllegalArgumentException if the given type name is unknown
+    */
    GenericDescriptor getDescriptorByName(String fullTypeName);
 }

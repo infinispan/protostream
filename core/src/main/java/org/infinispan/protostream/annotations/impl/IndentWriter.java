@@ -10,14 +10,23 @@ import java.io.StringWriter;
  */
 final class IndentWriter extends StringWriter {
 
+   /**
+    * The 'equivalent' of one TAB character, because we do not use TABs.
+    */
    private static final String TAB = "   ";
    private int indent = 0;
    private boolean indentNeeded = false;
 
+   /**
+    * Increase indentation.
+    */
    public void inc() {
       indent++;
    }
 
+   /**
+    * Decrease indentation.
+    */
    public void dec() {
       if (indent > 0) {
          indent--;
@@ -25,7 +34,7 @@ final class IndentWriter extends StringWriter {
    }
 
    @Override
-   public final void write(int c) {
+   public void write(int c) {
       if (indentNeeded) {
          indentNeeded = false;
          for (int i = 0; i < indent; i++) {
@@ -39,14 +48,14 @@ final class IndentWriter extends StringWriter {
    }
 
    @Override
-   public final void write(char[] buf, int off, int len) {
+   public void write(char[] buf, int off, int len) {
       for (int i = off; i < off + len; i++) {
          write(buf[i]);
       }
    }
 
    @Override
-   public final void write(String s) {
+   public void write(String s) {
       if (s == null) {
          s = "null";
       }
@@ -54,7 +63,7 @@ final class IndentWriter extends StringWriter {
    }
 
    @Override
-   public final void write(String s, int off, int len) {
+   public void write(String s, int off, int len) {
       for (int i = off; i < off + len; i++) {
          write(s.charAt(i));
       }
