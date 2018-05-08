@@ -174,7 +174,6 @@ public final class ProtoSchemaGenerator {
          }
          if (marshallerClass != null) {
             BaseMarshaller marshaller = marshallerClass.newInstance();
-            ptm.setMarshaller(marshaller);
             serializationContext.registerMarshaller(marshaller);
          }
       }
@@ -206,7 +205,7 @@ public final class ProtoSchemaGenerator {
          // this is a known type, defined in another schema file that we'll need to import
          BaseMarshaller<?> marshaller = serializationContext.getMarshaller(javaType);
          GenericDescriptor descriptor = serializationContext.getDescriptorByName(marshaller.getTypeName());
-         protoTypeMetadata = new ProtoTypeMetadata(descriptor, marshaller);
+         protoTypeMetadata = new ImportedProtoTypeMetadata(descriptor, marshaller);
          imports.add(descriptor.getFileDescriptor().getName());
       } else if (javaType.isEnum()) {
          protoTypeMetadata = new ProtoEnumTypeMetadata((Class<? extends Enum>) javaType);

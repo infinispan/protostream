@@ -1,16 +1,10 @@
 package org.infinispan.protostream.annotations.impl;
 
-import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.descriptors.EnumDescriptor;
-import org.infinispan.protostream.descriptors.EnumValueDescriptor;
-import org.infinispan.protostream.descriptors.GenericDescriptor;
-
 /**
  * @author anistor@redhat.com
  * @since 3.0
  */
-class ProtoTypeMetadata implements HasProtoSchema {
+abstract class ProtoTypeMetadata implements HasProtoSchema {
 
    protected final String name;
 
@@ -18,30 +12,12 @@ class ProtoTypeMetadata implements HasProtoSchema {
 
    protected final String documentation;
 
-   protected GenericDescriptor descriptor;
-
-   protected BaseMarshaller marshaller;
-
    protected ProtoMessageTypeMetadata outerType;
 
-   /**
-    * Constructor for a type that is already marshallable by SerializationContext. No schema or code is generated for it.
-    */
-   ProtoTypeMetadata(GenericDescriptor descriptor, BaseMarshaller<?> marshaller) {
-      this.descriptor = descriptor;
-      this.marshaller = marshaller;
-      this.name = marshaller.getTypeName();
-      this.javaClass = marshaller.getJavaClass();
-      this.documentation = null;
-   }
-
-   /**
-    * Constructor to be used by derived classes, not for direct instantiation.
-    */
-   protected ProtoTypeMetadata(String name, Class<?> javaClass) {
+   protected ProtoTypeMetadata(String name, Class<?> javaClass, String documentation) {
       this.name = name;
       this.javaClass = javaClass;
-      this.documentation = DocumentationExtractor.getDocumentation(javaClass);
+      this.documentation = documentation;
    }
 
    public String getName() {
@@ -72,39 +48,19 @@ class ProtoTypeMetadata implements HasProtoSchema {
       return canonicalName != null ? canonicalName : javaClass.getName();
    }
 
-   public BaseMarshaller getMarshaller() {
-      return marshaller;
-   }
+   public abstract boolean isEnum();
 
-   public void setMarshaller(BaseMarshaller marshaller) {
-      this.marshaller = marshaller;
-   }
+   public abstract ProtoEnumValueMetadata getEnumMemberByName(String name);
 
-   public boolean isEnum() {
-      return marshaller instanceof EnumMarshaller;
-   }
-
-   public ProtoEnumValueMetadata getEnumMemberByName(String name) {
-      if (!isEnum()) {
-         throw new IllegalStateException(getFullName() + " is not an enum");
-      }
-      EnumValueDescriptor evd = ((EnumDescriptor) descriptor).findValueByName(name);
-      if (evd == null) {
-         return null;
-      }
-      Enum ev = ((EnumMarshaller) marshaller).decode(evd.getNumber());
-      return new ProtoEnumValueMetadata(evd.getNumber(), name, ev, null);
-   }
-
-   public ProtoMessageTypeMetadata getOuterType() {
+   public final ProtoMessageTypeMetadata getOuterType() {
       return outerType;
    }
 
-   protected void setOuterType(ProtoMessageTypeMetadata outerType) {
+   protected final void setOuterType(ProtoMessageTypeMetadata outerType) {
       this.outerType = outerType;
    }
 
-   public boolean isTopLevel() {
+   public final boolean isTopLevel() {
       return outerType == null;
    }
 

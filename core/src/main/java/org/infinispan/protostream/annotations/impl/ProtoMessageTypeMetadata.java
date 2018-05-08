@@ -44,7 +44,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    private final Map<Class<?>, ProtoTypeMetadata> innerTypes = new HashMap<>();
 
    ProtoMessageTypeMetadata(ProtoSchemaGenerator protoSchemaGenerator, Class<?> messageClass) {
-      super(getProtoName(messageClass), messageClass);
+      super(getProtoName(messageClass), messageClass, DocumentationExtractor.getDocumentation(messageClass));
       this.protoSchemaGenerator = protoSchemaGenerator;
 
       checkInstantiability();
@@ -118,6 +118,11 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    @Override
    public boolean isEnum() {
       return false;
+   }
+
+   @Override
+   public ProtoEnumValueMetadata getEnumMemberByName(String name) {
+      throw new IllegalStateException(javaClass.getCanonicalName() + " is not an enum");
    }
 
    @Override
