@@ -27,7 +27,7 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
    private Map<String, ProtoEnumValueMetadata> membersByName;
 
    ProtoEnumTypeMetadata(Class<? extends Enum> enumClass) {
-      super(getProtoName(enumClass), enumClass);
+      super(getProtoName(enumClass), enumClass, DocumentationExtractor.getDocumentation(enumClass));
    }
 
    private static String getProtoName(Class<? extends Enum> enumClass) {
@@ -77,6 +77,11 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
+   public boolean isEnum() {
+      return true;
+   }
+
+   @Override
    public ProtoEnumValueMetadata getEnumMemberByName(String name) {
       scanMemberAnnotations();
       return membersByName.get(name);
@@ -99,10 +104,5 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       }
       iw.dec();
       iw.append("}\n");
-   }
-
-   @Override
-   public boolean isEnum() {
-      return true;
    }
 }
