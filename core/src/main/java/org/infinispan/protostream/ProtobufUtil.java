@@ -162,6 +162,7 @@ public final class ProtobufUtil {
       return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(byteBuffer));
    }
 
+   //todo [anistor] should make it possible to plug in a custom wrapping strategy instead of the default one
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
