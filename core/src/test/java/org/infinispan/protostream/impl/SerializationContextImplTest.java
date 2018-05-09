@@ -17,6 +17,7 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ImmutableSerializationContext;
+import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
@@ -40,7 +41,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testRegisterProtoFiles() throws Exception {
+   public void testRegisterProtoFiles() {
       SerializationContextImpl ctx = createContext();
 
       String file1 = "syntax = \"proto3\";\n" +
@@ -99,6 +100,95 @@ public class SerializationContextImplTest {
       }
    }
 
+   // ColorType1 should not be an Enum
+   enum ColorType1 {
+      GREEN, RED;
+   }
+
+   @Test
+   public void testRegisterImproperMarshaller1() {
+      exception.expect(IllegalArgumentException.class);
+      exception.expectMessage("Invalid marshaller (the produced class is a Java Enum but the marshaller is not an EnumMarshaller)");
+
+      SerializationContextImpl ctx = createContext();
+
+      String file = "package test;\n" +
+            "message Color {\n" +
+            "   optional int32 color = 1;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
+      ctx.registerProtoFiles(fileDescriptorSource);
+
+      ctx.registerMarshaller(new MessageMarshaller<ColorType1>() {
+         @Override
+         public Class<ColorType1> getJavaClass() {
+            return ColorType1.class;
+         }
+
+         @Override
+         public String getTypeName() {
+            return "test.Color";
+         }
+
+         @Override
+         public ColorType1 readFrom(ProtoStreamReader reader) {
+            // never invoked
+            return null;
+         }
+
+         @Override
+         public void writeTo(ProtoStreamWriter writer, ColorType1 color) {
+            // never invoked
+         }
+      });
+   }
+
+   // ColorType2 should be an Enum
+   class ColorType2 {
+      public int rgb;
+   }
+
+   @Test
+   public void testRegisterImproperMarshaller2() {
+      exception.expect(IllegalArgumentException.class);
+      exception.expectMessage("test.Color is not a message type");
+
+      SerializationContextImpl ctx = createContext();
+
+      String file = "package test;\n" +
+            "enum Color {\n" +
+            "   GREEN = 1;\n" +
+            "   RED = 2;\n" +
+            "}";
+
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
+      ctx.registerProtoFiles(fileDescriptorSource);
+
+      ctx.registerMarshaller(new MessageMarshaller<ColorType2>() {
+         @Override
+         public Class<ColorType2> getJavaClass() {
+            return ColorType2.class;
+         }
+
+         @Override
+         public String getTypeName() {
+            return "test.Color";
+         }
+
+         @Override
+         public ColorType2 readFrom(ProtoStreamReader reader) {
+            // never invoked
+            return null;
+         }
+
+         @Override
+         public void writeTo(ProtoStreamWriter writer, ColorType2 color) {
+            // never invoked
+         }
+      });
+   }
+
    @Test
    public void testMarshallerProvider() throws Exception {
       SerializationContextImpl ctx = createContext();
@@ -112,7 +202,7 @@ public class SerializationContextImplTest {
 
          Integer f;
 
-         X(Integer f) {
+         private X(Integer f) {
             this.f = f;
          }
       }
@@ -176,7 +266,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testTwoFilesWithErrorsAtOnce() throws Exception {
+   public void testTwoFilesWithErrorsAtOnce() {
       SerializationContextImpl ctx = createContext();
       Map<String, Throwable> errors = new HashMap<>();
       List<String> successful = new ArrayList<>();
@@ -208,7 +298,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testTwoFilesWithErrorsSeparately() throws Exception {
+   public void testTwoFilesWithErrorsSeparately() {
       SerializationContextImpl ctx = createContext();
 
       Map<String, Throwable> errors1 = new HashMap<>();
@@ -260,7 +350,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testUnregisterMissingFiles() throws Exception {
+   public void testUnregisterMissingFiles() {
       exception.expect(IllegalArgumentException.class);
       exception.expectMessage("File test.proto does not exist");
 
@@ -269,7 +359,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testUnregisterFileWithErrors() throws Exception {
+   public void testUnregisterFileWithErrors() {
       SerializationContextImpl ctx = createContext();
       Map<String, Throwable> errors = new HashMap<>();
       List<String> successful = new ArrayList<>();
@@ -299,7 +389,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testFileCanExistWithSemanticErrors() throws Exception {
+   public void testFileCanExistWithSemanticErrors() {
       SerializationContextImpl ctx = createContext();
       FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "import \"no_such_file.proto\";");
 
@@ -319,7 +409,7 @@ public class SerializationContextImplTest {
     * Test that files with syntax errors DO NOT get registered if there is no progress callback present.
     */
    @Test
-   public void testFileCannotExistWithParsingErrors() throws Exception {
+   public void testFileCannotExistWithParsingErrors() {
       SerializationContextImpl ctx = createContext();
       FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "this is bogus");
 
@@ -338,7 +428,7 @@ public class SerializationContextImplTest {
     * Test that files with syntax errors DO get registered if there is a progress callback present.
     */
    @Test
-   public void testFileCanExistWithParsingErrors() throws Exception {
+   public void testFileCanExistWithParsingErrors() {
       SerializationContextImpl ctx = createContext();
       FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "this is bogus")
             .withProgressCallback(new FileDescriptorSource.ProgressCallback() {
@@ -350,7 +440,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testDuplicateTypeIdInDifferentFiles() throws Exception {
+   public void testDuplicateTypeIdInDifferentFiles() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate type id 10 for type test2.M2. Already used by test1.M1");
 
@@ -374,7 +464,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testDuplicateTypeIdInSameFile() throws Exception {
+   public void testDuplicateTypeIdInSameFile() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate type id 10 for type test1.M2. Already used by test1.M1");
 
@@ -393,7 +483,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testEnumConstantNameClashesWithOtherType1() throws Exception {
+   public void testEnumConstantNameClashesWithOtherType1() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
 
@@ -410,7 +500,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testEnumConstantNameClashesWithOtherType2() throws Exception {
+   public void testEnumConstantNameClashesWithOtherType2() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
 
@@ -433,7 +523,7 @@ public class SerializationContextImplTest {
    }
 
    @Test
-   public void testEnumConstantNameClashesWithOtherType3() throws Exception {
+   public void testEnumConstantNameClashesWithOtherType3() {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
 
