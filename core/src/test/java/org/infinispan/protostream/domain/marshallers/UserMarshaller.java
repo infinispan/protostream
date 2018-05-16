@@ -26,7 +26,7 @@ public class UserMarshaller implements MessageMarshaller<User> {
    }
 
    @Override
-   public Class<? extends User> getJavaClass() {
+   public Class<User> getJavaClass() {
       return User.class;
    }
 

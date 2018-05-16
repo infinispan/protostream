@@ -17,7 +17,7 @@ public class TransactionMarshaller implements MessageMarshaller<Transaction> {
    }
 
    @Override
-   public Class<? extends Transaction> getJavaClass() {
+   public Class<Transaction> getJavaClass() {
       return Transaction.class;
    }
 

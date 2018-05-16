@@ -34,7 +34,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
          }
 
          @Override
-         public Class<? extends int[]> getJavaClass() {
+         public Class<int[]> getJavaClass() {
             return int[].class;
          }
 
@@ -84,7 +84,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
          }
 
          @Override
-         public Class<? extends UserList> getJavaClass() {
+         public Class<UserList> getJavaClass() {
             return UserList.class;
          }
 
