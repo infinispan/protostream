@@ -19,7 +19,7 @@ public class AccountMarshaller implements MessageMarshaller<Account> {
    }
 
    @Override
-   public Class<? extends Account> getJavaClass() {
+   public Class<Account> getJavaClass() {
       return Account.class;
    }
 

@@ -16,7 +16,7 @@ public class AddressMarshaller implements MessageMarshaller<Address> {
    }
 
    @Override
-   public Class<? extends Address> getJavaClass() {
+   public Class<Address> getJavaClass() {
       return Address.class;
    }
 

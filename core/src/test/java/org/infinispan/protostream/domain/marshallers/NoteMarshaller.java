@@ -45,7 +45,7 @@ public class NoteMarshaller implements MessageMarshaller<Note> {
    }
 
    @Override
-   public Class<? extends Note> getJavaClass() {
+   public Class<Note> getJavaClass() {
       return Note.class;
    }
 

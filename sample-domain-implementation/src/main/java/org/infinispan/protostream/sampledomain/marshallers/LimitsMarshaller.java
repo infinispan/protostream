@@ -16,7 +16,7 @@ public class LimitsMarshaller implements MessageMarshaller<Account.Limits> {
    }
 
    @Override
-   public Class<? extends Account.Limits> getJavaClass() {
+   public Class<Account.Limits> getJavaClass() {
       return Account.Limits.class;
    }
 

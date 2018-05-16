@@ -6,7 +6,7 @@ import org.infinispan.protostream.domain.Account;
 public class CurrencyMarshaller implements EnumMarshaller<Account.Currency> {
 
    @Override
-   public Class<? extends Account.Currency> getJavaClass() {
+   public Class<Account.Currency> getJavaClass() {
       return Account.Currency.class;
    }
 

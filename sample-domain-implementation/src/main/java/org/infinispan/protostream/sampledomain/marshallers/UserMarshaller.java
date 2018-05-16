@@ -24,7 +24,7 @@ public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetH
    }
 
    @Override
-   public Class<? extends User> getJavaClass() {
+   public Class<User> getJavaClass() {
       return User.class;
    }
 

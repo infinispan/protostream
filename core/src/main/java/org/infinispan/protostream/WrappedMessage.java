@@ -334,7 +334,7 @@ public final class WrappedMessage {
    public static final class Marshaller implements RawProtobufMarshaller<WrappedMessage> {
 
       @Override
-      public Class<? extends WrappedMessage> getJavaClass() {
+      public Class<WrappedMessage> getJavaClass() {
          return WrappedMessage.class;
       }
 
