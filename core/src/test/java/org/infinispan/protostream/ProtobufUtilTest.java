@@ -251,7 +251,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    @Test
-   public void testArrayfEnum() throws Exception {
+   public void testArrayOfEnum() throws Exception {
       Account account = createAccount();
       SerializationContext context = createContext();
       byte[] bytes = ProtobufUtil.toWrappedByteArray(context, account);
@@ -310,5 +310,4 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
          fail("Invalid json found:" + json);
       }
    }
-
 }
