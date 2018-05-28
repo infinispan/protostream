@@ -130,9 +130,9 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       if (fields == null) {
          // use a TreeMap to ensure ascending order by field number
          fields = new TreeMap<>();
-         Map<String, ProtoFieldMetadata> fieldByName = new HashMap<>();
+         Map<String, ProtoFieldMetadata> fieldsByName = new HashMap<>();
          Set<Class<?>> examinedClasses = new HashSet<>();
-         discoverFields(javaClass, examinedClasses, fields, fieldByName);
+         discoverFields(javaClass, examinedClasses, fields, fieldsByName);
          if (fields.isEmpty()) {
             throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller.");
          }
@@ -141,13 +141,12 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    private void checkConstructor() {
-      Constructor<?> ctor;
+      Constructor<?> ctor = null;
       try {
          ctor = javaClass.getDeclaredConstructor();
-      } catch (NoSuchMethodException e) {
-         throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " must have a non-private no argument constructor");
+      } catch (NoSuchMethodException ignored) {
       }
-      if (Modifier.isPrivate(ctor.getModifiers())) {
+      if (ctor == null || Modifier.isPrivate(ctor.getModifiers())) {
          throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " must have a non-private no argument constructor");
       }
    }
@@ -234,6 +233,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                }
 
                fieldsByNumber.put(fieldMetadata.getNumber(), fieldMetadata);
+               fieldsByName.put(fieldName, fieldMetadata);
             }
          }
       }
@@ -357,6 +357,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                }
 
                fieldsByNumber.put(annotation.number(), fieldMetadata);
+               fieldsByName.put(fieldName, fieldMetadata);
             }
          }
       }

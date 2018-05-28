@@ -68,7 +68,7 @@ public final class EnumValueDescriptor {
 
    void setContainingEnum(EnumDescriptor enumDescriptor) {
       this.enumDescriptor = enumDescriptor;
-      fullName = enumDescriptor.getFullName() + "." + name;
+      fullName = enumDescriptor.getFullName() + '.' + name;
       scopedName = enumDescriptor.getFullName().substring(0, enumDescriptor.getFullName().length()
             - enumDescriptor.getName().length()) + name;
    }

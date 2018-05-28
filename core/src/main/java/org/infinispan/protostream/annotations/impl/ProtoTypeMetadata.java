@@ -19,6 +19,9 @@ class ProtoTypeMetadata implements HasProtoSchema {
 
    protected ProtoMessageTypeMetadata outerType;
 
+   /**
+    * Constructor for a type that is already marshallable by SerializationContext. No schema or code is generated for it.
+    */
    ProtoTypeMetadata(BaseMarshaller<?> marshaller) {
       this.marshaller = marshaller;
       this.name = marshaller.getTypeName();
@@ -26,6 +29,9 @@ class ProtoTypeMetadata implements HasProtoSchema {
       this.documentation = null;
    }
 
+   /**
+    * Constructor to be used by derived classes, not for direct instantiation.
+    */
    protected ProtoTypeMetadata(String name, Class<?> javaClass) {
       this.name = name;
       this.javaClass = javaClass;
