@@ -116,8 +116,8 @@
         <version.jboss.logging>3.3.1.Final</version.jboss.logging>
         <version.jboss.logging.processor>1.2.1.Final</version.jboss.logging.processor>
         <version.log4j>1.2.17</version.log4j>
-        <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
-        <version.javassist>3.20.0-GA</version.javassist>
+        <version.jboss.marshalling>2.0.5.Final</version.jboss.marshalling>
+        <version.javassist>3.23.1-GA</version.javassist>
         <version.osgi>4.3.1</version.osgi>
         <version.commons-cli>1.2</version.commons-cli>
         <version.gson>2.8.2</version.gson>
@@ -187,6 +187,13 @@
                 <version>${version.jboss.logging.processor}</version>
                 <scope>provided</scope>
                 <optional>true</optional>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>1.3.1</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
