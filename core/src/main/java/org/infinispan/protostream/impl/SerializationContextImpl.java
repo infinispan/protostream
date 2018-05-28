@@ -182,18 +182,21 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshaller argument cannot be null");
       }
       BaseMarshallerDelegate<?> marshallerDelegate = makeMarshallerDelegate(marshaller);
-      marshallersByName.put(marshaller.getTypeName(), marshallerDelegate);
+      BaseMarshallerDelegate<?> existingDelegate = marshallersByName.put(marshaller.getTypeName(), marshallerDelegate);
+      if (existingDelegate != null) {
+         marshallersByClass.remove(existingDelegate.getMarshaller().getJavaClass());
+      }
       marshallersByClass.put(marshaller.getJavaClass(), marshallerDelegate);
    }
 
    private BaseMarshallerDelegate<?> makeMarshallerDelegate(BaseMarshaller<?> marshaller) {
       if (marshaller.getJavaClass().isEnum() && !(marshaller instanceof EnumMarshaller)) {
-         throw new IllegalArgumentException("Invalid marshaller (the produced class is a Java Enum but the marshaller is not an EnumMarshaller) : " + marshaller);
+         throw new IllegalArgumentException("Invalid marshaller (the produced class is a Java Enum but the marshaller is not an EnumMarshaller) : " + marshaller.getClass().getName());
       }
       // we try to validate first that a message descriptor exists
       if (marshaller instanceof EnumMarshaller) {
          if (!marshaller.getJavaClass().isEnum()) {
-            throw new IllegalArgumentException("Invalid enum marshaller (the produced class is not a Java Enum) : " + marshaller);
+            throw new IllegalArgumentException("Invalid enum marshaller (the produced class is not a Java Enum) : " + marshaller.getClass().getName());
          }
          EnumDescriptor enumDescriptor = getEnumDescriptor(marshaller.getTypeName());
          return new EnumMarshallerDelegate<>((EnumMarshaller<?>) marshaller, enumDescriptor);
@@ -211,7 +214,7 @@ public final class SerializationContextImpl implements SerializationContext {
       }
       BaseMarshallerDelegate<?> marshallerDelegate = marshallersByName.get(marshaller.getTypeName());
       if (marshallerDelegate == null || marshallerDelegate.getMarshaller() != marshaller) {
-         throw new IllegalArgumentException("The given marshaller was not previously registered");
+         throw new IllegalArgumentException("The given marshaller was not previously registered with this SerializationContext");
       }
       marshallersByName.remove(marshaller.getTypeName());
       marshallersByClass.remove(marshaller.getJavaClass());
@@ -258,7 +261,7 @@ public final class SerializationContextImpl implements SerializationContext {
       if (marshallerDelegate == null) {
          BaseMarshaller<?> marshaller = getMarshallerFromProvider(descriptorFullName);
          if (marshaller == null) {
-            throw new IllegalArgumentException("No marshaller registered for " + descriptorFullName);
+            throw new IllegalArgumentException("No marshaller registered for Protobuf type " + descriptorFullName);
          }
          marshallerDelegate = (BaseMarshallerDelegate<T>) makeMarshallerDelegate(marshaller);
       }
@@ -270,7 +273,7 @@ public final class SerializationContextImpl implements SerializationContext {
       if (marshallerDelegate == null) {
          BaseMarshaller<?> marshaller = getMarshallerFromProvider(javaClass);
          if (marshaller == null) {
-            throw new IllegalArgumentException("No marshaller registered for " + javaClass.getName());
+            throw new IllegalArgumentException("No marshaller registered for Java type " + javaClass.getName());
          }
          marshallerDelegate = (BaseMarshallerDelegate<T>) makeMarshallerDelegate(marshaller);
       }

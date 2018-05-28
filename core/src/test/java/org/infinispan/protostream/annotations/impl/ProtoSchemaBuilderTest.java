@@ -3,9 +3,11 @@ package org.infinispan.protostream.annotations.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
@@ -17,10 +19,12 @@ import java.util.Map;
 
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.testdomain.Simple;
@@ -108,7 +112,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
     * Abstract field types in a message class are not accepted.
     */
    @Test
-   public void tesAbstractClass() throws Exception {
+   public void testAbstractClass() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
       exception.expectMessage("The type org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$MessageWithAbstractFieldType$AbstractType of field 'testField1' of class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$MessageWithAbstractFieldType should not be abstract.");
 
@@ -377,6 +381,76 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
             .packageName("test_package1")
             .addClass(TestCase_DuplicateEnumValueName.E.class)
             .build(ctx);
+   }
+
+   @ProtoMessage(name = "User")
+   static class AnotherUser {
+
+      @ProtoField(number = 1, defaultValue = "1")
+      public byte gender;
+   }
+
+   @Test
+   public void testReplaceExistingMarshallerWithAnnotations() throws Exception {
+      SerializationContext ctx = createContext();
+
+      assertTrue(ctx.canMarshall("sample_bank_account.User"));
+      assertTrue(ctx.canMarshall(org.infinispan.protostream.domain.User.class));
+
+      // replace 'sample_bank_account.User' with a new definition and also generate and register a new marshaller for it
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder
+            .fileName("sample_bank_account/bank.proto")
+            .packageName("sample_bank_account")
+            .addClass(AnotherUser.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall("sample_bank_account.User"));
+      assertTrue(ctx.canMarshall(AnotherUser.class));
+      // this 'sample_bank_account.User' definition does not have a 'name' field
+      assertNull(ctx.getMessageDescriptor("sample_bank_account.User").findFieldByName("name"));
+
+      // the old Java type it was mapping to is no longer marshallable
+      assertFalse(ctx.canMarshall(org.infinispan.protostream.domain.User.class));
+   }
+
+   @Test
+   public void testReplaceExistingMarshaller() throws Exception {
+      SerializationContext ctx = createContext();
+
+      assertTrue(ctx.canMarshall("sample_bank_account.User"));
+      assertTrue(ctx.canMarshall(org.infinispan.protostream.domain.User.class));
+
+      MessageMarshaller<AnotherUser> anotherUserMarshaller = new MessageMarshaller<AnotherUser>() {
+
+         @Override
+         public AnotherUser readFrom(ProtoStreamReader reader) throws IOException {
+            int gender = reader.readInt("gender");
+            AnotherUser anotherUser = new AnotherUser();
+            anotherUser.gender = (byte) gender;
+            return anotherUser;
+         }
+
+         @Override
+         public void writeTo(ProtoStreamWriter writer, AnotherUser user) throws IOException {
+            writer.writeInt("gender", user.gender);
+         }
+
+         @Override
+         public String getTypeName() {
+            return "sample_bank_account.User";
+         }
+
+         @Override
+         public Class<AnotherUser> getJavaClass() {
+            return AnotherUser.class;
+         }
+      };
+      ctx.registerMarshaller(anotherUserMarshaller);
+
+      assertTrue(ctx.canMarshall("sample_bank_account.User"));
+      assertTrue(ctx.canMarshall(AnotherUser.class));
+      assertFalse(ctx.canMarshall(org.infinispan.protostream.domain.User.class));
    }
 
    static class MessageWithAllFieldTypes {
