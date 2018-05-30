@@ -108,7 +108,7 @@
         <version.maven.animalsniffer>1.16</version.maven.animalsniffer>
         <version.maven.shade>3.1.1</version.maven.shade>
 
-        <version.protobuf>3.0.2</version.protobuf>
+        <version.protobuf>3.6.1</version.protobuf>
         <version.junit>4.12</version.junit>
         <version.jcipannotations>1.0</version.jcipannotations>
         <version.fest.assertions>2.0M10</version.fest.assertions>
