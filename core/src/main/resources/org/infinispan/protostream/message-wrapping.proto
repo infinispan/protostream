@@ -4,10 +4,16 @@ package org.infinispan.protostream;
 
 /**
  * Protobuf messages do not indicate their message type or structure. Readers of protobuf data streams are expected to
- * know what message type to expect next in the stream.
- * WrappedMessage is intended to solve this problem of self-describing messages by allowing the stream reader to detect
- * the type of the message. Still, message structure is not provided as it would not be efficient. The user is expected
- * to have knowledge of the structure once it knows the type.
+ * know in advance what message type to expect next in the stream. Also, the wire format is not self-delimiting so the
+ * length of the next message must be known in advance of be detected correctly so that not too much nor too little is
+ * read. This is particularly important is multiple messages are contained in a stream.
+ * A detailed explanation is oferred here: https://developers.google.com/protocol-buffers/docs/techniques#streaming
+ * <p>
+ * WrappedMessage solves this problem of self-describing messages by allowing the stream reader to detect
+ * the type of the message. Still, the message structure is not provided as it would not be efficient to carry the type
+ * descriptor over the wire with each message. The application is expected to have knowledge of the structure once it
+ * learns the type name.
+ * <p> This is similar to 'google.protobuf.Any' but is also able to handle scalars not just messages.
  *
  * @TypeId(1000000)
  */
@@ -43,7 +49,7 @@ message WrappedMessage {
    }
 
    /**
-    * Store the type name or type id. This is not used for primitive types.
+    * Stores the type name or type id. This is not used for scalar types, only for mesage types.
     */
    oneof typeNameOrId {
 
