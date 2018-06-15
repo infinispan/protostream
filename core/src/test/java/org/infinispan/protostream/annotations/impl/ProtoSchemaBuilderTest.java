@@ -2020,4 +2020,77 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertFalse(schema.contains("message InnerMessage3"));  // InnerMessage3 is a nested class but still not included
       assertFalse(schema.contains("baseField1"));
    }
+
+   @ProtoDoc("A test for 'oneof'")
+   public static class TestOneof {
+
+      @ProtoField(number = 1, oneof = "oneof1")
+      public String fieldA;
+
+      @ProtoField(number = 2, oneof = "oneof1")
+      public String fieldB;
+
+      @ProtoField(number = 3)
+      public String fieldC;
+
+      @ProtoField(number = 4, oneof = "oneof2")
+      public String fieldD;
+
+      @ProtoField(number = 5, oneof = "oneof2")
+      public String fieldE;
+   }
+
+   @Test
+   public void testOneOf() throws Exception {
+      SerializationContext ctx = createContext();
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder
+            .fileName("test.proto")
+            .addClass(TestOneof.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall(TestOneof.class));
+      assertTrue(ctx.canMarshall("TestOneof"));
+   }
+
+   public static class TestInvalidOneof1 {
+
+      @ProtoField(number = 1, oneof = "fieldA")
+      public String fieldA;
+   }
+
+   @Test
+   public void testInvalidOneOf1() throws Exception {
+      exception.expect(ProtoSchemaBuilderException.class);
+      exception.expectMessage("The field named 'fieldA' of org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$TestInvalidOneof1 is member of the 'fieldA' oneof which collides with an existing field or oneof.");
+
+      SerializationContext ctx = createContext();
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder
+            .fileName("test.proto")
+            .addClass(TestInvalidOneof1.class)
+            .build(ctx);
+   }
+
+   public static class TestInvalidOneof2 {
+
+      @ProtoField(number = 1, name = "fieldX")
+      public String fieldA;
+
+      @ProtoField(number = 2, name = "fieldX")
+      public String fieldB;
+   }
+
+   @Test
+   public void testDuplicateFieldName() throws Exception {
+      exception.expect(ProtoSchemaBuilderException.class);
+      exception.expectMessage("Duplicate field name definition. Found two field definitions with name 'fieldX': in public java.lang.String org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$TestInvalidOneof2.fieldB and in public java.lang.String org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$TestInvalidOneof2.fieldA");
+
+      SerializationContext ctx = createContext();
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder
+            .fileName("test.proto")
+            .addClass(TestInvalidOneof2.class)
+            .build(ctx);
+   }
 }

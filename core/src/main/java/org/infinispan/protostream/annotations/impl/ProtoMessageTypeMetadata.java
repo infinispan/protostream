@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +17,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
@@ -186,8 +189,26 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          t.generateProto(iw);
       }
 
-      for (ProtoFieldMetadata f : fieldsByNumber.values()) {
-         f.generateProto(iw);
+      LinkedList<ProtoFieldMetadata> unprocessedFields = new LinkedList<>(fieldsByNumber.values());
+      while (!unprocessedFields.isEmpty()) {
+         ProtoFieldMetadata f = unprocessedFields.remove();
+         if (f.getOneof() == null) {
+            f.generateProto(iw);
+         } else {
+            iw.append("\noneof ").append(f.getOneof()).append(" {\n");
+            iw.inc();
+            f.generateProto(iw);
+            Iterator<ProtoFieldMetadata> it = unprocessedFields.iterator();
+            while (it.hasNext()) {
+               ProtoFieldMetadata f2 = it.next();
+               if (f.getOneof().equals(f2.getOneof())) {
+                  f2.generateProto(iw);
+                  it.remove();
+               }
+            }
+            iw.dec();
+            iw.append("}\n");
+         }
       }
 
       iw.dec();
@@ -214,7 +235,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          // all the fields discovered in this class hierarchy, by name
          fieldsByName = new HashMap<>();
 
-         discoverFields(annotatedClass, new HashSet<>());
+         // all the oneofs discovered in this class hierarchy
+         Set<String> oneofs = new HashSet<>();
+
+         discoverFields(annotatedClass, new HashSet<>(), fieldsByNumber, fieldsByName, oneofs);
          if (fieldsByNumber.isEmpty()) {
             //todo avoid this warning in case where not necessary
             // TODO [anistor] remove the "The class should be either annotated or it should have a custom marshaller" part after MessageMarshaller is removed in 5
@@ -341,17 +365,17 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
    }
 
-   private void discoverFields(XClass clazz, Set<XClass> examinedClasses) {
+   private void discoverFields(XClass clazz, Set<XClass> examinedClasses, Map<Integer, ProtoFieldMetadata> fieldsByNumber, Map<String, ProtoFieldMetadata> fieldsByName, Set<String> oneofs) {
       if (!examinedClasses.add(clazz)) {
          // avoid re-examining classes due to multiple interface inheritance
          return;
       }
 
       if (clazz.getSuperclass() != null) {
-         discoverFields(clazz.getSuperclass(), examinedClasses);
+         discoverFields(clazz.getSuperclass(), examinedClasses, fieldsByNumber, fieldsByName, oneofs);
       }
       for (XClass i : clazz.getInterfaces()) {
-         discoverFields(i, examinedClasses);
+         discoverFields(i, examinedClasses, fieldsByNumber, fieldsByName, oneofs);
       }
 
       for (XField field : clazz.getDeclaredFields()) {
@@ -361,6 +385,9 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             }
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
                throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + field);
+            }
+            if (field.getAnnotation(ProtoField.class) != null) {
+               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet and @ProtoField annotations cannot be used together: " + field);
             }
             unknownFieldSetField = field;
          } else {
@@ -424,7 +451,21 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
                }
-               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(number, fieldName, javaType, collectionImplementation,
+
+               String oneof = annotation.oneof();
+               if (oneof.isEmpty()) {
+                  oneof = null;
+               } else {
+                  if (oneof.equals(fieldName) || fieldsByName.containsKey(oneof)) {
+                     throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " is member of the '" + oneof + "' oneof which collides with an existing field or oneof.");
+                  }
+                  if (isRepeated || isRequired) {
+                     throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " cannot be marked repeated or required since it is member of the '" + oneof + " oneof.");
+                  }
+                  oneofs.add(oneof);
+               }
+
+               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(number, fieldName, oneof, javaType, collectionImplementation,
                      protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue, field);
 
                ProtoFieldMetadata existing = fieldsByNumber.get(number);
@@ -445,10 +486,19 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          }
       }
 
+      Set<XMethod> skipMethods = new HashSet<>();
+
       for (XMethod method : clazz.getDeclaredMethods()) {
+         if (skipMethods.contains(method)) {
+            continue;
+         }
+
          if (method.getAnnotation(ProtoUnknownFieldSet.class) != null) {
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
                throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + method);
+            }
+            if (method.getAnnotation(ProtoField.class) != null) {
+               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet and @ProtoField annotations cannot be used together: " + method);
             }
             String propertyName;
             if (method.getReturnType() == typeFactory.fromClass(void.class)) {
@@ -464,6 +514,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                //TODO [anistor] also check setter args
                unknownFieldSetSetter = method;
                unknownFieldSetGetter = findGetter(propertyName, method.getParameterTypes()[0]);
+               checkForbiddenAnnotations(unknownFieldSetGetter, unknownFieldSetSetter);
+               skipMethods.add(unknownFieldSetGetter);
             } else {
                // this method is expected to be a getter
                if (method.getName().startsWith("get") && method.getName().length() > 3) {
@@ -479,6 +531,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                //TODO [anistor] also check getter args
                unknownFieldSetGetter = method;
                unknownFieldSetSetter = findSetter(propertyName, unknownFieldSetGetter.getReturnType());
+               checkForbiddenAnnotations(unknownFieldSetSetter, unknownFieldSetGetter);
+               skipMethods.add(unknownFieldSetSetter);
             }
          } else {
             ProtoField annotation = method.getAnnotation(ProtoField.class);
@@ -508,6 +562,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   //TODO [anistor] also check setter args
                   setter = method;
                   getter = findGetter(propertyName, method.getParameterTypes()[0]);
+                  checkForbiddenAnnotations(getter, setter);
+                  skipMethods.add(getter);
                   getterReturnType = getter.getReturnType();
                   if (getterReturnType == typeFactory.fromClass(Optional.class)) {
                      getterReturnType = getter.determineOptionalReturnType();
@@ -531,7 +587,13 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   if (getterReturnType == typeFactory.fromClass(Optional.class)) {
                      getterReturnType = getter.determineOptionalReturnType();
                   }
-                  setter = factory == null ? findSetter(propertyName, getterReturnType) : null;
+                  if (factory == null) {
+                     setter = findSetter(propertyName, getterReturnType);
+                     checkForbiddenAnnotations(setter, getter);
+                     skipMethods.add(setter);
+                  } else {
+                     setter = null;
+                  }
                }
 
                int number = getNumber(annotation, method);
@@ -582,7 +644,19 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
                }
 
-               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(number, fieldName, javaType, collectionImplementation,
+               String oneof = annotation.oneof();
+               if (oneof.isEmpty()) {
+                  oneof = null;
+               } else {
+                  if (oneof.equals(fieldName) || fieldsByName.containsKey(oneof)) {
+                     throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " is member of the '" + oneof + "' oneof which collides with an existing field or oneof.");
+                  }
+                  if (isRepeated || isRequired) {
+                     throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " cannot be marked repeated or required since it is member of the '" + oneof + " oneof.");
+                  }
+                  oneofs.add(oneof);
+               }
+               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(number, fieldName, oneof, javaType, collectionImplementation,
                      protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue,
                      propertyName, method, getter, setter);
 
@@ -1059,6 +1133,14 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   + ". The candidate method does not have a suitable return type: " + setter);
          }
          return setter;
+      }
+   }
+
+   private void checkForbiddenAnnotations(XMethod m1, XMethod m2) {
+      if (m1.getAnnotation(ProtoDoc.class) != null
+            || m1.getAnnotation(ProtoField.class) != null
+            || m1.getAnnotation(ProtoUnknownFieldSet.class) != null) {
+         throw new ProtoSchemaBuilderException("No @ProtoDoc, @ProtoField or @ProtoUnknownFieldSet annotations allowed on method " + m1 + ". They should have been added to " + m2);
       }
    }
 
