@@ -17,6 +17,7 @@ public class Simple {
    @ProtoField(number = 1111)
    public Simple simple;
 
+   //todo [anistor] should be possible not to require 'required' in this case because it is implied already?
    @ProtoField(number = 1, required = true, defaultValue = "0.0")
    public float afloat;
 
