@@ -20,6 +20,7 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
 
    private final int number;
    private final String name;
+   private final String oneof;
    private final XClass javaType;
    private final XClass collectionImplementation;
    private final Type protobufType;
@@ -36,12 +37,13 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    private final XMethod getter;
    private final XMethod setter;  // setter is optional
 
-   ProtoFieldMetadata(int number, String name, XClass javaType,
+   ProtoFieldMetadata(int number, String name, String oneof, XClass javaType,
                       XClass collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
                       boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
                       XField field) {
       this.number = number;
       this.name = name;
+      this.oneof = oneof;
       this.javaType = javaType;
       this.collectionImplementation = collectionImplementation;
       this.protoTypeMetadata = protoTypeMetadata;
@@ -58,12 +60,13 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
       this.propertyName = field.getName();
    }
 
-   ProtoFieldMetadata(int number, String name, XClass javaType,
+   ProtoFieldMetadata(int number, String name, String oneof, XClass javaType,
                       XClass collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
                       boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
                       String propertyName, XMethod definingMethod, XMethod getter, XMethod setter) {
       this.number = number;
       this.name = name;
+      this.oneof = oneof;
       this.javaType = javaType;
       this.collectionImplementation = collectionImplementation;
       this.protoTypeMetadata = protoTypeMetadata;
@@ -90,6 +93,10 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
 
    public String getPropertyName() {
       return propertyName;
+   }
+
+   public String getOneof() {
+      return oneof;
    }
 
    /**
@@ -156,10 +163,12 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    public void generateProto(IndentWriter iw) {
       iw.append('\n');
       ProtoTypeMetadata.appendDocumentation(iw, documentation);
-      if (isRepeated) {
-         iw.append("repeated ");
-      } else {
-         iw.append(isRequired ? "required " : "optional ");
+      if (oneof == null) {
+         if (isRepeated) {
+            iw.append("repeated ");
+         } else {
+            iw.append(isRequired ? "required " : "optional ");
+         }
       }
       String typeName;
       if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
@@ -276,6 +285,7 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
             ", protobufType=" + protobufType +
             ", javaType=" + javaType +
             ", collectionImplementation=" + collectionImplementation +
+            ", oneof=" + oneof +
             ", documentation='" + documentation + '\'' +
             ", protoTypeMetadata=" + (protoTypeMetadata != null ? protoTypeMetadata.getName() : null) +
             ", isRequired=" + isRequired +

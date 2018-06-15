@@ -74,4 +74,6 @@ public @interface ProtoField {
     * that must be instantiated by the marshaling layer when reading this from a data stream.
     */
    Class<? extends Collection> collectionImplementation() default Collection.class;
+
+   String oneof() default "";
 }
