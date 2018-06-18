@@ -189,7 +189,7 @@ public final class WrappedMessage {
          out.writeEnum(WRAPPED_ENUM, encodedEnum);
       } else {
          // This is either an unknown primitive type or a message type. Try to use a message marshaller.
-         BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t.getClass());
+         BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t);
          ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
          RawProtoStreamWriter nestedOut = RawProtoStreamWriterImpl.newInstance(buffer);
          marshallerDelegate.marshall(null, t, null, nestedOut);
