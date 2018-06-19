@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -61,6 +62,8 @@ public final class SerializationContextImpl implements SerializationContext {
    private final Map<Class<?>, BaseMarshallerDelegate<?>> marshallersByClass = new ConcurrentHashMap<>();
 
    private final Map<MarshallerProvider, MarshallerProvider> marshallerProviders = new ConcurrentHashMap<>();
+
+   private final Map<DynamicMarshallerProvider, DynamicMarshallerProvider> dynamicMarshallerProviders = new ConcurrentHashMap<>();
 
    public SerializationContextImpl(Configuration configuration) {
       if (configuration == null) {
@@ -240,6 +243,22 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
+   public void registerDynamicMarshallerProvider(DynamicMarshallerProvider marshallerProvider) {
+      if (marshallerProvider == null) {
+         throw new IllegalArgumentException("marshallerProvider argument cannot be null");
+      }
+      dynamicMarshallerProviders.put(marshallerProvider, marshallerProvider);
+   }
+
+   @Override
+   public void unregisterDynamicMarshallerProvider(DynamicMarshallerProvider marshallerProvider) {
+      if (marshallerProvider == null) {
+         throw new IllegalArgumentException("marshallerProvider argument cannot be null");
+      }
+      dynamicMarshallerProviders.remove(marshallerProvider);
+   }
+
+   @Override
    public boolean canMarshall(Class<?> javaClass) {
       return marshallersByClass.containsKey(javaClass) || getMarshallerFromProvider(javaClass) != null;
    }
@@ -273,7 +292,11 @@ public final class SerializationContextImpl implements SerializationContext {
       if (marshallerDelegate == null) {
          BaseMarshaller<?> marshaller = getMarshallerFromProvider(descriptorFullName);
          if (marshaller == null) {
-            throw new IllegalArgumentException("No marshaller registered for " + descriptorFullName);
+            Optional<? extends BaseMarshaller<?>> marshallerFromDynamicProvider = getMarshallerFromDynamicProvider(descriptorFullName);
+            if(!marshallerFromDynamicProvider.isPresent()) {
+               throw new IllegalArgumentException("No marshaller registered for " + descriptorFullName);
+            }
+            return (BaseMarshallerDelegate<T>) makeMarshallerDelegate(marshallerFromDynamicProvider.get());
          }
          marshallerDelegate = (BaseMarshallerDelegate<T>) makeMarshallerDelegate(marshaller);
       }
@@ -292,6 +315,22 @@ public final class SerializationContextImpl implements SerializationContext {
       return marshallerDelegate;
    }
 
+   public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(T object) {
+      BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) marshallersByClass.get(object.getClass());
+      if (marshallerDelegate == null) {
+         BaseMarshaller<?> marshaller = getMarshallerFromProvider(object.getClass());
+         if (marshaller == null) {
+            Optional<? extends BaseMarshaller<?>> marshallerFromDynamicProvider = getMarshallerFromDynamicProvider(object);
+            if (!marshallerFromDynamicProvider.isPresent()) {
+               throw new IllegalArgumentException("No marshaller registered for " + object);
+            }
+            return (BaseMarshallerDelegate<T>) makeMarshallerDelegate(marshallerFromDynamicProvider.get());
+         }
+         marshallerDelegate = (BaseMarshallerDelegate<T>) makeMarshallerDelegate(marshaller);
+      }
+      return marshallerDelegate;
+   }
+
    private BaseMarshaller<?> getMarshallerFromProvider(Class<?> javaClass) {
       if (!marshallerProviders.isEmpty()) {
          for (MarshallerProvider mp : marshallerProviders.keySet()) {
@@ -302,6 +341,14 @@ public final class SerializationContextImpl implements SerializationContext {
          }
       }
       return null;
+   }
+
+   private Optional<? extends BaseMarshaller<?>> getMarshallerFromDynamicProvider(Object instance) {
+      return dynamicMarshallerProviders.keySet().stream().map(dmp -> dmp.getMarshaller(instance)).findFirst();
+   }
+
+   private Optional<? extends BaseMarshaller<?>> getMarshallerFromDynamicProvider(String typeName) {
+      return dynamicMarshallerProviders.keySet().stream().map(dmp -> dmp.getMarshaller(typeName)).findFirst();
    }
 
    private BaseMarshaller<?> getMarshallerFromProvider(String fullTypeName) {
