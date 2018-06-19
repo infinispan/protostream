@@ -188,11 +188,7 @@ public final class ProtoSchemaGenerator {
          // this is a known type, defined in another schema file that we'll need to import
          BaseMarshaller<?> m = serializationContext.getMarshaller(javaType);
          protoTypeMetadata = new ProtoTypeMetadata(m);
-         if (protoTypeMetadata.isEnum()) {
-            imports.add(serializationContext.getEnumDescriptor(m.getTypeName()).getFileDescriptor().getName());
-         } else {
-            imports.add(serializationContext.getMessageDescriptor(m.getTypeName()).getFileDescriptor().getName());
-         }
+         imports.add(serializationContext.getDescriptorByName(m.getTypeName()).getFileDescriptor().getName());
       } else if (javaType.isEnum()) {
          protoTypeMetadata = new ProtoEnumTypeMetadata((Class<? extends Enum>) javaType);
       } else {
