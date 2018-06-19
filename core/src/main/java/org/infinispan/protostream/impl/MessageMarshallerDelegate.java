@@ -70,7 +70,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
       if (unknownFieldSet != null) {
          // validate that none of the unknown fields are actually declared by the known descriptor
          for (FieldDescriptor fd : fieldDescriptors) {
-            if (unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType()))) {
+            if (unknownFieldSet.hasTag(fd.getWireTag())) {
                throw new IOException("Field " + fd.getFullName() + " is a known field so it is illegal to be present in the unknown field set");
             }
          }
@@ -81,7 +81,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
       // validate that all the required fields were written either by the marshaller or by the UnknownFieldSet
       for (FieldDescriptor fd : fieldDescriptors) {
          if (fd.isRequired() && !messageContext.isFieldMarked(fd.getNumber())
-               && (unknownFieldSet == null || !unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType())))) {
+               && (unknownFieldSet == null || !unknownFieldSet.hasTag(fd.getWireTag()))) {
             throw new IllegalStateException("Required field \"" + fd.getFullName()
                   + "\" should have been written by a calling a suitable method of "
                   + MessageMarshaller.ProtoStreamWriter.class.getName());
@@ -114,7 +114,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
       for (FieldDescriptor fd : fieldDescriptors) {
          if (fd.isRequired()
                && !messageContext.isFieldMarked(fd.getNumber())
-               && !messageContext.unknownFieldSet.hasTag(WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType()))) {
+               && !messageContext.unknownFieldSet.hasTag(fd.getWireTag())) {
             throw new IOException("Required field \"" + fd.getFullName() + "\" was not encountered in the stream");
          }
       }

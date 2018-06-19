@@ -9,6 +9,7 @@ import java.util.Map;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
+import org.infinispan.protostream.impl.WireFormat;
 
 /**
  * Represents a field in a proto file.
@@ -22,9 +23,9 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    private static final String PACKED = "packed";
    private final int number;
    private final Label label;
-   private final List<Option> options;
    private final String typeName;
    private final String defaultValue;
+   private final List<Option> options;
    private final Map<String, Object> optionByName = new HashMap<>();
    private final boolean isExtension;
    private Type type;
@@ -48,6 +49,10 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
 
    public int getNumber() {
       return number;
+   }
+
+   public int getWireTag() {
+      return WireFormat.makeTag(number, type.getWireType());
    }
 
    public Type getType() {

@@ -12,7 +12,6 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.RawProtoStreamReader;
@@ -80,7 +79,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
          throw new IllegalArgumentException("Declared field type is not of the expected type : " + fd.getFullName());
       }
       checkFieldRead(fd, false);
-      final int expectedTag = WireFormat.makeTag(fd.getNumber(), type.getWireType());
+      final int expectedTag = fd.getWireTag();
 
       Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
       if (o != null) {
@@ -308,7 +307,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
       }
 
       //todo validate type is compatible with readObject
-      final int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
+      final int expectedTag = fd.getWireTag();
       Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
       if (o != null) {
          byte[] byteArray = (byte[]) o;
@@ -365,13 +364,13 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
       }
 
       //todo validate type is compatible with readCollection
-      final int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
+      final int expectedTag = fd.getWireTag();
 
-      EnumMarshaller<?> enumMarshaller;
-      if (elementClass.isEnum()) {
-         enumMarshaller = ((EnumMarshallerDelegate) ctx.getMarshallerDelegate(elementClass)).getMarshaller();
+      EnumMarshallerDelegate<?> enumMarshallerDelegate;
+      if (fd.getType() == Type.ENUM) {
+         enumMarshallerDelegate = (EnumMarshallerDelegate) ctx.getMarshallerDelegate(elementClass);
       } else {
-         enumMarshaller = null;
+         enumMarshallerDelegate = null;
       }
 
       while (true) {
@@ -382,8 +381,9 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
 
          E e;
 
-         if (enumMarshaller != null) {
-            e = (E) enumMarshaller.decode(((Number) o).intValue());
+         if (enumMarshallerDelegate != null) {
+            int enumValue = ((Number) o).intValue();
+            e = (E) enumMarshallerDelegate.readEnum(expectedTag, enumValue, messageContext.unknownFieldSet);
          } else {
             byte[] byteArray = (byte[]) o;
             RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(byteArray);
@@ -408,7 +408,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
    }
 
    private void readPrimitiveCollection(FieldDescriptor fd, Collection<? super Object> collection, Class<?> elementClass) throws IOException {
-      final int expectedTag = WireFormat.makeTag(fd.getNumber(), fd.getType().getWireType());
+      final int expectedTag = fd.getWireTag();
       Type type = fd.getType();
 
       while (true) {
@@ -484,7 +484,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
 
    @Override
    public <E> E[] readArray(String fieldName, Class<? extends E> elementClass) throws IOException {
-      List<E> values = readCollection(fieldName, new ArrayList<E>(), elementClass);
+      List<E> values = readCollection(fieldName, new ArrayList<>(), elementClass);
       return values.toArray((E[]) Array.newInstance(elementClass, values.size()));
    }
 

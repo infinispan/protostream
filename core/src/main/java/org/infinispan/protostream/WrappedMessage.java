@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
+import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
@@ -180,35 +181,31 @@ public final class WrappedMessage {
          out.writeBool(WRAPPED_BOOL, (Boolean) t);
       } else if (t instanceof byte[]) {
          out.writeBytes(WRAPPED_BYTES, (byte[]) t);
-      } else if (t instanceof Enum) {
-         // use an enum encoder
-         EnumMarshaller marshaller = (EnumMarshaller) ctx.getMarshaller((Class<Enum>) t.getClass());
-         int encodedEnum = marshaller.encode((Enum) t);
-         writeTypeDiscriminator(ctx, out, marshaller);
-         out.writeEnum(WRAPPED_ENUM, encodedEnum);
       } else {
-         // This is either an unknown primitive type or a message type. Try to use a message marshaller.
+         // This is either a message type or an enum. Try to lookup a marshaller.
          BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t.getClass());
-         ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
-         RawProtoStreamWriter nestedOut = RawProtoStreamWriterImpl.newInstance(buffer);
-         marshallerDelegate.marshall(null, t, null, nestedOut);
-         nestedOut.flush();
-
          BaseMarshaller marshaller = marshallerDelegate.getMarshaller();
-         writeTypeDiscriminator(ctx, out, marshaller);
-         out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
+
+         // Write the type discriminator, either the fully qualified name or a numeric type id.
+         String typeName = marshaller.getTypeName();
+         Integer typeId = ctx.getDescriptorByName(typeName).getTypeId();
+         if (typeId == null) {
+            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, typeName);
+         } else {
+            out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
+         }
+
+         if (t.getClass().isEnum()) {
+            ((EnumMarshallerDelegate) marshallerDelegate).writeEnum(WRAPPED_ENUM, (Enum) t, out);
+         } else {
+            ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
+            RawProtoStreamWriter nestedOut = RawProtoStreamWriterImpl.newInstance(buffer);
+            marshallerDelegate.marshall(null, t, null, nestedOut);
+            nestedOut.flush();
+            out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
+         }
       }
       out.flush();
-   }
-
-   private static void writeTypeDiscriminator(ImmutableSerializationContext ctx, RawProtoStreamWriter out, BaseMarshaller marshaller) throws IOException {
-      String typeName = marshaller.getTypeName();
-      Integer typeId = ctx.getTypeIdByName(typeName);
-      if (typeId == null) {
-         out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, typeName);
-      } else {
-         out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
-      }
    }
 
    public static <T> T readMessage(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
@@ -301,7 +298,7 @@ public final class WrappedMessage {
       }
 
       if (typeId != null) {
-         descriptorFullName = ctx.getTypeNameById(typeId);
+         descriptorFullName = ctx.getDescriptorByTypeId(typeId).getFullName();
       }
       BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(descriptorFullName);
       if (messageBytes != null) {
@@ -311,7 +308,12 @@ public final class WrappedMessage {
       } else {
          // it's an Enum
          EnumMarshaller marshaller = (EnumMarshaller) marshallerDelegate.getMarshaller();
-         return (T) marshaller.decode(enumValue);
+         T e = (T) marshaller.decode(enumValue);
+         if (e == null) {
+            // Unknown enum value cause by schema evolution. We cannot handle data loss here so we throw!
+            throw new IOException("Unknown enum value " + enumValue + " for protobuf enum type " + descriptorFullName);
+         }
+         return e;
       }
    }
 
@@ -321,7 +323,6 @@ public final class WrappedMessage {
       if (o == null || getClass() != o.getClass()) return false;
 
       WrappedMessage other = (WrappedMessage) o;
-
       return value != null ? value.equals(other.value) : other.value == null;
    }
 
