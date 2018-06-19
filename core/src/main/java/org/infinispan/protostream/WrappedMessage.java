@@ -178,14 +178,9 @@ public final class WrappedMessage {
          out.writeBytes(WRAPPED_BYTES, (byte[]) t);
       } else if (t instanceof Enum) {
          // use an enum encoder
-         EnumMarshaller enumMarshaller = (EnumMarshaller) ctx.getMarshaller((Class<Enum>) t.getClass());
-         int encodedEnum = enumMarshaller.encode((Enum) t);
-         Integer typeId = ctx.getTypeIdByName(enumMarshaller.getTypeName());
-         if (typeId == null) {
-            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, enumMarshaller.getTypeName());
-         } else {
-            out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
-         }
+         EnumMarshaller marshaller = (EnumMarshaller) ctx.getMarshaller((Class<Enum>) t.getClass());
+         int encodedEnum = marshaller.encode((Enum) t);
+         writeTypeDiscriminator(ctx, out, marshaller);
          out.writeEnum(WRAPPED_ENUM, encodedEnum);
       } else {
          // This is either an unknown primitive type or a message type. Try to use a message marshaller.
@@ -195,16 +190,21 @@ public final class WrappedMessage {
          marshallerDelegate.marshall(null, t, null, nestedOut);
          nestedOut.flush();
 
-         String typeName = marshallerDelegate.getMarshaller().getTypeName();
-         Integer typeId = ctx.getTypeIdByName(typeName);
-         if (typeId == null) {
-            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, typeName);
-         } else {
-            out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
-         }
+         BaseMarshaller marshaller = marshallerDelegate.getMarshaller();
+         writeTypeDiscriminator(ctx, out, marshaller);
          out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
       }
       out.flush();
+   }
+
+   private static void writeTypeDiscriminator(ImmutableSerializationContext ctx, RawProtoStreamWriter out, BaseMarshaller marshaller) throws IOException {
+      String typeName = marshaller.getTypeName();
+      Integer typeId = ctx.getTypeIdByName(typeName);
+      if (typeId == null) {
+         out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, typeName);
+      } else {
+         out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
+      }
    }
 
    public static <T> T readMessage(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
@@ -213,11 +213,11 @@ public final class WrappedMessage {
       int enumValue = -1;
       byte[] messageBytes = null;
       Object value = null;
-      int readTags = 0;
+      int fieldCount = 0;
 
       int tag;
       while ((tag = in.readTag()) != 0) {
-         readTags++;
+         fieldCount++;
          switch (tag) {
             case WRAPPED_DESCRIPTOR_FULL_NAME << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                descriptorFullName = in.readString();
@@ -286,13 +286,13 @@ public final class WrappedMessage {
       }
 
       if (value != null) {
-         if (readTags != 1) {
+         if (fieldCount != 1) {
             throw new IOException("Invalid message encoding.");
          }
          return (T) value;
       }
 
-      if (descriptorFullName == null && typeId == null || descriptorFullName != null && typeId != null || readTags != 2) {
+      if (descriptorFullName == null && typeId == null || descriptorFullName != null && typeId != null || fieldCount != 2) {
          throw new IOException("Invalid message encoding.");
       }
 
