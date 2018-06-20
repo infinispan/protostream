@@ -1,6 +1,7 @@
 package org.infinispan.protostream;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * {@code UnknownFieldSet} keeps track of fields seen during parsing of a protocol message but whose field numbers are
@@ -12,13 +13,14 @@ import java.io.IOException;
  * stream (lowers performance but still works). In this case all fields that are encountered while parsing the stream up
  * to the point where the requested field is finally encountered are cached/buffered in this data structure.
  * <p/>
- * Instances of UnknownFieldSet are never to be created by the user. They will be created by the library and handed
- * over to the message marshaller via the {@link UnknownFieldSetHandler} mechanism.
+ * Instances of UnknownFieldSet are never to be created by the user. They will be created by the library and handed over
+ * to the message marshaller via the {@link UnknownFieldSetHandler} mechanism. Instances are serializable according to
+ * Java serialization.
  *
  * @author anistor@redhat.com
  * @since 1.0
  */
-public interface UnknownFieldSet {
+public interface UnknownFieldSet extends Serializable {
 
    /**
     * Checks if there are any fields in this set.

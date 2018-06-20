@@ -17,7 +17,8 @@ import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.UnknownFieldSet;
 
 /**
- * {@code UnknownFieldSet} implementation. This class should never be directly instantiated by users.
+ * {@link UnknownFieldSet} implementation. This is not thread-safe. This class should never be directly instantiated by
+ * users.
  *
  * @author anistor@redhat.com
  * @since 1.0
@@ -33,11 +34,11 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
    }
 
    /**
-    * Get an Deque of values for the given field number. A new one is created and added if it does not exist already.
+    * Get a Deque of values for the given tag. A new Deque is created and added if it does not exist already.
     */
    private Deque<Object> getField(int tag) {
       if (tag == 0) {
-         throw new IllegalArgumentException("Zero is not a valid tag number");
+         throw new IllegalArgumentException("0 is not a valid tag number");
       }
       Deque<Object> field = null;
       if (fields == null) {
@@ -98,7 +99,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
             return true;
 
          default:
-            throw new IOException("Protocol message tag had invalid wire type " + wireType);
+            throw new IOException("Protocol message tag " + tag + " has invalid wire type " + wireType);
       }
    }
 
@@ -108,7 +109,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
          throw new IllegalArgumentException("Zero is not a valid tag");
       }
       if (WireFormat.getTagWireType(tag) != WireFormat.WIRETYPE_VARINT) {
-         throw new IllegalArgumentException("The tag is not a VARINT");
+         throw new IllegalArgumentException("The tag is not a VARINT: " + tag);
       }
       getField(tag).addLast(value);
    }
@@ -160,14 +161,14 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
             }
             break;
          default:
-            throw new IllegalArgumentException("Invalid wire type " + wireType);
+            throw new IllegalArgumentException("Tag " + tag + " has invalid wire type " + wireType);
       }
    }
 
    @Override
    public <A> A consumeTag(int tag) {
       if (tag == 0) {
-         throw new IllegalArgumentException("Zero is not a valid tag number");
+         throw new IllegalArgumentException("0 is not a valid tag number");
       }
       int wireType = WireFormat.getTagWireType(tag);
       switch (wireType) {
@@ -178,7 +179,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
          case WireFormat.WIRETYPE_START_GROUP:
             break;
          default:
-            throw new IllegalArgumentException("Invalid wire type " + wireType);
+            throw new IllegalArgumentException("Tag " + tag + " has invalid wire type " + wireType);
       }
       if (fields == null) {
          return null;
@@ -197,7 +198,7 @@ final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
    @Override
    public boolean hasTag(int tag) {
       if (tag == 0) {
-         throw new IllegalArgumentException("Zero is not a valid tag number");
+         throw new IllegalArgumentException("0 is not a valid tag number");
       }
       return fields != null && fields.containsKey(tag);
    }
