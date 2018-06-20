@@ -7,29 +7,43 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
- * Contract to be implemented by marshallers for entity types. The marshaller implementation must be stateless and
- * thread-safe.
+ * Contract to be implemented by marshallers for protobuf message (entity) types. The marshaller implementation must be
+ * stateless (or behave as if stateless) and must be thread-safe.
  *
  * @author anistor@redhat.com
  * @since 1.0
  */
 public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
+   /**
+    * Read the fields written by {@link #writeTo(ProtoStreamWriter, Object)}. Should read them in the exact same order
+    * as were written to ensure maximum performance. Not obeying the order will lead to poor performance and will cause
+    * warnings to be logged but will still work.
+    */
    T readFrom(ProtoStreamReader reader) throws IOException;
 
+   /**
+    * Write the fields defined in the schema. Please establish a consistent order and always write them in the same
+    * order. Two common choices for ordering field writes are schema definition order and field number order.
+    */
    void writeTo(ProtoStreamWriter writer, T t) throws IOException;
 
    /**
-    * An high-level interface for the wire encoding of a protobuf stream that allows reading named and typed message
+    * An high-level interface for the wire encoding of a protobuf stream that allows reading named (and typed) message
     * fields.
     */
    interface ProtoStreamReader {
 
+      /**
+       * During reading, a marshaller can obtain the current {@link ImmutableSerializationContext} and use it in order
+       * to access the schema or marshaller information.
+       */
       ImmutableSerializationContext getSerializationContext();
 
       /**
-       * Can't return an {@code int} here because the field might be declared optional and missing so we might need to
-       * return a {@code null}.
+       * Reads an integer field given a field name. The field name and type are checked against the schema first.
+       * Can't return an {@code int} here because the field might be declared optional and actually missing so we have to
+       * be able to signal that by returning {@code null}.
        */
       Integer readInt(String fieldName) throws IOException;
 
@@ -71,11 +85,15 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
    }
 
    /**
-    * An high-level interface for the wire encoding of a protobuf stream that allows writing named and typed message
+    * An high-level interface for the wire encoding of a protobuf stream that allows writing named (and typed) message
     * fields.
     */
    interface ProtoStreamWriter {
 
+      /**
+       * During reading, a marshaller can obtain the current {@link ImmutableSerializationContext} and use it in order
+       * to access the schema or marshaller information.
+       */
       ImmutableSerializationContext getSerializationContext();
 
       void writeInt(String fieldName, int value) throws IOException;
