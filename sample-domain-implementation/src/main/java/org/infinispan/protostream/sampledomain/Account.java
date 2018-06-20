@@ -6,14 +6,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.infinispan.protostream.BaseMessage;
-
 //todo move everything to core and make a tests jar
 
 /**
  * @author anistor@redhat.com
  */
-public class Account extends BaseMessage {
+public class Account {
 
    public enum Currency {
       EUR, GBP, USD, BRL
@@ -26,7 +24,7 @@ public class Account extends BaseMessage {
    private List<byte[]> blurb;
    private Currency[] currencies;
 
-   public static class Limits extends BaseMessage {
+   public static class Limits {
 
       private Double maxDailyLimit;
 
@@ -154,7 +152,6 @@ public class Account extends BaseMessage {
             ", limits=" + limits +
             ", blurb=" + blurb.stream().map(Arrays::toString).collect(Collectors.toList()) +
             ", currencies='" + Arrays.toString(currencies) + '\'' +
-            ", unknownFieldSet='" + unknownFieldSet + '\'' +
             '}';
    }
 }

@@ -6,12 +6,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
 
-import org.infinispan.protostream.BaseMessage;
-
 /**
  * @author anistor@redhat.com
  */
-public class Address extends BaseMessage implements Externalizable {  // implement Externalizable just for PerformanceTest
+public class Address implements Externalizable {  // implement Externalizable just for PerformanceTest
 
    private String street;
    private String postCode;
@@ -87,7 +85,6 @@ public class Address extends BaseMessage implements Externalizable {  // impleme
             ", postCode='" + postCode + '\'' +
             ", number='" + number + '\'' +
             ", isCommercial='" + isCommercial + '\'' +
-            ", unknownFieldSet='" + unknownFieldSet + '\'' +
             '}';
    }
 
@@ -100,7 +97,7 @@ public class Address extends BaseMessage implements Externalizable {  // impleme
    }
 
    @Override
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+   public void readExternal(ObjectInput in) throws IOException {
       street = in.readUTF();
       postCode = in.readUTF();
       number = in.readInt();

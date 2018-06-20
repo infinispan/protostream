@@ -2,12 +2,10 @@ package org.infinispan.protostream.sampledomain;
 
 import java.util.Objects;
 
-import org.infinispan.protostream.BaseMessage;
-
 /**
  * @author anistor@redhat.com
  */
-public class Address extends BaseMessage {
+public class Address {
 
    private String street;
    private String postCode;
@@ -83,7 +81,6 @@ public class Address extends BaseMessage {
             ", postCode='" + postCode + '\'' +
             ", number='" + number + '\'' +
             ", isCommercial='" + isCommercial + '\'' +
-            ", unknownFieldSet='" + unknownFieldSet + '\'' +
             '}';
    }
 }

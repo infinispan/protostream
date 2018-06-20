@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.protostream.BaseMessage;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 
@@ -19,7 +18,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author anistor@redhat.com
  */
 @ProtoDoc("@Indexed")
-public class User extends BaseMessage implements Externalizable {   // implement Externalizable just for PerformanceTest
+public class User implements Externalizable {   // implement Externalizable just for PerformanceTest
 
    public enum Gender {
       MALE, FEMALE
@@ -150,7 +149,6 @@ public class User extends BaseMessage implements Externalizable {   // implement
             ", notes=" + notes +
             ", creationDate=" + creationDate +
             ", passwordExpirationDate=" + passwordExpirationDate +
-            ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }
 

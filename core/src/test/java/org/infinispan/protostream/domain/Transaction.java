@@ -3,12 +3,13 @@ package org.infinispan.protostream.domain;
 import java.math.BigDecimal;
 import java.util.Date;
 
-import org.infinispan.protostream.BaseMessage;
+import org.infinispan.protostream.Message;
+import org.infinispan.protostream.UnknownFieldSet;
 
 /**
  * @author anistor@redhat.com
  */
-public class Transaction extends BaseMessage {
+public class Transaction implements Message {
 
    private int id;
    private String description;
@@ -19,6 +20,8 @@ public class Transaction extends BaseMessage {
    private BigDecimal amount;
    private boolean isDebit;
    private boolean isValid;
+
+   private UnknownFieldSet unknownFieldSet;
 
    public int getId() {
       return id;
@@ -94,6 +97,16 @@ public class Transaction extends BaseMessage {
 
    public void setValid(boolean isValid) {
       this.isValid = isValid;
+   }
+
+   @Override
+   public UnknownFieldSet getUnknownFieldSet() {
+      return unknownFieldSet;
+   }
+
+   @Override
+   public void setUnknownFieldSet(UnknownFieldSet unknownFieldSet) {
+      this.unknownFieldSet = unknownFieldSet;
    }
 
    @Override

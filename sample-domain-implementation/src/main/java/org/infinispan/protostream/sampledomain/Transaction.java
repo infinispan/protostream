@@ -3,12 +3,10 @@ package org.infinispan.protostream.sampledomain;
 import java.math.BigDecimal;
 import java.util.Date;
 
-import org.infinispan.protostream.BaseMessage;
-
 /**
  * @author anistor@redhat.com
  */
-public class Transaction extends BaseMessage {
+public class Transaction {
 
    private int id;
    private String description;
@@ -108,7 +106,6 @@ public class Transaction extends BaseMessage {
             ", amount=" + amount +
             ", isDebit=" + isDebit +
             ", isValid=" + isValid +
-            ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }
 }
