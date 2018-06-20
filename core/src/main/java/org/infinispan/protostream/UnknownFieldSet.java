@@ -10,8 +10,10 @@ import java.io.IOException;
  * <p/>
  * This is also used to handle the case when fields are requested in a different order than they were written to the
  * stream (lowers performance but still works). In this case all fields that are encountered while parsing the stream up
- * to the point where the requested field is finally encountered are cached in this data structure.
+ * to the point where the requested field is finally encountered are cached/buffered in this data structure.
  * <p/>
+ * Instances of UnknownFieldSet are never to be created by the user. They will be created by the library and handed
+ * over to the message marshaller via the {@link UnknownFieldSetHandler} mechanism.
  *
  * @author anistor@redhat.com
  * @since 1.0

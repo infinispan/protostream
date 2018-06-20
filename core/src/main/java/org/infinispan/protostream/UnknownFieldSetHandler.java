@@ -9,7 +9,15 @@ package org.infinispan.protostream;
  */
 public interface UnknownFieldSetHandler<T> {
 
+   /**
+    * Extract the {@link UnknownFieldSet} that was previously attached to a message during unmarshalling.
+    *
+    * @return the UnknownFieldSet or {@link null}
+    */
    UnknownFieldSet getUnknownFieldSet(T message);
 
+   /**
+    * Attach a non-empty {@link UnknownFieldSet} to a message that was newly unmarshalled.
+    */
    void setUnknownFieldSet(T message, UnknownFieldSet unknownFieldSet);
 }
