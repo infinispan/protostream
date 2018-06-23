@@ -7,19 +7,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An optional annotation for specifying the Protobuf message type name.
+ * An optional annotation for specifying the Protobuf message or enum type name. If missing, the Java class name will be
+ * used for Protobuf too.
  *
  * @author anistor@redhat.com
- * @since 3.0
- * @deprecated replaced by {@link ProtoName}
+ * @since 4.3
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface ProtoMessage {
+public @interface ProtoName {
 
    /**
-    * Defines the name of the Protobuf message type. If missing, the Java class name will be used for Protobuf too.
+    * Defines the name of the Protobuf message type.
     */
-   String name() default "";
+   String value();
 }

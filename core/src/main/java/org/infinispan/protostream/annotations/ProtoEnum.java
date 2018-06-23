@@ -7,18 +7,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines a Protobuf enum type. This annotation is optional and can only be applied to Enums.
+ * An optional annotation for specifying the Protobuf enum type name.
  *
  * @author anistor@redhat.com
  * @since 3.0
+ * @deprecated replaced by {@link ProtoName}
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
+@Deprecated
 public @interface ProtoEnum {
 
    /**
-    * Defines the name of the Protobuf enum type. If missing, the Java name will be used for Protobuf too.
+    * Defines the name of the Protobuf enum type. If missing, the Java class name will be used for Protobuf too.
     */
    String name() default "";
 }

@@ -1,15 +1,15 @@
 package org.infinispan.protostream.annotations.impl.testdomain;
 
 import org.infinispan.protostream.annotations.ProtoDoc;
-import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoName;
 
 /**
  * @author anistor@redhat.com
  * @since 3.0
  */
 @ProtoDoc("bla bla bla\nand some more bla")
-@ProtoEnum(name = "TestEnumABC")
+@ProtoName("TestEnumABC")
 public enum TestEnum {
 
    @ProtoEnumValue(number = 4, name = "AX")

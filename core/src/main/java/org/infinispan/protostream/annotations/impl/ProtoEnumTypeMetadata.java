@@ -7,6 +7,7 @@ import java.util.TreeMap;
 
 import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.impl.Log;
@@ -28,8 +29,15 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
    }
 
    private static String getProtoName(Class<? extends Enum> enumClass) {
-      ProtoEnum annotation = enumClass.getAnnotation(ProtoEnum.class);
-      return annotation == null || annotation.name().isEmpty() ? enumClass.getSimpleName() : annotation.name();
+      ProtoName annotation = enumClass.getAnnotation(ProtoName.class);
+      ProtoEnum protoEnumAnnotation = enumClass.getAnnotation(ProtoEnum.class);
+      if (annotation != null) {
+         if (protoEnumAnnotation != null) {
+            throw new IllegalStateException("@ProtoEnum annotation cannot be used together with @ProtoName: " + enumClass.getName());
+         }
+         return annotation.value().isEmpty() ? enumClass.getSimpleName() : annotation.value();
+      }
+      return protoEnumAnnotation == null || protoEnumAnnotation.name().isEmpty() ? enumClass.getSimpleName() : protoEnumAnnotation.name();
    }
 
    @Override

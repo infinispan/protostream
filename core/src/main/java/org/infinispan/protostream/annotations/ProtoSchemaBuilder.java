@@ -26,8 +26,8 @@ import org.infinispan.protostream.config.Configuration;
 /**
  * Generates a Protocol Buffers schema definition file based on a set of {@code @Proto*} annotated classes.
  * <p/>
- * See {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link ProtoEnumValue}, {@link ProtoDoc} and {@link
- * ProtoUnknownFieldSet}.
+ * See {@link ProtoName}, {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link ProtoEnumValue}, {@link
+ * ProtoDoc} and {@link ProtoUnknownFieldSet}.
  *
  * @author anistor@redhat.com
  * @since 3.0

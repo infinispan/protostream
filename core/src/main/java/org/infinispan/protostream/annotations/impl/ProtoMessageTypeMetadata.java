@@ -16,6 +16,7 @@ import java.util.TreeMap;
 
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
@@ -55,8 +56,15 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    private static String getProtoName(Class<?> messageClass) {
-      ProtoMessage annotation = messageClass.getAnnotation(ProtoMessage.class);
-      return annotation == null || annotation.name().isEmpty() ? messageClass.getSimpleName() : annotation.name();
+      ProtoName annotation = messageClass.getAnnotation(ProtoName.class);
+      ProtoMessage protoMessageAnnotation = messageClass.getAnnotation(ProtoMessage.class);
+      if (annotation != null) {
+         if (protoMessageAnnotation != null) {
+            throw new IllegalStateException("@ProtoMessage annotation cannot be used together with @ProtoName: " + messageClass.getName());
+         }
+         return annotation.value().isEmpty() ? messageClass.getSimpleName() : annotation.value();
+      }
+      return protoMessageAnnotation == null || protoMessageAnnotation.name().isEmpty() ? messageClass.getSimpleName() : protoMessageAnnotation.name();
    }
 
    public Field getUnknownFieldSetField() {

@@ -14,7 +14,6 @@ import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
@@ -240,7 +239,6 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static class TestCase_DuplicateEnumValueName {
 
-      @ProtoEnum
       public enum E {
 
          @ProtoEnumValue(number = 1)
