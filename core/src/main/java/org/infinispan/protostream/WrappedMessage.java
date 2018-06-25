@@ -39,6 +39,7 @@ public final class WrappedMessage {
 
    /**
     * The fully qualified Protobuf type name of this message.
+    * This type is defined in message-wrapping.proto.
     */
    public static final String PROTOBUF_TYPE_NAME = "org.infinispan.protostream.WrappedMessage";
 
@@ -139,7 +140,7 @@ public final class WrappedMessage {
    public static final int WRAPPED_ENUM = 18;
 
    /**
-    * The (optional) type id of the wrapped message or enum. This is an alternative to {@link
+    * The (optional) numeric type id of the wrapped message or enum. This is an alternative to {@link
     * #WRAPPED_DESCRIPTOR_FULL_NAME}.
     */
    public static final int WRAPPED_DESCRIPTOR_ID = 19;
@@ -153,6 +154,9 @@ public final class WrappedMessage {
       this.value = value;
    }
 
+   /**
+    * Returns the wrapped value, which is either a primitive, an enum, or a message. The value can be {@code null} also.
+    */
    public Object getValue() {
       return value;
    }
@@ -331,6 +335,10 @@ public final class WrappedMessage {
       return "WrappedMessage{value=" + value + '}';
    }
 
+   /**
+    * Marshaller for WrappedMessage. This marshaller is not meant to handle unknown fields at the top level as they are
+    * very unlikely to ever appear. The handling of unknown fields for the inner message type will work as usual.
+    */
    public static final class Marshaller implements RawProtobufMarshaller<WrappedMessage> {
 
       @Override
