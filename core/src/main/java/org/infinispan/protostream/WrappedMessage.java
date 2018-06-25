@@ -162,7 +162,7 @@ public final class WrappedMessage {
       return value;
    }
 
-   public static void writeMessage(ImmutableSerializationContext ctx, RawProtoStreamWriter out, Object t) throws IOException {
+   static void writeMessage(ImmutableSerializationContext ctx, RawProtoStreamWriter out, Object t) throws IOException {
       if (t == null) {
          return;
       }
@@ -208,7 +208,7 @@ public final class WrappedMessage {
       out.flush();
    }
 
-   public static <T> T readMessage(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
+   static <T> T readMessage(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
       String descriptorFullName = null;
       Integer typeId = null;
       int enumValue = -1;
@@ -340,7 +340,7 @@ public final class WrappedMessage {
     * Marshaller for WrappedMessage. This marshaller is not meant to handle unknown fields at the top level as they are
     * very unlikely to ever appear. The handling of unknown fields for the inner message type will work as usual.
     */
-   public static final class Marshaller implements RawProtobufMarshaller<WrappedMessage> {
+   static final class Marshaller implements RawProtobufMarshaller<WrappedMessage> {
 
       @Override
       public Class<WrappedMessage> getJavaClass() {
