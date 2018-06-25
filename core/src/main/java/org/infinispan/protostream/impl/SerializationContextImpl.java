@@ -201,7 +201,7 @@ public final class SerializationContextImpl implements SerializationContext {
       }
       BaseMarshallerDelegate<?> marshallerDelegate = marshallersByName.get(marshaller.getTypeName());
       if (marshallerDelegate == null || marshallerDelegate.getMarshaller() != marshaller) {
-         throw new IllegalArgumentException("The given marshaller is not registered");
+         throw new IllegalArgumentException("The given marshaller was not previously registered");
       }
       marshallersByName.remove(marshaller.getTypeName());
       marshallersByClass.remove(marshaller.getJavaClass());
@@ -230,16 +230,7 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public boolean canMarshall(String fullTypeName) {
-      readLock.lock();
-      try {
-         if (genericDescriptors.containsKey(fullTypeName)) { //TODO the correct implementation should be: marshallersByName.containsKey(fullName)
-            return true;
-         }
-      } finally {
-         readLock.unlock();
-      }
-
-      return getMarshallerFromProvider(fullTypeName) != null;
+      return marshallersByName.containsKey(fullTypeName) || getMarshallerFromProvider(fullTypeName) != null;
    }
 
    @Override
