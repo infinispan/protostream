@@ -21,6 +21,9 @@ import javassist.ClassPool;
 import javassist.LoaderClassPath;
 
 /**
+ * This class is not to be directly invoked by users. See {@link org.infinispan.protostream.annotations.ProtoSchemaBuilder}
+ * instead.
+ *
  * @author anistor@redhat.com
  * @since 3.0
  */

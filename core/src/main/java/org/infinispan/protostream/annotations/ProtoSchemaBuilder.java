@@ -153,6 +153,9 @@ public final class ProtoSchemaBuilder {
     * @return itself
     */
    public ProtoSchemaBuilder fileName(String fileName) {
+      if (fileName == null || fileName.trim().isEmpty()) {
+         throw new IllegalArgumentException("fileName cannot be null or empty");
+      }
       this.fileName = fileName;
       return this;
    }
@@ -164,7 +167,7 @@ public final class ProtoSchemaBuilder {
     * @return itself
     */
    public ProtoSchemaBuilder packageName(String packageName) {
-      if (packageName.trim().isEmpty()) {
+      if (packageName != null && packageName.trim().isEmpty()) {
          throw new IllegalArgumentException("packageName cannot be empty");
       }
       this.packageName = packageName;
@@ -178,6 +181,9 @@ public final class ProtoSchemaBuilder {
     * @return itself
     */
    public ProtoSchemaBuilder addClass(Class<?> clazz) {
+      if (clazz == null) {
+         throw new IllegalArgumentException("class argument cannot be null");
+      }
       classes.add(clazz);
       return this;
    }
@@ -187,7 +193,7 @@ public final class ProtoSchemaBuilder {
     * types and registers everything with the given {@link SerializationContext}.
     *
     * @param serializationContext
-    * @return the generated Protocol Buffers schema file
+    * @return the generated Protocol Buffers schema file text
     * @throws ProtoSchemaBuilderException
     * @throws IOException
     */
@@ -198,13 +204,8 @@ public final class ProtoSchemaBuilder {
       if (classes.isEmpty()) {
          throw new ProtoSchemaBuilderException("At least one class must be specified");
       }
-      String schemaFile = new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes)
+
+      return new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes)
             .generateAndRegister();
-
-      fileName = null;
-      packageName = null;
-      classes.clear();
-
-      return schemaFile;
    }
 }
