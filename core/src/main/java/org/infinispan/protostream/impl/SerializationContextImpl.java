@@ -150,36 +150,20 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public Descriptor getMessageDescriptor(String fullTypeName) {
-      readLock.lock();
-      try {
-         GenericDescriptor descriptor = genericDescriptors.get(fullTypeName);
-         if (descriptor == null) {
-            throw new IllegalArgumentException("Message descriptor not found : " + fullTypeName);
-         }
-         if (!(descriptor instanceof Descriptor)) {
-            throw new IllegalArgumentException(fullTypeName + " is not a message type");
-         }
-         return (Descriptor) descriptor;
-      } finally {
-         readLock.unlock();
+      GenericDescriptor descriptor = getDescriptorByName(fullTypeName);
+      if (!(descriptor instanceof Descriptor)) {
+         throw new IllegalArgumentException(fullTypeName + " is not a message type");
       }
+      return (Descriptor) descriptor;
    }
 
    @Override
    public EnumDescriptor getEnumDescriptor(String fullTypeName) {
-      readLock.lock();
-      try {
-         GenericDescriptor descriptor = genericDescriptors.get(fullTypeName);
-         if (descriptor == null) {
-            throw new IllegalArgumentException("Enum descriptor not found : " + fullTypeName);
-         }
-         if (!(descriptor instanceof EnumDescriptor)) {
-            throw new IllegalArgumentException(fullTypeName + " is not an enum type");
-         }
-         return (EnumDescriptor) descriptor;
-      } finally {
-         readLock.unlock();
+      GenericDescriptor descriptor = getDescriptorByName(fullTypeName);
+      if (!(descriptor instanceof EnumDescriptor)) {
+         throw new IllegalArgumentException(fullTypeName + " is not an enum type");
       }
+      return (EnumDescriptor) descriptor;
    }
 
    @Override
@@ -322,43 +306,39 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
-   public GenericDescriptor getDescriptorByName(String fullTypeName) {
-      GenericDescriptor descriptor;
-      readLock.lock();
-      try {
-         descriptor = genericDescriptors.get(fullTypeName);
-      } finally {
-         readLock.unlock();
-      }
-      if (descriptor == null) {
-         throw new IllegalArgumentException("Descriptor not found : " + fullTypeName);
-      }
-      return descriptor;
-   }
-
-   @Override
-   public GenericDescriptor getDescriptorByTypeId(Integer typeId) {
-      readLock.lock();
-      try {
-         GenericDescriptor descriptorFullName = typeIds.get(typeId);
-         if (descriptorFullName == null) {
-            throw new IllegalArgumentException("Unknown type id : " + typeId);
-         }
-         return descriptorFullName;
-      } finally {
-         readLock.unlock();
-      }
-   }
-
-   @Override
    public Integer getTypeIdByName(String fullTypeName) {
+      return getDescriptorByName(fullTypeName).getTypeId();
+   }
+
+   @Override
+   public GenericDescriptor getDescriptorByName(String fullTypeName) {
+      if (fullTypeName == null) {
+         throw new IllegalArgumentException("Type name cannot be null");
+      }
       readLock.lock();
       try {
          GenericDescriptor descriptor = genericDescriptors.get(fullTypeName);
          if (descriptor == null) {
             throw new IllegalArgumentException("Unknown type name : " + fullTypeName);
          }
-         return descriptor.getTypeId();
+         return descriptor;
+      } finally {
+         readLock.unlock();
+      }
+   }
+
+   @Override
+   public GenericDescriptor getDescriptorByTypeId(Integer typeId) {
+      if (typeId == null) {
+         throw new IllegalArgumentException("Type id cannot be null");
+      }
+      readLock.lock();
+      try {
+         GenericDescriptor descriptor = typeIds.get(typeId);
+         if (descriptor == null) {
+            throw new IllegalArgumentException("Unknown type id : " + typeId);
+         }
+         return descriptor;
       } finally {
          readLock.unlock();
       }

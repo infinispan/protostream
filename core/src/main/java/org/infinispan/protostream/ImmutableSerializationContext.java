@@ -100,7 +100,7 @@ public interface ImmutableSerializationContext {
    /**
     * Obtains the descriptor associated with a type name.
     *
-    * @param fullTypeName the numeric type id
+    * @param fullTypeName the fully qualified type name
     * @return the descriptor
     * @throws IllegalArgumentException if the given type name is unknown
     */
