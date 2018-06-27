@@ -76,7 +76,9 @@ public interface ImmutableSerializationContext {
     * @param typeId the numeric type id
     * @return the fully qualified type name
     * @throws IllegalArgumentException if the given type id is unknown
+    * @deprecated replaced by {@code getDescriptorByTypeId(typeId).getFullName()}
     */
+   @Deprecated
    String getTypeNameById(Integer typeId);
 
    /**
@@ -85,7 +87,9 @@ public interface ImmutableSerializationContext {
     * @param fullTypeName the fully qualified type name
     * @return the type id or {@code null} if no type id is associated with the type
     * @throws IllegalArgumentException if the given type name is unknown
+    * @deprecated replaced by {@code getDescriptorByName(fullTypeName).getTypeId()}
     */
+   @Deprecated
    Integer getTypeIdByName(String fullTypeName);
 
    /**
