@@ -89,11 +89,11 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    }
 
    public boolean isRequired() {
-      return label.equals(Label.REQUIRED);
+      return label == Label.REQUIRED;
    }
 
    public boolean isRepeated() {
-      return label.equals(Label.REPEATED);
+      return label == Label.REPEATED;
    }
 
    public boolean isPacked() {

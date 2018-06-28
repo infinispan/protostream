@@ -3,7 +3,6 @@ package org.infinispan.protostream.descriptors;
 import static java.util.Collections.unmodifiableList;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -25,8 +24,8 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
    private final List<Option> options;
    private final List<FieldDescriptor> fields;
    private final List<OneOfDescriptor> oneofs;
-   private final List<Descriptor> nestedTypes;
-   private final List<EnumDescriptor> enumTypes;
+   private final List<Descriptor> nestedMessageTypes;
+   private final List<EnumDescriptor> nestedEnumTypes;
    private final Map<Integer, FieldDescriptor> fieldsByNumber = new HashMap<>();
    private final Map<String, FieldDescriptor> fieldsByName = new HashMap<>();
    private FileDescriptor fileDescriptor;
@@ -42,12 +41,12 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
          addFields(oneOf.getFields());
          oneOf.setContainingMessage(this);
       }
-      this.nestedTypes = unmodifiableList(builder.nestedTypes);
-      this.enumTypes = unmodifiableList(builder.enumTypes);
-      for (Descriptor nested : nestedTypes) {
+      this.nestedMessageTypes = unmodifiableList(builder.nestedMessageTypes);
+      this.nestedEnumTypes = unmodifiableList(builder.nestedEnumTypes);
+      for (Descriptor nested : nestedMessageTypes) {
          nested.setContainingType(this);
       }
-      for (EnumDescriptor nested : enumTypes) {
+      for (EnumDescriptor nested : nestedEnumTypes) {
          nested.setContainingType(this);
       }
    }
@@ -96,11 +95,11 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
    }
 
    public List<Descriptor> getNestedTypes() {
-      return nestedTypes;
+      return nestedMessageTypes;
    }
 
    public List<EnumDescriptor> getEnumTypes() {
-      return enumTypes;
+      return nestedEnumTypes;
    }
 
    public FieldDescriptor findFieldByNumber(int number) {
@@ -116,10 +115,10 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       for (FieldDescriptor fieldDescriptor : fields) {
          fieldDescriptor.setFileDescriptor(fileDescriptor);
       }
-      for (Descriptor nested : nestedTypes) {
+      for (Descriptor nested : nestedMessageTypes) {
          nested.setFileDescriptor(fileDescriptor);
       }
-      for (EnumDescriptor nested : enumTypes) {
+      for (EnumDescriptor nested : nestedEnumTypes) {
          nested.setFileDescriptor(fileDescriptor);
       }
       typeId = getProcessedAnnotation(Configuration.TYPE_ID_ANNOTATION);
@@ -152,10 +151,10 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
 
    private void setContainingType(Descriptor containingType) {
       this.containingType = containingType;
-      for (Descriptor nested : nestedTypes) {
+      for (Descriptor nested : nestedMessageTypes) {
          nested.setContainingType(this);
       }
-      for (EnumDescriptor nested : enumTypes) {
+      for (EnumDescriptor nested : nestedEnumTypes) {
          nested.setContainingType(this);
       }
    }
@@ -184,8 +183,8 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
       private List<Option> options;
       private List<FieldDescriptor> fields;
       private List<OneOfDescriptor> oneofs;
-      private List<Descriptor> nestedTypes = new LinkedList<>();
-      private List<EnumDescriptor> enumTypes;
+      private List<Descriptor> nestedMessageTypes;
+      private List<EnumDescriptor> nestedEnumTypes;
       private String documentation;
 
       public Builder withName(String name) {
@@ -213,13 +212,13 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
          return this;
       }
 
-      public Builder withNestedTypes(List<Descriptor> nestedTypes) {
-         this.nestedTypes = nestedTypes;
+      public Builder withNestedTypes(List<Descriptor> nestedMessageTypes) {
+         this.nestedMessageTypes = nestedMessageTypes;
          return this;
       }
 
-      public Builder withEnumTypes(List<EnumDescriptor> enumTypes) {
-         this.enumTypes = enumTypes;
+      public Builder withEnumTypes(List<EnumDescriptor> nestedEnumTypes) {
+         this.nestedEnumTypes = nestedEnumTypes;
          return this;
       }
 
