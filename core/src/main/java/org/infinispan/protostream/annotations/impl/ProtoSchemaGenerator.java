@@ -58,6 +58,13 @@ public final class ProtoSchemaGenerator {
    private final Map<String, ProtoTypeMetadata> metadataByTypeName = new HashMap<>();
 
    public ProtoSchemaGenerator(SerializationContext serializationContext, String fileName, String packageName, Set<Class<?>> classes) {
+      if (fileName == null) {
+         throw new ProtoSchemaBuilderException("fileName cannot be null");
+      }
+      if (classes.isEmpty()) {
+         throw new ProtoSchemaBuilderException("At least one class must be specified");
+      }
+
       this.serializationContext = serializationContext;
       this.fileName = fileName;
       this.packageName = packageName;

@@ -5,6 +5,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,7 +33,6 @@ import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -44,17 +46,27 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    public ExpectedException exception = ExpectedException.none();
 
    @Test
-   @Ignore
    public void testMain() throws Exception {
+      File tmpdir = new File(System.getProperty("java.io.tmpdir"));
+      File generatedSchemaFile = new File(tmpdir, "ProtoSchemaBuilderTest.proto");
+      generatedSchemaFile.delete();
+      File bankSchemaFile = new File(tmpdir, "bank.proto");
+      Files.copy(getClass().getResourceAsStream("/sample_bank_account/bank.proto"), bankSchemaFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
       String[] args = {
-            "-s", "sample_bank_account/bank.proto=sample-domain-definition/src/main/resources/sample_bank_account/bank.proto",
+            "-s", "sample_bank_account/bank.proto=" + bankSchemaFile.getAbsolutePath(),
             "-m", "org.infinispan.protostream.domain.marshallers.UserMarshaller",
             "-m", "org.infinispan.protostream.domain.marshallers.GenderMarshaller",
-            "-f", "test.proto",
+            "-f", generatedSchemaFile.getAbsolutePath(),
             "-p", "my_package",
             "org.infinispan.protostream.domain.Note"
       };
       ProtoSchemaBuilder.main(args);
+
+      assertTrue(generatedSchemaFile.exists());
+      assertTrue(generatedSchemaFile.length() > 0);
+
+      generatedSchemaFile.delete();
    }
 
    @Test
