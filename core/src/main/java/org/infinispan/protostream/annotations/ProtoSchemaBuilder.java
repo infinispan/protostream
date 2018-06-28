@@ -198,13 +198,6 @@ public final class ProtoSchemaBuilder {
     * @throws IOException
     */
    public String build(SerializationContext serializationContext) throws ProtoSchemaBuilderException, IOException {
-      if (fileName == null) {
-         throw new ProtoSchemaBuilderException("fileName cannot be null");
-      }
-      if (classes.isEmpty()) {
-         throw new ProtoSchemaBuilderException("At least one class must be specified");
-      }
-
       return new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes)
             .generateAndRegister();
    }
