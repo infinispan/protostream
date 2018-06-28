@@ -71,7 +71,6 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
    }
 
-
    @Override
    public void writeInt(String fieldName, Integer value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);

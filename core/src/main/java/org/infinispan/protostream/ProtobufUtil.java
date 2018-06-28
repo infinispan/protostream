@@ -781,7 +781,7 @@ public final class ProtobufUtil {
                if (prettyPrint) {
                   indent();
                }
-               if (fieldDescriptor.getLabel().equals(Label.ONE_OF)) {
+               if (fieldDescriptor.getLabel() == Label.ONE_OF) {
                   jsonOut.append('"').append(JSON_VALUE_FIELD).append("\":");
                } else {
                   jsonOut.append('"').append(fieldDescriptor.getName()).append("\":");
