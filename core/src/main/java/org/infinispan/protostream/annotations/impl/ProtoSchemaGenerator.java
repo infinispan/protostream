@@ -108,6 +108,7 @@ public final class ProtoSchemaGenerator {
             iw.append("//   ").append(ptm.getJavaClass().getCanonicalName()).append('\n');
          }
       }
+      iw.append("\nsyntax = \"proto2\";\n");
       if (packageName != null) {
          iw.append("\npackage ").append(packageName).append(";\n\n");
       }
