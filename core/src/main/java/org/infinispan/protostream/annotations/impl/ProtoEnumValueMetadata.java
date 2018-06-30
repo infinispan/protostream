@@ -14,8 +14,6 @@ final class ProtoEnumValueMetadata {
 
    private final String protoName;
 
-   private final Field enumField;
-
    private final Enum enumValue;
 
    private final String documentation;
@@ -23,7 +21,6 @@ final class ProtoEnumValueMetadata {
    ProtoEnumValueMetadata(int number, String protoName, Field enumField, Enum enumValue) {
       this.number = number;
       this.protoName = protoName;
-      this.enumField = enumField;
       this.enumValue = enumValue;
       documentation = DocumentationExtractor.getDocumentation(enumField);
    }
@@ -34,10 +31,6 @@ final class ProtoEnumValueMetadata {
 
    public String getProtoName() {
       return protoName;
-   }
-
-   public Field getEnumField() {
-      return enumField;
    }
 
    public Enum getEnumValue() {
@@ -53,7 +46,7 @@ final class ProtoEnumValueMetadata {
       ProtoTypeMetadata.appendDocumentation(iw, documentation);
       iw.append("   ").append(protoName).append(" = ").append(String.valueOf(number));
       if (ProtoSchemaBuilder.generateSchemaDebugComments) {
-         iw.append(" /* field = ").append(enumField.getName()).append(" */");
+         iw.append(" /* ").append(enumValue.getClass().getCanonicalName()).append('.').append(enumValue.name()).append(" */");
       }
       iw.append(";\n");
    }

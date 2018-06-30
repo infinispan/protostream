@@ -221,7 +221,7 @@ final class ProtoFieldMetadata {
       if (ProtoSchemaBuilder.generateSchemaDebugComments) {
          iw.append(" /* ");
          if (field != null) {
-            iw.append("field = ").append(field.getName());
+            iw.append("field = ").append(field.getDeclaringClass().getCanonicalName()).append('.').append(field.getName());
          } else {
             iw.append("getter = ").append(getter.getName()).append(", setter = ").append(setter.getName());
          }
