@@ -11,7 +11,7 @@ import org.infinispan.protostream.descriptors.Type;
  * @author anistor@redhat.com
  * @since 3.0
  */
-final class ProtoFieldMetadata {
+final class ProtoFieldMetadata implements HasProtoSchema {
 
    private final Class<?> declaringClass;
    private final int number;
@@ -139,6 +139,7 @@ final class ProtoFieldMetadata {
       return String.format("%s on property '%s' with tag number %d and name '%s'", declaringClass, propertyName, number, name);
    }
 
+   @Override
    public void generateProto(IndentWriter iw) {
       iw.append('\n');
       ProtoTypeMetadata.appendDocumentation(iw, documentation);

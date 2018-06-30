@@ -93,7 +93,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    @Override
    public void generateProto(IndentWriter iw) {
-      scanMemberAnnotations();
+      scanMemberAnnotations();  //todo [anistor] need to have a better place for this call
 
       iw.append("\n\n");
       appendDocumentation(iw, documentation);

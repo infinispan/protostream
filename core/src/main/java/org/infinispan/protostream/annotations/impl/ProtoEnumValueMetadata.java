@@ -8,7 +8,7 @@ import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
  * @author anistor@redhat.com
  * @since 3.0
  */
-final class ProtoEnumValueMetadata {
+final class ProtoEnumValueMetadata implements HasProtoSchema {
 
    private final int number;
 
@@ -41,6 +41,7 @@ final class ProtoEnumValueMetadata {
       return documentation;
    }
 
+   @Override
    public void generateProto(IndentWriter iw) {
       iw.append("\n\n");
       ProtoTypeMetadata.appendDocumentation(iw, documentation);

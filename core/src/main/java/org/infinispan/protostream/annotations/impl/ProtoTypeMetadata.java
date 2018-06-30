@@ -7,7 +7,7 @@ import org.infinispan.protostream.EnumMarshaller;
  * @author anistor@redhat.com
  * @since 3.0
  */
-class ProtoTypeMetadata {
+class ProtoTypeMetadata implements HasProtoSchema {
 
    protected final String name;
 
@@ -79,6 +79,7 @@ class ProtoTypeMetadata {
       return outerType == null;
    }
 
+   @Override
    public void generateProto(IndentWriter iw) {
       // subclasses must override this
    }
