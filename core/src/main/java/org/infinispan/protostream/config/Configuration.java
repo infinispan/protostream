@@ -5,7 +5,8 @@ import java.util.Map;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
- * Configuration interface for the ProtoStream library.
+ * Configuration interface for the ProtoStream library. This object is not mutable. Use the {@link Builder} in order to
+ * create and mutate a new instance.
  *
  * @author anistor@redhat.com
  * @since 2.0
@@ -15,12 +16,18 @@ public interface Configuration {
    /**
     * The TypeId annotation. This optional annotation defines a unique integer type identifier for each message or enum
     * type. This can be used alternatively instead of the fully qualified type name during marshalling to save some
-    * space.
+    * bandwidth.
     */
    String TYPE_ID_ANNOTATION = "TypeId";
 
+   /**
+    * Flag that indicates in out of sequence reads should be logged as warnings. This is {@code true} by default.
+    */
    boolean logOutOfSequenceReads();
 
+   /**
+    * Flag that indicates in out of sequence writes should be logged as warnings. This is {@code true} by default.
+    */
    boolean logOutOfSequenceWrites();
 
    AnnotationsConfig annotationsConfig();
