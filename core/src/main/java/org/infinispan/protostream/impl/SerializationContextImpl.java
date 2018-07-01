@@ -86,6 +86,16 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    @Override
+   public Map<String, GenericDescriptor> getGenericDescriptors() {
+      readLock.lock();
+      try {
+         return Collections.unmodifiableMap(new HashMap<>(genericDescriptors));
+      } finally {
+         readLock.unlock();
+      }
+   }
+
+   @Override
    public void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException {
       if (log.isDebugEnabled()) {
          log.debugf("Registering proto files : %s", source.getFileDescriptors().keySet());

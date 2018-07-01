@@ -25,6 +25,13 @@ public interface ImmutableSerializationContext {
    Map<String, FileDescriptor> getFileDescriptors();
 
    /**
+    * Obtain the currently registered type descriptors.
+    *
+    * @return an immutable copy of the internal map of descriptors
+    */
+   Map<String, GenericDescriptor> getGenericDescriptors();
+
+   /**
     * @throws IllegalArgumentException if the descriptor is not found or is not a message
     */
    Descriptor getMessageDescriptor(String fullTypeName);
