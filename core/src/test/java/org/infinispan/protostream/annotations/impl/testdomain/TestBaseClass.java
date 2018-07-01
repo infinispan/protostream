@@ -28,6 +28,9 @@ public class TestBaseClass {
    @ProtoField(number = 111, defaultValue = "red")
    public String color;
 
+   @ProtoField(number = 112)
+   public InnerClassFromBase innerClassFromBaseField;
+
    @ProtoField(number = 6)
    public String getName() {
       return name;
@@ -43,5 +46,11 @@ public class TestBaseClass {
 
    public void setColor(String color) {
       this.color = color;
+   }
+
+   public static class InnerClassFromBase {
+
+      @ProtoField(number = 1, required = true)
+      public int innerInteger;
    }
 }

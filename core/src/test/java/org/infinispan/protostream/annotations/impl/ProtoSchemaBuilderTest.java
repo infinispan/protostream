@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -281,6 +282,53 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       assertTrue(ctx.canMarshall(TestClass.class));
       assertTrue(ctx.canMarshall("test_package2.TestClass"));
+      assertTrue(ctx.canMarshall("test_package1.TestEnumABC"));
+      assertFalse(ctx.canMarshall("test_package2.TestEnumABC"));
+   }
+
+   @Test
+   public void testAutoImport() throws Exception {
+      SerializationContext ctx = createContext();
+
+      new ProtoSchemaBuilder()
+            .fileName("test1.proto")
+            .packageName("test_package1")
+            .addClass(TestEnum.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall(TestEnum.class));
+      assertTrue(ctx.canMarshall("test_package1.TestEnumABC"));
+
+      ProtoSchemaBuilder protoSchemaBuilder2 = new ProtoSchemaBuilder();
+      protoSchemaBuilder2
+            .autoImportClasses(false)
+            .fileName("test2.proto")
+            .packageName("test_package2")
+            .addClass(TestClass.class);
+
+      try {
+         // TestClass2 was not added explicitly and is not auto-added because autoImportClasses == false so we expect an exception
+         protoSchemaBuilder2.build(ctx);
+         fail("ProtoSchemaBuilderException expected");
+      } catch (ProtoSchemaBuilderException e) {
+         assertTrue(e.getMessage().contains("Found a reference to class org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2 which was not explicitly added to the builder and 'autoImportClasses' is off."));
+      }
+
+      assertFalse(ctx.canMarshall(TestClass.class));
+      assertFalse(ctx.canMarshall(TestClass.InnerClass.class));
+      assertFalse(ctx.canMarshall(TestClass.InnerClass2.class));
+      assertFalse(ctx.canMarshall(TestClass2.class));
+
+      // it must work after explicitly adding TestClass2
+      protoSchemaBuilder2.addClass(TestClass2.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall(TestClass.class));
+      assertTrue(ctx.canMarshall("test_package2.TestClass"));
+      assertTrue(ctx.canMarshall(TestClass.InnerClass.class));
+      assertTrue(ctx.canMarshall(TestClass.InnerClass2.class));
+      assertTrue(ctx.canMarshall(TestClass2.class));
+      assertTrue(ctx.canMarshall("test_package1.TestEnumABC"));
       assertFalse(ctx.canMarshall("test_package2.TestEnumABC"));
    }
 

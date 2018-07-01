@@ -27,6 +27,11 @@ final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
+   public boolean isImported() {
+      return true;
+   }
+
+   @Override
    public boolean isEnum() {
       return descriptor instanceof EnumDescriptor;
    }

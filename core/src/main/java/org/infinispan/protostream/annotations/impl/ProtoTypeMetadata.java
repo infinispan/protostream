@@ -48,6 +48,10 @@ abstract class ProtoTypeMetadata implements HasProtoSchema {
       return canonicalName != null ? canonicalName : javaClass.getName();
    }
 
+   public boolean isImported() {
+      return false;
+   }
+
    public abstract boolean isEnum();
 
    public abstract ProtoEnumValueMetadata getEnumMemberByName(String name);

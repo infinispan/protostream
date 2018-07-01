@@ -51,13 +51,27 @@ public final class ProtoSchemaGenerator {
    //TODO [anistor] need to have a flag to (optionally) prevent generation for classes that were not manually added but were auto-discovered
    private final Set<Class<?>> classes;
 
+   /**
+    * Known classes: the user-added classes ({@link #classes}) plus all their superclasses and superinterfaces. This is
+    * only used when auto-import is off.
+    */
+   private final Set<Class<?>> knownClasses = new HashSet<>();
+
+   /**
+    * Indicates if class dependencies are automatically added when discovered or will generate an error.
+    */
+   private final boolean autoImportClasses;
+
+   /**
+    * The imported schema files.
+    */
    private final Set<String> imports = new HashSet<>();
 
    private final Map<Class<?>, ProtoTypeMetadata> metadataByClass = new HashMap<>();
 
    private final Map<String, ProtoTypeMetadata> metadataByTypeName = new HashMap<>();
 
-   public ProtoSchemaGenerator(SerializationContext serializationContext, String fileName, String packageName, Set<Class<?>> classes) {
+   public ProtoSchemaGenerator(SerializationContext serializationContext, String fileName, String packageName, Set<Class<?>> classes, boolean autoImportClasses) {
       if (fileName == null) {
          throw new ProtoSchemaBuilderException("fileName cannot be null");
       }
@@ -69,9 +83,17 @@ public final class ProtoSchemaGenerator {
       this.fileName = fileName;
       this.packageName = packageName;
       this.classes = classes;
+      this.autoImportClasses = autoImportClasses;
    }
 
    public String generateAndRegister() throws ProtoSchemaBuilderException {
+      if (!autoImportClasses) {
+         // collect supers
+         for (Class<?> c : classes) {
+            collectKnownClasses(c);
+         }
+      }
+
       // scan initial classes
       for (Class<?> c : classes) {
          ProtoTypeMetadata protoTypeMetadata = c.isEnum() ? new ProtoEnumTypeMetadata((Class<? extends Enum>) c) : new ProtoMessageTypeMetadata(this, c);
@@ -93,7 +115,7 @@ public final class ProtoSchemaGenerator {
       // establish the outer-inner relationship between definitions
       for (Class<?> c : metadataByClass.keySet()) {
          ProtoTypeMetadata m = metadataByClass.get(c);
-         if (m instanceof ProtoMessageTypeMetadata || m instanceof ProtoEnumTypeMetadata) {
+         if (!m.isImported()) {
             ProtoMessageTypeMetadata outer = findOuterType(c);
             if (outer != null) {
                m.setOuterType(outer);
@@ -108,7 +130,7 @@ public final class ProtoSchemaGenerator {
          iw.append("// Scanned classes:\n");
          //todo [anistor] this list of scanned classes should include all interfaces and base classes not just the ones for which a proto definition was generated
          for (ProtoTypeMetadata ptm : metadataByClass.values()) {
-            if (ptm instanceof ProtoEnumTypeMetadata || ptm instanceof ProtoMessageTypeMetadata) {
+            if (!ptm.isImported()) {
                iw.append("//   ").append(ptm.getJavaClassName()).append('\n');
             }
          }
@@ -218,6 +240,12 @@ public final class ProtoSchemaGenerator {
    }
 
    private void defineType(ProtoTypeMetadata protoTypeMetadata) {
+      if (!autoImportClasses && !protoTypeMetadata.isImported() && !isKnown(protoTypeMetadata.getJavaClass())) {
+         // autoImportClasses is off and we are just expanding the class set
+         throw new ProtoSchemaBuilderException("Found a reference to class "
+               + protoTypeMetadata.getJavaClassName() + " which was not explicitly added to the builder and 'autoImportClasses' is off.");
+      }
+
       String fullName = protoTypeMetadata.getFullName();
       ProtoTypeMetadata existing = metadataByTypeName.get(fullName);
       if (existing != null) {
@@ -226,5 +254,27 @@ public final class ProtoSchemaGenerator {
       }
       metadataByTypeName.put(fullName, protoTypeMetadata);
       metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);
+   }
+
+   private boolean isKnown(Class<?> c) {
+      boolean isKnown;
+      while (!(isKnown = knownClasses.contains(c))) {
+         // try the outer class because inner classes are considered recursively added too
+         c = c.getEnclosingClass();
+         if (c == null) {
+            break;
+         }
+      }
+      return isKnown;
+   }
+
+   private void collectKnownClasses(Class<?> c) {
+      knownClasses.add(c);
+      if (c.getSuperclass() != null) {
+         collectKnownClasses(c.getSuperclass());
+      }
+      for (Class<?> i : c.getInterfaces()) {
+         collectKnownClasses(i);
+      }
    }
 }

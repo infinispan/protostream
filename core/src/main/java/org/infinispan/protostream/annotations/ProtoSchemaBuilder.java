@@ -61,6 +61,8 @@ public final class ProtoSchemaBuilder {
 
    private final Set<Class<?>> classes = new HashSet<>();
 
+   private boolean autoImportClasses = true;
+
    public static void main(String[] args) throws Exception {
       CommandLine cmd = parseCommandLine(args);
       if (cmd == null) {
@@ -199,6 +201,20 @@ public final class ProtoSchemaBuilder {
    }
 
    /**
+    * A flag to control processing of classes that were not directly added but were discovered by auto-import. When such
+    * a class is found an error will be generated if autoImportClasses is turned off. This flag is {@code true} by
+    * default to make your life easier but can be turned off when you need to be very specific about which classes are
+    * to be processed.
+    *
+    * @param autoImportClasses
+    * @return itself, to help chaining calls
+    */
+   public ProtoSchemaBuilder autoImportClasses(boolean autoImportClasses) {
+      this.autoImportClasses = autoImportClasses;
+      return this;
+   }
+
+   /**
     * Builds the Protocol Buffers schema file defining the types and generates marshaller implementations for these
     * types and registers everything with the given {@link SerializationContext}.
     *
@@ -208,7 +224,7 @@ public final class ProtoSchemaBuilder {
     * @throws IOException
     */
    public String build(SerializationContext serializationContext) throws ProtoSchemaBuilderException, IOException {
-      return new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes)
+      return new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes, autoImportClasses)
             .generateAndRegister();
    }
 }
