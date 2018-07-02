@@ -67,7 +67,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
             messageContext.out.writeSInt32(fd.getNumber(), value);
             break;
          default:
-            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
    }
 
@@ -77,7 +77,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
-            throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
+            throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
       }
@@ -98,7 +98,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
             messageContext.out.writeSInt32(fd.getNumber(), value);
             break;
          default:
-            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
    }
 
@@ -139,7 +139,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
             }
             break;
          default:
-            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
    }
 
@@ -164,7 +164,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
             messageContext.out.writeSInt64(fd.getNumber(), value);
             break;
          default:
-            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
    }
 
@@ -174,7 +174,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
-            throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
+            throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
       }
@@ -195,7 +195,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
             messageContext.out.writeSInt64(fd.getNumber(), value);
             break;
          default:
-            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
    }
 
@@ -236,7 +236,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
             }
             break;
          default:
-            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
    }
 
@@ -259,7 +259,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (fd.getType() != Type.DOUBLE) {
-         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
       messageContext.out.writeDouble(fd.getNumber(), value);
    }
@@ -268,12 +268,12 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeDouble(String fieldName, Double value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       if (fd.getType() != Type.DOUBLE) {
-         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
       checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
-            throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
+            throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
       }
@@ -284,7 +284,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeDoubles(String fieldName, double[] array) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       if (fd.getType() != Type.DOUBLE) {
-         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
       checkRepeatedFieldWrite(fd);
       if (array == null) {
@@ -302,7 +302,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeFloat(String fieldName, float value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       if (fd.getType() != Type.FLOAT) {
-         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
       checkFieldWrite(fd);
       messageContext.out.writeFloat(fd.getNumber(), value);
@@ -312,12 +312,12 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeFloat(String fieldName, Float value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       if (fd.getType() != Type.FLOAT) {
-         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
       checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
-            throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
+            throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
       }
@@ -328,7 +328,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeFloats(String fieldName, float[] array) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       if (fd.getType() != Type.FLOAT) {
-         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
       checkRepeatedFieldWrite(fd);
       if (array == null) {
@@ -346,7 +346,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeBoolean(String fieldName, boolean value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       if (fd.getType() != Type.BOOL) {
-         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
       checkFieldWrite(fd);
       messageContext.out.writeBool(fd.getNumber(), value);
@@ -356,12 +356,12 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeBoolean(String fieldName, Boolean value) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       if (fd.getType() != Type.BOOL) {
-         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
       checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
-            throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
+            throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
       }
@@ -372,7 +372,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    public void writeBooleans(String fieldName, boolean[] array) throws IOException {
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       if (fd.getType() != Type.BOOL) {
-         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+         throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
       checkRepeatedFieldWrite(fd);
       if (array == null) {
@@ -391,11 +391,11 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (fd.getType() != Type.STRING) {
-         throw new IllegalArgumentException("Declared field type is not of type string : " + fieldName);
+         throw new IllegalArgumentException("Declared field type is not of type string : " + fd.getFullName());
       }
       if (value == null) {
          if (fd.isRequired()) {
-            throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
+            throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
       }
@@ -407,11 +407,11 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (fd.getType() != Type.BYTES) {
-         throw new IllegalArgumentException("Declared field type is not of type bytes : " + fieldName);
+         throw new IllegalArgumentException("Declared field type is not of type bytes : " + fd.getFullName());
       }
       if (value == null) {
          if (fd.isRequired()) {
-            throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
+            throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
       }
@@ -423,7 +423,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (fd.getType() != Type.BYTES) {
-         throw new IllegalArgumentException("Declared field type is not of type bytes : " + fieldName);
+         throw new IllegalArgumentException("Declared field type is not of type bytes : " + fd.getFullName());
       }
       if (input == null) {
          throw new IllegalArgumentException("The input stream cannot be null");
@@ -454,7 +454,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
-            throw new IllegalArgumentException("A required field cannot be null : " + fieldName);
+            throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
       }
@@ -465,7 +465,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       } else if (fd.getType() == Type.ENUM) {
          writeEnum(fd, (Enum) value);
       } else {
-         throw new IllegalArgumentException("Declared field type is not a message or an enum : " + fieldName);
+         throw new IllegalArgumentException("Declared field type is not a message or an enum : " + fd.getFullName());
       }
    }
 
@@ -631,7 +631,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
             }
             break;
          default:
-            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
    }
 
@@ -771,7 +771,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
             }
             break;
          default:
-            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldName);
+            throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
    }
 
