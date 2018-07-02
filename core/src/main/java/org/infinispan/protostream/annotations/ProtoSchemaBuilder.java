@@ -72,14 +72,8 @@ public final class ProtoSchemaBuilder {
       if (schemas != null) {
          for (String schema : schemas.stringPropertyNames()) {
             String file = schemas.getProperty(schema);
-            FileInputStream in = null;
-            try {
-               in = new FileInputStream(file);
+            try (FileInputStream in = new FileInputStream(file)) {
                ctx.registerProtoFiles(new FileDescriptorSource().addProtoFile(schema, in));
-            } finally {
-               if (in != null) {
-                  in.close();
-               }
             }
          }
       }
@@ -164,7 +158,7 @@ public final class ProtoSchemaBuilder {
     * Set the name of the protobuf package to generate. This is optional.
     *
     * @param packageName the package name
-    * @return itself
+    * @return itself, to help chaining calls
     */
    public ProtoSchemaBuilder packageName(String packageName) {
       if (packageName != null && packageName.trim().isEmpty()) {
@@ -175,10 +169,18 @@ public final class ProtoSchemaBuilder {
    }
 
    /**
-    * Add a @ProtoXyz annotated class to be analyzed.
+    * Add a @ProtoXyz annotated class to be analyzed. Proto schema and marshaller will be generated for it.
+    * <p/>
+    * Its superclass and superinterfaces will be also included in the analysis but no separate protobuf types and
+    * marshallers will be generated for them as Protobuf does not have any notion of type hierarchy and inheritance.
+    * The fields defined by the superclass or superinterfaces will be just included in the schema of the derived class.
+    * <p/>
+    * Its inner classes will also be automatically processed if they are referenced by the outer class. If you want to
+    * make sure an inner class is processed regardless if referenced or not you will have to add it explicitly using
+    * {@code addClass}.
     *
     * @param clazz the class to analyze
-    * @return itself
+    * @return itself, to help chaining calls
     */
    public ProtoSchemaBuilder addClass(Class<?> clazz) {
       if (clazz == null) {
