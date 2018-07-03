@@ -1,14 +1,17 @@
 package org.infinispan.protostream.annotations.impl;
 
-import java.io.StringWriter;
+import java.io.Writer;
 
 /**
- * A StringWriter with indentation capabilities to support more readable code generation.
+ * A Writer capable of appending Strings in a similar manner to StringWriter but with indentation capabilities to
+ * support more readable code generation. No IOExceptions are ever thrown. Closing has no effect.
  *
  * @author anistor@redhat.com
  * @since 3.0
  */
-final class IndentWriter extends StringWriter {
+final class IndentWriter extends Writer {
+
+   private final StringBuilder sb = new StringBuilder(256);
 
    /**
     * The 'equivalent' of one TAB character, because we do not use TABs.
@@ -16,6 +19,9 @@ final class IndentWriter extends StringWriter {
    private static final String TAB = "   ";
    private int indent = 0;
    private boolean indentNeeded = false;
+
+   public IndentWriter() {
+   }
 
    /**
     * Increase indentation.
@@ -38,10 +44,10 @@ final class IndentWriter extends StringWriter {
       if (indentNeeded) {
          indentNeeded = false;
          for (int i = 0; i < indent; i++) {
-            super.write(TAB);
+            sb.append(TAB);
          }
       }
-      super.write(c);
+      sb.append((char) c);
       if (c == '\n') {
          indentNeeded = true;
       }
@@ -67,5 +73,39 @@ final class IndentWriter extends StringWriter {
       for (int i = off; i < off + len; i++) {
          write(s.charAt(i));
       }
+   }
+
+   @Override
+   public IndentWriter append(CharSequence cs) {
+      write(cs == null ? "null" : cs.toString());
+      return this;
+   }
+
+   @Override
+   public IndentWriter append(CharSequence cs, int start, int end) {
+      if (cs == null) {
+         cs = "null";
+      }
+      write(cs.subSequence(start, end).toString());
+      return this;
+   }
+
+   @Override
+   public IndentWriter append(char c) {
+      write(c);
+      return this;
+   }
+
+   @Override
+   public String toString() {
+      return sb.toString();
+   }
+
+   @Override
+   public void flush() {
+   }
+
+   @Override
+   public void close() {
    }
 }
