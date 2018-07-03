@@ -1,6 +1,8 @@
 package org.infinispan.protostream.annotations.impl;
 
+import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.Date;
 
@@ -13,7 +15,6 @@ import org.infinispan.protostream.descriptors.Type;
  */
 final class ProtoFieldMetadata implements HasProtoSchema {
 
-   private final Class<?> declaringClass;
    private final int number;
    private final String name;
    private final Class<?> javaType;
@@ -26,16 +27,15 @@ final class ProtoFieldMetadata implements HasProtoSchema {
    private final boolean isArray;
    private final Object defaultValue;
 
-   private final String propertyName;
+   private final Member declaringMember;
    private final Field field;
    private final Method getter;
    private final Method setter;
 
-   ProtoFieldMetadata(Class<?> declaringClass, int number, String name, Class<?> javaType,
+   ProtoFieldMetadata(int number, String name, Class<?> javaType,
                       Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
                       boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
                       Field field) {
-      this.declaringClass = declaringClass;
       this.number = number;
       this.name = name;
       this.javaType = javaType;
@@ -46,18 +46,17 @@ final class ProtoFieldMetadata implements HasProtoSchema {
       this.isArray = isArray;
       this.defaultValue = defaultValue;
       this.protobufType = protobufType;
-      this.propertyName = field.getName();
+      this.declaringMember = field;
       this.field = field;
       this.getter = null;
       this.setter = null;
       this.documentation = DocumentationExtractor.getDocumentation(field);
    }
 
-   ProtoFieldMetadata(Class<?> declaringClass, int number, String name, Class<?> javaType,
+   ProtoFieldMetadata(int number, String name, Class<?> javaType,
                       Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
                       boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
-                      String propertyName, Method getter, Method setter) {
-      this.declaringClass = declaringClass;
+                      Method definingMethod, Method getter, Method setter) {
       this.number = number;
       this.name = name;
       this.javaType = javaType;
@@ -69,14 +68,10 @@ final class ProtoFieldMetadata implements HasProtoSchema {
       this.defaultValue = defaultValue;
       this.protobufType = protobufType;
       this.field = null;
-      this.propertyName = propertyName;
+      this.declaringMember = definingMethod;
       this.getter = getter;
       this.setter = setter;
-      this.documentation = DocumentationExtractor.getDocumentation(getter, setter);
-   }
-
-   public Class<?> getDeclaringClass() {
-      return declaringClass;
+      this.documentation = DocumentationExtractor.getDocumentation(definingMethod);
    }
 
    public int getNumber() {
@@ -136,7 +131,7 @@ final class ProtoFieldMetadata implements HasProtoSchema {
    }
 
    public String getLocation() {
-      return String.format("%s on property '%s' with tag number %d and name '%s'", declaringClass, propertyName, number, name);
+      return declaringMember instanceof Executable ? ((Executable) declaringMember).toGenericString() : declaringMember.toString();
    }
 
    @Override

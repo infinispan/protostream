@@ -128,9 +128,13 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    @Override
    public void scanMemberAnnotations() {
       if (fields == null) {
+         // all the fields discovered in this class hierarchy, by number
          // use a TreeMap to ensure ascending order by field number
          fields = new TreeMap<>();
+
+         // all the fields discovered in this class hierarchy, by name
          Map<String, ProtoFieldMetadata> fieldsByName = new HashMap<>();
+
          Set<Class<?>> examinedClasses = new HashSet<>();
          discoverFields(javaClass, examinedClasses, fields, fieldsByName);
          if (fields.isEmpty()) {
@@ -167,7 +171,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       for (Field field : clazz.getDeclaredFields()) {
          if (field.getAnnotation(ProtoUnknownFieldSet.class) != null) {
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
-               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not be used multiple times : " + field);
+               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not be used multiple times in one class hierarchy : " + field);
             }
             unknownFieldSetField = field;
          } else {
@@ -218,18 +222,18 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (protobufType == Type.ENUM || protobufType == Type.MESSAGE || protobufType == Type.GROUP) {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
                }
-               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(clazz, annotation.number(), fieldName, javaType, collectionImplementation,
-                                                                         protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue, field);
+               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(annotation.number(), fieldName, javaType, collectionImplementation,
+                     protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue, field);
 
                ProtoFieldMetadata existing = fieldsByNumber.get(annotation.number());
                if (existing != null) {
-                  throw new ProtoSchemaBuilderException("Duplicate field definition. Found two field definitions with number " + annotation.number() + ": in "
-                                                              + fieldMetadata.getLocation() + " and in " + existing.getLocation());
+                  throw new ProtoSchemaBuilderException("Duplicate field number definition. Found two field definitions with number " + annotation.number() + ": in "
+                        + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
                existing = fieldsByName.get(fieldMetadata.getName());
                if (existing != null) {
-                  throw new ProtoSchemaBuilderException("Duplicate field definition. Found two field definitions with name '" + fieldMetadata.getName() + "': in "
-                                                              + fieldMetadata.getLocation() + " and in " + existing.getLocation());
+                  throw new ProtoSchemaBuilderException("Duplicate field name definition. Found two field definitions with name '" + fieldMetadata.getName() + "': in "
+                        + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
 
                fieldsByNumber.put(fieldMetadata.getNumber(), fieldMetadata);
@@ -241,7 +245,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       for (Method method : clazz.getDeclaredMethods()) {
          if (method.getAnnotation(ProtoUnknownFieldSet.class) != null) {
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
-               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not be used multiple times : " + method);
+               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not be used multiple times in one class hierarchy : " + method);
             }
             String propertyName;
             if (method.getReturnType().equals(Void.TYPE)) {
@@ -280,6 +284,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                String propertyName;
                Method getter;
                Method setter;
+               // we can have the annotation present on either getter or setter but not both
                if (method.getReturnType().equals(Void.TYPE)) {
                   // this method is expected to be a setter
                   if (method.getName().startsWith("set") && method.getName().length() >= 4) {
@@ -341,19 +346,19 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
                }
 
-               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(clazz, annotation.number(), fieldName, javaType, collectionImplementation,
-                                                                         protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue,
-                                                                         propertyName, getter, setter);
+               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(annotation.number(), fieldName, javaType, collectionImplementation,
+                     protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue,
+                     method, getter, setter);
 
                ProtoFieldMetadata existing = fieldsByNumber.get(annotation.number());
                if (existing != null) {
                   throw new ProtoSchemaBuilderException("Duplicate field definition. Found two field definitions with number " + annotation.number() + ": in "
-                                                              + fieldMetadata.getLocation() + " and in " + existing.getLocation());
+                        + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
                existing = fieldsByName.get(fieldMetadata.getName());
                if (existing != null) {
                   throw new ProtoSchemaBuilderException("Duplicate field definition. Found two field definitions with name '" + fieldMetadata.getName() + "': in "
-                                                              + fieldMetadata.getLocation() + " and in " + existing.getLocation());
+                        + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
 
                fieldsByNumber.put(annotation.number(), fieldMetadata);
@@ -436,11 +441,11 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             collectionImplementation.getDeclaredConstructor();
          } catch (NoSuchMethodException e) {
             throw new ProtoSchemaBuilderException("The collection class ('" + collectionImplementation.getName() + "') of repeated field '"
-                                                        + fieldName + "' of " + clazz + " must have a public no-argument constructor.");
+                  + fieldName + "' of " + clazz + " must have a public no-argument constructor.");
          }
          if (!fieldType.isAssignableFrom(collectionImplementation)) {
             throw new ProtoSchemaBuilderException("The collection implementation class ('" + collectionImplementation.getName() + "') of repeated field '"
-                                                        + fieldName + "' of " + clazz + " is not assignable to this field's type.");
+                  + fieldName + "' of " + clazz + " is not assignable to this field's type.");
          }
       } else {
          if (configuredCollection != Collection.class) {
@@ -553,12 +558,12 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          getter = javaClass.getMethod(methodName);
       } catch (NoSuchMethodException e) {
          throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
-                                                     + "' of type " + propertyType + " in class " + javaClass.getName());
+               + "' of type " + propertyType + " in class " + javaClass.getName());
       }
       if (!getter.getReturnType().equals(propertyType)) {
          throw new ProtoSchemaBuilderException("No suitable getter method found for property '" + propertyName
-                                                     + "' of type " + propertyType + " in class " + javaClass.getName()
-                                                     + ". The candidate method does not have a suitable return type: " + getter);
+               + "' of type " + propertyType + " in class " + javaClass.getName()
+               + ". The candidate method does not have a suitable return type: " + getter);
       }
       return getter;
    }
@@ -570,12 +575,12 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          setter = javaClass.getMethod(methodName, propertyType);
       } catch (NoSuchMethodException e) {
          throw new ProtoSchemaBuilderException("No setter method found for property '" + propertyName
-                                                     + "' of type " + propertyType + " in class " + javaClass.getName());
+               + "' of type " + propertyType + " in class " + javaClass.getName());
       }
       if (!setter.getReturnType().equals(Void.TYPE)) {
          throw new ProtoSchemaBuilderException("No suitable setter method found for property '" + propertyName
-                                                     + "' of type " + propertyType + " in class " + javaClass.getName()
-                                                     + ". The candidate method does not have a suitable return type: " + setter);
+               + "' of type " + propertyType + " in class " + javaClass.getName()
+               + ". The candidate method does not have a suitable return type: " + setter);
       }
       return setter;
    }

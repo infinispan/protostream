@@ -11,22 +11,6 @@ import org.infinispan.protostream.annotations.ProtoDoc;
 final class DocumentationExtractor {
 
    /**
-    * Collect and concatenate the description text from the {@code @ProtoDoc.value} of the given elements.
-    */
-   public static String getDocumentation(AnnotatedElement element1, AnnotatedElement element2) {
-      String doc1 = getDocumentation(element1);
-      String doc2 = getDocumentation(element2);
-
-      if (doc1 == null) {
-         return doc2;
-      }
-      if (doc2 == null) {
-         return doc1;
-      }
-      return doc1 + '\n' + doc2;
-   }
-
-   /**
     * Collect and concatenate the description text from the {@code @ProtoDoc.value} of the given element.
     */
    public static String getDocumentation(AnnotatedElement element) {
