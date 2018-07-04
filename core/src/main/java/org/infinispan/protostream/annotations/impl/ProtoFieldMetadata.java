@@ -219,7 +219,8 @@ final class ProtoFieldMetadata implements HasProtoSchema {
          if (field != null) {
             iw.append("field = ").append(field.getDeclaringClass().getCanonicalName()).append('.').append(field.getName());
          } else {
-            iw.append("getter = ").append(getter.getName()).append(", setter = ").append(setter.getName());
+            iw.append("getter = ").append(getter.getDeclaringClass().getCanonicalName()).append('.').append(getter.getName())
+                  .append(", setter = ").append(setter.getDeclaringClass().getCanonicalName()).append('.').append(setter.getName());
          }
          iw.append(" */");
       }
