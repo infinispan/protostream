@@ -42,9 +42,9 @@ final class ProtoEnumValueMetadata {
    }
 
    public void generateProto(IndentWriter iw) {
-      iw.append("\n\n");
+      iw.append("\n");
       ProtoTypeMetadata.appendDocumentation(iw, documentation);
-      iw.append("   ").append(protoName).append(" = ").append(String.valueOf(number));
+      iw.append(protoName).append(" = ").append(String.valueOf(number));
       if (ProtoSchemaBuilder.generateSchemaDebugComments) {
          iw.append(" /* ").append(enumValue.getClass().getCanonicalName()).append('.').append(enumValue.name()).append(" */");
       }

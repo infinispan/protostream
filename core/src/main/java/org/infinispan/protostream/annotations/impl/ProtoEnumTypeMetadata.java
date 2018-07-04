@@ -89,9 +89,11 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
          iw.append(" /* ").append(javaClass.getCanonicalName()).append(" */");
       }
       iw.append(" {\n");
+      iw.inc();
       for (ProtoEnumValueMetadata m : membersByNumber.values()) {
          m.generateProto(iw);
       }
+      iw.dec();
       iw.append("}\n");
    }
 
