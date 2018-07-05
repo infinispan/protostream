@@ -46,6 +46,14 @@ final class MarshallerCodeGenerator {
     */
    private static volatile long nextId = 0;
 
+   /**
+    * Do nullable fields that do not have a user defined default value get a default type specific value if missing instead of just
+    * null? This is currently implemented just for arrays/collections.
+    * TODO Maybe numbers should also receive a 0 default value and booleans a false value. But what about strings?
+    * Empty string does not sound like a good fit. See the spec we do not fully implement here: https://developers.google.com/protocol-buffers/docs/proto#optional
+    */
+   private boolean noDefaults = false;
+
    private final ClassPool cp;
    private final CtClass ioException;
    private final CtClass enumMarshallerInterface;
@@ -275,7 +283,13 @@ final class MarshallerCodeGenerator {
          if (fieldMetadata.isRepeated()) {
             String c = makeCollectionLocalVar(fieldMetadata);
             String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
-            iw.append(collectionImpl).append(' ').append(c).append(" = null;\n");
+            iw.append(collectionImpl).append(' ').append(c).append(" = ");
+            if (noDefaults) {
+               iw.append("null");
+            } else {
+               iw.append("new ").append(collectionImpl).append("()");
+            }
+            iw.append(";\n");
          }
       }
       iw.append("boolean done = false;\n");
@@ -415,8 +429,10 @@ final class MarshallerCodeGenerator {
             }
             if (fieldMetadata.isRepeated()) {
                String c = makeCollectionLocalVar(fieldMetadata);
-               String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
-               iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(collectionImpl).append("();\n");
+               if (noDefaults) {
+                  String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
+                  iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(collectionImpl).append("();\n");
+               }
                iw.append(c).append(".add(").append(box(v, defaultValue.getClass())).append(");\n");
             } else {
                iw.append("o.").append(createSetter(fieldMetadata, box(v, fieldMetadata.getJavaType()))).append(";\n");

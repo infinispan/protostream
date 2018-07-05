@@ -9,8 +9,11 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.protostream.DescriptorParserException;
@@ -792,5 +795,123 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new MessageWithAllFieldTypes());
       ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+   }
+
+   static class MessageWithRepeatedFields {
+
+      static abstract class X {
+
+      }
+
+      //@ProtoField(number = 1111) X fieldX;
+
+      @ProtoField(number = 1)
+      int[] testField1;
+
+      @ProtoField(number = 2)
+      Integer[] testField2;
+
+      @ProtoField(number = 3, collectionImplementation = ArrayList.class)
+      List<Integer> testField3;
+
+      @ProtoField(number = 4)
+      Inner[] testField4;
+
+      @ProtoField(number = 5, collectionImplementation = ArrayList.class)
+      List<Inner> testField5;
+
+      int[] testField6;
+
+      Integer[] testField7;
+
+      List<Integer> testField8;
+
+      Inner[] testField9;
+
+      List<Inner> testField10;
+
+      @ProtoField(number = 6)
+      public int[] getTestField6() {
+         return testField6;
+      }
+
+      public void setTestField6(int[] testField6) {
+         this.testField6 = testField6;
+      }
+
+      @ProtoField(number = 7)
+      public Integer[] getTestField7() {
+         return testField7;
+      }
+
+      public void setTestField7(Integer[] testField7) {
+         this.testField7 = testField7;
+      }
+
+      @ProtoField(number = 8, collectionImplementation = ArrayList.class)
+      public List<Integer> getTestField8() {
+         return testField8;
+      }
+
+      public void setTestField8(List<Integer> testField8) {
+         this.testField8 = testField8;
+      }
+
+      @ProtoField(number = 9)
+      public Inner[] getTestField9() {
+         return testField9;
+      }
+
+      public void setTestField9(Inner[] testField9) {
+         this.testField9 = testField9;
+      }
+
+      @ProtoField(number = 10, collectionImplementation = ArrayList.class)
+      public List<Inner> getTestField10() {
+         return testField10;
+      }
+
+      public void setTestField10(List<Inner> testField10) {
+         this.testField10 = testField10;
+      }
+
+      static class Inner {
+
+         @ProtoField(number = 1, required = true)
+         int intField;
+      }
+   }
+
+   @Test
+   public void testNonNullRepeatedFields() throws Exception {
+      SerializationContext ctx = createContext();
+      new ProtoSchemaBuilder()
+            .fileName("test.proto")
+            .addClass(MessageWithRepeatedFields.class)
+            .build(ctx);
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new MessageWithRepeatedFields());
+      MessageWithRepeatedFields o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertNotNull(o.testField1);
+      assertEquals(0, o.testField1.length);
+      assertNotNull(o.testField2);
+      assertEquals(0, o.testField2.length);
+      assertNotNull(o.testField3);
+      assertEquals(0, o.testField3.size());
+      assertNotNull(o.testField4);
+      assertEquals(0, o.testField4.length);
+      assertNotNull(o.testField5);
+      assertEquals(0, o.testField5.size());
+      assertNotNull(o.testField6);
+      assertEquals(0, o.testField6.length);
+      assertNotNull(o.testField7);
+      assertEquals(0, o.testField7.length);
+      assertNotNull(o.testField8);
+      assertEquals(0, o.testField8.size());
+      assertNotNull(o.testField9);
+      assertEquals(0, o.testField9.length);
+      assertNotNull(o.testField10);
+      assertEquals(0, o.testField10.size());
    }
 }
