@@ -93,6 +93,29 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       protoSchemaBuilder.addClass(Object.class).build(ctx);
    }
 
+   static class MessageWithAbstractFieldType {
+
+      static abstract class AbstractType {
+
+         @ProtoField(number = 1, required = true)
+         int field1;
+      }
+
+      @ProtoField(number = 1)
+      AbstractType testField1;
+   }
+
+   @Test
+   public void tesAbstractClass() throws Exception {
+      exception.expect(ProtoSchemaBuilderException.class);
+      exception.expectMessage("The type org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$MessageWithAbstractFieldType$AbstractType of field 'testField1' of class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$MessageWithAbstractFieldType should not be abstract.");
+
+      SerializationContext ctx = createContext();
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder.fileName("test.proto");
+      protoSchemaBuilder.addClass(MessageWithAbstractFieldType.class).build(ctx);
+   }
+
    @Test
    public void testGeneration() throws Exception {
       SerializationContext ctx = createContext();
@@ -798,12 +821,6 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    }
 
    static class MessageWithRepeatedFields {
-
-      static abstract class X {
-
-      }
-
-      //@ProtoField(number = 1111) X fieldX;
 
       @ProtoField(number = 1)
       int[] testField1;
