@@ -195,7 +195,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   }
                }
                if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
-                  throw new ProtoSchemaBuilderException("The class " + javaType.getName() + " of repeated field '" + fieldName + "' of " + clazz + " should not be abstract.");
+                  throw new ProtoSchemaBuilderException("The type " + javaType.getName() + " of field '" + fieldName + "' of " + clazz + " should not be abstract.");
                }
 
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, annotation.defaultValue());
@@ -316,7 +316,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   }
                }
                if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
-                  throw new ProtoSchemaBuilderException("The class " + javaType.getName() + " of repeated field '" + fieldName + "' of " + clazz + " should not be abstract.");
+                  throw new ProtoSchemaBuilderException("The type " + javaType.getName() + " of field '" + fieldName + "' of " + clazz + " should not be abstract.");
                }
 
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, annotation.defaultValue());
