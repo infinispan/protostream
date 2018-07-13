@@ -70,7 +70,7 @@ public class MessageContext<E extends MessageContext> {
          if (parentContext != null) {
             pfqn = parentContext.getFullFieldName();
          }
-         fullFieldName = pfqn != null ? pfqn + "." + fieldName : fieldName;
+         fullFieldName = pfqn != null ? pfqn + '.' + fieldName : fieldName;
       }
       return fullFieldName;
    }

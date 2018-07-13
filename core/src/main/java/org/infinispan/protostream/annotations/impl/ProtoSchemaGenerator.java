@@ -78,12 +78,14 @@ public final class ProtoSchemaGenerator {
          defineType(protoTypeMetadata);
       }
 
+      // scan member annotations and possibly discover more classes being referenced
       while (true) {
          List<ProtoTypeMetadata> meta = new ArrayList<>(metadataByClass.values());
          for (ProtoTypeMetadata m : meta) {
             m.scanMemberAnnotations();
          }
          if (metadataByClass.size() == meta.size()) {
+            // no new classes were discovered
             break;
          }
       }
@@ -213,7 +215,8 @@ public final class ProtoSchemaGenerator {
       String fullName = protoTypeMetadata.getFullName();
       ProtoTypeMetadata existing = metadataByTypeName.get(fullName);
       if (existing != null) {
-         throw new ProtoSchemaBuilderException("Duplicate type definition. Type '" + fullName + "' is defined by " + protoTypeMetadata.getJavaClass() + " and by " + existing.getJavaClass());
+         throw new ProtoSchemaBuilderException("Duplicate type definition. Type '" + fullName + "' is defined by "
+               + protoTypeMetadata.getJavaClass().getName() + " and also by " + existing.getJavaClass().getName());
       }
       metadataByTypeName.put(fullName, protoTypeMetadata);
       metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);

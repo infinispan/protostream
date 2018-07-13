@@ -40,10 +40,10 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
             if (f.isEnumConstant()) {
                ProtoEnumValue annotation = f.getAnnotation(ProtoEnumValue.class);
                if (annotation == null) {
-                  throw new ProtoSchemaBuilderException("Enum members must have the @ProtoEnumValue annotation: " + javaClass.getName() + "." + f.getName());
+                  throw new ProtoSchemaBuilderException("Enum members must have the @ProtoEnumValue annotation: " + javaClass.getName() + '.' + f.getName());
                }
                if (membersByNumber.containsKey(annotation.number())) {
-                  throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + annotation.number() + " on annotation member: " + javaClass.getName() + "." + f.getName());
+                  throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + annotation.number() + " on annotation member: " + javaClass.getName() + '.' + f.getName());
                }
                String name = annotation.name();
                if (name.isEmpty()) {

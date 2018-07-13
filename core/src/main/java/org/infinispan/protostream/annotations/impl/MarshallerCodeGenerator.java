@@ -61,7 +61,7 @@ final class MarshallerCodeGenerator {
    private final CtMethod encodeMethod;
    private final String protobufSchemaPackage;
 
-   public MarshallerCodeGenerator(String protobufSchemaPackage, ClassPool cp) throws NotFoundException {
+   MarshallerCodeGenerator(String protobufSchemaPackage, ClassPool cp) throws NotFoundException {
       this.protobufSchemaPackage = protobufSchemaPackage;
       this.cp = cp;
       ioException = cp.getCtClass(IOException.class.getName());
@@ -165,7 +165,7 @@ final class MarshallerCodeGenerator {
 
    private String makeQualifiedTypeName(String fullName) {
       if (protobufSchemaPackage != null) {
-         return protobufSchemaPackage + "." + fullName;
+         return protobufSchemaPackage + '.' + fullName;
       }
       return fullName;
    }
@@ -793,10 +793,10 @@ final class MarshallerCodeGenerator {
       return fieldMetadata.getGetter().getName() + "()";
    }
 
-   private String createSetter(ProtoFieldMetadata fieldMetadata, String args) {
+   private String createSetter(ProtoFieldMetadata fieldMetadata, String value) {
       if (fieldMetadata.getField() != null) {
-         return fieldMetadata.getField().getName() + " = " + args;
+         return fieldMetadata.getField().getName() + '=' + value;
       }
-      return fieldMetadata.getSetter().getName() + "(" + args + ")";
+      return fieldMetadata.getSetter().getName() + '(' + value + ')';
    }
 }
