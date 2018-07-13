@@ -66,6 +66,9 @@ import com.google.gson.stream.MalformedJsonException;
  */
 public final class ProtobufUtil {
 
+   // Z-normalized RFC 3339 format
+   private static final String RFC_3339_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+
    private static final Gson GSON = new Gson();
 
    /**
@@ -887,7 +890,7 @@ public final class ProtobufUtil {
 
    private static final ThreadLocal<DateFormat> timestampFormat = ThreadLocal.withInitial(() -> {
       // Z-normalized RFC 3339 format
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+      SimpleDateFormat sdf = new SimpleDateFormat(RFC_3339_DATE_FORMAT);
       GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
       calendar.setGregorianChange(new Date(Long.MIN_VALUE));
       sdf.setCalendar(calendar);
