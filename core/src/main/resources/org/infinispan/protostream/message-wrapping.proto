@@ -19,8 +19,8 @@ package org.infinispan.protostream;
  */
 message WrappedMessage {
 
+   // Exactly one of the following fields is used if the wrapped value is a primitive (scalar) type.
    oneof scalarOrMessage {
-      // Exactly one of the following fields is used if the wrapped value is a primitive (scalar) type.
       double wrappedDouble = 1;
       float wrappedFloat = 2;
       int64 wrappedInt64 = 3;
@@ -37,19 +37,28 @@ message WrappedMessage {
       sint32 wrappedSInt32 = 14;
       sint64 wrappedSInt64 = 15;
 
-      /**
-       * Stores the message bytes if the wrapped value is a message type.
-       */
-      bytes wrappedMessage = 17;
+      /** There is no native char type in protobuf so it is mapped to int32. */
+      int32 wrappedChar = 20;
+
+      /** There is no native short type in protobuf so it is mapped to int32. */
+      int32 wrappedShort = 21;
+
+      /** There is no native byte type in protobuf so it is mapped to int32. */
+      int32 wrappedByte = 22;
 
       /**
        * This is used if the wrapped value is an enum.
        */
       int32 wrappedEnum = 18;
+
+      /**
+       * Stores the message bytes if the wrapped value is a message type.
+       */
+      bytes wrappedMessage = 17;
    }
 
    /**
-    * Stores the type name or type id. This is not used for scalar types, only for mesage types.
+    * Stores the fully qualified type name or numeric type id. This is not used for scalar types, only for message types.
     */
    oneof typeNameOrId {
 
