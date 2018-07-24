@@ -115,14 +115,19 @@ public class WrappingTest extends AbstractProtoStreamTest {
       assertEquals(3, ((User) list.get(2)).getId());
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test
    public void testMarshallByte() throws Exception {
-      testMarshallPrimitive((byte) 3);   //there is no support for byte
+      testMarshallPrimitive((byte) 3);
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test
    public void testMarshallShort() throws Exception {
-      testMarshallPrimitive((short) 3);  //there is no support for short
+      testMarshallPrimitive((short) 3);
+   }
+
+   @Test
+   public void testMarshallChar() throws Exception {
+      testMarshallPrimitive('c');
    }
 
    @Test
