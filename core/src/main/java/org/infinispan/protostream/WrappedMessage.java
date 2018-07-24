@@ -90,6 +90,21 @@ public final class WrappedMessage {
    public static final int WRAPPED_STRING = 9;
 
    /**
+    * A wrapped char (marshalled as int32).
+    */
+   public static final int WRAPPED_CHAR = 20;
+
+   /**
+    * A wrapped short (marshalled as int32).
+    */
+   public static final int WRAPPED_SHORT = 21;
+
+   /**
+    * A wrapped byte (marshalled as int32).
+    */
+   public static final int WRAPPED_BYTE = 22;
+
+   /**
     * A wrapped bytes.
     */
    public static final int WRAPPED_BYTES = 10;
@@ -169,6 +184,12 @@ public final class WrappedMessage {
 
       if (t instanceof String) {
          out.writeString(WRAPPED_STRING, (String) t);
+      } else if (t instanceof Character) {
+         out.writeInt32(WRAPPED_CHAR, ((Character) t).charValue());
+      } else if (t instanceof Byte) {
+         out.writeInt32(WRAPPED_BYTE, ((Byte) t).byteValue());
+      } else if (t instanceof Short) {
+         out.writeInt32(WRAPPED_SHORT, ((Short) t).shortValue());
       } else if (t instanceof Long) {
          out.writeInt64(WRAPPED_INT64, (Long) t);
       } else if (t instanceof Integer) {
@@ -234,6 +255,15 @@ public final class WrappedMessage {
                break;
             case WRAPPED_STRING << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                value = in.readString();
+               break;
+            case WRAPPED_CHAR << 3 | WireFormat.WIRETYPE_VARINT:
+               value = (char) in.readInt32();
+               break;
+            case WRAPPED_SHORT << 3 | WireFormat.WIRETYPE_VARINT:
+               value = (short) in.readInt32();
+               break;
+            case WRAPPED_BYTE << 3 | WireFormat.WIRETYPE_VARINT:
+               value = (byte) in.readInt32();
                break;
             case WRAPPED_BYTES << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                value = in.readByteArray();
