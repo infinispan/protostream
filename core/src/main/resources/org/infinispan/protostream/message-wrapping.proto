@@ -5,14 +5,14 @@ package org.infinispan.protostream;
 /**
  * Protobuf messages do not indicate their message type or structure. Readers of protobuf data streams are expected to
  * know in advance what message type to expect next in the stream. Also, the wire format is not self-delimiting so the
- * length of the next message must be known in advance of be detected correctly so that not too much nor too little is
- * read. This is particularly important is multiple messages are contained in a stream.
- * A detailed explanation is oferred here: https://developers.google.com/protocol-buffers/docs/techniques#streaming
+ * length of the next message must be computed based on the schema so that not too much nor too little is read.
+ * This is particularly important if multiple messages are contained in a stream. A detailed explanation is oferred here:
+ * https://developers.google.com/protocol-buffers/docs/techniques#streaming
  * <p>
  * WrappedMessage solves this problem of self-describing messages by allowing the stream reader to detect
- * the type of the message. Still, the message structure is not provided as it would not be efficient to carry the type
- * descriptor over the wire with each message. The application is expected to have knowledge of the structure once it
- * learns the type name.
+ * the type of the message. Still, only the type name is provided but the actual schema is not provided as it would not
+ * be efficient to carry so much information over the wire with each message. The application is expected to have
+ * knowledge of the schema and use it once it learns the type name.
  * <p> This is similar to 'google.protobuf.Any' but is also able to handle scalars not just messages.
  *
  * @TypeId(1000000)
@@ -45,6 +45,12 @@ message WrappedMessage {
 
       /** There is no native byte type in protobuf so it is mapped to int32. */
       int32 wrappedByte = 22;
+
+      /** There is no native Date type in protobuf so it is mapped to fixed64. */
+      int64 wrappedDateMillis = 23;
+
+      /** There is no native Instant type in protobuf so it is mapped to fixed64. */
+      int64 wrappedInstantMillis = 24;
 
       /**
        * This is used if the wrapped value is an enum.
