@@ -7,9 +7,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -25,9 +27,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
    @Test
    public void testMarshallIntArray() throws Exception {
-      SerializationContext ctx = createContext();
-
-      ctx.registerMarshaller(new MessageMarshaller<int[]>() {
+      MessageMarshaller<int[]> m = new MessageMarshaller<int[]>() {
          @Override
          public String getTypeName() {
             return "sample_bank_account.int_array";
@@ -59,14 +59,9 @@ public class WrappingTest extends AbstractProtoStreamTest {
             }
             writer.writeArray("theArray", theArray, Integer.class);
          }
-      });
+      };
 
-      int[] testArray = new int[]{4, 7, 8};
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, testArray);
-      Object unmarshalled = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-      assertTrue(unmarshalled instanceof int[]);
-      int[] unmarshalledArray = (int[]) unmarshalled;
-      assertArrayEquals(testArray, unmarshalledArray);
+      roundtrip(new int[]{4, 7, 8}, m);
    }
 
    private static class UserList extends ArrayList<User> {
@@ -74,9 +69,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
    @Test
    public void testMarshallUserList() throws Exception {
-      SerializationContext ctx = createContext();
-
-      ctx.registerMarshaller(new MessageMarshaller<UserList>() {
+      MessageMarshaller<UserList> m = new MessageMarshaller<UserList>() {
 
          @Override
          public String getTypeName() {
@@ -97,16 +90,15 @@ public class WrappingTest extends AbstractProtoStreamTest {
          public void writeTo(ProtoStreamWriter writer, UserList list) throws IOException {
             writer.writeCollection("theList", list, User.class);
          }
-      });
+      };
 
       List<User> users = new UserList();
       users.add(createUser(1, "X1", "Y1"));
       users.add(createUser(2, "X2", "Y2"));
       users.add(createUser(3, "X3", "Y3"));
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, users);
-      Object obj = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-      assertTrue(obj instanceof ArrayList);
-      List list = (List) obj;
+
+      List list = (List) roundtrip(users, m);
+
       assertTrue(list.get(0) instanceof User);
       assertTrue(list.get(1) instanceof User);
       assertTrue(list.get(2) instanceof User);
@@ -117,85 +109,76 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
    @Test
    public void testMarshallByte() throws Exception {
-      testMarshallPrimitive((byte) 3);
+      roundtrip((byte) 3);
    }
 
    @Test
    public void testMarshallShort() throws Exception {
-      testMarshallPrimitive((short) 3);
+      roundtrip((short) 3);
    }
 
    @Test
    public void testMarshallChar() throws Exception {
-      testMarshallPrimitive('c');
+      roundtrip('c');
    }
 
    @Test
    public void testMarshallFloat() throws Exception {
-      testMarshallPrimitive(3.14);
+      roundtrip(3.14);
    }
 
    @Test
    public void testMarshallDouble() throws Exception {
-      testMarshallPrimitive(3.14d);
+      roundtrip(3.14d);
    }
 
    @Test
    public void testMarshallBoolean() throws Exception {
-      testMarshallPrimitive(true);
-      testMarshallPrimitive(false);
+      roundtrip(true);
+      roundtrip(false);
    }
 
    @Test
    public void testMarshallInt() throws Exception {
-      testMarshallPrimitive(3);
+      roundtrip(3);
    }
 
    @Test
    public void testMarshallLong() throws Exception {
-      testMarshallPrimitive(3L);
+      roundtrip(3L);
    }
 
    @Test
    public void testMarshallString() throws Exception {
-      testMarshallPrimitive("xyz");
+      roundtrip("xyz");
    }
 
    @Test
    public void testMarshallBytes() throws Exception {
-      ImmutableSerializationContext ctx = createContext();
-      byte[] value = new byte[]{1, 2, 3, 4};
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, value);
-      Object obj = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-      assertTrue(obj instanceof byte[]);
-      assertArrayEquals(value, (byte[]) obj);
+      roundtrip(new byte[]{1, 2, 3, 4});
    }
 
    @Test
    public void testMarshallEnum() throws Exception {
-      testMarshallPrimitive(User.Gender.MALE);
+      roundtrip(User.Gender.MALE);
+      roundtrip(User.Gender.FEMALE);
    }
 
-   private void testMarshallPrimitive(Object value) throws Exception {
-      if (value == null || value.getClass().isArray()) {
-         throw new IllegalArgumentException("nulls or arrays are not accepted");
-      }
-      ImmutableSerializationContext ctx = createContext();
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, value);
-      Object obj = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-      assertEquals(value.getClass(), obj.getClass());
-      assertEquals(value, obj);
+   @Test
+   public void testMarshallDate() throws Exception {
+      roundtrip(new Date(System.currentTimeMillis()));
+   }
+
+   @Test
+   public void testMarshallInstant() throws Exception {
+      roundtrip(Instant.now());
    }
 
    @Test
    public void testMarshallObject() throws Exception {
-      ImmutableSerializationContext ctx = createContext();
-
       User user = createUser(1, "John", "Batman");
 
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, user);
-
-      User decoded = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      User decoded = (User) roundtrip(user);
 
       assertEquals(1, decoded.getId());
       assertEquals("John", decoded.getName());
@@ -215,10 +198,35 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
    @Test
    public void testMarshallNull() throws Exception {
-      ImmutableSerializationContext ctx = createContext();
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, null);
-      Object obj = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-      assertNull(obj);
+      roundtrip(null);
+   }
+
+   private Object roundtrip(Object in, BaseMarshaller... marshallers) throws Exception {
+      SerializationContext ctx = createContext();
+      for (BaseMarshaller m : marshallers) {
+         ctx.registerMarshaller(m);
+      }
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, in);
+      assertNotNull(bytes);
+
+      Object out = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      if (in != null) {
+         assertNotNull(out);
+         assertEquals(in.getClass(), out.getClass());
+      } else {
+         assertNull(out);
+      }
+
+      if (in instanceof byte[]) {
+         assertArrayEquals((byte[]) in, (byte[]) out);
+      } else if (in instanceof int[]) {
+         assertArrayEquals((int[]) in, (int[]) out);
+      } else {
+         assertEquals(in, out);
+      }
+
+      return out;
    }
 
    private User createUser(int id, String name, String surname) {

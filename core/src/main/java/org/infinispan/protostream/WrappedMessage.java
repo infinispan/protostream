@@ -1,6 +1,8 @@
 package org.infinispan.protostream;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.Date;
 
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
@@ -105,6 +107,16 @@ public final class WrappedMessage {
    public static final int WRAPPED_BYTE = 22;
 
    /**
+    * A wrapped java.util.Date (marshalled as int64).
+    */
+   public static final int WRAPPED_DATE_MILLIS = 23;
+
+   /**
+    * A wrapped java.time.Instant (marshalled as int64).
+    */
+   public static final int WRAPPED_INSTANT_MILLIS = 24;
+
+   /**
     * A wrapped bytes.
     */
    public static final int WRAPPED_BYTES = 10;
@@ -190,6 +202,10 @@ public final class WrappedMessage {
          out.writeInt32(WRAPPED_BYTE, ((Byte) t).byteValue());
       } else if (t instanceof Short) {
          out.writeInt32(WRAPPED_SHORT, ((Short) t).shortValue());
+      } else if (t instanceof Date) {
+         out.writeInt64(WRAPPED_DATE_MILLIS, ((Date) t).getTime());
+      } else if (t instanceof Instant) {
+         out.writeInt64(WRAPPED_INSTANT_MILLIS, ((Instant) t).toEpochMilli());  //todo we need nanos too
       } else if (t instanceof Long) {
          out.writeInt64(WRAPPED_INT64, (Long) t);
       } else if (t instanceof Integer) {
@@ -265,6 +281,12 @@ public final class WrappedMessage {
             case WRAPPED_BYTE << 3 | WireFormat.WIRETYPE_VARINT:
                value = (byte) in.readInt32();
                break;
+            case WRAPPED_DATE_MILLIS << 3 | WireFormat.WIRETYPE_VARINT:
+               value = new Date(in.readInt64());
+               break;
+            case WRAPPED_INSTANT_MILLIS << 3 | WireFormat.WIRETYPE_VARINT:
+               value = Instant.ofEpochMilli(in.readInt64());
+               break;
             case WRAPPED_BYTES << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                value = in.readByteArray();
                break;
@@ -308,7 +330,7 @@ public final class WrappedMessage {
                value = in.readSInt32();
                break;
             default:
-               throw new IllegalStateException("Unexpected tag : " + tag);
+               throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : " + WireFormat.getTagFieldNumber(tag)+ ", Wire type : " + WireFormat.getTagWireType(tag) + ")");
          }
       }
 
