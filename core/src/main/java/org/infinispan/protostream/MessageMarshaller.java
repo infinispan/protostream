@@ -138,7 +138,22 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
       <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException;
 
+      /**
+       * Writes an enum value. The third argument (the {@code class} was never used internally) so this variant is now
+       * deprecated.
+       *
+       * @deprecated replaced by {@link #writeEnum(String fieldName, E value)}
+       */
+      @Deprecated
       <E extends Enum<E>> void writeEnum(String fieldName, E value, Class<E> clazz) throws IOException;
+
+      /**
+       * Writes an enum value.
+       *
+       * @param fieldName the field name
+       * @param value     the enum value
+       */
+      <E extends Enum<E>> void writeEnum(String fieldName, E value) throws IOException;
 
       <E> void writeCollection(String fieldName, Collection<? super E> collection, Class<E> elementClass) throws IOException;
 

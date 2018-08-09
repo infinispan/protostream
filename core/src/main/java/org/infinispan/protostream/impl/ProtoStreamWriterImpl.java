@@ -471,7 +471,23 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public <E extends Enum<E>> void writeEnum(String fieldName, E value, Class<E> clazz) throws IOException {
-      writeObject(fieldName, value, clazz);
+      writeEnum(fieldName, value);
+   }
+
+   @Override
+   public <E extends Enum<E>> void writeEnum(String fieldName, E value) throws IOException {
+      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      if (fd.getType() != Type.ENUM) {
+         throw new IllegalArgumentException("Declared field type is not an enum : " + fd.getFullName());
+      }
+      checkFieldWrite(fd);
+      if (value == null) {
+         if (fd.isRequired()) {
+            throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
+         }
+         return;
+      }
+      writeEnum(fd, value);
    }
 
    private void writeMessage(FieldDescriptor fd, Object value, Class clazz) throws IOException {
