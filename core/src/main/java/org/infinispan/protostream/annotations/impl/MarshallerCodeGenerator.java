@@ -44,7 +44,7 @@ final class MarshallerCodeGenerator {
    /**
     * The prefix of class names of generated marshallers.
     */
-   private static final String MARSHALLER_CLASS_NAME_PREFIX = "___ProtostreamGeneratedMarshaller_";
+   private static final String MARSHALLER_CLASS_NAME_PREFIX = "___ProtostreamGeneratedMarshaller";
 
    /**
     * A numeric id that is appended to generated class names to avoid potential collisions.
@@ -101,12 +101,16 @@ final class MarshallerCodeGenerator {
       return nextId++;
    }
 
+   private String makeMarshallerClassName() {
+      return MARSHALLER_CLASS_NAME_PREFIX + nextMarshallerClassId();
+   }
+
    /**
     * Generates an implementation of EnumMarshaller as a static nested class in the Enum class to be marshalled.
     */
    public EnumMarshaller generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws NotFoundException, CannotCompileException, IllegalAccessException, InstantiationException {
       CtClass enumClass = cp.get(petm.getJavaClass().getName());
-      String className = makeMarshallerClassName(petm.getJavaClass());
+      String className = makeMarshallerClassName();
       CtClass marshallerImpl = enumClass.makeNestedClass(className, true);
       marshallerImpl.addInterface(enumMarshallerInterface);
 
@@ -144,10 +148,6 @@ final class MarshallerCodeGenerator {
       EnumMarshaller marshallerInstance = (EnumMarshaller) generatedMarshallerClass.newInstance();
       marshallerImpl.detach();
       return marshallerInstance;
-   }
-
-   private String makeMarshallerClassName(Class<?> clazz) {
-      return MARSHALLER_CLASS_NAME_PREFIX + clazz.getSimpleName() + nextMarshallerClassId();
    }
 
    private String generateEnumDecodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
@@ -209,7 +209,7 @@ final class MarshallerCodeGenerator {
     */
    public RawProtobufMarshaller generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException, IllegalAccessException, InstantiationException {
       CtClass entityClass = cp.get(messageTypeMetadata.getJavaClass().getName());
-      CtClass marshallerImpl = entityClass.makeNestedClass(makeMarshallerClassName(messageTypeMetadata.getJavaClass()), true);
+      CtClass marshallerImpl = entityClass.makeNestedClass(makeMarshallerClassName(), true);
       marshallerImpl.addInterface(rawProtobufMarshallerInterface);
       marshallerImpl.setSuperclass(generatedMarshallerBaseClass);
 
