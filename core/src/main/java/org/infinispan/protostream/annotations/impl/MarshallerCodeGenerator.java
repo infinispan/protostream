@@ -30,6 +30,8 @@ import javassist.NotFoundException;
 // TODO [anistor] bounded streams should be checked to be exactly as the size indicated
 
 /**
+ * Generates bytecode implementations of EnumMarshaller and RawProtobufMarshaller.
+ *
  * @author anistor@readhat.com
  * @since 3.0
  */
@@ -99,6 +101,9 @@ final class MarshallerCodeGenerator {
       return nextId++;
    }
 
+   /**
+    * Generates an implementation of EnumMarshaller as a static nested class in the Enum class to be marshalled.
+    */
    public EnumMarshaller generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws NotFoundException, CannotCompileException, IllegalAccessException, InstantiationException {
       CtClass enumClass = cp.get(petm.getJavaClass().getName());
       String className = makeMarshallerClassName(petm.getJavaClass());
@@ -198,6 +203,10 @@ final class MarshallerCodeGenerator {
       return "__md$" + fieldMetadata.getJavaType().getCanonicalName().replace('.', '$');
    }
 
+   /**
+    * Generates an implementation of RawProtobufMarshaller as a static nested class in the message class to be
+    * marshalled.
+    */
    public RawProtobufMarshaller generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException, IllegalAccessException, InstantiationException {
       CtClass entityClass = cp.get(messageTypeMetadata.getJavaClass().getName());
       CtClass marshallerImpl = entityClass.makeNestedClass(makeMarshallerClassName(messageTypeMetadata.getJavaClass()), true);
