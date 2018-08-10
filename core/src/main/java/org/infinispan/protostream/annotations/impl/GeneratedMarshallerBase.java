@@ -9,7 +9,7 @@ import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 
 /**
- * Base class for generated marshallers. Provides some handy helper methods.
+ * Base class for generated message marshallers. Provides some handy helper methods.
  *
  * @author anistor@redhat.com
  * @since 3.0

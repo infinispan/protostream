@@ -115,7 +115,7 @@ final class MarshallerCodeGenerator {
       ctDecodeMethod.setModifiers(ctDecodeMethod.getModifiers() | Modifier.FINAL);
       String decodeSrc = generateEnumDecodeMethod(petm);
       if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctDecodeMethod, decodeSrc);
+         log.tracef("%s %s", ctDecodeMethod.getLongName(), decodeSrc);
       }
       ctDecodeMethod.setBody(decodeSrc);
       marshallerImpl.addMethod(ctDecodeMethod);
@@ -124,7 +124,7 @@ final class MarshallerCodeGenerator {
       ctEncodeMethod.setModifiers(ctEncodeMethod.getModifiers() | Modifier.FINAL);
       String encodeSrc = generateEnumEncodeMethod(petm);
       if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctEncodeMethod, encodeSrc);
+         log.tracef("%s %s", ctEncodeMethod.getLongName(), encodeSrc);
       }
       ctEncodeMethod.setBody(encodeSrc);
       marshallerImpl.addMethod(ctEncodeMethod);
@@ -217,7 +217,7 @@ final class MarshallerCodeGenerator {
       ctReadFromMethod.setModifiers(ctReadFromMethod.getModifiers() | Modifier.FINAL);
       String readFromSrc = generateReadFromMethod(messageTypeMetadata);
       if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctReadFromMethod, readFromSrc);
+         log.tracef("%s %s", ctReadFromMethod.getLongName(), readFromSrc);
       }
       ctReadFromMethod.setBody(readFromSrc);
       marshallerImpl.addMethod(ctReadFromMethod);
@@ -227,7 +227,7 @@ final class MarshallerCodeGenerator {
       ctWriteToMethod.setModifiers(ctWriteToMethod.getModifiers() | Modifier.FINAL);
       String writeToSrc = generateWriteToMethod(messageTypeMetadata);
       if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctWriteToMethod, writeToSrc);
+         log.tracef("%s %s", ctWriteToMethod.getLongName(), writeToSrc);
       }
       ctWriteToMethod.setBody(writeToSrc);
       marshallerImpl.addMethod(ctWriteToMethod);
