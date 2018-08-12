@@ -407,7 +407,7 @@ final class MarshallerCodeGenerator {
          iw.append("if (!u.readSingleField(tag, $2)) done = true;\n");
          iw.append("if (!u.isEmpty()) ").append(setUnknownFieldSetFieldStatement).append(";\n");
       } else {
-         iw.append("$2.skipField(tag);\n");
+         iw.append("if (!$2.skipField(tag)) done = true;\n");
       }
       iw.dec();
       iw.append("}\n");
