@@ -469,7 +469,7 @@ final class MarshallerCodeGenerator {
                   iw.append("for (int i = 0; i < _c.length; i++) _c[i] = ").append(unbox("((" + boxedType.getName() + ")" + c + ".get(i))", boxedType)).append("; ");
                   c = "_c";
                } else {
-                  c = "(" + fieldMetadata.getJavaType().getName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaType().getName() + "[" + c + ".size()])";
+                  c = "(" + fieldMetadata.getJavaType().getName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaType().getName() + "[0])";
                }
             }
             iw.append("o.").append(createSetter(fieldMetadata, c)).append(';');

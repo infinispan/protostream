@@ -1,7 +1,6 @@
 package org.infinispan.protostream.impl;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
@@ -30,8 +29,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
       this.ctx = ctx;
       this.marshaller = marshaller;
       this.messageDescriptor = messageDescriptor;
-      List<FieldDescriptor> fields = messageDescriptor.getFields();
-      fieldDescriptors = fields.toArray(new FieldDescriptor[fields.size()]);
+      fieldDescriptors = messageDescriptor.getFields().toArray(new FieldDescriptor[0]);
    }
 
    @Override
