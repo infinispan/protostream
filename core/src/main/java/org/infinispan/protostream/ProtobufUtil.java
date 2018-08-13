@@ -66,6 +66,8 @@ import com.google.gson.stream.MalformedJsonException;
  */
 public final class ProtobufUtil {
 
+   private static final int BUFFER_SIZE = 512;
+
    // Z-normalized RFC 3339 format
    private static final String RFC_3339_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
@@ -110,13 +112,13 @@ public final class ProtobufUtil {
    }
 
    public static byte[] toByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
       writeTo(ctx, baos, t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(BUFFER_SIZE);
       writeTo(ctx, baos, t);
       return baos.getByteBuffer();
    }
@@ -167,13 +169,13 @@ public final class ProtobufUtil {
 
    //todo [anistor] should make it possible to plug in a custom wrapping strategy instead of the default one
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
       WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toWrappedByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(BUFFER_SIZE);
       WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.getByteBuffer();
    }
@@ -207,7 +209,7 @@ public final class ProtobufUtil {
    }
 
    public static byte[] fromCanonicalJSON(ImmutableSerializationContext ctx, Reader reader) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
       RawProtoStreamWriter writer = RawProtoStreamWriterImpl.newInstance(baos);
 
       JsonReader jsonReader = new JsonReader(reader);
@@ -389,7 +391,7 @@ public final class ProtobufUtil {
       Set<String> requiredFields = messageDescriptor.getFields().stream()
             .filter(FieldDescriptor::isRequired).map(FieldDescriptor::getName).collect(Collectors.toSet());
 
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
       RawProtoStreamWriter objectWriter = RawProtoStreamWriterImpl.newInstance(baos);
 
       String currentField = null;
