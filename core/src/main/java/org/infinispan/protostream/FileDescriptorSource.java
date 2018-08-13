@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -21,7 +22,6 @@ import java.util.Map;
  */
 public final class FileDescriptorSource {
 
-   private static final String ENCODING = "UTF-8";
    private static final int BUFFER_SIZE = 1024;
 
    /**
@@ -157,7 +157,7 @@ public final class FileDescriptorSource {
    }
 
    private char[] toCharArray(InputStream is) throws IOException {
-      try (Reader reader = new InputStreamReader(is, ENCODING)) {
+      try (Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
          return toCharArray(reader);
       }
    }
