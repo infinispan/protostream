@@ -3,8 +3,8 @@ package org.infinispan.protostream.impl;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -145,12 +145,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
    private Object convertWireTypeToJavaType(Type type, Object o) {
       switch (type) {
          case STRING:
-            try {
-               o = new String((byte[]) o, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-               // Hell is freezing
-               throw new RuntimeException("UTF-8 not supported", e);
-            }
+            o = new String((byte[]) o, StandardCharsets.UTF_8);
             break;
          case BYTES:
             o = (byte[]) o;

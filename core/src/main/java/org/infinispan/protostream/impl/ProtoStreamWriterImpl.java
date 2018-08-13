@@ -490,7 +490,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       writeEnum(fd, value);
    }
 
-   private void writeMessage(FieldDescriptor fd, Object value, Class clazz) throws IOException {
+   private void writeMessage(FieldDescriptor fd, Object value, Class<?> clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       RawProtoStreamWriter out = RawProtoStreamWriterImpl.newInstance(baos);
@@ -499,7 +499,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       messageContext.out.writeBytes(fd.getNumber(), baos.getByteBuffer());
    }
 
-   private void writeGroup(FieldDescriptor fd, Object value, Class clazz) throws IOException {
+   private void writeGroup(FieldDescriptor fd, Object value, Class<?> clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
       messageContext.out.writeTag(fd.getNumber(), WireFormat.WIRETYPE_START_GROUP);
       marshallerDelegate.marshall(fd, value, this, messageContext.out);
