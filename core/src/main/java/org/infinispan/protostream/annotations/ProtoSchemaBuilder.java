@@ -20,6 +20,7 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.Version;
 import org.infinispan.protostream.annotations.impl.ProtoSchemaGenerator;
 import org.infinispan.protostream.config.Configuration;
 
@@ -110,12 +111,11 @@ public final class ProtoSchemaBuilder {
    }
 
    private static CommandLine parseCommandLine(String[] args) throws ParseException {
-      Option f = new Option(FILE_OPT, FILE_LONG_OPT, true, "output file name");
-      Option p = new Option(PACKAGE_OPT, PACKAGE_LONG_OPT, true, "Protobuf package name");
-      p.setRequired(true);
-      Option h = new Option(HELP_OPT, HELP_LONG_OPT, false, "Print usage information");
-      Option m = new Option(MARSHALLER_OPT, MARSHALLER_LONG_OPT, true, "Register custom marshaller class");
-      Option s = new Option(SCHEMA_OPT, SCHEMA_LONG_OPT, true, "Register Protobuf schema");
+      Option f = new Option(FILE_OPT, FILE_LONG_OPT, true, "Output schema file name (optional)");
+      Option p = new Option(PACKAGE_OPT, PACKAGE_LONG_OPT, true, "The protobuf package name of the generated schema (optional)");
+      Option h = new Option(HELP_OPT, HELP_LONG_OPT, false, "Print usage information and exit immediately");
+      Option m = new Option(MARSHALLER_OPT, MARSHALLER_LONG_OPT, true, "Register an existing marshaller class to be available for 'includes' (optional, multiple)");
+      Option s = new Option(SCHEMA_OPT, SCHEMA_LONG_OPT, true, "Register an existing protobuf schema to be available for 'includes' (optional, multiple)");
       s.setArgs(2);
       s.setValueSeparator('=');
       Options options = new Options();
@@ -129,7 +129,9 @@ public final class ProtoSchemaBuilder {
 
       if (cmd.hasOption(HELP_OPT)) {
          HelpFormatter formatter = new HelpFormatter();
-         formatter.printHelp("java " + ProtoSchemaBuilder.class.getName() + " [options]", "Options: ", options, "followed by a list of class names to process");
+         formatter.setSyntaxPrefix("ProtoStream " + Version.getVersion() + " " + ProtoSchemaBuilder.class.getSimpleName());
+         formatter.printHelp(200, " usage: java " + ProtoSchemaBuilder.class.getName() + " [options] <list of fully qualified class names to process>",
+               "Options: ", options, "The list of class names is separated by whitespace.");
          return null;
       }
 
