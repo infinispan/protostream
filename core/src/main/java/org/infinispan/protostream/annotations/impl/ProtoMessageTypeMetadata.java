@@ -186,6 +186,9 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (Modifier.isPrivate(field.getModifiers())) {
                   throw new ProtoSchemaBuilderException("Private fields cannot be @ProtoField annotated: " + field);
                }
+               if (annotation.number() == 0) {
+                  throw new ProtoSchemaBuilderException("0 is not a valid Protobuf field number: " + field);
+               }
                String fieldName = annotation.name();
                if (fieldName.isEmpty()) {
                   fieldName = field.getName();
@@ -309,6 +312,10 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   getter = method;
                   setter = findSetter(propertyName, getter.getReturnType());
                }
+               if (annotation.number() == 0) {
+                  throw new ProtoSchemaBuilderException("0 is not a valid Protobuf field number: " + method);
+               }
+
                String fieldName = annotation.name();
                if (fieldName.isEmpty()) {
                   fieldName = propertyName;
