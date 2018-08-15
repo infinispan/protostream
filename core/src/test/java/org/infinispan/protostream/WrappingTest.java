@@ -171,7 +171,7 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
    @Test
    public void testMarshallInstant() throws Exception {
-      roundtrip(Instant.now());
+      roundtrip(Instant.ofEpochMilli(System.currentTimeMillis()));
    }
 
    @Test
