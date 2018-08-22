@@ -48,7 +48,7 @@ public final class ProtoSchemaBuilder {
    public static final String SCHEMA_LONG_OPT = "schema";
 
    /**
-    * Set this flag to {@code true} to enable output of debug comments in the generated protobuf schema.
+    * Set this flag to {@code true} to enable output of debug comments in the generated Protobuf schema.
     */
    public static boolean generateSchemaDebugComments = false;
 
@@ -112,10 +112,10 @@ public final class ProtoSchemaBuilder {
 
    private static CommandLine parseCommandLine(String[] args) throws ParseException {
       Option f = new Option(FILE_OPT, FILE_LONG_OPT, true, "Output schema file name (optional)");
-      Option p = new Option(PACKAGE_OPT, PACKAGE_LONG_OPT, true, "The protobuf package name of the generated schema (optional)");
+      Option p = new Option(PACKAGE_OPT, PACKAGE_LONG_OPT, true, "The Protobuf package name of the generated schema (optional)");
       Option h = new Option(HELP_OPT, HELP_LONG_OPT, false, "Print usage information and exit immediately");
       Option m = new Option(MARSHALLER_OPT, MARSHALLER_LONG_OPT, true, "Register an existing marshaller class to be available for 'includes' (optional, multiple)");
-      Option s = new Option(SCHEMA_OPT, SCHEMA_LONG_OPT, true, "Register an existing protobuf schema to be available for 'includes' (optional, multiple)");
+      Option s = new Option(SCHEMA_OPT, SCHEMA_LONG_OPT, true, "Register an existing Protobuf schema to be available for 'includes' (optional, multiple)");
       s.setArgs(2);
       s.setValueSeparator('=');
       Options options = new Options();
@@ -142,7 +142,7 @@ public final class ProtoSchemaBuilder {
    }
 
    /**
-    * Set the name of the protobuf schema file to generate. This is mandatory. The resulting file will be registered in
+    * Set the name of the Protobuf schema file to generate. This is mandatory. The resulting file will be registered in
     * the {@link SerializationContext} with this given name.
     *
     * @param fileName the name of the file to generate
@@ -157,7 +157,7 @@ public final class ProtoSchemaBuilder {
    }
 
    /**
-    * Set the name of the protobuf package to generate. This is optional.
+    * Set the name of the Protobuf package to generate. This is optional.
     *
     * @param packageName the package name
     * @return itself, to help chaining calls
@@ -173,7 +173,7 @@ public final class ProtoSchemaBuilder {
    /**
     * Add a @ProtoXyz annotated class to be analyzed. Proto schema and marshaller will be generated for it.
     * <p/>
-    * Its superclass and superinterfaces will be also included in the analysis but no separate protobuf types and
+    * Its superclass and superinterfaces will be also included in the analysis but no separate Protobuf types and
     * marshallers will be generated for them as Protobuf does not have any notion of type hierarchy and inheritance.
     * The fields defined by the superclass or superinterfaces will be just included in the schema of the derived class.
     * <p/>

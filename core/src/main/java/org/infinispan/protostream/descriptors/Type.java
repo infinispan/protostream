@@ -3,7 +3,7 @@ package org.infinispan.protostream.descriptors;
 import org.infinispan.protostream.impl.WireFormat;
 
 /**
- * Type of a field in protobuf, can be any value defined in <a href="https://developers.google.com/protocol-buffers/docs/proto3#scalar">https://developers.google.com/protocol-buffers/docs/proto3#scalar</a>
+ * Type of a field in Protobuf, can be any value defined in <a href="https://developers.google.com/protocol-buffers/docs/proto3#scalar">https://developers.google.com/protocol-buffers/docs/proto3#scalar</a>
  * plus composite types group, message and enum.
  *
  * @author gustavonalle

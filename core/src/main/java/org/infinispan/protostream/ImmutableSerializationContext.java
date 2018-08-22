@@ -47,7 +47,7 @@ public interface ImmutableSerializationContext {
     * Checks if the given type (message or enum) can be marshalled. This checks that the Protobuf type was defined and a
     * marshaller was registered for it.
     *
-    * @param fullTypeName the fully qualified name of the protobuf definition to check
+    * @param fullTypeName the fully qualified name of the Protobuf definition to check
     * @return {@code true} if a marshaller exists, {@code false} otherwise
     */
    boolean canMarshall(String fullTypeName);

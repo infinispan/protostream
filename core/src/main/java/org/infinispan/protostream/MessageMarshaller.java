@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
- * Contract to be implemented by marshallers for protobuf message (entity) types. The marshaller implementation must be
+ * Contract to be implemented by marshallers for Protobuf message (entity) types. The marshaller implementation must be
  * stateless (or behave as if stateless) and must be thread-safe.
  *
  * @author anistor@redhat.com
@@ -29,7 +29,7 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
    void writeTo(ProtoStreamWriter writer, T t) throws IOException;
 
    /**
-    * An high-level interface for the wire encoding of a protobuf stream that allows reading named (and typed) message
+    * An high-level interface for the wire encoding of a Protobuf stream that allows reading named (and typed) message
     * fields.
     */
    interface ProtoStreamReader {
@@ -85,7 +85,7 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
    }
 
    /**
-    * An high-level interface for the wire encoding of a protobuf stream that allows writing named (and typed) message
+    * An high-level interface for the wire encoding of a Protobuf stream that allows writing named (and typed) message
     * fields.
     */
    interface ProtoStreamWriter {

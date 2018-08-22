@@ -1,7 +1,7 @@
 package org.infinispan.protostream.descriptors;
 
 /**
- * Java mappings of the protobuf field types
+ * Java mappings of the Protobuf field types
  *
  * @author gustavonalle
  * @since 2.0
