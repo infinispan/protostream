@@ -23,7 +23,6 @@ import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -36,13 +35,13 @@ public class SerializationContextImplTest {
    @org.junit.Rule
    public ExpectedException exception = ExpectedException.none();
 
-   private SerializationContextImpl createContext() {
-      return (SerializationContextImpl) ProtobufUtil.newSerializationContext(Configuration.builder().build());
+   private SerializationContext createContext() {
+      return ProtobufUtil.newSerializationContext();
    }
 
    @Test
    public void testRegisterProtoFiles() {
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
 
       String file1 = "syntax = \"proto3\";\n" +
             "package p;\n" +
@@ -100,7 +99,7 @@ public class SerializationContextImplTest {
       }
    }
 
-   // ColorType1 should not be an Enum
+   // ColorType1 should not be an Enum, but it is, so an exception is thrown
    enum ColorType1 {
       GREEN, RED;
    }
@@ -110,7 +109,7 @@ public class SerializationContextImplTest {
       exception.expect(IllegalArgumentException.class);
       exception.expectMessage("Invalid marshaller (the produced class is a Java Enum but the marshaller is not an EnumMarshaller)");
 
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
 
       String file = "package test;\n" +
             "message Color {\n" +
@@ -144,7 +143,7 @@ public class SerializationContextImplTest {
       });
    }
 
-   // ColorType2 should be an Enum
+   // ColorType2 should be an Enum, but it is, so an exception is thrown
    class ColorType2 {
       public int rgb;
    }
@@ -154,7 +153,7 @@ public class SerializationContextImplTest {
       exception.expect(IllegalArgumentException.class);
       exception.expectMessage("test.Color is not a message type");
 
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
 
       String file = "package test;\n" +
             "enum Color {\n" +
@@ -191,7 +190,7 @@ public class SerializationContextImplTest {
 
    @Test
    public void testMarshallerProvider() throws Exception {
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
 
       String file = "package test;\n" +
             "message X {\n" +
@@ -267,7 +266,7 @@ public class SerializationContextImplTest {
 
    @Test
    public void testTwoFilesWithErrorsAtOnce() {
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       Map<String, Throwable> errors = new HashMap<>();
       List<String> successful = new ArrayList<>();
       FileDescriptorSource source = FileDescriptorSource.fromString("test1.proto", "kabooom1")
@@ -299,7 +298,7 @@ public class SerializationContextImplTest {
 
    @Test
    public void testTwoFilesWithErrorsSeparately() {
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
 
       Map<String, Throwable> errors1 = new HashMap<>();
       List<String> successful1 = new ArrayList<>();
@@ -354,13 +353,13 @@ public class SerializationContextImplTest {
       exception.expect(IllegalArgumentException.class);
       exception.expectMessage("File test.proto does not exist");
 
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       ctx.unregisterProtoFile("test.proto");
    }
 
    @Test
    public void testUnregisterFileWithErrors() {
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       Map<String, Throwable> errors = new HashMap<>();
       List<String> successful = new ArrayList<>();
       FileDescriptorSource source = FileDescriptorSource.fromString("test.proto", "kabooom")
@@ -390,7 +389,7 @@ public class SerializationContextImplTest {
 
    @Test
    public void testFileCanExistWithSemanticErrors() {
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "import \"no_such_file.proto\";");
 
       try {
@@ -410,7 +409,7 @@ public class SerializationContextImplTest {
     */
    @Test
    public void testFileCannotExistWithParsingErrors() {
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "this is bogus");
 
       try {
@@ -429,7 +428,7 @@ public class SerializationContextImplTest {
     */
    @Test
    public void testFileCanExistWithParsingErrors() {
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       FileDescriptorSource source = FileDescriptorSource.fromString("file1.proto", "this is bogus")
             .withProgressCallback(new FileDescriptorSource.ProgressCallback() {
             });
@@ -459,7 +458,7 @@ public class SerializationContextImplTest {
             .addProtoFile("test1.proto", file1)
             .addProtoFile("test2.proto", file2);
 
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       ctx.registerProtoFiles(source);
    }
 
@@ -478,7 +477,7 @@ public class SerializationContextImplTest {
             "   optional string b = 1;\n" +
             "}";
 
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
    }
 
@@ -495,7 +494,7 @@ public class SerializationContextImplTest {
             "  M1 = 1;\n" +
             "}";
 
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
    }
 
@@ -518,7 +517,7 @@ public class SerializationContextImplTest {
             .addProtoFile("test_proto_path/file1.proto", file1)
             .addProtoFile("test_proto_path/file2.proto", file2);
 
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       ctx.registerProtoFiles(fileDescriptorSource);
    }
 
@@ -537,7 +536,7 @@ public class SerializationContextImplTest {
             "  M1 = 1;\n" +
             "}";
 
-      SerializationContextImpl ctx = createContext();
+      SerializationContext ctx = createContext();
       ctx.registerProtoFiles(FileDescriptorSource.fromString("test_proto_path/file1.proto", file1));
       ctx.registerProtoFiles(FileDescriptorSource.fromString("test_proto_path/file2.proto", file2));
    }

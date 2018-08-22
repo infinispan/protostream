@@ -84,6 +84,10 @@ public final class ProtobufUtil {
    private ProtobufUtil() {
    }
 
+   public static SerializationContext newSerializationContext() {
+      return newSerializationContext(Configuration.builder().build());
+   }
+
    public static SerializationContext newSerializationContext(Configuration configuration) {
       SerializationContextImpl serializationContext = new SerializationContextImpl(configuration);
 

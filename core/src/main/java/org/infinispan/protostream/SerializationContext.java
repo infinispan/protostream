@@ -25,7 +25,7 @@ public interface SerializationContext extends ImmutableSerializationContext {
     * @throws IOException
     * @throws DescriptorParserException
     */
-   void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException;
+   void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException;
 
    /**
     * Unregisters a file. Types from all dependant files are removed too and their status is set to
