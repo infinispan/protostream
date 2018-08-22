@@ -469,7 +469,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             if (javaType.isEnum()) {
                ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
                if (!m.isEnum()) {
-                  throw new ProtoSchemaBuilderException(javaType + " is not a protobuf marshallable enum type");
+                  throw new ProtoSchemaBuilderException(javaType + " is not a Protobuf marshallable enum type");
                }
                return Type.ENUM;
             } else if (javaType == String.class) {
@@ -494,19 +494,19 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             } else {
                ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
                if (m.isEnum()) {
-                  throw new ProtoSchemaBuilderException(javaType + " is not a protobuf marshallable message type");
+                  throw new ProtoSchemaBuilderException(javaType + " is not a Protobuf marshallable message type");
                }
             }
             break;
          case ENUM:
             if (!javaType.isEnum()) {
-               throw new ProtoSchemaBuilderException(javaType + " is not a protobuf marshallable enum type");
+               throw new ProtoSchemaBuilderException(javaType + " is not a Protobuf marshallable enum type");
             }
             break;
          case GROUP:
             ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
             if (m.isEnum()) {
-               throw new ProtoSchemaBuilderException(javaType + " is not a protobuf marshallable message type");
+               throw new ProtoSchemaBuilderException(javaType + " is not a Protobuf marshallable message type");
             }
             break;
          case STRING:

@@ -363,7 +363,7 @@ public final class WrappedMessage {
          T e = (T) marshaller.decode(enumValue);
          if (e == null) {
             // Unknown enum value cause by schema evolution. We cannot handle data loss here so we throw!
-            throw new IOException("Unknown enum value " + enumValue + " for protobuf enum type " + descriptorFullName);
+            throw new IOException("Unknown enum value " + enumValue + " for Protobuf enum type " + descriptorFullName);
          }
          return e;
       }

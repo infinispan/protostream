@@ -314,7 +314,7 @@ public final class ProtobufUtil {
 
    private static void expectField(FieldDescriptor descriptor, String fieldName) {
       if (descriptor == null)
-         throw new IllegalStateException("The field '" + fieldName + "' was not found in the protobuf schema");
+         throw new IllegalStateException("The field '" + fieldName + "' was not found in the Protobuf schema");
    }
 
    private static void processJsonDocument(ImmutableSerializationContext ctx, JsonReader reader, RawProtoStreamWriter writer) throws IOException {

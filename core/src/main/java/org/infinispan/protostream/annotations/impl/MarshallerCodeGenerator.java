@@ -25,7 +25,7 @@ import javassist.CtField;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 
-// TODO [anistor] check which java classfile limits impose limits on the size of the supported protobuf schema
+// TODO [anistor] check which java classfile limits impose limits on the size of the supported Protobuf schema
 // TODO [anistor] what do we do with non-repeated fields that come repeated from stream?
 // TODO [anistor] bounded streams should be checked to be exactly as the size indicated
 
@@ -726,7 +726,7 @@ final class MarshallerCodeGenerator {
 
    /**
     * Cast the given value if necessary. This is usually needed for the types that we are forced to represent as 32 bit
-    * integers because of protobuf's lack of support for integral types of 8 and 16 bits.
+    * integers because of Protobuf's lack of support for integral types of 8 and 16 bits.
     */
    private String convert(String v, ProtoFieldMetadata fieldMetadata) {
       if (fieldMetadata.getJavaType() == Character.class) {

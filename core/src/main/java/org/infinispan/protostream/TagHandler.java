@@ -5,7 +5,7 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 
 /**
- * An event based interface for consuming a (read only) protobuf stream containing exactly one top level message.
+ * An event based interface for consuming a (read only) Protobuf stream containing exactly one top level message.
  *
  * @author anistor@redhat.com
  * @since 1.0
