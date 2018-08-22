@@ -23,7 +23,6 @@ import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -37,7 +36,7 @@ public class SerializationContextImplTest {
    public ExpectedException exception = ExpectedException.none();
 
    private SerializationContextImpl createContext() {
-      return (SerializationContextImpl) ProtobufUtil.newSerializationContext(Configuration.builder().build());
+      return (SerializationContextImpl) ProtobufUtil.newSerializationContext();
    }
 
    @Test
@@ -100,7 +99,7 @@ public class SerializationContextImplTest {
       }
    }
 
-   // ColorType1 should not be an Enum
+   // ColorType1 should not be an Enum, but it is, so an exception is thrown
    enum ColorType1 {
       GREEN, RED;
    }
@@ -144,7 +143,7 @@ public class SerializationContextImplTest {
       });
    }
 
-   // ColorType2 should be an Enum
+   // ColorType2 should be an Enum, but it is, so an exception is thrown
    class ColorType2 {
       public int rgb;
    }
