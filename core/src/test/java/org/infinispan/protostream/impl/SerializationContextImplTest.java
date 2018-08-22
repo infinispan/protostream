@@ -107,7 +107,7 @@ public class SerializationContextImplTest {
    @Test
    public void testRegisterImproperMarshaller1() {
       exception.expect(IllegalArgumentException.class);
-      exception.expectMessage("Invalid marshaller (the produced class is a Java Enum but the marshaller is not an EnumMarshaller)");
+      exception.expectMessage("Invalid marshaller (the produced class is a Java Enum, but the marshaller is not an EnumMarshaller)");
 
       SerializationContext ctx = createContext();
 

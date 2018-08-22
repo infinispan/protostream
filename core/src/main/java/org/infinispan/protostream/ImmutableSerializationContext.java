@@ -69,6 +69,23 @@ public interface ImmutableSerializationContext {
    boolean canMarshall(String fullTypeName);
 
    /**
+    * Checks if the given instance can be marshalled.
+    *
+    * @param object the instance
+    * @return {@code true} if a marshaller exists, {@code false} otherwise
+    */
+   boolean canMarshall(Object object);
+
+   /**
+    * Obtains the marshaller associated with a given instance.
+    *
+    * @param object the instance
+    * @return the marshaller
+    * @throws IllegalArgumentException if the given instance does not have a suitable marshaller registered
+    */
+   <T> BaseMarshaller<T> getMarshaller(T object);
+
+   /**
     * Obtains the marshaller associated with a Protobuf type name.
     *
     * @param fullTypeName the type name
