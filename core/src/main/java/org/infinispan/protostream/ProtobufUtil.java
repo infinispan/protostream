@@ -54,7 +54,7 @@ public final class ProtobufUtil {
       if (t == null) {
          throw new IllegalArgumentException("Object to marshall cannot be null");
       }
-      BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t.getClass());
+      BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t);
       marshallerDelegate.marshall(null, t, null, out);
       out.flush();
    }

@@ -249,7 +249,7 @@ public final class WrappedMessage {
          out.writeBytes(WRAPPED_BYTES, (byte[]) t);
       } else {
          // This is either a message type or an enum. Try to lookup a marshaller.
-         BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t.getClass());
+         BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t);
          BaseMarshaller marshaller = marshallerDelegate.getMarshaller();
 
          // Write the type discriminator, either the fully qualified name or a numeric type id.
