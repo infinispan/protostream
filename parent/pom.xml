@@ -61,8 +61,8 @@
     </issueManagement>
 
     <ciManagement>
-        <system>TeamCity</system>
-        <url>http://ci.infinispan.org</url>
+        <system>Travis</system>
+        <url>https://travis-ci.org/infinispan/protostream</url>
         <notifiers>
             <notifier>
                 <type>mail</type>
