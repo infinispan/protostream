@@ -53,13 +53,13 @@ public interface AnnotatedDescriptor {
    Map<String, AnnotationElement.Annotation> getAnnotations() throws AnnotationParserException;
 
    /**
-    * Get the annotation object created by the registered {@link org.infinispan.protostream.AnnotationMetadataCreator}
+    * Get the 'processed' annotation object created by the registered {@link org.infinispan.protostream.AnnotationMetadataCreator}
     * or {@code null} if the annotation is missing or no {@link org.infinispan.protostream.AnnotationMetadataCreator}
     * was registered.
     *
-    * @param annotationName
-    * @param <T>
-    * @return
+    * @param annotationName the name of the annotation
+    * @param <T>            the expected type of the object created by the {@link org.infinispan.protostream.AnnotationMetadataCreator}
+    * @return the 'processed' annotation object or {@code null} if not found
     * @throws AnnotationParserException if parsing of annotations fails
     */
    <T> T getProcessedAnnotation(String annotationName) throws AnnotationParserException;

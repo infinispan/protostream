@@ -29,7 +29,7 @@ import org.junit.Test;
 
 /**
  * Compare performance (time, space) versus Java Serialization and JBoss Marshalling.
- * <p/>
+ * <p>
  * This is a performance test so it is ignored during normal run of the test suite.
  *
  * @author anistor@redhat.com

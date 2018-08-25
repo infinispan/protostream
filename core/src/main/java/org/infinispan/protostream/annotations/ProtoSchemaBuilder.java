@@ -23,10 +23,11 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.Version;
 import org.infinispan.protostream.annotations.impl.ProtoSchemaGenerator;
 import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.impl.Log;
 
 /**
  * Generates a Protocol Buffers schema definition file based on a set of {@code @Proto*} annotated classes.
- * <p/>
+ * <p>
  * See {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link ProtoEnumValue}, {@link ProtoDoc} and {@link
  * ProtoUnknownFieldSet}.
  *
@@ -34,6 +35,8 @@ import org.infinispan.protostream.config.Configuration;
  * @since 3.0
  */
 public final class ProtoSchemaBuilder {
+
+   private static final Log log = Log.LogFactory.getLog(ProtoSchemaBuilder.class);
 
    public static final String DEFAULT_GENERATED_SCHEMA_NAME = "generated.proto";
    public static final String FILE_OPT = "f";
@@ -152,6 +155,9 @@ public final class ProtoSchemaBuilder {
       if (fileName == null || fileName.trim().isEmpty()) {
          throw new IllegalArgumentException("fileName cannot be null or empty");
       }
+      if (!fileName.endsWith(".proto")) {
+         log.warnf("fileName '%s' should end with '.proto'", fileName);
+      }
       this.fileName = fileName;
       return this;
    }
@@ -172,11 +178,11 @@ public final class ProtoSchemaBuilder {
 
    /**
     * Add a @ProtoXyz annotated class to be analyzed. Proto schema and marshaller will be generated for it.
-    * <p/>
+    * <p>
     * Its superclass and superinterfaces will be also included in the analysis but no separate Protobuf types and
     * marshallers will be generated for them as Protobuf does not have any notion of type hierarchy and inheritance.
     * The fields defined by the superclass or superinterfaces will be just included in the schema of the derived class.
-    * <p/>
+    * <p>
     * Its inner classes will also be automatically processed if they are referenced by the outer class. If you want to
     * make sure an inner class is processed regardless if referenced or not you will have to add it explicitly using
     * {@code addClass}.

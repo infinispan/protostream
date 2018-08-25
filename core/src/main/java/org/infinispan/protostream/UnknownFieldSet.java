@@ -6,12 +6,12 @@ import java.io.IOException;
  * {@code UnknownFieldSet} keeps track of fields seen during parsing of a protocol message but whose field numbers are
  * not recognized by the user provided marshallers (are never requested by them). This usually occurs when new fields
  * are added to a message type and then messages containing those fields are read by old versions of software that was
- * built before the new types were added.
- * <p/>
+ * built before the new fields were added.
+ * <p>
  * This is also used to handle the case when fields are requested in a different order than they were written to the
  * stream (lowers performance but still works). In this case all fields that are encountered while parsing the stream up
  * to the point where the requested field is finally encountered are cached/buffered in this data structure.
- * <p/>
+ * <p>
  * Instances of UnknownFieldSet are never to be created by the user. They will be created by the library and handed
  * over to the message marshaller via the {@link UnknownFieldSetHandler} mechanism.
  *

@@ -159,8 +159,8 @@ public final class FileDescriptor {
 
    /**
     * Resolve type references across files and report semantic errors like duplicate type declarations, duplicate type
-    * ids or clashing enum value constants. Only {@link Status#UNRESOLVED} files are processed. Files with other states
-    * are ignored.
+    * ids or clashing enum value constants. Only {@link FileDescriptor.Status#UNRESOLVED} files are processed. Files
+    * with other states are ignored.
     */
    public void resolveDependencies(ResolutionContext resolutionContext) throws DescriptorParserException {
       resolveDependencies(resolutionContext, new HashSet<>());

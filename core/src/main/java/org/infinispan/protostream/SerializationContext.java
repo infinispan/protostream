@@ -5,8 +5,8 @@ import java.io.IOException;
 import org.infinispan.protostream.config.Configuration;
 
 /**
- * A repository for Protobuf type definitions and their marshallers. All marshalling operations happen in the context of
- * a {@code SerializationContext}.
+ * A repository for Protobuf type definitions and their marshallers. All ProtoStream marshalling operations happen in
+ * the context of a {@code SerializationContext}.
  *
  * @author anistor@redhat.com
  * @since 1.0
@@ -14,7 +14,7 @@ import org.infinispan.protostream.config.Configuration;
 public interface SerializationContext extends ImmutableSerializationContext {
 
    /**
-    * Get the configuration.
+    * Get the (immutable) configuration object that was used when creating this context.
     */
    Configuration getConfiguration();
 

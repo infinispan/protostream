@@ -8,7 +8,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines the documentation text of the generated message type, enum type or field.
+ * The documentation text of the generated message type, enum type or field. You can put here human readable text and
+ * also ProtoStream documentation comment annotations. This annotation can be repeated and all the text will be
+ * collected together in the order of appearance.
  *
  * @author anistor@redhat.com
  * @since 3.0
@@ -20,7 +22,7 @@ import java.lang.annotation.Target;
 public @interface ProtoDoc {
 
    /**
-    * The documentation text.
+    * The documentation text (human readable and also ProtoStream documentation comment annotations).
     */
    String value();
 }
