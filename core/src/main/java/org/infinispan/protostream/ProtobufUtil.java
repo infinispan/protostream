@@ -140,7 +140,7 @@ public final class ProtobufUtil {
       return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(bytes), clazz);
    }
 
-   //todo [anistor] what happens with remaining trailing bytes? signal error?
+   //todo [anistor] what happens with remaining unconsumed trailing bytes after offset+length, here and in general? signal an error, a warning, or ignore?
    public static <A> A fromByteArray(ImmutableSerializationContext ctx, byte[] bytes, int offset, int length, Class<A> clazz) throws IOException {
       return readFrom(ctx, RawProtoStreamReaderImpl.newInstance(bytes, offset, length), clazz);
    }
@@ -153,10 +153,10 @@ public final class ProtobufUtil {
     * Parses a top-level message that was wrapped according to the org.infinispan.protostream.WrappedMessage proto
     * definition.
     *
-    * @param ctx
-    * @param bytes
-    * @return
-    * @throws IOException
+    * @param ctx the serialization context
+    * @param bytes the array of bytes to parse
+    * @return the unwrapped object
+    * @throws IOException in case parsing fails
     */
    public static <A> A fromWrappedByteArray(ImmutableSerializationContext ctx, byte[] bytes) throws IOException {
       return fromWrappedByteArray(ctx, bytes, 0, bytes.length);
@@ -201,12 +201,13 @@ public final class ProtobufUtil {
    }
 
    /**
-    * See https://developers.google.com/protocol-buffers/docs/proto3#json
+    * Converts a Protobuf encoded message to its <a href="https://developers.google.com/protocol-buffers/docs/proto3#json">
+    * canonical JSON representation</a>.
     *
-    * @param ctx
-    * @param bytes
-    * @return
-    * @throws IOException
+    * @param ctx   the serialization context
+    * @param bytes the Protobuf encoded message bytes to parse
+    * @return the JSON string representation
+    * @throws IOException if I/O operations fail
     */
    public static String toCanonicalJSON(ImmutableSerializationContext ctx, byte[] bytes) throws IOException {
       return toCanonicalJSON(ctx, bytes, true);
@@ -593,15 +594,15 @@ public final class ProtobufUtil {
       reader.endArray();
    }
 
-
    /**
-    * See https://developers.google.com/protocol-buffers/docs/proto3#json
+    * Converts a Protobuf encoded message to its <a href="https://developers.google.com/protocol-buffers/docs/proto3#json">
+    * canonical JSON representation</a>.
     *
-    * @param ctx
-    * @param bytes
-    * @param prettyPrint
-    * @return
-    * @throws IOException
+    * @param ctx         the serialization context
+    * @param bytes       the Protobuf encoded message bytes to parse
+    * @param prettyPrint indicates if the JSON output should use a 'pretty' human-readable format or a compact format
+    * @return the JSON string representation
+    * @throws IOException if I/O operations fail
     */
    public static String toCanonicalJSON(ImmutableSerializationContext ctx, byte[] bytes, boolean prettyPrint) throws IOException {
       StringBuilder jsonOut = new StringBuilder();

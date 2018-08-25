@@ -12,7 +12,7 @@ public interface UnknownFieldSetHandler<T> {
    /**
     * Extract the {@link UnknownFieldSet} that was previously attached to a message during unmarshalling.
     *
-    * @return the UnknownFieldSet or {@link null}
+    * @return the UnknownFieldSet or {@code null}
     */
    UnknownFieldSet getUnknownFieldSet(T message);
 
