@@ -710,7 +710,6 @@ public class DescriptorsTest {
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
             .type(AnnotationElement.AttributeType.IDENTIFIER)
             .metadataCreator((descriptor, annotation) -> annotation.getDefaultAttributeValue().getValue())
-            .parentBuilder()
             .annotation("Bar", AnnotationElement.AnnotationTarget.FIELD)
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
             .type(AnnotationElement.AttributeType.IDENTIFIER)

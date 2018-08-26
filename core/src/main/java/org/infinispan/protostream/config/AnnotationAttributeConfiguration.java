@@ -44,7 +44,17 @@ public interface AnnotationAttributeConfiguration {
        */
       Builder attribute(String name);
 
+      /**
+       * @return the parent builder in order to allow defining more annotations
+       * @deprecated just call {@link #annotation(String, AnnotationElement.AnnotationTarget...)} directly
+       */
+      @Deprecated
       AnnotationConfiguration.Builder parentBuilder();
+
+      /**
+       * Starts the creation of a new annotation with the given name and return its builder to continue define it.
+       */
+      AnnotationConfiguration.Builder annotation(String annotationName, AnnotationElement.AnnotationTarget... target);
 
       Configuration build();
    }

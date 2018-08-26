@@ -219,6 +219,11 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
       }
 
       @Override
+      public AnnotationConfiguration.Builder annotation(String annotationName, AnnotationElement.AnnotationTarget... target) {
+         return parentBuilder.annotation(annotationName, target);
+      }
+
+      @Override
       public Configuration build() {
          return parentBuilder.build();
       }

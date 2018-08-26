@@ -39,7 +39,7 @@ public interface Configuration {
       interface Builder {
 
          /**
-          * Create a new annotation with the given name and return its builder to continue configure it.
+          * Create a new annotation with the given name and return its builder to continue define it.
           */
          AnnotationConfiguration.Builder annotation(String annotationName, AnnotationElement.AnnotationTarget... target);
 
