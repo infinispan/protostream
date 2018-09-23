@@ -33,9 +33,8 @@ public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetH
       int id = reader.readInt("id");
       Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<>(), Integer.class);
 
-      // Read them out of order. It still works but logs a warning!
-      String surname = reader.readString("surname");
       String name = reader.readString("name");
+      String surname = reader.readString("surname");
       String salutation = reader.readString("salutation");
 
       List<Address> addresses = reader.readCollection("addresses", new ArrayList<>(), Address.class);
