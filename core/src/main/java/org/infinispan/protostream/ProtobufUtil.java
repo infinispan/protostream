@@ -412,6 +412,7 @@ public final class ProtobufUtil {
                   throw new IllegalStateException("Field '" + currentField + "' is not an object");
                }
                processObject(ctx, reader, objectWriter, messageType.getFullName(), descriptor.getNumber(), false);
+               requiredFields.remove(descriptor.getName());
                break;
             case NAME:
                currentField = reader.nextName();
