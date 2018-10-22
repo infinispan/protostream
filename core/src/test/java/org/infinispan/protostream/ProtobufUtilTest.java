@@ -143,9 +143,9 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    @Test
-   public void testWithDifferentFieldOrder() throws Exception {
+   public void testJsonWithDifferentFieldOrder() throws Exception {
       SerializationContext ctx = createContext();
-      String json = "{\"_type\":\"sample_bank_account.Account\",\"limits\":{\"maxDailyLimit\":1.5,\"maxTransactionLimit\":3.5},\"description\":\"test account\",\"creationDate\":\"1500508800000\",\"blurb\":[\"\",\"ew==\",\"AQIDBA==\"],\"currencies\":[\"USD\",\"BRL\"],\"id\":1}";
+      String json = "{\"_type\":\"sample_bank_account.Account\",\"hardLimits\":{\"maxDailyLimit\":5,\"maxTransactionLimit\":35},\"limits\":{\"maxDailyLimit\":1.5,\"maxTransactionLimit\":3.5},\"description\":\"test account\",\"creationDate\":\"1500508800000\",\"blurb\":[\"\",\"ew==\",\"AQIDBA==\"],\"currencies\":[\"USD\",\"BRL\"],\"id\":1}";
       byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
 
       Account account = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
@@ -269,6 +269,10 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       limits.setMaxTransactionLimit(3.5);
       limits.setPayees(new String[]{"Madoff", "Ponzi"});
       account.setLimits(limits);
+      Account.Limits hardLimits = new Account.Limits();
+      hardLimits.setMaxDailyLimit(5d);
+      hardLimits.setMaxTransactionLimit(35d);
+      account.setHardLimits(hardLimits);
       Date creationDate = Date.from(LocalDate.of(2017, 7, 20).atStartOfDay().toInstant(ZoneOffset.UTC));
       account.setCreationDate(creationDate);
       List<byte[]> blurb = new ArrayList<>();

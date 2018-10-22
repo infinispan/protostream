@@ -141,7 +141,12 @@ message Account {
    /**
     * @Field(store = Store.YES)
     */
-   repeated bytes blurb = 5;
+   required Limits hardLimits = 5;
+
+   /**
+    * @Field(store = Store.YES)
+    */
+   repeated bytes blurb = 6;
 
    /** @TypeId(43) */
    enum Currency {
@@ -151,7 +156,7 @@ message Account {
       BRL = 3;
    }
 
-   repeated Currency currencies = 6;
+   repeated Currency currencies = 7;
 }
 
 /**
