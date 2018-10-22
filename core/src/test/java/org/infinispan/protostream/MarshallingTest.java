@@ -65,6 +65,10 @@ public class MarshallingTest extends AbstractProtoStreamTest {
       account.setCurrencies(new Account.Currency[]{Account.Currency.BRL});
       Date creationDate = new Date();
       account.setCreationDate(creationDate);
+      Account.Limits limits = new Account.Limits();
+      limits.setMaxDailyLimit(0.0);
+      limits.setMaxTransactionLimit(0.0);
+      account.setHardLimits(limits);
       List<byte[]> blurb = new ArrayList<>();
       blurb.add(new byte[0]);
       blurb.add(new byte[]{1, 2, 3});

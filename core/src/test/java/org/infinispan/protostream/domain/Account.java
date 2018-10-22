@@ -21,6 +21,7 @@ public class Account extends BaseMessage {
    private String description;
    private Date creationDate;
    private Limits limits;
+   private Limits hardLimits;
    private List<byte[]> blurb;
    private Currency[] currencies;
 
@@ -108,8 +109,16 @@ public class Account extends BaseMessage {
       return limits;
    }
 
+   public Limits getHardLimits() {
+      return hardLimits;
+   }
+
    public void setLimits(Limits limits) {
       this.limits = limits;
+   }
+
+   public void setHardLimits(Limits limits) {
+      this.hardLimits = limits;
    }
 
    public List<byte[]> getBlurb() {
@@ -145,6 +154,7 @@ public class Account extends BaseMessage {
             Objects.equals(description, account.description) &&
             Objects.equals(creationDate, account.creationDate) &&
             Objects.equals(limits, account.limits) &&
+            Objects.equals(hardLimits, account.hardLimits) &&
             blurbEquals(account.blurb) &&
             Arrays.equals(currencies, account.currencies);
    }
@@ -161,6 +171,7 @@ public class Account extends BaseMessage {
             ", description='" + description + '\'' +
             ", creationDate='" + creationDate + '\'' +
             ", limits=" + limits +
+            ", hardLimits=" + hardLimits +
             ", blurb=" + blurb.stream().map(Arrays::toString).collect(Collectors.toList()) +
             ", currencies='" + Arrays.toString(currencies) + '\'' +
             ", unknownFieldSet='" + unknownFieldSet + '\'' +
