@@ -75,7 +75,7 @@ public class Address implements Externalizable {  // implement Externalizable ju
 
    @Override
    public int hashCode() {
-      return Objects.hash(street, postCode, number);
+      return Objects.hash(street, postCode, number, isCommercial);
    }
 
    @Override
@@ -83,8 +83,8 @@ public class Address implements Externalizable {  // implement Externalizable ju
       return "Address{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
-            ", number='" + number + '\'' +
-            ", isCommercial='" + isCommercial + '\'' +
+            ", number=" + number +
+            ", isCommercial=" + isCommercial +
             '}';
    }
 

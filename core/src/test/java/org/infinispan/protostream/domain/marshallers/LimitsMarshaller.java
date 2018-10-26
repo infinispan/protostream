@@ -26,11 +26,11 @@ public class LimitsMarshaller implements MessageMarshaller<Account.Limits> {
       double maxTransactionLimit = reader.readDouble("maxTransactionLimit");
       String[] payees = reader.readArray("payees", String.class);
 
-      Account.Limits account = new Account.Limits();
-      account.setMaxDailyLimit(maxDailyLimit);
-      account.setMaxTransactionLimit(maxTransactionLimit);
-      account.setPayees(payees);
-      return account;
+      Account.Limits limits = new Account.Limits();
+      limits.setMaxDailyLimit(maxDailyLimit);
+      limits.setMaxTransactionLimit(maxTransactionLimit);
+      limits.setPayees(payees);
+      return limits;
    }
 
    @Override

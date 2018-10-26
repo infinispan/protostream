@@ -117,7 +117,7 @@ public class Transaction implements Message {
             ", longDescription='" + longDescription + '\'' +
             ", notes='" + notes + '\'' +
             ", accountId=" + accountId +
-            ", date=" + date +
+            ", date='" + date + '\'' +
             ", amount=" + amount +
             ", isDebit=" + isDebit +
             ", isValid=" + isValid +

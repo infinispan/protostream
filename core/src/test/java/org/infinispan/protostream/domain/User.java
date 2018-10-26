@@ -147,8 +147,8 @@ public class User implements Externalizable {   // implement Externalizable just
             ", age=" + age +
             ", gender=" + gender +
             ", notes=" + notes +
-            ", creationDate=" + creationDate +
-            ", passwordExpirationDate=" + passwordExpirationDate +
+            ", creationDate='" + creationDate + '\'' +
+            ", passwordExpirationDate='" + passwordExpirationDate + '\'' +
             '}';
    }
 

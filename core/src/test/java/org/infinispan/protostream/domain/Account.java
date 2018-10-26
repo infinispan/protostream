@@ -16,11 +16,17 @@ public class Account {
    }
 
    private int id;
+
    private String description;
+
    private Date creationDate;
+
    private Limits limits;
+
    private Limits hardLimits;
+
    private List<byte[]> blurb;
+
    private Currency[] currencies;
 
    public static class Limits {
@@ -29,7 +35,7 @@ public class Account {
 
       private Double maxTransactionLimit;
 
-      private String[] payees;
+      private String[] payees = new String[0];
 
       public Double getMaxDailyLimit() {
          return maxDailyLimit;
@@ -61,12 +67,13 @@ public class Account {
          if (o == null || getClass() != o.getClass()) return false;
          Limits limits = (Limits) o;
          return Objects.equals(maxDailyLimit, limits.maxDailyLimit) &&
-               Objects.equals(maxTransactionLimit, limits.maxTransactionLimit);
+               Objects.equals(maxTransactionLimit, limits.maxTransactionLimit) &&
+               Arrays.equals(payees, limits.payees);
       }
 
       @Override
       public int hashCode() {
-         return Objects.hash(maxDailyLimit, maxTransactionLimit);
+         return Objects.hash(maxDailyLimit, maxTransactionLimit, Arrays.hashCode(payees));
       }
 
       @Override
@@ -77,6 +84,13 @@ public class Account {
                ", payees=" + Arrays.toString(payees) +
                '}';
       }
+   }
+
+   public Account() {
+      // hardLimits is a required field, so we make our life easy by providing defaults here
+      hardLimits = new Limits();
+      hardLimits.setMaxTransactionLimit(5000.0);
+      hardLimits.setMaxDailyLimit(10000.0);
    }
 
    public int getId() {
@@ -107,16 +121,16 @@ public class Account {
       return limits;
    }
 
-   public Limits getHardLimits() {
-      return hardLimits;
-   }
-
    public void setLimits(Limits limits) {
       this.limits = limits;
    }
 
-   public void setHardLimits(Limits limits) {
-      this.hardLimits = limits;
+   public Limits getHardLimits() {
+      return hardLimits;
+   }
+
+   public void setHardLimits(Limits hardLimits) {
+      this.hardLimits = hardLimits;
    }
 
    public List<byte[]> getBlurb() {
@@ -128,10 +142,17 @@ public class Account {
    }
 
    private boolean blurbEquals(List<byte[]> otherBlurbs) {
-      if ((otherBlurbs == null && blurb == null) ||
-            otherBlurbs == null || blurb == null ||
-            otherBlurbs.size() != blurb.size()) return false;
-      for (int i = 0; i < blurb.size(); i++) if (!Arrays.equals(blurb.get(i), otherBlurbs.get(i))) return false;
+      if (otherBlurbs == blurb) {
+         return true;
+      }
+      if (otherBlurbs == null || blurb == null || otherBlurbs.size() != blurb.size()) {
+         return false;
+      }
+      for (int i = 0; i < blurb.size(); i++) {
+         if (!Arrays.equals(blurb.get(i), otherBlurbs.get(i))) {
+            return false;
+         }
+      }
       return true;
    }
 
@@ -159,7 +180,13 @@ public class Account {
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, description, creationDate, limits, blurb, currencies);
+      int blurbHash = 0;
+      if (blurb != null) {
+         for (byte[] b : blurb) {
+            blurbHash = 31 * blurbHash + Arrays.hashCode(b);
+         }
+      }
+      return Objects.hash(id, description, creationDate, limits, hardLimits, blurbHash, Arrays.hashCode(currencies));
    }
 
    @Override
@@ -170,8 +197,8 @@ public class Account {
             ", creationDate='" + creationDate + '\'' +
             ", limits=" + limits +
             ", hardLimits=" + hardLimits +
-            ", blurb=" + blurb.stream().map(Arrays::toString).collect(Collectors.toList()) +
-            ", currencies='" + Arrays.toString(currencies) + '\'' +
+            ", blurb=" + (blurb != null ? blurb.stream().map(Arrays::toString).collect(Collectors.toList()) : "null") +
+            ", currencies=" + Arrays.toString(currencies) +
             '}';
    }
 }

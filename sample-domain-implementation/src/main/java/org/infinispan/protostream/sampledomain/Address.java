@@ -71,7 +71,7 @@ public class Address {
 
    @Override
    public int hashCode() {
-      return Objects.hash(street, postCode, number);
+      return Objects.hash(street, postCode, number, isCommercial);
    }
 
    @Override
@@ -79,8 +79,8 @@ public class Address {
       return "Address{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
-            ", number='" + number + '\'' +
-            ", isCommercial='" + isCommercial + '\'' +
+            ", number=" + number +
+            ", isCommercial=" + isCommercial +
             '}';
    }
 }

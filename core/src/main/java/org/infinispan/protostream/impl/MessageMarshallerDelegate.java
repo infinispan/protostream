@@ -82,7 +82,7 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
                && (unknownFieldSet == null || !unknownFieldSet.hasTag(fd.getWireTag()))) {
             throw new IllegalStateException("Required field \"" + fd.getFullName()
                   + "\" should have been written by a calling a suitable method of "
-                  + MessageMarshaller.ProtoStreamWriter.class.getName());
+                  + MessageMarshaller.ProtoStreamWriter.class.getCanonicalName());
          }
       }
 
