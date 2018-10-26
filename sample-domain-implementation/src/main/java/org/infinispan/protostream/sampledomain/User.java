@@ -138,8 +138,8 @@ public class User {
             ", age=" + age +
             ", gender=" + gender +
             ", notes=" + notes +
-            ", creationDate=" + creationDate +
-            ", passwordExpirationDate=" + passwordExpirationDate +
+            ", creationDate='" + creationDate + '\'' +
+            ", passwordExpirationDate='" + passwordExpirationDate + '\'' +
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }

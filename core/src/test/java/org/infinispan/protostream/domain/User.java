@@ -148,8 +148,8 @@ public class User extends BaseMessage implements Externalizable {   // implement
             ", age=" + age +
             ", gender=" + gender +
             ", notes=" + notes +
-            ", creationDate=" + creationDate +
-            ", passwordExpirationDate=" + passwordExpirationDate +
+            ", creationDate='" + creationDate + '\'' +
+            ", passwordExpirationDate='" + passwordExpirationDate + '\'' +
             ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }

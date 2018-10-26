@@ -73,7 +73,7 @@ public class Address extends BaseMessage {
 
    @Override
    public int hashCode() {
-      return Objects.hash(street, postCode, number);
+      return Objects.hash(street, postCode, number, isCommercial);
    }
 
    @Override
@@ -81,9 +81,9 @@ public class Address extends BaseMessage {
       return "Address{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
-            ", number='" + number + '\'' +
-            ", isCommercial='" + isCommercial + '\'' +
-            ", unknownFieldSet='" + unknownFieldSet + '\'' +
+            ", number=" + number +
+            ", isCommercial=" + isCommercial +
+            ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }
 }

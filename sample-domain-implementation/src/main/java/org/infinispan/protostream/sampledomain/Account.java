@@ -20,10 +20,17 @@ public class Account extends BaseMessage {
    }
 
    private int id;
+
    private String description;
+
    private Date creationDate;
+
    private Limits limits;
+
+   private Limits hardLimits;
+
    private List<byte[]> blurb;
+
    private Currency[] currencies;
 
    public static class Limits extends BaseMessage {
@@ -31,6 +38,8 @@ public class Account extends BaseMessage {
       private Double maxDailyLimit;
 
       private Double maxTransactionLimit;
+
+      private String[] payees = new String[0];
 
       public Double getMaxDailyLimit() {
          return maxDailyLimit;
@@ -48,18 +57,27 @@ public class Account extends BaseMessage {
          this.maxTransactionLimit = maxTransactionLimit;
       }
 
+      public String[] getPayees() {
+         return payees;
+      }
+
+      public void setPayees(String[] payees) {
+         this.payees = payees;
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
          Limits limits = (Limits) o;
          return Objects.equals(maxDailyLimit, limits.maxDailyLimit) &&
-               Objects.equals(maxTransactionLimit, limits.maxTransactionLimit);
+               Objects.equals(maxTransactionLimit, limits.maxTransactionLimit) &&
+               Arrays.equals(payees, limits.payees);
       }
 
       @Override
       public int hashCode() {
-         return Objects.hash(maxDailyLimit, maxTransactionLimit);
+         return Objects.hash(maxDailyLimit, maxTransactionLimit, Arrays.hashCode(payees));
       }
 
       @Override
@@ -67,8 +85,16 @@ public class Account extends BaseMessage {
          return "Limits{" +
                "maxDailyLimit=" + maxDailyLimit +
                ", maxTransactionLimit=" + maxTransactionLimit +
+               ", payees=" + Arrays.toString(payees) +
                '}';
       }
+   }
+
+   public Account() {
+      // hardLimits is a required field, so we make our life easy by providing defaults here
+      hardLimits = new Limits();
+      hardLimits.setMaxTransactionLimit(5000.0);
+      hardLimits.setMaxDailyLimit(10000.0);
    }
 
    public int getId() {
@@ -103,6 +129,14 @@ public class Account extends BaseMessage {
       this.limits = limits;
    }
 
+   public Limits getHardLimits() {
+      return hardLimits;
+   }
+
+   public void setHardLimits(Limits hardLimits) {
+      this.hardLimits = hardLimits;
+   }
+
    public List<byte[]> getBlurb() {
       return blurb;
    }
@@ -112,10 +146,17 @@ public class Account extends BaseMessage {
    }
 
    private boolean blurbEquals(List<byte[]> otherBlurbs) {
-      if ((otherBlurbs == null && blurb == null) ||
-            otherBlurbs == null || blurb == null ||
-            otherBlurbs.size() != blurb.size()) return false;
-      for (int i = 0; i < blurb.size(); i++) if (!Arrays.equals(blurb.get(i), otherBlurbs.get(i))) return false;
+      if (otherBlurbs == blurb) {
+         return true;
+      }
+      if (otherBlurbs == null || blurb == null || otherBlurbs.size() != blurb.size()) {
+         return false;
+      }
+      for (int i = 0; i < blurb.size(); i++) {
+         if (!Arrays.equals(blurb.get(i), otherBlurbs.get(i))) {
+            return false;
+         }
+      }
       return true;
    }
 
@@ -136,13 +177,20 @@ public class Account extends BaseMessage {
             Objects.equals(description, account.description) &&
             Objects.equals(creationDate, account.creationDate) &&
             Objects.equals(limits, account.limits) &&
+            Objects.equals(hardLimits, account.hardLimits) &&
             blurbEquals(account.blurb) &&
             Arrays.equals(currencies, account.currencies);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, description, creationDate, limits, blurb, currencies);
+      int blurbHash = 0;
+      if (blurb != null) {
+         for (byte[] b : blurb) {
+            blurbHash = 31 * blurbHash + Arrays.hashCode(b);
+         }
+      }
+      return Objects.hash(id, description, creationDate, limits, hardLimits, blurbHash, Arrays.hashCode(currencies));
    }
 
    @Override
@@ -152,9 +200,10 @@ public class Account extends BaseMessage {
             ", description='" + description + '\'' +
             ", creationDate='" + creationDate + '\'' +
             ", limits=" + limits +
-            ", blurb=" + blurb.stream().map(Arrays::toString).collect(Collectors.toList()) +
-            ", currencies='" + Arrays.toString(currencies) + '\'' +
-            ", unknownFieldSet='" + unknownFieldSet + '\'' +
+            ", hardLimits=" + hardLimits +
+            ", blurb=" + (blurb != null ? blurb.stream().map(Arrays::toString).collect(Collectors.toList()) : "null") +
+            ", currencies=" + Arrays.toString(currencies) +
+            ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }
 }

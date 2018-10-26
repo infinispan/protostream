@@ -79,7 +79,7 @@ public class Note {
       return "Note{" +
             "text='" + text + '\'' +
             ", author=" + author +
-            ", creationDate=" + creationDate +
+            ", creationDate='" + creationDate + '\'' +
             ", digest=" + Arrays.toString(digest) +
             ", note=" + note +
             ", notes=" + notes +

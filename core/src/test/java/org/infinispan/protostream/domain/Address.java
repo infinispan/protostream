@@ -77,7 +77,7 @@ public class Address extends BaseMessage implements Externalizable {  // impleme
 
    @Override
    public int hashCode() {
-      return Objects.hash(street, postCode, number);
+      return Objects.hash(street, postCode, number, isCommercial);
    }
 
    @Override
@@ -85,9 +85,9 @@ public class Address extends BaseMessage implements Externalizable {  // impleme
       return "Address{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
-            ", number='" + number + '\'' +
-            ", isCommercial='" + isCommercial + '\'' +
-            ", unknownFieldSet='" + unknownFieldSet + '\'' +
+            ", number=" + number +
+            ", isCommercial=" + isCommercial +
+            ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }
 
@@ -100,7 +100,7 @@ public class Address extends BaseMessage implements Externalizable {  // impleme
    }
 
    @Override
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+   public void readExternal(ObjectInput in) throws IOException {
       street = in.readUTF();
       postCode = in.readUTF();
       number = in.readInt();
