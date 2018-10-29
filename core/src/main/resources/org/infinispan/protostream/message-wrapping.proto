@@ -46,11 +46,14 @@ message WrappedMessage {
       /** There is no native byte type in protobuf so it is mapped to int32. */
       int32 wrappedByte = 22;
 
-      /** There is no native Date type in protobuf so it is mapped to fixed64. */
+      /** There is no native Date type in protobuf so it is mapped to int64 (milliseconds). */
       int64 wrappedDateMillis = 23;
 
-      /** There is no native Instant type in protobuf so it is mapped to fixed64. */
-      int64 wrappedInstantMillis = 24;
+      /** There is no native Instant type in protobuf so it is mapped to an int64 (seconds) + and int32 (nanoseconds). */
+      int64 wrappedInstantSeconds = 24;
+
+      /** The nanoseconds of the Instant. */
+      int32 wrappedInstantNanos = 25;
 
       /**
        * This is used if the wrapped value is an enum.

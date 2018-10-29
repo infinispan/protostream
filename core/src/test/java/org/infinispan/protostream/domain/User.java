@@ -156,8 +156,18 @@ public class User implements Externalizable {   // implement Externalizable just
    public void writeExternal(ObjectOutput out) throws IOException {
       out.writeInt(id);
       out.writeUTF(name);
-      out.writeUTF(surname);
-      out.writeUTF(salutation);
+      if (surname != null) {
+         out.writeBoolean(true);
+         out.writeUTF(surname);
+      } else {
+         out.writeBoolean(false);
+      }
+      if (salutation != null) {
+         out.writeBoolean(true);
+         out.writeUTF(salutation);
+      } else {
+         out.writeBoolean(false);
+      }
       if (accountIds == null) {
          out.writeInt(-1);
       } else {
@@ -180,17 +190,29 @@ public class User implements Externalizable {   // implement Externalizable just
       } else {
          out.writeBoolean(false);
       }
-      out.writeInt(gender.ordinal());
-      out.writeUTF(notes);
+      if (gender != null) {
+         out.writeBoolean(true);
+         out.writeInt(gender.ordinal());
+      } else {
+         out.writeBoolean(false);
+      }
+      if (notes != null) {
+         out.writeBoolean(true);
+         out.writeUTF(notes);
+      } else {
+         out.writeBoolean(false);
+      }
       if (creationDate != null) {
          out.writeBoolean(true);
-         out.writeLong(creationDate.toEpochMilli());
+         out.writeLong(creationDate.getEpochSecond());
+         out.writeInt(creationDate.getNano());
       } else {
          out.writeBoolean(false);
       }
       if (passwordExpirationDate != null) {
          out.writeBoolean(true);
-         out.writeLong(passwordExpirationDate.toEpochMilli());
+         out.writeLong(passwordExpirationDate.getEpochSecond());
+         out.writeInt(passwordExpirationDate.getNano());
       } else {
          out.writeBoolean(false);
       }
@@ -200,21 +222,21 @@ public class User implements Externalizable {   // implement Externalizable just
    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
       id = in.readInt();
       name = in.readUTF();
-      surname = in.readUTF();
-      salutation = in.readUTF();
+      if (in.readBoolean()) {
+         surname = in.readUTF();
+      }
+      if (in.readBoolean()) {
+         salutation = in.readUTF();
+      }
       int numAccountIds = in.readInt();
-      if (numAccountIds == -1) {
-         accountIds = null;
-      } else {
+      if (numAccountIds >= 0) {
          accountIds = new HashSet<>(numAccountIds);
          for (int i = 0; i < numAccountIds; i++) {
             accountIds.add(in.readInt());
          }
       }
       int numAddresses = in.readInt();
-      if (numAddresses == -1) {
-         addresses = null;
-      } else {
+      if (numAddresses >= 0) {
          addresses = new ArrayList<>(numAddresses);
          for (int i = 0; i < numAddresses; i++) {
             addresses.add((Address) in.readObject());
@@ -222,20 +244,22 @@ public class User implements Externalizable {   // implement Externalizable just
       }
       if (in.readBoolean()) {
          age = in.readInt();
-      } else {
-         age = null;
-      }
-      gender = User.Gender.values()[in.readInt()];
-      notes = in.readUTF();
-      if (in.readBoolean()) {
-         creationDate = Instant.ofEpochMilli(in.readLong());
-      } else {
-         creationDate = null;
       }
       if (in.readBoolean()) {
-         passwordExpirationDate = Instant.ofEpochMilli(in.readLong());
-      } else {
-         passwordExpirationDate = null;
+         gender = Gender.values()[in.readInt()];
+      }
+      if (in.readBoolean()) {
+         notes = in.readUTF();
+      }
+      if (in.readBoolean()) {
+         long seconds = in.readLong();
+         int nanos = in.readInt();
+         creationDate = Instant.ofEpochSecond(seconds, nanos);
+      }
+      if (in.readBoolean()) {
+         long seconds = in.readLong();
+         int nanos = in.readInt();
+         passwordExpirationDate = Instant.ofEpochSecond(seconds, nanos);
       }
    }
 

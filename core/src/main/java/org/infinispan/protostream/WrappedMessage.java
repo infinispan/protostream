@@ -112,9 +112,14 @@ public final class WrappedMessage {
    public static final int WRAPPED_DATE_MILLIS = 23;
 
    /**
-    * A wrapped java.time.Instant (marshalled as int64).
+    * A wrapped java.time.Instant (marshalled as int64 (seconds) and an int32 (nanos)).
     */
-   public static final int WRAPPED_INSTANT_MILLIS = 24;
+   public static final int WRAPPED_INSTANT_SECONDS = 24;
+
+   /**
+    * The nanoseconds of the java.time.Instant.
+    */
+   public static final int WRAPPED_INSTANT_NANOS = 25;
 
    /**
     * A wrapped bytes.
@@ -205,7 +210,9 @@ public final class WrappedMessage {
       } else if (t instanceof Date) {
          out.writeInt64(WRAPPED_DATE_MILLIS, ((Date) t).getTime());
       } else if (t instanceof Instant) {
-         out.writeInt64(WRAPPED_INSTANT_MILLIS, ((Instant) t).toEpochMilli());  //todo we need nanos too
+         Instant instant = (Instant) t;
+         out.writeInt64(WRAPPED_INSTANT_SECONDS, instant.getEpochSecond());
+         out.writeInt32(WRAPPED_INSTANT_NANOS, instant.getNano());
       } else if (t instanceof Long) {
          out.writeInt64(WRAPPED_INT64, (Long) t);
       } else if (t instanceof Integer) {
@@ -252,17 +259,22 @@ public final class WrappedMessage {
       byte[] messageBytes = null;
       Object value = null;
       int fieldCount = 0;
+      int expectedFieldCount = 1;
 
       int tag;
       while ((tag = in.readTag()) != 0) {
          fieldCount++;
          switch (tag) {
-            case WRAPPED_DESCRIPTOR_FULL_NAME << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
+            case WRAPPED_DESCRIPTOR_FULL_NAME << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED: {
+               expectedFieldCount = 2;
                descriptorFullName = in.readString();
                break;
-            case WRAPPED_DESCRIPTOR_ID << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_DESCRIPTOR_ID << 3 | WireFormat.WIRETYPE_VARINT: {
+               expectedFieldCount = 2;
                typeId = in.readInt32();
                break;
+            }
             case WRAPPED_ENUM << 3 | WireFormat.WIRETYPE_VARINT:
                enumValue = in.readEnum();
                break;
@@ -284,9 +296,18 @@ public final class WrappedMessage {
             case WRAPPED_DATE_MILLIS << 3 | WireFormat.WIRETYPE_VARINT:
                value = new Date(in.readInt64());
                break;
-            case WRAPPED_INSTANT_MILLIS << 3 | WireFormat.WIRETYPE_VARINT:
-               value = Instant.ofEpochMilli(in.readInt64());
+            case WRAPPED_INSTANT_SECONDS << 3 | WireFormat.WIRETYPE_VARINT: {
+               expectedFieldCount = 2;
+               long seconds = in.readInt64();
+               value = value == null ? Instant.ofEpochSecond(seconds, 0) : Instant.ofEpochSecond(seconds, ((Instant) value).getNano());
                break;
+            }
+            case WRAPPED_INSTANT_NANOS << 3 | WireFormat.WIRETYPE_VARINT: {
+               expectedFieldCount = 2;
+               int nanos = in.readInt32();
+               value = value == null ? Instant.ofEpochSecond(0, nanos) : Instant.ofEpochSecond(((Instant) value).getEpochSecond(), nanos);
+               break;
+            }
             case WRAPPED_BYTES << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
                value = in.readByteArray();
                break;
@@ -330,7 +351,7 @@ public final class WrappedMessage {
                value = in.readSInt32();
                break;
             default:
-               throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : " + WireFormat.getTagFieldNumber(tag)+ ", Wire type : " + WireFormat.getTagWireType(tag) + ")");
+               throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : " + WireFormat.getTagFieldNumber(tag) + ", Wire type : " + WireFormat.getTagWireType(tag) + ")");
          }
       }
 
@@ -339,7 +360,7 @@ public final class WrappedMessage {
       }
 
       if (value != null) {
-         if (fieldCount != 1) {
+         if (fieldCount != expectedFieldCount) {
             throw new IOException("Invalid message encoding.");
          }
          return (T) value;
