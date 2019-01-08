@@ -18,19 +18,19 @@ import org.infinispan.protostream.UnknownFieldSet;
 
 /**
  * {@link UnknownFieldSet} implementation. This is not thread-safe. This class should never be directly instantiated by
- * users.
+ * users even though it is marked {@code public}.
  *
  * @author anistor@redhat.com
  * @since 1.0
  */
-final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
+public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizable {
 
    // elements of the Deque can be one of : varint, fixed32, fixed64, byte[] or UnknownFieldSetImpl
    // this is created lazily
    private Map<Integer, Deque<Object>> fields;
 
    public UnknownFieldSetImpl() {
-      // needs to be public to be serializable
+      // needs to be public to be Serializable/Externalizable
    }
 
    /**
