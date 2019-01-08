@@ -273,6 +273,38 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertEquals("The surname, of course", testClass.getFields().get(0).getDocumentation());
    }
 
+   @Test
+   public void testUnknownFields() throws Exception {
+      SerializationContext ctx = createContext();
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder
+            .fileName("test.proto")
+            .packageName("test_package")
+            .addClass(Simple.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall(Simple.class));
+      assertTrue(ctx.canMarshall("test_package.Simple"));
+
+      byte[] msg1 = ProtobufUtil.toByteArray(ctx, new Simple());
+
+      byte[] msg2 = ProtobufUtil.toWrappedByteArray(ctx, 1234);
+
+      // concatenate the two messages to have some unknown fields in the stream
+      byte[] concatenatedMsg = new byte[msg1.length + msg2.length];
+      System.arraycopy(msg1, 0, concatenatedMsg, 0, msg1.length);
+      System.arraycopy(msg2, 0, concatenatedMsg, msg1.length, msg2.length);
+
+      // we should be able to deal with those unknown fields gracefully when unmarshalling
+      Object unmarshalled = ProtobufUtil.fromByteArray(ctx, concatenatedMsg, Simple.class);
+      assertTrue(unmarshalled instanceof Simple);
+
+      Simple simple = (Simple) unmarshalled;
+
+      // ensure we do have some unknown fields there
+      assertFalse(simple.unknownFieldSet.isEmpty());
+   }
+
    static class TestCase_DuplicateEnumValueName {
 
       @ProtoEnum
