@@ -2,6 +2,7 @@ package org.infinispan.protostream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -20,7 +21,8 @@ public final class Version implements Comparable<Version> {
    private static Version getArtifactVersion() {
       int major = 0;
       int minor = 0;
-      int patchLevel = 0;
+      int micro = 0;
+      String suffix = null;
 
       InputStream res = Version.class.getResourceAsStream("/META-INF/maven/org.infinispan.protostream/protostream/pom.properties");
       if (res != null) {
@@ -30,14 +32,21 @@ public final class Version implements Comparable<Version> {
             String version = pomProps.getProperty("version", "0.0.0-UNKNOWN");
             String[] versionParts = version.split("[.\\-]");
             major = Integer.parseInt(versionParts[0]);
-            minor = Integer.parseInt(versionParts[1]);
-            patchLevel = Integer.parseInt(versionParts[2]);
+            if (versionParts.length > 1) {
+               minor = Integer.parseInt(versionParts[1]);
+            }
+            if (versionParts.length > 2) {
+               micro = Integer.parseInt(versionParts[2]);
+            }
+            if (versionParts.length > 3) {
+               suffix = versionParts[3];
+            }
          } catch (IOException | NumberFormatException | ArrayIndexOutOfBoundsException e) {
             // ignored
          }
       }
 
-      return new Version(major, minor, patchLevel);
+      return new Version(major, minor, micro, suffix);
    }
 
    public static Version getVersion() {
@@ -50,14 +59,20 @@ public final class Version implements Comparable<Version> {
 
    private final int major;
    private final int minor;
-   private final int patchLevel;
+   private final int micro;
+   private final String suffix;
    private final String versionString;
 
-   public Version(int major, int minor, int patchLevel) {
+   public Version(int major, int minor, int micro) {
+      this(major, minor, micro, null);
+   }
+
+   public Version(int major, int minor, int micro, String suffix) {
       this.major = major;
       this.minor = minor;
-      this.patchLevel = patchLevel;
-      versionString = major + "." + minor + "." + patchLevel;
+      this.micro = micro;
+      this.suffix = suffix;
+      versionString = major + "." + minor + "." + micro + (suffix != null ? "." + suffix : "");
    }
 
    public int getMajor() {
@@ -68,8 +83,12 @@ public final class Version implements Comparable<Version> {
       return minor;
    }
 
-   public int getPatchLevel() {
-      return patchLevel;
+   public int getMicro() {
+      return micro;
+   }
+
+   public String getSuffix() {
+      return suffix;
    }
 
    @Override
@@ -86,21 +105,27 @@ public final class Version implements Comparable<Version> {
          return false;
       }
       Version other = (Version) obj;
-      return other.major == major && other.minor == minor && other.patchLevel == patchLevel;
+      return other.major == major && other.minor == minor && other.micro == micro && Objects.equals(suffix, other.suffix);
    }
 
    @Override
    public int hashCode() {
-      return 31 * (31 * major + minor) + patchLevel;
+      return 31 * (31 * (31 * major + minor) + micro) + (suffix != null ? suffix.hashCode() : 0);
    }
 
    @Override
    public int compareTo(Version other) {
+      if (this == other) {
+         return 0;
+      }
       int d = major - other.major;
       if (d == 0) {
          d = minor - other.minor;
          if (d == 0) {
-            d = patchLevel - other.patchLevel;
+            d = micro - other.micro;
+            if (d == 0) {
+               d = suffix.compareTo(other.suffix);
+            }
          }
       }
       return d;
