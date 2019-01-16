@@ -30,7 +30,8 @@ import javassist.NotFoundException;
 // TODO [anistor] bounded streams should be checked to be exactly as the size indicated
 
 /**
- * Generates bytecode implementations of EnumMarshaller and RawProtobufMarshaller.
+ * Generates bytecode for implementation classes of {@link EnumMarshaller} and {@link RawProtobufMarshaller}. This class
+ * relies heavily on javassist library (and should be the only place where javassist is used throughout this project).
  *
  * @author anistor@readhat.com
  * @since 3.0
@@ -49,7 +50,7 @@ final class MarshallerCodeGenerator {
    /**
     * A numeric id that is appended to generated class names to avoid potential collisions.
     */
-   private static volatile long nextId = 0;
+   private static long nextId = 0;
 
    /**
     * Do nullable fields that do not have a user defined default value get a default type specific value if missing instead of just
@@ -60,14 +61,12 @@ final class MarshallerCodeGenerator {
    private boolean noDefaults = false;
 
    private final ClassPool cp;
-   private final CtClass ioException;
+   private final CtClass ioExceptionClass;
    private final CtClass enumMarshallerInterface;
    private final CtClass rawProtobufMarshallerInterface;
    private final CtClass generatedMarshallerBaseClass;
    private final CtClass baseMarshallerDelegateClass;
    private final CtClass enumMarshallerDelegateClass;
-   private final CtMethod getJavaClassMethod;
-   private final CtMethod getTypeNameMethod;
    private final CtMethod readFromMethod;
    private final CtMethod writeToMethod;
    private final CtMethod decodeMethod;
@@ -77,14 +76,12 @@ final class MarshallerCodeGenerator {
    MarshallerCodeGenerator(String protobufSchemaPackage, ClassPool cp) throws NotFoundException {
       this.protobufSchemaPackage = protobufSchemaPackage;
       this.cp = cp;
-      ioException = cp.getCtClass(IOException.class.getName());
+      ioExceptionClass = cp.getCtClass(IOException.class.getName());
       enumMarshallerInterface = cp.getCtClass(EnumMarshaller.class.getName());
       rawProtobufMarshallerInterface = cp.getCtClass(RawProtobufMarshaller.class.getName());
       generatedMarshallerBaseClass = cp.getCtClass(GeneratedMarshallerBase.class.getName());
       baseMarshallerDelegateClass = cp.getCtClass(BaseMarshallerDelegate.class.getName());
       enumMarshallerDelegateClass = cp.getCtClass(EnumMarshallerDelegate.class.getName());
-      getJavaClassMethod = rawProtobufMarshallerInterface.getMethod("getJavaClass", "()Ljava/lang/Class;");
-      getTypeNameMethod = rawProtobufMarshallerInterface.getMethod("getTypeName", "()Ljava/lang/String;");
       String rawProtobufInputStreamName = RawProtoStreamReader.class.getName().replace('.', '/');
       String rawProtobufOutputStreamName = RawProtoStreamWriter.class.getName().replace('.', '/');
       String serializationContextName = ImmutableSerializationContext.class.getName().replace('.', '/');
@@ -106,23 +103,20 @@ final class MarshallerCodeGenerator {
    }
 
    /**
-    * Generates an implementation of EnumMarshaller as a static nested class in the Enum class to be marshalled.
+    * Generates an implementation of EnumMarshaller as a static nested class in the Enum class to be marshalled. The
+    * InnerClasses attribute of the outer class is not altered, so this is not officially considered a nested class.
     */
-   public EnumMarshaller generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws NotFoundException, CannotCompileException, IllegalAccessException, InstantiationException {
+   public Class<EnumMarshaller> generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws NotFoundException, CannotCompileException {
       CtClass enumClass = cp.get(petm.getJavaClass().getName());
-      String className = makeMarshallerClassName();
-      CtClass marshallerImpl = enumClass.makeNestedClass(className, true);
+      CtClass marshallerImpl = enumClass.makeNestedClass(makeMarshallerClassName(), true);
+      if (log.isTraceEnabled()) {
+         log.tracef("Generating enum marshaller %s for %s", marshallerImpl.getName(), petm.getJavaClass().getName());
+      }
       marshallerImpl.addInterface(enumMarshallerInterface);
+      marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
-      CtMethod ctGetJavaClassMethod = new CtMethod(getJavaClassMethod, marshallerImpl, null);
-      ctGetJavaClassMethod.setModifiers(ctGetJavaClassMethod.getModifiers() | Modifier.FINAL);
-      ctGetJavaClassMethod.setBody("{ return " + petm.getJavaClass().getName() + ".class; }");
-      marshallerImpl.addMethod(ctGetJavaClassMethod);
-
-      CtMethod ctGetTypeNameMethod = new CtMethod(getTypeNameMethod, marshallerImpl, null);
-      ctGetTypeNameMethod.setModifiers(ctGetTypeNameMethod.getModifiers() | Modifier.FINAL);
-      ctGetTypeNameMethod.setBody("{ return \"" + makeQualifiedTypeName(petm.getFullName()) + "\"; }");
-      marshallerImpl.addMethod(ctGetTypeNameMethod);
+      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + petm.getJavaClass().getName() + ".class; }", marshallerImpl));
+      marshallerImpl.addMethod(CtMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(petm.getFullName()) + "\"; }", marshallerImpl));
 
       CtMethod ctDecodeMethod = new CtMethod(decodeMethod, marshallerImpl, null);
       ctDecodeMethod.setModifiers(ctDecodeMethod.getModifiers() | Modifier.FINAL);
@@ -142,12 +136,10 @@ final class MarshallerCodeGenerator {
       ctEncodeMethod.setBody(encodeSrc);
       marshallerImpl.addMethod(ctEncodeMethod);
 
-      marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
-
-      Class<?> generatedMarshallerClass = marshallerImpl.toClass();
-      EnumMarshaller marshallerInstance = (EnumMarshaller) generatedMarshallerClass.newInstance();
+      Class<EnumMarshaller> generatedMarshallerClass = (Class<EnumMarshaller>) marshallerImpl.toClass();
       marshallerImpl.detach();
-      return marshallerInstance;
+
+      return generatedMarshallerClass;
    }
 
    private String generateEnumDecodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
@@ -204,29 +196,27 @@ final class MarshallerCodeGenerator {
    }
 
    /**
-    * Generates an implementation of RawProtobufMarshaller as a static nested class in the message class to be
-    * marshalled.
+    * Generates an implementation of {@link RawProtobufMarshaller} as a static nested class in the message class to be
+    * marshalled. The InnerClasses attribute of the outer class is not altered, so this is not officially considered a
+    * nested class.
     */
-   public RawProtobufMarshaller generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException, IllegalAccessException, InstantiationException {
+   public Class<RawProtobufMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException {
       CtClass entityClass = cp.get(messageTypeMetadata.getJavaClass().getName());
       CtClass marshallerImpl = entityClass.makeNestedClass(makeMarshallerClassName(), true);
+      if (log.isTraceEnabled()) {
+         log.tracef("Generating message marshaller %s for %s", marshallerImpl.getName(), messageTypeMetadata.getJavaClass().getName());
+      }
       marshallerImpl.addInterface(rawProtobufMarshallerInterface);
       marshallerImpl.setSuperclass(generatedMarshallerBaseClass);
+      marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
       addMarshallerDelegateFields(marshallerImpl, messageTypeMetadata);
 
-      CtMethod ctGetJavaClassMethod = new CtMethod(getJavaClassMethod, marshallerImpl, null);
-      ctGetJavaClassMethod.setModifiers(ctGetJavaClassMethod.getModifiers() | Modifier.FINAL);
-      ctGetJavaClassMethod.setBody("{ return " + entityClass.getName() + ".class; }");
-      marshallerImpl.addMethod(ctGetJavaClassMethod);
-
-      CtMethod ctGetTypeNameMethod = new CtMethod(getTypeNameMethod, marshallerImpl, null);
-      ctGetTypeNameMethod.setModifiers(ctGetTypeNameMethod.getModifiers() | Modifier.FINAL);
-      ctGetTypeNameMethod.setBody("{ return \"" + makeQualifiedTypeName(messageTypeMetadata.getFullName()) + "\"; }");
-      marshallerImpl.addMethod(ctGetTypeNameMethod);
+      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + entityClass.getName() + ".class; }", marshallerImpl));
+      marshallerImpl.addMethod(CtMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(messageTypeMetadata.getFullName()) + "\"; }", marshallerImpl));
 
       CtMethod ctReadFromMethod = new CtMethod(readFromMethod, marshallerImpl, null);
-      ctGetTypeNameMethod.setExceptionTypes(new CtClass[]{ioException});
+      ctReadFromMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
       ctReadFromMethod.setModifiers(ctReadFromMethod.getModifiers() | Modifier.FINAL);
       String readFromSrc = generateReadFromMethod(messageTypeMetadata);
       if (log.isTraceEnabled()) {
@@ -236,7 +226,7 @@ final class MarshallerCodeGenerator {
       marshallerImpl.addMethod(ctReadFromMethod);
 
       CtMethod ctWriteToMethod = new CtMethod(writeToMethod, marshallerImpl, null);
-      ctWriteToMethod.setExceptionTypes(new CtClass[]{ioException});
+      ctWriteToMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
       ctWriteToMethod.setModifiers(ctWriteToMethod.getModifiers() | Modifier.FINAL);
       String writeToSrc = generateWriteToMethod(messageTypeMetadata);
       if (log.isTraceEnabled()) {
@@ -245,14 +235,16 @@ final class MarshallerCodeGenerator {
       ctWriteToMethod.setBody(writeToSrc);
       marshallerImpl.addMethod(ctWriteToMethod);
 
-      marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
-
-      Class<?> generatedMarshallerClass = marshallerImpl.toClass();
-      RawProtobufMarshaller marshallerInstance = (RawProtobufMarshaller) generatedMarshallerClass.newInstance();
+      Class<RawProtobufMarshaller> generatedMarshallerClass = (Class<RawProtobufMarshaller>) marshallerImpl.toClass();
       marshallerImpl.detach();
-      return marshallerInstance;
+
+      return generatedMarshallerClass;
    }
 
+   /**
+    * Add fields used to cache delegates to other marshalled types (message or enum). These fields are lazily
+    * initialized.
+    */
    private void addMarshallerDelegateFields(CtClass marshallerImpl, ProtoMessageTypeMetadata messageTypeMetadata) throws CannotCompileException {
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          switch (fieldMetadata.getProtobufType()) {
@@ -264,7 +256,9 @@ final class MarshallerCodeGenerator {
                   // add the field only if it does not already exist
                   marshallerImpl.getDeclaredField(fieldName);
                } catch (NotFoundException ex) {
-                  marshallerImpl.addField(new CtField(fieldMetadata.getJavaType().isEnum() ? enumMarshallerDelegateClass : baseMarshallerDelegateClass, fieldName, marshallerImpl));
+                  CtField marshallerDelegateField = new CtField(fieldMetadata.getJavaType().isEnum() ? enumMarshallerDelegateClass : baseMarshallerDelegateClass, fieldName, marshallerImpl);
+                  marshallerDelegateField.setModifiers(Modifier.PRIVATE);
+                  marshallerImpl.addField(marshallerDelegateField);
                }
                break;
          }

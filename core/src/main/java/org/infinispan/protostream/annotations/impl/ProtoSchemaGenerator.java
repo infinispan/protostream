@@ -1,6 +1,5 @@
 package org.infinispan.protostream.annotations.impl;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,9 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
@@ -50,7 +47,7 @@ public final class ProtoSchemaGenerator {
 
    private final String packageName;
 
-   //TODO [anistor] need to have a flag to prevent generation for classes that were not manually added but were auto-discovered
+   //TODO [anistor] need to have a flag to (optionally) prevent generation for classes that were not manually added but were auto-discovered
    private final Set<Class<?>> classes;
 
    private final Set<String> imports = new HashSet<>();
@@ -73,7 +70,7 @@ public final class ProtoSchemaGenerator {
       this.classes = classes;
    }
 
-   public String generateAndRegister() throws ProtoSchemaBuilderException, IOException {
+   public String generateAndRegister() throws ProtoSchemaBuilderException {
       // scan initial classes
       for (Class<?> c : classes) {
          ProtoTypeMetadata protoTypeMetadata = c.isEnum() ? new ProtoEnumTypeMetadata((Class<? extends Enum>) c) : new ProtoMessageTypeMetadata(this, c);
@@ -107,11 +104,12 @@ public final class ProtoSchemaGenerator {
       IndentWriter iw = new IndentWriter();
       iw.append("// File name: ").append(fileName).append('\n');
       if (ProtoSchemaBuilder.generateSchemaDebugComments) {
-         iw.append("// Scanned classes:\n");    //todo [anistor] this list of scanned classes should include all interfaces and base classes not just the ones for which a proto definition was generated
-      }
-      for (ProtoTypeMetadata ptm : metadataByClass.values()) {
-         if (ptm instanceof ProtoEnumTypeMetadata || ptm instanceof ProtoMessageTypeMetadata) {
-            iw.append("//   ").append(ptm.getJavaClass().getCanonicalName()).append('\n');
+         iw.append("// Scanned classes:\n");
+         //todo [anistor] this list of scanned classes should include all interfaces and base classes not just the ones for which a proto definition was generated
+         for (ProtoTypeMetadata ptm : metadataByClass.values()) {
+            if (ptm instanceof ProtoEnumTypeMetadata || ptm instanceof ProtoMessageTypeMetadata) {
+               iw.append("//   ").append(ptm.getJavaClass().getCanonicalName()).append('\n');
+            }
          }
       }
       iw.append("\nsyntax = \"proto2\";\n");
@@ -167,12 +165,14 @@ public final class ProtoSchemaGenerator {
       MarshallerCodeGenerator marshallerCodeGenerator = new MarshallerCodeGenerator(packageName, getClassPool());
       for (Class<?> c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
+         Class<? extends BaseMarshaller> marshallerClass = null;
          if (ptm instanceof ProtoMessageTypeMetadata) {
-            RawProtobufMarshaller<?> marshaller = marshallerCodeGenerator.generateMessageMarshaller((ProtoMessageTypeMetadata) ptm);
-            ptm.setMarshaller(marshaller);
-            serializationContext.registerMarshaller(marshaller);
+            marshallerClass = marshallerCodeGenerator.generateMessageMarshaller((ProtoMessageTypeMetadata) ptm);
          } else if (ptm instanceof ProtoEnumTypeMetadata) {
-            EnumMarshaller<?> marshaller = marshallerCodeGenerator.generateEnumMarshaller((ProtoEnumTypeMetadata) ptm);
+            marshallerClass = marshallerCodeGenerator.generateEnumMarshaller((ProtoEnumTypeMetadata) ptm);
+         }
+         if (marshallerClass != null) {
+            BaseMarshaller marshaller = marshallerClass.newInstance();
             ptm.setMarshaller(marshaller);
             serializationContext.registerMarshaller(marshaller);
          }
