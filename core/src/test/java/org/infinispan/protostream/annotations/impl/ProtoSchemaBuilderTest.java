@@ -104,6 +104,9 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       AbstractType testField1;
    }
 
+   /**
+    * Abstract field types in a message class are not accepted.
+    */
    @Test
    public void tesAbstractClass() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
@@ -112,7 +115,51 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       protoSchemaBuilder.fileName("test.proto");
-      protoSchemaBuilder.addClass(MessageWithAbstractFieldType.class).build(ctx);
+      protoSchemaBuilder.addClass(MessageWithAbstractFieldType.class)
+            .build(ctx);
+   }
+
+   /**
+    * Anonymous classes are not instantiable by our standards, so a meaningful error message is given.
+    */
+   @Test
+   public void testAnonymousClass() throws Exception {
+      exception.expect(ProtoSchemaBuilderException.class);
+      exception.expectMessage("The class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$1 must be instantiable using a public no-argument constructor.");
+
+      SerializationContext ctx = createContext();
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder.fileName("test.proto");
+
+      Object msgInstance = new Object() {
+         @ProtoField(number = 1)
+         String field1;
+      };
+
+      protoSchemaBuilder.addClass(msgInstance.getClass())
+            .build(ctx);
+   }
+
+   /**
+    * Local classes are not instantiable by our standards, so a meaningful error message is given.
+    */
+   @Test
+   public void testLocalClass() throws Exception {
+      exception.expect(ProtoSchemaBuilderException.class);
+      exception.expectMessage("The class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$1LocalClass must be instantiable using a public no-argument constructor.");
+
+      SerializationContext ctx = createContext();
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder.fileName("test.proto");
+
+      class LocalClass {
+
+         @ProtoField(number = 1)
+         String field1;
+      }
+
+      protoSchemaBuilder.addClass(LocalClass.class)
+            .build(ctx);
    }
 
    @Test

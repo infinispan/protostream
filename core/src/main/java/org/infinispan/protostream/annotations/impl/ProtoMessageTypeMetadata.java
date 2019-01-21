@@ -23,6 +23,9 @@ import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
 import org.infinispan.protostream.descriptors.Type;
 
 /**
+ * A {@link ProtoTypeMetadata} for a message type created based on annotations during the current execution of {@link
+ * org.infinispan.protostream.annotations.ProtoSchemaBuilder}.
+ *
  * @author anistor@redhat.com
  * @since 3.0
  */
@@ -46,12 +49,12 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
       // ensure class is not abstract and has a default public constructor
       if (Modifier.isAbstract(javaClass.getModifiers())) {
-         throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + javaClass);
+         throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + javaClass.getName());
       }
       try {
          javaClass.getDeclaredConstructor();
       } catch (NoSuchMethodException e) {
-         throw new ProtoSchemaBuilderException("The class " + javaClass.getCanonicalName() + " must be instantiable using a public no-argument constructor.");
+         throw new ProtoSchemaBuilderException("The class " + javaClass.getName() + " must be instantiable using a public no-argument constructor.");
       }
    }
 
