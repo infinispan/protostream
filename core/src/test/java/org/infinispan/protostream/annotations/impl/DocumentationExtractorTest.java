@@ -51,7 +51,6 @@ public class DocumentationExtractorTest {
    @Test
    public void testMultiDoc1() throws Exception {
       Field field2 = TestDocs.class.getDeclaredField("field2");
-      System.out.println("DocumentationExtractorTest.testMultiDoc1 " + field2.toString());
       String doc = DocumentationExtractor.getDocumentation(field2);
       assertEquals("1\n2", doc);
    }
