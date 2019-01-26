@@ -3,6 +3,7 @@ package org.infinispan.protostream.config;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
@@ -18,12 +19,11 @@ final class ConfigurationImpl implements Configuration {
 
    private final AnnotationsConfigImpl annotationsConfig;
 
-   private ConfigurationImpl(boolean logOutOfSequenceReads,
-                             boolean logOutOfSequenceWrites,
-                             Map<String, AnnotationConfigurationImpl> annotations) {
+   private ConfigurationImpl(boolean logOutOfSequenceReads, boolean logOutOfSequenceWrites,
+                             Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
       this.logOutOfSequenceReads = logOutOfSequenceReads;
       this.logOutOfSequenceWrites = logOutOfSequenceWrites;
-      this.annotationsConfig = new AnnotationsConfigImpl(annotations);
+      this.annotationsConfig = new AnnotationsConfigImpl(annotations, logUndefinedAnnotations);
    }
 
    @Override
@@ -54,8 +54,18 @@ final class ConfigurationImpl implements Configuration {
 
       private final Map<String, AnnotationConfiguration> annotations;
 
-      AnnotationsConfigImpl(Map<String, AnnotationConfigurationImpl> annotations) {
+      private final boolean logUndefinedAnnotations;
+
+      AnnotationsConfigImpl(Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
          this.annotations = Collections.unmodifiableMap(annotations);
+         Set<String> annotationNames = annotations.keySet();
+         boolean hasUserDefinedAnnotations = !(annotationNames.isEmpty() || annotationNames.size() == 1 && annotationNames.contains(TYPE_ID_ANNOTATION));
+         this.logUndefinedAnnotations = hasUserDefinedAnnotations && logUndefinedAnnotations;
+      }
+
+      @Override
+      public boolean logUndefinedAnnotations() {
+         return logUndefinedAnnotations;
       }
 
       @Override
@@ -65,7 +75,7 @@ final class ConfigurationImpl implements Configuration {
 
       @Override
       public String toString() {
-         return "AnnotationsConfig{annotations=" + annotations + '}';
+         return "AnnotationsConfig{annotations=" + annotations + ", logUndefinedAnnotations=" + logUndefinedAnnotations + '}';
       }
    }
 
@@ -74,6 +84,8 @@ final class ConfigurationImpl implements Configuration {
       private boolean logOutOfSequenceReads = true;
 
       private boolean logOutOfSequenceWrites = true;
+
+      private Boolean logUndefinedAnnotations = null;
 
       private AnnotationsConfig.Builder annotationsConfigBuilder = null;
 
@@ -116,6 +128,12 @@ final class ConfigurationImpl implements Configuration {
       }
 
       @Override
+      public Builder setLogUndefinedAnnotations(boolean logUndefinedAnnotations) {
+         this.logUndefinedAnnotations = logUndefinedAnnotations;
+         return this;
+      }
+
+      @Override
       public AnnotationsConfig.Builder annotationsConfig() {
          if (annotationsConfigBuilder == null) {
             annotationsConfigBuilder = new AnnotationsConfigBuilderImpl();
@@ -147,7 +165,8 @@ final class ConfigurationImpl implements Configuration {
             }
          }
 
-         return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites, annotations);
+         return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites,
+               annotations, logUndefinedAnnotations == null ? annotations.size() > 1 : logUndefinedAnnotations);
       }
    }
 }
