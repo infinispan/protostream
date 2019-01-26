@@ -11,6 +11,7 @@ import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.config.AnnotationAttributeConfiguration;
 import org.infinispan.protostream.config.AnnotationConfiguration;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.impl.parser.AnnotationParser;
@@ -68,7 +69,8 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
    }
 
    /**
-    * Extract annotations by parsing the documentation comment and run the configured {@link AnnotationMetadataCreator}s.
+    * Extract annotations by parsing the documentation comment and run the configured {@link
+    * AnnotationMetadataCreator}s.
     *
     * @throws AnnotationParserException if annotation parsing fails
     */
@@ -83,8 +85,10 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
             for (AnnotationElement.Annotation annotation : parsedAnnotations) {
                AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation.getName());
                if (annotationConfig == null) {
-                  // unknown annotations are ignored
-                  log.warnf("Encountered and ignored and unknown annotation \"%s\" on %s", annotation.getName(), fullName);
+                  // unknown annotations are ignored, but we might want to log a warning
+                  if (getAnnotationsConfig().logUndefinedAnnotations()) {
+                     log.warnf("Encountered and ignored and unknown annotation \"%s\" on %s", annotation.getName(), fullName);
+                  }
                } else {
                   validateAttributes(annotation, annotationConfig);
 
@@ -280,10 +284,18 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
       }
    }
 
+   protected Configuration.AnnotationsConfig getAnnotationsConfig() {
+      return getFileDescriptor().getConfiguration().annotationsConfig();
+   }
+
    /**
-    * Subclasses are responsible for fetching the {@link AnnotationConfiguration} from the appropriate place.
+    * Subclasses are responsible for fetching the {@link AnnotationConfiguration} from the appropriate config (it it
+    * exists) and to validate that the target is suitable.
+    *
+    * @return null if the annotation is not found
+    * @throws DescriptorParserException is the annotation target is not suitable for this descriptor
     */
-   protected abstract AnnotationConfiguration getAnnotationConfig(String annotationName);
+   protected abstract AnnotationConfiguration getAnnotationConfig(String annotationName) throws DescriptorParserException;
 
    @Override
    public Map<String, AnnotationElement.Annotation> getAnnotations() throws AnnotationParserException {

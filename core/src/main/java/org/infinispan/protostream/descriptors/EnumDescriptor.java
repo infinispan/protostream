@@ -46,7 +46,7 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
 
    @Override
    protected AnnotationConfiguration getAnnotationConfig(String annotationName) {
-      AnnotationConfiguration annotationConfiguration = fileDescriptor.configuration.annotationsConfig().annotations().get(annotationName);
+      AnnotationConfiguration annotationConfiguration = getAnnotationsConfig().annotations().get(annotationName);
       if (annotationConfiguration == null) {
          return null;
       }

@@ -109,6 +109,13 @@ public final class FileDescriptor {
       status = parsingException != null ? Status.PARSING_ERROR : Status.UNRESOLVED;
    }
 
+   public Configuration getConfiguration() {
+      return configuration;
+   }
+
+   /**
+    * This method is not part of the public API. May be removed in future versions.
+    */
    public void setConfiguration(Configuration configuration) {
       this.configuration = configuration;
    }
