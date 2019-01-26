@@ -34,6 +34,12 @@ public interface Configuration {
 
    interface AnnotationsConfig {
 
+      /**
+       * Should we log a warning every time we encounter an undefined documentation annotation? This is {@code true} by
+       * default.
+       */
+      boolean logUndefinedAnnotations();
+
       Map<String, AnnotationConfiguration> annotations();
 
       interface Builder {
@@ -52,6 +58,12 @@ public interface Configuration {
       Builder setLogOutOfSequenceReads(boolean logOutOfSequenceReads);
 
       Builder setLogOutOfSequenceWrites(boolean logOutOfSequenceWrites);
+
+      /**
+       * Should we log a warning every time we encounter an undefined documentation annotation? This is {@code true} by
+       * default.
+       */
+      Builder setLogUndefinedAnnotations(boolean logUndefinedAnnotations);
 
       AnnotationsConfig.Builder annotationsConfig();
 
