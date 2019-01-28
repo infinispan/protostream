@@ -129,7 +129,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    @Test
    public void testAnonymousClass() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
-      exception.expectMessage("The class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$1 must be instantiable using a public no-argument constructor.");
+      exception.expectMessage("Local or anonymous classes are not allowed. The class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$1 must be instantiable using a non-private no-argument constructor.");
 
       SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
@@ -150,7 +150,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    @Test
    public void testLocalClass() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
-      exception.expectMessage("The class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$1LocalClass must be instantiable using a public no-argument constructor.");
+      exception.expectMessage("Local or anonymous classes are not allowed. The class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest$1LocalClass must be instantiable using a non-private no-argument constructor.");
 
       SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
