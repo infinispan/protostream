@@ -3,7 +3,6 @@ package org.infinispan.protostream.config;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
@@ -58,9 +57,7 @@ final class ConfigurationImpl implements Configuration {
 
       AnnotationsConfigImpl(Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
          this.annotations = Collections.unmodifiableMap(annotations);
-         Set<String> annotationNames = annotations.keySet();
-         boolean hasUserDefinedAnnotations = !(annotationNames.isEmpty() || annotationNames.size() == 1 && annotationNames.contains(TYPE_ID_ANNOTATION));
-         this.logUndefinedAnnotations = hasUserDefinedAnnotations && logUndefinedAnnotations;
+         this.logUndefinedAnnotations = logUndefinedAnnotations;
       }
 
       @Override
