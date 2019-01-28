@@ -46,15 +46,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       super(getProtoName(messageClass), messageClass);
       this.protoSchemaGenerator = protoSchemaGenerator;
 
-      // ensure class is not abstract and has a default public constructor
-      if (Modifier.isAbstract(javaClass.getModifiers())) {
-         throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + javaClass.getName());
-      }
-      try {
-         javaClass.getDeclaredConstructor();
-      } catch (NoSuchMethodException e) {
-         throw new ProtoSchemaBuilderException("The class " + javaClass.getName() + " must be instantiable using a public no-argument constructor.");
-      }
+      checkInstantiability();
    }
 
    private static String getProtoName(Class<?> messageClass) {
@@ -135,19 +127,31 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          if (fields.isEmpty()) {
             throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller.");
          }
-         checkConstructor();
+         checkInstantiability();
       }
    }
 
-   private void checkConstructor() {
-      Constructor<?> ctor;
+   private void checkInstantiability() {
+      // ensure the class is not abstract
+      if (Modifier.isAbstract(javaClass.getModifiers())) {
+         throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + javaClass.getName());
+      }
+      // ensure it is not a local or anonymous class
+      if (javaClass.getEnclosingMethod() != null || javaClass.getEnclosingConstructor() != null) {
+         throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + javaClass.getName() + " must be instantiable using a non-private no-argument constructor.");
+      }
+      // ensure the class is not a non-static inner class
+      if (javaClass.getEnclosingClass() != null && !Modifier.isStatic(javaClass.getModifiers())) {
+         throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + javaClass.getName() + " must be instantiable using a non-private no-argument constructor.");
+      }
+      // ensure the class has a non-private no-argument constructor
+      Constructor<?> ctor = null;
       try {
          ctor = javaClass.getDeclaredConstructor();
-      } catch (NoSuchMethodException e) {
-         throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " must have a non-private no argument constructor");
+      } catch (NoSuchMethodException ignored) {
       }
-      if (Modifier.isPrivate(ctor.getModifiers())) {
-         throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " must have a non-private no argument constructor");
+      if (ctor == null || Modifier.isPrivate(ctor.getModifiers())) {
+         throw new ProtoSchemaBuilderException("The class " + javaClass.getName() + " must must be instantiable using a non-private no-argument constructor.");
       }
    }
 
