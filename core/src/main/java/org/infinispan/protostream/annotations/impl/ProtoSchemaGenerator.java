@@ -12,6 +12,7 @@ import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.impl.Log;
 
 import javassist.ClassClassPath;
@@ -203,9 +204,10 @@ public final class ProtoSchemaGenerator {
 
       if (serializationContext.canMarshall(javaType)) {
          // this is a known type, defined in another schema file that we'll need to import
-         BaseMarshaller<?> m = serializationContext.getMarshaller(javaType);
-         protoTypeMetadata = new ProtoTypeMetadata(m);
-         imports.add(serializationContext.getDescriptorByName(m.getTypeName()).getFileDescriptor().getName());
+         BaseMarshaller<?> marshaller = serializationContext.getMarshaller(javaType);
+         GenericDescriptor descriptor = serializationContext.getDescriptorByName(marshaller.getTypeName());
+         protoTypeMetadata = new ProtoTypeMetadata(descriptor, marshaller);
+         imports.add(descriptor.getFileDescriptor().getName());
       } else if (javaType.isEnum()) {
          protoTypeMetadata = new ProtoEnumTypeMetadata((Class<? extends Enum>) javaType);
       } else {

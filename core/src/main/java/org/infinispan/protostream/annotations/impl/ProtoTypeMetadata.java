@@ -2,6 +2,9 @@ package org.infinispan.protostream.annotations.impl;
 
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.descriptors.EnumDescriptor;
+import org.infinispan.protostream.descriptors.EnumValueDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 
 /**
  * @author anistor@redhat.com
@@ -15,6 +18,8 @@ class ProtoTypeMetadata implements HasProtoSchema {
 
    protected final String documentation;
 
+   protected GenericDescriptor descriptor;
+
    protected BaseMarshaller marshaller;
 
    protected ProtoMessageTypeMetadata outerType;
@@ -22,7 +27,8 @@ class ProtoTypeMetadata implements HasProtoSchema {
    /**
     * Constructor for a type that is already marshallable by SerializationContext. No schema or code is generated for it.
     */
-   ProtoTypeMetadata(BaseMarshaller<?> marshaller) {
+   ProtoTypeMetadata(GenericDescriptor descriptor, BaseMarshaller<?> marshaller) {
+      this.descriptor = descriptor;
       this.marshaller = marshaller;
       this.name = marshaller.getTypeName();
       this.javaClass = marshaller.getJavaClass();
@@ -76,6 +82,18 @@ class ProtoTypeMetadata implements HasProtoSchema {
 
    public boolean isEnum() {
       return marshaller instanceof EnumMarshaller;
+   }
+
+   public ProtoEnumValueMetadata getEnumMemberByName(String name) {
+      if (!isEnum()) {
+         throw new IllegalStateException(getFullName() + " is not an enum");
+      }
+      EnumValueDescriptor evd = ((EnumDescriptor) descriptor).findValueByName(name);
+      if (evd == null) {
+         return null;
+      }
+      Enum ev = ((EnumMarshaller) marshaller).decode(evd.getNumber());
+      return new ProtoEnumValueMetadata(evd.getNumber(), name, ev, null);
    }
 
    public ProtoMessageTypeMetadata getOuterType() {

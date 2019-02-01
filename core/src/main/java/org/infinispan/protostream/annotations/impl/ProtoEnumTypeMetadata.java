@@ -66,7 +66,7 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
                } catch (IllegalAccessException iae) {
                   // not really possible
                }
-               membersByNumber.put(annotation.number(), new ProtoEnumValueMetadata(annotation.number(), name, f, e));
+               membersByNumber.put(annotation.number(), new ProtoEnumValueMetadata(annotation.number(), name, e, DocumentationExtractor.getDocumentation(f)));
             }
          }
          if (membersByNumber.isEmpty()) {
@@ -84,7 +84,8 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       return membersByNumber;
    }
 
-   public ProtoEnumValueMetadata getMemberByName(String name) {
+   @Override
+   public ProtoEnumValueMetadata getEnumMemberByName(String name) {
       scanMemberAnnotations();
       return membersByName.get(name);
    }

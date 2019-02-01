@@ -37,6 +37,7 @@ import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestCla
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
@@ -381,6 +382,28 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
             .packageName("test_package1")
             .addClass(TestCase_DuplicateEnumValueName.E.class)
             .build(ctx);
+   }
+
+   @ProtoMessage
+   static class MessageWithImportedEnum {
+
+      // this one corresponds to enum sample_bank_account.User.Gender
+      @ProtoField(number = 1, defaultValue = "FEMALE")
+      public User.Gender gender;
+   }
+
+   @Test
+   public void testImportedEnum() throws Exception {
+      SerializationContext ctx = createContext();
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      protoSchemaBuilder
+            .fileName("test.proto")
+            .packageName("test_package")
+            .addClass(MessageWithImportedEnum.class)
+            .build(ctx);
+
+      assertTrue(ctx.canMarshall(MessageWithImportedEnum.class));
+      assertTrue(ctx.canMarshall("test_package.MessageWithImportedEnum"));
    }
 
    @ProtoMessage(name = "User")

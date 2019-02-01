@@ -1,7 +1,5 @@
 package org.infinispan.protostream.annotations.impl;
 
-import java.lang.reflect.Field;
-
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 
 /**
@@ -18,11 +16,11 @@ final class ProtoEnumValueMetadata implements HasProtoSchema {
 
    private final String documentation;
 
-   ProtoEnumValueMetadata(int number, String protoName, Field enumField, Enum enumValue) {
+   ProtoEnumValueMetadata(int number, String protoName, Enum enumValue, String documentation) {
       this.number = number;
       this.protoName = protoName;
       this.enumValue = enumValue;
-      documentation = DocumentationExtractor.getDocumentation(enumField);
+      this.documentation = documentation;
    }
 
    public int getNumber() {
