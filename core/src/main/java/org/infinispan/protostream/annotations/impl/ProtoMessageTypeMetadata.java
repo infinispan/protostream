@@ -383,8 +383,8 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          return "\"" + defaultValue + "\"";
       }
       if (fieldType.isEnum()) {
-         ProtoEnumTypeMetadata protoEnumTypeMetadata = (ProtoEnumTypeMetadata) protoSchemaGenerator.scanAnnotations(fieldType);
-         ProtoEnumValueMetadata enumVal = protoEnumTypeMetadata.getMemberByName(defaultValue);
+         ProtoTypeMetadata protoEnumTypeMetadata = protoSchemaGenerator.scanAnnotations(fieldType);
+         ProtoEnumValueMetadata enumVal = protoEnumTypeMetadata.getEnumMemberByName(defaultValue);
          if (enumVal == null) {
             throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName() + ": " + defaultValue + " is not a member of " + protoEnumTypeMetadata.getFullName() + " enum");
          }
