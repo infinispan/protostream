@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -369,8 +368,8 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    @Test
    public void testDuplicateEnumValueName() throws Exception {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Enum constant 'A' is already defined in test_package1.E");
+      exception.expect(ProtoSchemaBuilderException.class);
+      exception.expectMessage("Found duplicate definition of Protobuf enum constant A on enum member: org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.TestCase_DuplicateEnumValueName.E.B");
 
       SerializationContext ctx = createContext();
 
