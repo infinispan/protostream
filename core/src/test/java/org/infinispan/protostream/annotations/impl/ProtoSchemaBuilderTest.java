@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
@@ -25,6 +26,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.testdomain.Simple;
@@ -330,6 +332,122 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertTrue(ctx.canMarshall(TestClass2.class));
       assertTrue(ctx.canMarshall("test_package1.TestEnumABC"));
       assertFalse(ctx.canMarshall("test_package2.TestEnumABC"));
+   }
+
+   public enum TestOverride1 {
+
+      @ProtoEnumValue(number = 1) A
+   }
+
+   @ProtoName("TestOverride1")
+   public enum TestOverride2 {
+
+      @ProtoEnumValue(number = 1) A
+   }
+
+   @Test
+   public void testMarshallerOverride1() throws Exception {
+      SerializationContext ctx = createContext();
+
+      assertFalse(ctx.canMarshall(TestOverride1.class));
+      assertFalse(ctx.canMarshall("package1.TestOverride1"));
+
+      // generate schema and marshaller for TestOverride1, mapping it to package1.TestOverride1 in Protobuf
+      new ProtoSchemaBuilder()
+            .fileName("test1.proto")
+            .packageName("package1")
+            .addClass(TestOverride1.class)
+            .build(ctx);
+
+      // assert the type is marshallable, check all aspects of this
+      assertTrue(ctx.canMarshall(TestOverride1.class));
+      assertEquals("package1.TestOverride1", ctx.getMarshaller(TestOverride1.class).getTypeName());
+      assertTrue(ctx.canMarshall("package1.TestOverride1"));
+      assertEquals(TestOverride1.class, ctx.getMarshaller("package1.TestOverride1").getJavaClass());
+
+      // generate schema and marshaller for TestOverride1 again, mapping it to package2.TestOverride1 in Protobuf
+      new ProtoSchemaBuilder()
+            .fileName("test2.proto")
+            .packageName("package2")
+            .addClass(TestOverride1.class)
+            .build(ctx);
+
+      // assert the type is marshallable, check all aspects of this
+      assertTrue(ctx.canMarshall(TestOverride1.class));
+      assertEquals("package2.TestOverride1", ctx.getMarshaller(TestOverride1.class).getTypeName());
+      assertTrue(ctx.canMarshall("package2.TestOverride1"));
+      assertEquals(TestOverride1.class, ctx.getMarshaller("package2.TestOverride1").getJavaClass());
+
+      // assert the old mapping (TestOverride1 <-> package1.TestOverride1) is gone now
+      assertFalse(ctx.canMarshall("package1.TestOverride1"));
+   }
+
+   @Test
+   public void testMarshallerOverride2() throws Exception {
+      SerializationContext ctx = createContext();
+
+      assertFalse(ctx.canMarshall(TestOverride1.class));
+      assertFalse(ctx.canMarshall("package1.TestOverride1"));
+
+      // generate schema and marshaller for TestOverride1, mapping it to package1.TestOverride1 in Protobuf
+      new ProtoSchemaBuilder()
+            .fileName("test1.proto")
+            .packageName("package1")
+            .addClass(TestOverride1.class)
+            .build(ctx);
+
+      // generate schema and marshaller for TestOverride2, mapping it to package2.TestOverride1 in Protobuf
+      new ProtoSchemaBuilder()
+            .fileName("test2.proto")
+            .packageName("package2")
+            .addClass(TestOverride2.class)
+            .build(ctx);
+
+      // assert the type is marshallable, check all aspects of this
+      assertTrue(ctx.canMarshall(TestOverride1.class));
+      assertEquals("package1.TestOverride1", ctx.getMarshaller(TestOverride1.class).getTypeName());
+      assertTrue(ctx.canMarshall("package1.TestOverride1"));
+      assertEquals(TestOverride1.class, ctx.getMarshaller("package1.TestOverride1").getJavaClass());
+
+      assertTrue(ctx.canMarshall(TestOverride2.class));
+      assertEquals("package2.TestOverride1", ctx.getMarshaller(TestOverride2.class).getTypeName());
+      assertTrue(ctx.canMarshall("package2.TestOverride1"));
+      assertEquals(TestOverride2.class, ctx.getMarshaller("package2.TestOverride1").getJavaClass());
+
+      // register marshaller for TestOverride1 again, mapping it to package2.TestOverride1 in Protobuf
+      ctx.registerMarshaller(new EnumMarshaller<TestOverride1>() {
+         @Override
+         public Class<TestOverride1> getJavaClass() {
+            return TestOverride1.class;
+         }
+
+         @Override
+         public String getTypeName() {
+            return "package2.TestOverride1";
+         }
+
+         @Override
+         public TestOverride1 decode(int v) {
+            return TestOverride1.A;
+         }
+
+         @Override
+         public int encode(TestOverride1 e) throws IllegalArgumentException {
+            return 1;
+         }
+      });
+
+      // assert the type is marshallable, check all aspects of this
+      assertTrue(ctx.canMarshall(TestOverride1.class));
+      assertEquals("package2.TestOverride1", ctx.getMarshaller(TestOverride1.class).getTypeName());
+      assertTrue(ctx.canMarshall("package2.TestOverride1"));
+      assertEquals(TestOverride1.class, ctx.getMarshaller("package2.TestOverride1").getJavaClass());
+
+      // assert the old type is no longer marshallable
+      assertFalse(ctx.canMarshall(TestOverride2.class));
+
+      // assert the old mapping (TestOverride1 <-> package1.TestOverride1) is gone now
+      assertFalse(ctx.canMarshall("package1.TestOverride1"));
    }
 
    @Test

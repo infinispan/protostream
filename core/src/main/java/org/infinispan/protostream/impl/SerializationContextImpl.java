@@ -186,7 +186,10 @@ public final class SerializationContextImpl implements SerializationContext {
       if (existingDelegate != null) {
          marshallersByClass.remove(existingDelegate.getMarshaller().getJavaClass());
       }
-      marshallersByClass.put(marshaller.getJavaClass(), marshallerDelegate);
+      existingDelegate = marshallersByClass.put(marshaller.getJavaClass(), marshallerDelegate);
+      if (existingDelegate != null) {
+         marshallersByName.remove(existingDelegate.getMarshaller().getTypeName());
+      }
    }
 
    private BaseMarshallerDelegate<?> makeMarshallerDelegate(BaseMarshaller<?> marshaller) {
