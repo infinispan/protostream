@@ -119,7 +119,7 @@
         <version.jboss.logging.processor>2.1.0.Final</version.jboss.logging.processor>
         <version.log4j>1.2.17</version.log4j>
         <version.jboss.marshalling>2.0.6.Final</version.jboss.marshalling>
-        <version.javassist>3.23.1-GA</version.javassist>
+        <version.javassist>3.24.1-GA</version.javassist>
         <version.osgi>4.3.1</version.osgi>
         <version.commons-cli>1.2</version.commons-cli>
         <version.gson>2.8.2</version.gson>
