@@ -256,7 +256,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not be used multiple times in one class hierarchy : " + method);
             }
             String propertyName;
-            if (method.getReturnType().equals(Void.TYPE)) {
+            if (method.getReturnType() == Void.TYPE) {
                // this method is expected to be a setter
                if (method.getName().startsWith("set") && method.getName().length() >= 4) {
                   propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
@@ -293,7 +293,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                Method getter;
                Method setter;
                // we can have the annotation present on either getter or setter but not both
-               if (method.getReturnType().equals(Void.TYPE)) {
+               if (method.getReturnType() == Void.TYPE) {
                   // this method is expected to be a setter
                   if (method.getName().startsWith("set") && method.getName().length() >= 4) {
                      propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
@@ -468,8 +468,8 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return collectionImplementation;
    }
 
-   private Type getProtobufType(Class<?> javaType, Type type) {
-      switch (type) {
+   private Type getProtobufType(Class<?> javaType, Type declaredType) {
+      switch (declaredType) {
          case MESSAGE:
             // MESSAGE means either 'unspecified' or MESSAGE
             if (javaType.isEnum()) {
@@ -517,23 +517,23 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             break;
          case STRING:
             if (javaType != String.class)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case BYTES:
             if (javaType != byte[].class)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case DOUBLE:
             if (javaType != Double.class && javaType != Double.TYPE)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case FLOAT:
             if (javaType != Float.class && javaType != Float.TYPE)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case BOOL:
             if (javaType != Boolean.class && javaType != Boolean.TYPE)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case INT32:
          case UINT32:
@@ -541,7 +541,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case SFIXED32:
          case SINT32:
             if (javaType != Integer.class && javaType != Integer.TYPE)
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case INT64:
          case UINT64:
@@ -550,10 +550,10 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case SINT64:
             if (javaType != Long.class && javaType != Long.TYPE
                   && !Date.class.isAssignableFrom(javaType) && !Instant.class.isAssignableFrom(javaType))
-               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + type);
+               throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
       }
-      return type;
+      return declaredType;
    }
 
    private boolean isRepeated(Class<?> type) {
@@ -562,7 +562,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private Method findGetter(String propertyName, Class<?> propertyType) {
       String prefix = "get";
-      if (propertyType.equals(Boolean.TYPE) || propertyType.equals(Boolean.class)) {
+      if (propertyType == Boolean.TYPE || propertyType == Boolean.class) {
          prefix = "is";
       }
       String methodName = prefix + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
@@ -573,7 +573,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
       }
-      if (!getter.getReturnType().equals(propertyType)) {
+      if (getter.getReturnType() != propertyType) {
          throw new ProtoSchemaBuilderException("No suitable getter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
                + ". The candidate method does not have a suitable return type: " + getter);
@@ -590,7 +590,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          throw new ProtoSchemaBuilderException("No setter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
       }
-      if (!setter.getReturnType().equals(Void.TYPE)) {
+      if (setter.getReturnType() != Void.TYPE) {
          throw new ProtoSchemaBuilderException("No suitable setter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
                + ". The candidate method does not have a suitable return type: " + setter);

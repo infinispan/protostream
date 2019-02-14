@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -185,7 +186,7 @@ public final class ProtoSchemaBuilder {
     * <p>
     * Its inner classes will also be automatically processed if they are referenced by the outer class. If you want to
     * make sure an inner class is processed regardless if referenced or not you will have to add it explicitly using
-    * {@code addClass}.
+    * {@code #addClass} or {@link #addClasses}.
     *
     * @param clazz the class to analyze
     * @return itself, to help chaining calls
@@ -195,6 +196,28 @@ public final class ProtoSchemaBuilder {
          throw new IllegalArgumentException("class argument cannot be null");
       }
       classes.add(clazz);
+      return this;
+   }
+
+   /**
+    * Add several @ProtoXyz annotated classes to be analyzed. Proto schema and marshaller will be generated for them.
+    * <p>
+    * Their superclasses and superinterfaces will be also included in the analysis but no separate Protobuf types and
+    * marshallers will be generated for them as Protobuf does not have any notion of type hierarchy and inheritance. The
+    * fields defined by the superclass or superinterfaces will be just included in the schema of the derived class.
+    * <p>
+    * Inner classes will also be automatically processed if they are referenced by the outer class. If you want to make
+    * sure an inner class is processed regardless if referenced or not you will have to add it explicitly using {@link
+    * #addClass} or {@code #addClasses}.
+    *
+    * @param classes the classes to analyze
+    * @return itself, to help chaining calls
+    */
+   public ProtoSchemaBuilder addClasses(Class<?>... classes) {
+      if (classes == null || classes.length == 0) {
+         throw new IllegalArgumentException("classes argument cannot be null or empty");
+      }
+      Collections.addAll(this.classes, classes);
       return this;
    }
 
