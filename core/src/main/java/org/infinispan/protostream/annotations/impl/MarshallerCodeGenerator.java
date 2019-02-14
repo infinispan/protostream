@@ -149,7 +149,7 @@ final class MarshallerCodeGenerator {
       iw.append("switch ($1) {\n");
       iw.inc();
       for (ProtoEnumValueMetadata value : enumTypeMetadata.getMembers().values()) {
-         iw.append("case ").append(String.valueOf(value.getNumber())).append(": return ").append(enumTypeMetadata.getJavaClassName()).append(".").append(value.getEnumValue().name()).append(";\n");
+         iw.append("case ").append(String.valueOf(value.getNumber())).append(": return ").append(value.getJavaEnumName()).append(";\n");
       }
       iw.append("default: return null;\n");
       iw.dec();
@@ -166,7 +166,7 @@ final class MarshallerCodeGenerator {
       iw.append("switch ($1.ordinal()) {\n");
       iw.inc();
       for (ProtoEnumValueMetadata value : enumTypeMetadata.getMembers().values()) {
-         iw.append("case ").append(String.valueOf(value.getEnumValue().ordinal())).append(": return ").append(String.valueOf(value.getNumber())).append(";\n");
+         iw.append("case ").append(String.valueOf(value.getJavaEnumOrdinal())).append(": return ").append(String.valueOf(value.getNumber())).append(";\n");
       }
       iw.append("default: throw new IllegalArgumentException(\"Unexpected ").append(enumTypeMetadata.getJavaClassName()).append(" enum value : \" + $1.name());\n");
       iw.dec();
@@ -421,8 +421,7 @@ final class MarshallerCodeGenerator {
             } else if (Instant.class.isAssignableFrom(fieldMetadata.getJavaType())) {
                v = defaultValue + "L";
             } else if (defaultValue instanceof ProtoEnumValueMetadata) {
-               Enum enumValue = ((ProtoEnumValueMetadata) defaultValue).getEnumValue();
-               v = enumValue.getDeclaringClass().getName() + "." + enumValue.name();
+               v = ((ProtoEnumValueMetadata) defaultValue).getJavaEnumName();
             } else if (defaultValue instanceof Long) {
                v = defaultValue + "L";
             } else if (defaultValue instanceof Double) {
