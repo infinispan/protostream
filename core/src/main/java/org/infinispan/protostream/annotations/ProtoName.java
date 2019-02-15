@@ -7,8 +7,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An optional annotation for specifying the Protobuf message or enum type name. If missing, the Java class name will be
- * used for Protobuf too.
+ * An optional annotation for specifying the Protobuf message or enum type name. If missing, the Java class name ({@link
+ * Class#getSimpleName()}) will be used for Protobuf too.
  *
  * @author anistor@redhat.com
  * @since 4.3
