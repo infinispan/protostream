@@ -188,16 +188,7 @@ public final class ProtoSchemaGenerator {
       JavassistMarshallerCodeGenerator marshallerCodeGenerator = new JavassistMarshallerCodeGenerator(packageName, getClassPool());
       for (Class<?> c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
-         Class<? extends BaseMarshaller> marshallerClass = null;
-         if (ptm instanceof ProtoMessageTypeMetadata) {
-            marshallerClass = marshallerCodeGenerator.generateMessageMarshaller((ProtoMessageTypeMetadata) ptm);
-         } else if (ptm instanceof ProtoEnumTypeMetadata) {
-            marshallerClass = marshallerCodeGenerator.generateEnumMarshaller((ProtoEnumTypeMetadata) ptm);
-         }
-         if (marshallerClass != null) {
-            BaseMarshaller marshaller = marshallerClass.newInstance();
-            serializationContext.registerMarshaller(marshaller);
-         }
+         marshallerCodeGenerator.generateMarshaller(serializationContext, ptm);
       }
    }
 

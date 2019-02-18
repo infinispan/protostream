@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.Message;
@@ -104,11 +105,24 @@ final class JavassistMarshallerCodeGenerator {
       return MARSHALLER_CLASS_NAME_PREFIX + nextMarshallerClassId();
    }
 
+   public void generateMarshaller(SerializationContext serializationContext, ProtoTypeMetadata ptm) throws Exception {
+      Class<? extends BaseMarshaller> marshallerClass = null;
+      if (ptm instanceof ProtoMessageTypeMetadata) {
+         marshallerClass = generateMessageMarshaller((ProtoMessageTypeMetadata) ptm);
+      } else if (ptm instanceof ProtoEnumTypeMetadata) {
+         marshallerClass = generateEnumMarshaller((ProtoEnumTypeMetadata) ptm);
+      }
+      if (marshallerClass != null) {
+         BaseMarshaller marshaller = marshallerClass.newInstance();
+         serializationContext.registerMarshaller(marshaller);
+      }
+   }
+
    /**
     * Generates an implementation of EnumMarshaller as a static nested class in the Enum class to be marshalled. The
     * InnerClasses attribute of the outer class is not altered, so this is not officially considered a nested class.
     */
-   public Class<EnumMarshaller> generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws NotFoundException, CannotCompileException {
+   private Class<EnumMarshaller> generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws NotFoundException, CannotCompileException {
       CtClass enumClass = cp.get(petm.getJavaClass().getName());
       CtClass marshallerImpl = enumClass.makeNestedClass(makeMarshallerClassName(), true);
       if (log.isTraceEnabled()) {
@@ -202,7 +216,7 @@ final class JavassistMarshallerCodeGenerator {
     * marshalled. The InnerClasses attribute of the outer class is not altered, so this is not officially considered a
     * nested class.
     */
-   public Class<RawProtobufMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException {
+   private Class<RawProtobufMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException {
       CtClass entityClass = cp.get(messageTypeMetadata.getJavaClass().getName());
       CtClass marshallerImpl = entityClass.makeNestedClass(makeMarshallerClassName(), true);
       if (log.isTraceEnabled()) {
