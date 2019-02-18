@@ -35,7 +35,7 @@ public final class ProtoSchemaGenerator {
    static {
       boolean isOSGi = false;
       try {
-         isOSGi = MarshallerCodeGenerator.class.getClassLoader() instanceof org.osgi.framework.BundleReference;
+         isOSGi = ProtoSchemaGenerator.class.getClassLoader() instanceof org.osgi.framework.BundleReference;
       } catch (NoClassDefFoundError ex) {
          // Ignore
       }
@@ -185,7 +185,7 @@ public final class ProtoSchemaGenerator {
    }
 
    private void generateMarshallers() throws Exception {
-      MarshallerCodeGenerator marshallerCodeGenerator = new MarshallerCodeGenerator(packageName, getClassPool());
+      JavassistMarshallerCodeGenerator marshallerCodeGenerator = new JavassistMarshallerCodeGenerator(packageName, getClassPool());
       for (Class<?> c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
          Class<? extends BaseMarshaller> marshallerClass = null;

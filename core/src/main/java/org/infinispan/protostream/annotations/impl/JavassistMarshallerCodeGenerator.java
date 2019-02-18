@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ImmutableSerializationContext;
@@ -36,9 +38,9 @@ import javassist.NotFoundException;
  * @author anistor@readhat.com
  * @since 3.0
  */
-final class MarshallerCodeGenerator {
+final class JavassistMarshallerCodeGenerator {
 
-   private static final Log log = Log.LogFactory.getLog(MarshallerCodeGenerator.class);
+   private static final Log log = Log.LogFactory.getLog(JavassistMarshallerCodeGenerator.class);
 
    private static final String PROTOSTREAM_PACKAGE = SerializationContext.class.getPackage().getName();
 
@@ -73,7 +75,7 @@ final class MarshallerCodeGenerator {
    private final CtMethod encodeMethod;
    private final String protobufSchemaPackage;
 
-   MarshallerCodeGenerator(String protobufSchemaPackage, ClassPool cp) throws NotFoundException {
+   JavassistMarshallerCodeGenerator(String protobufSchemaPackage, ClassPool cp) throws NotFoundException {
       this.protobufSchemaPackage = protobufSchemaPackage;
       this.cp = cp;
       ioExceptionClass = cp.getCtClass(IOException.class.getName());
@@ -163,7 +165,7 @@ final class MarshallerCodeGenerator {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
-      iw.append("switch ($1.ordinal()) {\n");
+      iw.append("switch ($1.ordinal()) {\n"); // use ordinal rather than enum constant because Javassist does not support enum syntax at all
       iw.inc();
       for (ProtoEnumValueMetadata value : enumTypeMetadata.getMembers().values()) {
          iw.append("case ").append(String.valueOf(value.getJavaEnumOrdinal())).append(": return ").append(String.valueOf(value.getNumber())).append(";\n");
@@ -246,16 +248,15 @@ final class MarshallerCodeGenerator {
     * initialized.
     */
    private void addMarshallerDelegateFields(CtClass marshallerImpl, ProtoMessageTypeMetadata messageTypeMetadata) throws CannotCompileException {
+      Set<String> addedFields = new HashSet<>();
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          switch (fieldMetadata.getProtobufType()) {
             case GROUP:
             case MESSAGE:
             case ENUM:
                String fieldName = makeMarshallerDelegateFieldName(fieldMetadata);
-               try {
-                  // add the field only if it does not already exist
-                  marshallerImpl.getDeclaredField(fieldName);
-               } catch (NotFoundException ex) {
+               // Add the field only if it does not already exist. If there is more than one usage of a marshaller then we could try to add it twice.
+               if (addedFields.add(fieldName)) {
                   CtField marshallerDelegateField = new CtField(fieldMetadata.getJavaType().isEnum() ? enumMarshallerDelegateClass : baseMarshallerDelegateClass, fieldName, marshallerImpl);
                   marshallerDelegateField.setModifiers(Modifier.PRIVATE);
                   marshallerImpl.addField(marshallerDelegateField);
