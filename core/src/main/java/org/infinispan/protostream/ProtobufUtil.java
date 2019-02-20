@@ -56,6 +56,7 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.MalformedJsonException;
+import com.google.protobuf.CodedOutputStream;
 
 /**
  * This is the entry point to the ProtoStream library. This class provides methods to write and read Java objects
@@ -171,9 +172,17 @@ public final class ProtobufUtil {
       return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(byteBuffer));
    }
 
+   public static <A> A fromWrappedStream(ImmutableSerializationContext ctx, InputStream in) throws IOException {
+      return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(in));
+   }
+
    //todo [anistor] should make it possible to plug in a custom wrapping strategy instead of the default one
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
+      return toWrappedByteArray(ctx, t, BUFFER_SIZE);
+   }
+
+   public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t, int bufferSize) throws IOException {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(bufferSize);
       WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.toByteArray();
    }
@@ -182,6 +191,14 @@ public final class ProtobufUtil {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(BUFFER_SIZE);
       WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(baos), t);
       return baos.getByteBuffer();
+   }
+
+   public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
+      toWrappedStream(ctx, out, t, CodedOutputStream.DEFAULT_BUFFER_SIZE);
+   }
+
+   public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t, int bufferSize) throws IOException {
+      WrappedMessage.writeMessage(ctx, RawProtoStreamWriterImpl.newInstance(out, bufferSize), t);
    }
 
    private static final class JsonNestingLevel {
