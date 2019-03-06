@@ -57,7 +57,7 @@
 
     <issueManagement>
         <system>jira</system>
-        <url>https://issues.jboss.org/browse/ISPN</url>
+        <url>https://issues.jboss.org/browse/IPROTO</url>
     </issueManagement>
 
     <ciManagement>
