@@ -290,7 +290,10 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <additionalparam>-Xdoclint:none</additionalparam>
+                    <source>8</source>
+                    <doclint>none</doclint>
+                    <detectLinks>false</detectLinks>
+                    <detectOfflineLinks>false</detectOfflineLinks>
                     <links>
                         <link>http://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
