@@ -22,7 +22,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Field %s was written out of sequence and will lead to sub-optimal read performance", id = 2)
    void fieldWriteOutOfSequence(String fieldName);
 
-   public static class LogFactory {
+   class LogFactory {
       public static Log getLog(Class<?> clazz) {
          return Logger.getMessageLogger(Log.class, clazz.getName());
       }
