@@ -1,12 +1,10 @@
 package org.infinispan.protostream.annotations.impl;
 
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
-
 /**
  * @author anistor@redhat.com
  * @since 3.0
  */
-final class ProtoEnumValueMetadata implements HasProtoSchema {
+public final class ProtoEnumValueMetadata implements HasProtoSchema {
 
    private final int number;
 
@@ -18,11 +16,11 @@ final class ProtoEnumValueMetadata implements HasProtoSchema {
 
    private final String documentation;
 
-   ProtoEnumValueMetadata(int number, String protoName, Enum enumValue, String documentation) {
+   ProtoEnumValueMetadata(int number, String protoName, int javaEnumOrdinal, String javaEnumName, String documentation) {
       this.number = number;
       this.protoName = protoName;
-      this.javaEnumOrdinal = enumValue.ordinal();
-      this.javaEnumName = enumValue.getDeclaringClass().getName() + '.' + enumValue.name();
+      this.javaEnumOrdinal = javaEnumOrdinal;
+      this.javaEnumName = javaEnumName;
       this.documentation = documentation;
    }
 
@@ -66,7 +64,7 @@ final class ProtoEnumValueMetadata implements HasProtoSchema {
       iw.append("\n");
       ProtoTypeMetadata.appendDocumentation(iw, documentation);
       iw.append(protoName).append(" = ").append(String.valueOf(number));
-      if (ProtoSchemaBuilder.generateSchemaDebugComments) {
+      if (BaseProtoSchemaGenerator.generateSchemaDebugComments) {
          iw.append(" /* ").append(javaEnumName).append(" */");
       }
       iw.append(";\n");

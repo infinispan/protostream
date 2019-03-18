@@ -538,7 +538,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    @Test
    public void testDuplicateEnumValueName() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
-      exception.expectMessage("Found duplicate definition of Protobuf enum constant A on enum member: org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.TestCase_DuplicateEnumValueName.E.B");
+      exception.expectMessage("Found duplicate definition of Protobuf enum constant A on enum constant: org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.TestCase_DuplicateEnumValueName.E.B");
 
       SerializationContext ctx = createContext();
 

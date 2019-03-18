@@ -9,7 +9,7 @@ import java.io.Writer;
  * @author anistor@redhat.com
  * @since 3.0
  */
-final class IndentWriter extends Writer {
+public final class IndentWriter extends Writer {
 
    private final StringBuilder sb = new StringBuilder(256);
 

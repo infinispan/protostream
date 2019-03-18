@@ -6,9 +6,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -21,16 +22,23 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.Version;
-import org.infinispan.protostream.annotations.impl.ProtoSchemaGenerator;
+import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
+import org.infinispan.protostream.annotations.impl.RuntimeProtoSchemaGenerator;
+import org.infinispan.protostream.annotations.impl.types.ReflectionClassFactory;
+import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
 
 /**
- * Generates a Protocol Buffers schema definition file based on a set of {@code @Proto*} annotated classes.
+ * Generates a Protocol Buffers schema definition file and associated marshallers based on a set of {@code @Proto*}
+ * annotated classes.
  * <p>
  * See {@link ProtoName}, {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link ProtoEnumValue}, {@link
  * ProtoDoc} and {@link ProtoUnknownFieldSet}.
+ * <p>
+ * This class performs run-time generation. For a compile-time equivalent see {@link AutoProtoSchemaBuilder} and {@link SerializationContextInitializer}.
  *
  * @author anistor@redhat.com
  * @since 3.0
@@ -60,7 +68,7 @@ public final class ProtoSchemaBuilder {
 
    private String packageName;
 
-   private final Set<Class<?>> classes = new HashSet<>();
+   private final Set<Class<?>> classes = new LinkedHashSet<>();
 
    private boolean autoImportClasses = true;
 
@@ -87,8 +95,8 @@ public final class ProtoSchemaBuilder {
 
       String[] marshallers = cmd.getOptionValues(MARSHALLER_LONG_OPT);
       if (marshallers != null) {
-         for (String marshaller : marshallers) {
-            BaseMarshaller<?> bm = (BaseMarshaller) Class.forName(marshaller).newInstance();
+         for (String marshallerClass : marshallers) {
+            BaseMarshaller<?> bm = (BaseMarshaller) Class.forName(marshallerClass).newInstance();
             ctx.registerMarshaller(bm);
          }
       }
@@ -247,7 +255,10 @@ public final class ProtoSchemaBuilder {
     * @throws IOException
     */
    public String build(SerializationContext serializationContext) throws ProtoSchemaBuilderException, IOException {
-      return new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes, autoImportClasses)
+      ReflectionClassFactory typeFactory = new ReflectionClassFactory();
+      Set<XClass> xclasses = classes.stream().map(typeFactory::fromClass).collect(Collectors.toCollection(LinkedHashSet::new));
+      BaseProtoSchemaGenerator.generateSchemaDebugComments = generateSchemaDebugComments;
+      return new RuntimeProtoSchemaGenerator(typeFactory, serializationContext, fileName, packageName, xclasses, autoImportClasses)
             .generateAndRegister();
    }
 }

@@ -1,23 +1,22 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.annotations.impl.types.XClass;
+
 /**
  * @author anistor@redhat.com
  * @since 3.0
  */
-abstract class ProtoTypeMetadata implements HasProtoSchema {
+public abstract class ProtoTypeMetadata implements HasProtoSchema {
 
    protected final String name;
 
-   protected final Class<?> javaClass;
-
-   protected final String documentation;
+   protected final XClass javaClass;
 
    protected ProtoMessageTypeMetadata outerType;
 
-   protected ProtoTypeMetadata(String name, Class<?> javaClass, String documentation) {
+   protected ProtoTypeMetadata(String name, XClass javaClass) {
       this.name = name;
       this.javaClass = javaClass;
-      this.documentation = documentation;
    }
 
    public String getName() {
@@ -36,10 +35,10 @@ abstract class ProtoTypeMetadata implements HasProtoSchema {
    }
 
    public String getDocumentation() {
-      return documentation;
+      return javaClass.getDocumentation();
    }
 
-   public Class<?> getJavaClass() {
+   public XClass getJavaClass() {
       return javaClass;
    }
 

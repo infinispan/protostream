@@ -25,6 +25,7 @@
         <module>sample-domain-definition</module>
         <module>sample-domain-implementation</module>
         <module>core</module>
+        <module>processor</module>
     </modules>
 
     <build>

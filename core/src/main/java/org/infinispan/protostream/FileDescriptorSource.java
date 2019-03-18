@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -194,5 +195,21 @@ public final class FileDescriptorSource {
          }
       }
       return is;
+   }
+
+   public static String getResourceAsString(Class<?> c, String name) {
+      try (InputStream is = c.getResourceAsStream(name)) {
+         try (Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+            StringWriter writer = new StringWriter();
+            char[] buffer = new char[BUFFER_SIZE];
+            int count;
+            while ((count = reader.read(buffer)) != -1) {
+               writer.write(buffer, 0, count);
+            }
+            return writer.toString();
+         }
+      } catch (IOException e) {
+         return null;
+      }
    }
 }

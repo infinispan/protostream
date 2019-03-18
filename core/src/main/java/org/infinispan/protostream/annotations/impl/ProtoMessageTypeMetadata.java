@@ -1,10 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
@@ -14,12 +10,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.lang.model.type.MirroredTypeException;
+
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
+import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
+import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.annotations.impl.types.XConstructor;
+import org.infinispan.protostream.annotations.impl.types.XField;
+import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 
@@ -30,28 +32,31 @@ import org.infinispan.protostream.descriptors.Type;
  * @author anistor@redhat.com
  * @since 3.0
  */
-final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
+public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
-   private final ProtoSchemaGenerator protoSchemaGenerator;
+   private final BaseProtoSchemaGenerator protoSchemaGenerator;
+
+   private final UnifiedTypeFactory typeFactory;
 
    private Map<Integer, ProtoFieldMetadata> fields = null;
 
-   private Field unknownFieldSetField;
+   private XField unknownFieldSetField;
 
-   private Method unknownFieldSetGetter;
+   private XMethod unknownFieldSetGetter;
 
-   private Method unknownFieldSetSetter;
+   private XMethod unknownFieldSetSetter;
 
-   private final Map<Class<?>, ProtoTypeMetadata> innerTypes = new HashMap<>();
+   private final Map<XClass, ProtoTypeMetadata> innerTypes = new HashMap<>();
 
-   ProtoMessageTypeMetadata(ProtoSchemaGenerator protoSchemaGenerator, Class<?> messageClass) {
-      super(getProtoName(messageClass), messageClass, DocumentationExtractor.getDocumentation(messageClass));
+   ProtoMessageTypeMetadata(BaseProtoSchemaGenerator protoSchemaGenerator, XClass messageClass) {
+      super(getProtoName(messageClass), messageClass);
       this.protoSchemaGenerator = protoSchemaGenerator;
+      this.typeFactory = messageClass.getFactory();
 
       checkInstantiability();
    }
 
-   private static String getProtoName(Class<?> messageClass) {
+   private static String getProtoName(XClass messageClass) {
       ProtoName annotation = messageClass.getAnnotation(ProtoName.class);
       ProtoMessage protoMessageAnnotation = messageClass.getAnnotation(ProtoMessage.class);
       if (annotation != null) {
@@ -63,17 +68,17 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return protoMessageAnnotation == null || protoMessageAnnotation.name().isEmpty() ? messageClass.getSimpleName() : protoMessageAnnotation.name();
    }
 
-   public Field getUnknownFieldSetField() {
+   public XField getUnknownFieldSetField() {
       scanMemberAnnotations();
       return unknownFieldSetField;
    }
 
-   public Method getUnknownFieldSetGetter() {
+   public XMethod getUnknownFieldSetGetter() {
       scanMemberAnnotations();
       return unknownFieldSetGetter;
    }
 
-   public Method getUnknownFieldSetSetter() {
+   public XMethod getUnknownFieldSetSetter() {
       scanMemberAnnotations();
       return unknownFieldSetSetter;
    }
@@ -92,9 +97,9 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       scanMemberAnnotations();  //todo [anistor] need to have a better place for this call
 
       iw.append("\n\n");
-      appendDocumentation(iw, documentation);
+      appendDocumentation(iw, getDocumentation());
       iw.append("message ").append(name);
-      if (ProtoSchemaBuilder.generateSchemaDebugComments) {
+      if (BaseProtoSchemaGenerator.generateSchemaDebugComments) {
          iw.append(" /* ").append(getJavaClassName()).append(" */");
       }
       iw.append(" {\n");
@@ -136,7 +141,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          // all the fields discovered in this class hierarchy, by name
          Map<String, ProtoFieldMetadata> fieldsByName = new HashMap<>();
 
-         Set<Class<?>> examinedClasses = new HashSet<>();
+         Set<XClass> examinedClasses = new HashSet<>();
          discoverFields(javaClass, examinedClasses, fields, fieldsByName);
          if (fields.isEmpty()) {
             throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller.");
@@ -151,7 +156,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + getJavaClassName());
       }
       // ensure it is not a local or anonymous class
-      if (javaClass.getEnclosingMethod() != null || javaClass.getEnclosingConstructor() != null) {
+      if (javaClass.isLocal()) {
          throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
       // ensure the class is not a non-static inner class
@@ -159,17 +164,13 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
       // ensure the class has a non-private no-argument constructor
-      Constructor<?> ctor = null;
-      try {
-         ctor = javaClass.getDeclaredConstructor();
-      } catch (NoSuchMethodException ignored) {
-      }
+      XConstructor ctor = javaClass.getDeclaredConstructor();  //todo [anistor] vs getConstructor()
       if (ctor == null || Modifier.isPrivate(ctor.getModifiers())) {
          throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must must be instantiable using a non-private no-argument constructor.");
       }
    }
 
-   private void discoverFields(Class<?> clazz, Set<Class<?>> examinedClasses, Map<Integer, ProtoFieldMetadata> fieldsByNumber, Map<String, ProtoFieldMetadata> fieldsByName) {
+   private void discoverFields(XClass clazz, Set<XClass> examinedClasses, Map<Integer, ProtoFieldMetadata> fieldsByNumber, Map<String, ProtoFieldMetadata> fieldsByName) {
       if (!examinedClasses.add(clazz)) {
          // avoid re-examining classes due to multiple interface inheritance
          return;
@@ -178,11 +179,11 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       if (clazz.getSuperclass() != null) {
          discoverFields(clazz.getSuperclass(), examinedClasses, fieldsByNumber, fieldsByName);
       }
-      for (Class<?> i : clazz.getInterfaces()) {
+      for (XClass i : clazz.getInterfaces()) {
          discoverFields(i, examinedClasses, fieldsByNumber, fieldsByName);
       }
 
-      for (Field field : clazz.getDeclaredFields()) {
+      for (XField field : clazz.getDeclaredFields()) {
          if (field.getAnnotation(ProtoUnknownFieldSet.class) != null) {
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
                throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not be used multiple times in one class hierarchy : " + field);
@@ -214,13 +215,9 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (isRepeated && isRequired) {
                   throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required.");
                }
-               Class<?> javaType = annotation.javaType();
-               if (javaType == void.class) {
-                  if (isRepeated) {
-                     javaType = determineElementType(field.getType(), field.getGenericType());
-                  } else {
-                     javaType = field.getType();
-                  }
+               XClass javaType = getJavaTypeFromAnnotation(annotation);
+               if (javaType == typeFactory.fromClass(void.class)) {
+                  javaType = isRepeated ? field.determineRepeatedElementType() : field.getType();
                }
                if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
@@ -232,7 +229,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " should be marked required or should have a default value.");
                }
 
-               Class<?> collectionImplementation = getCollectionImplementation(clazz, field.getType(), annotation.collectionImplementation(), fieldName, isRepeated);
+               XClass collectionImplementation = getCollectionImplementation(clazz, field.getType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
 
                Type protobufType = getProtobufType(javaType, annotation.type());
                ProtoTypeMetadata protoTypeMetadata = null;
@@ -259,13 +256,13 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          }
       }
 
-      for (Method method : clazz.getDeclaredMethods()) {
+      for (XMethod method : clazz.getDeclaredMethods()) {
          if (method.getAnnotation(ProtoUnknownFieldSet.class) != null) {
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
                throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not be used multiple times in one class hierarchy : " + method);
             }
             String propertyName;
-            if (method.getReturnType() == Void.TYPE) {
+            if (method.getReturnType() == typeFactory.fromClass(void.class)) {
                // this method is expected to be a setter
                if (method.getName().startsWith("set") && method.getName().length() >= 4) {
                   propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
@@ -299,10 +296,10 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException("Static methods cannot be @ProtoField annotated: " + method);
                }
                String propertyName;
-               Method getter;
-               Method setter;
+               XMethod getter;
+               XMethod setter;
                // we can have the annotation present on either getter or setter but not both
-               if (method.getReturnType() == Void.TYPE) {
+               if (method.getReturnType() == typeFactory.fromClass(void.class)) {
                   // this method is expected to be a setter
                   if (method.getName().startsWith("set") && method.getName().length() >= 4) {
                      propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
@@ -341,13 +338,9 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (isRepeated && isRequired) {
                   throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required.");
                }
-               Class<?> javaType = annotation.javaType();
-               if (javaType == void.class) {
-                  if (isRepeated) {
-                     javaType = determineElementType(getter.getReturnType(), getter.getGenericReturnType());
-                  } else {
-                     javaType = getter.getReturnType();
-                  }
+               XClass javaType = getJavaTypeFromAnnotation(annotation);
+               if (javaType == typeFactory.fromClass(void.class)) {
+                  javaType = isRepeated ? getter.determineRepeatedElementType() : getter.getReturnType();
                }
                if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
@@ -359,7 +352,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " should be marked required or should have a default value.");
                }
 
-               Class<?> collectionImplementation = getCollectionImplementation(clazz, getter.getReturnType(), annotation.collectionImplementation(), fieldName, isRepeated);
+               XClass collectionImplementation = getCollectionImplementation(clazz, getter.getReturnType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
 
                Type protobufType = getProtobufType(javaType, annotation.type());
                ProtoTypeMetadata protoTypeMetadata = null;
@@ -389,11 +382,27 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
    }
 
-   private Object getDefaultValue(Class<?> clazz, String fieldName, Class<?> fieldType, String defaultValue) {
+   private XClass getCollectionImplementationFromAnnotation(ProtoField annotation) {
+      try {
+         return typeFactory.fromClass(annotation.collectionImplementation());
+      } catch (MirroredTypeException e) {
+         return typeFactory.fromTypeMirror(e.getTypeMirror());
+      }
+   }
+
+   private XClass getJavaTypeFromAnnotation(ProtoField annotation) {
+      try {
+         return typeFactory.fromClass(annotation.javaType());
+      } catch (MirroredTypeException e) {
+         return typeFactory.fromTypeMirror(e.getTypeMirror());
+      }
+   }
+
+   private Object getDefaultValue(XClass clazz, String fieldName, XClass fieldType, String defaultValue) {
       if (defaultValue == null || defaultValue.isEmpty()) {
          return null;
       }
-      if (fieldType == String.class) {
+      if (fieldType == typeFactory.fromClass(String.class)) {
          return "\"" + defaultValue + "\"";
       }
       if (fieldType.isEnum()) {
@@ -404,38 +413,38 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          }
          return enumVal;
       }
-      if (fieldType == Character.class || fieldType == Character.TYPE) {
+      if (fieldType == typeFactory.fromClass(Character.class) || fieldType == typeFactory.fromClass(char.class)) {
          if (defaultValue.length() > 1) {
             throw new ProtoSchemaBuilderException("Invalid default value for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName() + ": " + defaultValue);
          }
          return defaultValue.charAt(0);
       }
-      if (fieldType == Boolean.class || fieldType == Boolean.TYPE) {
+      if (fieldType == typeFactory.fromClass(Boolean.class) || fieldType == typeFactory.fromClass(boolean.class)) {
          return Boolean.valueOf(defaultValue);
       }
       try {
-         if (fieldType == Integer.class || fieldType == Integer.TYPE) {
+         if (fieldType == typeFactory.fromClass(Integer.class) || fieldType == typeFactory.fromClass(int.class)) {
             return Integer.valueOf(defaultValue);
          }
-         if (fieldType == Long.class || fieldType == Long.TYPE) {
+         if (fieldType == typeFactory.fromClass(Long.class) || fieldType == typeFactory.fromClass(long.class)) {
             return Long.valueOf(defaultValue);
          }
-         if (fieldType == Short.class || fieldType == Short.TYPE) {
+         if (fieldType == typeFactory.fromClass(Short.class) || fieldType == typeFactory.fromClass(short.class)) {
             return Short.valueOf(defaultValue);
          }
-         if (fieldType == Double.class || fieldType == Double.TYPE) {
+         if (fieldType == typeFactory.fromClass(Double.class) || fieldType == typeFactory.fromClass(double.class)) {
             return Double.valueOf(defaultValue);
          }
-         if (fieldType == Float.class || fieldType == Float.TYPE) {
+         if (fieldType == typeFactory.fromClass(Float.class) || fieldType == typeFactory.fromClass(float.class)) {
             return Float.valueOf(defaultValue);
          }
-         if (fieldType == Byte.class || fieldType == Byte.TYPE) {
+         if (fieldType == typeFactory.fromClass(Byte.class) || fieldType == typeFactory.fromClass(byte.class)) {
             return Byte.valueOf(defaultValue);
          }
-         if (Date.class.isAssignableFrom(fieldType)) {
+         if (fieldType.isAssignableTo(typeFactory.fromClass(Date.class))) {
             return Long.valueOf(defaultValue);
          }
-         if (Instant.class.isAssignableFrom(fieldType)) {
+         if (fieldType.isAssignableTo(typeFactory.fromClass(Instant.class))) {
             return Long.valueOf(defaultValue);
          }
       } catch (NumberFormatException e) {
@@ -445,31 +454,30 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       throw new ProtoSchemaBuilderException("No default value is allowed for field '" + fieldName + "' of Java type " + fieldType.getCanonicalName() + " from class " + clazz.getCanonicalName());
    }
 
-   private Class<?> getCollectionImplementation(Class<?> clazz, Class<?> fieldType, Class<?> configuredCollection, String fieldName, boolean isRepeated) {
-      Class<?> collectionImplementation;
+   private XClass getCollectionImplementation(XClass clazz, XClass fieldType, XClass configuredCollection, String fieldName, boolean isRepeated) {
+      XClass collectionImplementation;
       if (isRepeated && !fieldType.isArray()) {
          collectionImplementation = configuredCollection;
-         if (collectionImplementation == Collection.class) {
+         if (collectionImplementation == typeFactory.fromClass(Collection.class)) {
             collectionImplementation = fieldType;
          }
-         if (!Collection.class.isAssignableFrom(collectionImplementation)) {
+         if (!collectionImplementation.isAssignableTo(typeFactory.fromClass(Collection.class))) {
             throw new ProtoSchemaBuilderException("The collection class of repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " must implement java.util.Collection.");
          }
          if (Modifier.isAbstract(collectionImplementation.getModifiers())) {
             throw new ProtoSchemaBuilderException("The collection class (" + collectionImplementation.getCanonicalName() + ") of repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " must not be abstract. Please specify an appropriate class in collectionImplementation member.");
          }
-         try {
-            collectionImplementation.getDeclaredConstructor();
-         } catch (NoSuchMethodException e) {
+         XConstructor ctor = collectionImplementation.getDeclaredConstructor();   //todo [anistor] vs getConstructor()
+         if (ctor == null) {
             throw new ProtoSchemaBuilderException("The collection class ('" + collectionImplementation.getCanonicalName() + "') of repeated field '"
                   + fieldName + "' of " + clazz.getCanonicalName() + " must have a public no-argument constructor.");
          }
-         if (!fieldType.isAssignableFrom(collectionImplementation)) {
+         if (!collectionImplementation.isAssignableTo(fieldType)) {
             throw new ProtoSchemaBuilderException("The collection implementation class ('" + collectionImplementation.getCanonicalName() + "') of repeated field '"
                   + fieldName + "' of " + clazz.getCanonicalName() + " is not assignable to this field's type.");
          }
       } else {
-         if (configuredCollection != Collection.class) {
+         if (configuredCollection != typeFactory.fromClass(Collection.class)) {
             throw new ProtoSchemaBuilderException("Specifying the collection implementation class is only allowed for repeated/collection fields: '" + fieldName + "' of " + clazz.getCanonicalName());
          }
          collectionImplementation = null;
@@ -477,7 +485,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return collectionImplementation;
    }
 
-   private Type getProtobufType(Class<?> javaType, Type declaredType) {
+   private Type getProtobufType(XClass javaType, Type declaredType) {
       switch (declaredType) {
          case MESSAGE:
             // MESSAGE means either 'unspecified' or MESSAGE
@@ -487,24 +495,24 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException(javaType.getCanonicalName() + " is not a Protobuf marshallable enum type");
                }
                return Type.ENUM;
-            } else if (javaType == String.class) {
+            } else if (javaType == typeFactory.fromClass(String.class)) {
                return Type.STRING;
-            } else if (javaType == Double.class || javaType == Double.TYPE) {
+            } else if (javaType == typeFactory.fromClass(Double.class) || javaType == typeFactory.fromClass(double.class)) {
                return Type.DOUBLE;
-            } else if (javaType == Float.class || javaType == Float.TYPE) {
+            } else if (javaType == typeFactory.fromClass(Float.class) || javaType == typeFactory.fromClass(float.class)) {
                return Type.FLOAT;
-            } else if (javaType == Long.class || javaType == Long.TYPE) {
+            } else if (javaType == typeFactory.fromClass(Long.class) || javaType == typeFactory.fromClass(long.class)) {
                return Type.INT64;
-            } else if (javaType == Integer.class || javaType == Integer.TYPE ||
-                  javaType == Short.class || javaType == Short.TYPE ||
-                  javaType == Byte.class || javaType == Byte.TYPE ||
-                  javaType == Character.class || javaType == Character.TYPE) {
+            } else if (javaType == typeFactory.fromClass(Integer.class) || javaType == typeFactory.fromClass(int.class) ||
+                  javaType == typeFactory.fromClass(Short.class) || javaType == typeFactory.fromClass(short.class) ||
+                  javaType == typeFactory.fromClass(Byte.class) || javaType == typeFactory.fromClass(byte.class) ||
+                  javaType == typeFactory.fromClass(Character.class) || javaType == typeFactory.fromClass(char.class)) {
                return Type.INT32;
-            } else if (javaType == Boolean.class || javaType == Boolean.TYPE) {
+            } else if (javaType == typeFactory.fromClass(Boolean.class) || javaType == typeFactory.fromClass(boolean.class)) {
                return Type.BOOL;
-            } else if (Date.class.isAssignableFrom(javaType)) {
+            } else if (javaType.isAssignableTo(typeFactory.fromClass(Date.class))) {
                return Type.FIXED64;
-            } else if (Instant.class.isAssignableFrom(javaType)) {
+            } else if (javaType.isAssignableTo(typeFactory.fromClass(Instant.class))) {
                return Type.FIXED64;
             } else {
                ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
@@ -525,23 +533,23 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             }
             break;
          case STRING:
-            if (javaType != String.class)
+            if (javaType != typeFactory.fromClass(String.class))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case BYTES:
-            if (javaType != byte[].class)
+            if (javaType != typeFactory.fromClass(byte[].class))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case DOUBLE:
-            if (javaType != Double.class && javaType != Double.TYPE)
+            if (javaType != typeFactory.fromClass(Double.class) && javaType != typeFactory.fromClass(double.class))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case FLOAT:
-            if (javaType != Float.class && javaType != Float.TYPE)
+            if (javaType != typeFactory.fromClass(Float.class) && javaType != typeFactory.fromClass(float.class))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case BOOL:
-            if (javaType != Boolean.class && javaType != Boolean.TYPE)
+            if (javaType != typeFactory.fromClass(Boolean.class) && javaType != typeFactory.fromClass(boolean.class))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case INT32:
@@ -549,7 +557,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case FIXED32:
          case SFIXED32:
          case SINT32:
-            if (javaType != Integer.class && javaType != Integer.TYPE)
+            if (javaType != typeFactory.fromClass(Integer.class) && javaType != typeFactory.fromClass(int.class))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
          case INT64:
@@ -557,28 +565,26 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case FIXED64:
          case SFIXED64:
          case SINT64:
-            if (javaType != Long.class && javaType != Long.TYPE
-                  && !Date.class.isAssignableFrom(javaType) && !Instant.class.isAssignableFrom(javaType))
+            if (javaType != typeFactory.fromClass(Long.class) && javaType != typeFactory.fromClass(long.class)
+                  && !javaType.isAssignableTo(typeFactory.fromClass(Date.class)) && !javaType.isAssignableTo(typeFactory.fromClass(Instant.class)))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
       }
       return declaredType;
    }
 
-   private boolean isRepeated(Class<?> type) {
-      return type.isArray() || Collection.class.isAssignableFrom(type);
+   private boolean isRepeated(XClass type) {
+      return type.isArray() || type.isAssignableTo(typeFactory.fromClass(Collection.class));
    }
 
-   private Method findGetter(String propertyName, Class<?> propertyType) {
+   private XMethod findGetter(String propertyName, XClass propertyType) {
       String prefix = "get";
-      if (propertyType == Boolean.TYPE || propertyType == Boolean.class) {
+      if (propertyType == typeFactory.fromClass(boolean.class) || propertyType == typeFactory.fromClass(Boolean.class)) {
          prefix = "is";
       }
       String methodName = prefix + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-      Method getter;
-      try {
-         getter = javaClass.getMethod(methodName);
-      } catch (NoSuchMethodException e) {
+      XMethod getter = javaClass.getMethod(methodName);
+      if (getter == null) {
          throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
       }
@@ -590,59 +596,18 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return getter;
    }
 
-   private Method findSetter(String propertyName, Class<?> propertyType) {
+   private XMethod findSetter(String propertyName, XClass propertyType) {
       String methodName = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-      Method setter;
-      try {
-         setter = javaClass.getMethod(methodName, propertyType);
-      } catch (NoSuchMethodException e) {
+      XMethod setter = javaClass.getMethod(methodName, propertyType);
+      if (setter == null) {
          throw new ProtoSchemaBuilderException("No setter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
       }
-      if (setter.getReturnType() != Void.TYPE) {
+      if (setter.getReturnType() != typeFactory.fromClass(void.class)) {
          throw new ProtoSchemaBuilderException("No suitable setter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
                + ". The candidate method does not have a suitable return type: " + setter);
       }
       return setter;
-   }
-
-   private static Class<?> determineElementType(Class<?> type, java.lang.reflect.Type genericType) {
-      if (type.isArray()) {
-         return type.getComponentType();
-      }
-      if (Collection.class.isAssignableFrom(type)) {
-         return determineCollectionElementType(genericType);
-      }
-      return null;
-   }
-
-   private static Class<?> determineCollectionElementType(java.lang.reflect.Type genericType) {
-      if (genericType instanceof ParameterizedType) {
-         ParameterizedType type = (ParameterizedType) genericType;
-         java.lang.reflect.Type fieldArgType = type.getActualTypeArguments()[0];
-         if (fieldArgType instanceof Class) {
-            return (Class) fieldArgType;
-         }
-         return (Class) ((ParameterizedType) fieldArgType).getRawType();
-      } else if (genericType instanceof Class) {
-         Class c = (Class) genericType;
-         if (c.getGenericSuperclass() != null && Collection.class.isAssignableFrom(c.getSuperclass())) {
-            Class x = determineCollectionElementType(c.getGenericSuperclass());
-            if (x != null) {
-               return x;
-            }
-         }
-         for (java.lang.reflect.Type t : c.getGenericInterfaces()) {
-            if (t instanceof Class && Map.class.isAssignableFrom((Class<?>) t)
-                  || t instanceof ParameterizedType && Collection.class.isAssignableFrom((Class) ((ParameterizedType) t).getRawType())) {
-               Class x = determineCollectionElementType(t);
-               if (x != null) {
-                  return x;
-               }
-            }
-         }
-      }
-      return null;
    }
 }

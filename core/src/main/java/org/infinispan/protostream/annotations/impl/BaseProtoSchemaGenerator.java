@@ -10,14 +10,11 @@ import java.util.Set;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
+import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.impl.Log;
-
-import javassist.ClassClassPath;
-import javassist.ClassPool;
-import javassist.LoaderClassPath;
 
 /**
  * This class is not to be directly invoked by users. See {@link org.infinispan.protostream.annotations.ProtoSchemaBuilder}
@@ -26,52 +23,47 @@ import javassist.LoaderClassPath;
  * @author anistor@redhat.com
  * @since 3.0
  */
-public final class ProtoSchemaGenerator {
+public abstract class BaseProtoSchemaGenerator {
 
-   private static final Log log = Log.LogFactory.getLog(ProtoSchemaGenerator.class);
+   private static final Log log = Log.LogFactory.getLog(BaseProtoSchemaGenerator.class);
 
-   private static final boolean IS_OSGI_CONTEXT;
+   /**
+    * Set this flag to {@code true} to enable output of debug comments in the generated Protobuf schema.
+    */
+   public static boolean generateSchemaDebugComments = false;
 
-   static {
-      boolean isOSGi = false;
-      try {
-         isOSGi = ProtoSchemaGenerator.class.getClassLoader() instanceof org.osgi.framework.BundleReference;
-      } catch (NoClassDefFoundError ex) {
-         // Ignore
-      }
-      IS_OSGI_CONTEXT = isOSGi;
-   }
+   protected final UnifiedTypeFactory typeFactory;
 
-   private final SerializationContext serializationContext;
+   protected final SerializationContext serializationContext;
 
-   private final String fileName;
+   protected final String fileName;
 
-   private final String packageName;
+   protected final String packageName;
 
    //TODO [anistor] need to have a flag to (optionally) prevent generation for classes that were not manually added but were auto-discovered
-   private final Set<Class<?>> classes;
+   protected final Set<XClass> classes;
+
+   /**
+    * Indicates if class dependencies are automatically added when discovered or will generate an error.
+    */
+   protected final boolean autoImportClasses;
 
    /**
     * Known classes: the user-added classes ({@link #classes}) plus all their superclasses and superinterfaces. This is
     * only used when auto-import is off.
     */
-   private final Set<Class<?>> knownClasses = new HashSet<>();
-
-   /**
-    * Indicates if class dependencies are automatically added when discovered or will generate an error.
-    */
-   private final boolean autoImportClasses;
+   private final Set<XClass> knownClasses = new HashSet<>();
 
    /**
     * The imported schema files.
     */
    private final Set<String> imports = new HashSet<>();
 
-   private final Map<Class<?>, ProtoTypeMetadata> metadataByClass = new HashMap<>();
+   private final Map<XClass, ProtoTypeMetadata> metadataByClass = new HashMap<>();
 
    private final Map<String, ProtoTypeMetadata> metadataByTypeName = new HashMap<>();
 
-   public ProtoSchemaGenerator(SerializationContext serializationContext, String fileName, String packageName, Set<Class<?>> classes, boolean autoImportClasses) {
+   protected BaseProtoSchemaGenerator(UnifiedTypeFactory typeFactory, SerializationContext serializationContext, String fileName, String packageName, Set<XClass> classes, boolean autoImportClasses) {
       if (fileName == null) {
          throw new ProtoSchemaBuilderException("fileName cannot be null");
       }
@@ -79,6 +71,7 @@ public final class ProtoSchemaGenerator {
          throw new ProtoSchemaBuilderException("At least one class must be specified");
       }
 
+      this.typeFactory = typeFactory;
       this.serializationContext = serializationContext;
       this.fileName = fileName;
       this.packageName = packageName;
@@ -89,14 +82,14 @@ public final class ProtoSchemaGenerator {
    public String generateAndRegister() throws ProtoSchemaBuilderException {
       if (!autoImportClasses) {
          // collect supers
-         for (Class<?> c : classes) {
+         for (XClass c : classes) {
             collectKnownClasses(c);
          }
       }
 
       // scan initial classes
-      for (Class<?> c : classes) {
-         ProtoTypeMetadata protoTypeMetadata = c.isEnum() ? new ProtoEnumTypeMetadata((Class<? extends Enum>) c) : new ProtoMessageTypeMetadata(this, c);
+      for (XClass c : classes) {
+         ProtoTypeMetadata protoTypeMetadata = c.isEnum() ? new ProtoEnumTypeMetadata(c) : new ProtoMessageTypeMetadata(this, c);
          defineType(protoTypeMetadata);
       }
 
@@ -113,7 +106,7 @@ public final class ProtoSchemaGenerator {
       }
 
       // establish the outer-inner relationship between definitions
-      for (Class<?> c : metadataByClass.keySet()) {
+      for (XClass c : metadataByClass.keySet()) {
          ProtoTypeMetadata m = metadataByClass.get(c);
          if (!m.isImported()) {
             ProtoMessageTypeMetadata outer = findOuterType(c);
@@ -126,7 +119,7 @@ public final class ProtoSchemaGenerator {
 
       IndentWriter iw = new IndentWriter();
       iw.append("// File name: ").append(fileName).append('\n');
-      if (ProtoSchemaBuilder.generateSchemaDebugComments) {
+      if (generateSchemaDebugComments) {
          iw.append("// Scanned classes:\n");
          //todo [anistor] this list of scanned classes should include all interfaces and base classes not just the ones for which a proto definition was generated
          for (ProtoTypeMetadata ptm : metadataByClass.values()) {
@@ -144,7 +137,7 @@ public final class ProtoSchemaGenerator {
       }
 
       // generate type definitions
-      for (Class<?> c : metadataByClass.keySet()) {
+      for (XClass c : metadataByClass.keySet()) {
          ProtoTypeMetadata m = metadataByClass.get(c);
          if (m.isTopLevel()) {
             m.generateProto(iw);
@@ -168,9 +161,9 @@ public final class ProtoSchemaGenerator {
       return protoFile;
    }
 
-   private ProtoMessageTypeMetadata findOuterType(Class<?> c) {
+   private ProtoMessageTypeMetadata findOuterType(XClass c) {
       ProtoTypeMetadata outer = null;
-      Class<?> ec = c.getEnclosingClass();
+      XClass ec = c.getEnclosingClass();
       while (ec != null) {
          if (ec.isEnum()) {
             throw new ProtoSchemaBuilderException("Classes defined inside an Enum are not allowed : " + c.getCanonicalName());
@@ -185,43 +178,39 @@ public final class ProtoSchemaGenerator {
    }
 
    private void generateMarshallers() throws Exception {
-      JavassistMarshallerCodeGenerator marshallerCodeGenerator = new JavassistMarshallerCodeGenerator(packageName, getClassPool());
-      for (Class<?> c : metadataByClass.keySet()) {
+      AbstractMarshallerCodeGenerator marshallerCodeGenerator = makeCodeGenerator();
+      for (XClass c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
          marshallerCodeGenerator.generateMarshaller(serializationContext, ptm);
       }
    }
 
-   private ClassPool getClassPool() {
-      ClassLoader classLoader = getClass().getClassLoader();
-      ClassPool cp = new ClassPool(ClassPool.getDefault()) {
-         @Override
-         public ClassLoader getClassLoader() {
-            return IS_OSGI_CONTEXT ? classLoader : super.getClassLoader();
-         }
-      };
-      for (Class<?> c : classes) {
-         cp.appendClassPath(new ClassClassPath(c));
-      }
-      cp.appendClassPath(new LoaderClassPath(classLoader));
-      return cp;
-   }
+   protected abstract AbstractMarshallerCodeGenerator makeCodeGenerator();
 
-   protected ProtoTypeMetadata scanAnnotations(Class<?> javaType) {
+   protected ProtoTypeMetadata scanAnnotations(XClass javaType) {
       ProtoTypeMetadata protoTypeMetadata = metadataByClass.get(javaType);
       if (protoTypeMetadata != null) {
          // already seen
          return protoTypeMetadata;
       }
 
-      if (serializationContext.canMarshall(javaType)) {
-         // this is a known type, defined in another schema file that we'll need to import
-         BaseMarshaller<?> marshaller = serializationContext.getMarshaller(javaType);
+      // check if this is already marshallable
+      BaseMarshaller<?> marshaller = null;
+      try {
+         //TODO [anistor] getting back the Class object might fail at compile time annotation processing
+         marshaller = serializationContext.getMarshaller(javaType.asClass());
+      } catch (Exception e) {
+         // ignore
+      }
+
+      if (marshaller != null) {
+         // this is an already known type, defined in another schema file that we'll just need to import; nothing gets generated for it
          GenericDescriptor descriptor = serializationContext.getDescriptorByName(marshaller.getTypeName());
-         protoTypeMetadata = new ImportedProtoTypeMetadata(descriptor, marshaller);
+         XClass javaClass = typeFactory.fromClass(marshaller.getJavaClass());
+         protoTypeMetadata = new ImportedProtoTypeMetadata(descriptor, marshaller, javaClass);
          imports.add(descriptor.getFileDescriptor().getName());
       } else if (javaType.isEnum()) {
-         protoTypeMetadata = new ProtoEnumTypeMetadata((Class<? extends Enum>) javaType);
+         protoTypeMetadata = new ProtoEnumTypeMetadata(javaType);
       } else {
          protoTypeMetadata = new ProtoMessageTypeMetadata(this, javaType);
       }
@@ -247,7 +236,7 @@ public final class ProtoSchemaGenerator {
       metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);
    }
 
-   private boolean isKnown(Class<?> c) {
+   private boolean isKnown(XClass c) {
       boolean isKnown;
       while (!(isKnown = knownClasses.contains(c))) {
          // try the outer class because inner classes are considered recursively added too
@@ -259,12 +248,12 @@ public final class ProtoSchemaGenerator {
       return isKnown;
    }
 
-   private void collectKnownClasses(Class<?> c) {
+   private void collectKnownClasses(XClass c) {
       knownClasses.add(c);
       if (c.getSuperclass() != null) {
          collectKnownClasses(c.getSuperclass());
       }
-      for (Class<?> i : c.getInterfaces()) {
+      for (XClass i : c.getInterfaces()) {
          collectKnownClasses(i);
       }
    }

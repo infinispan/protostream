@@ -4,7 +4,7 @@ package org.infinispan.protostream.annotations.impl;
  * @author anistor@redhat.com
  * @since 4.3
  */
-interface HasProtoSchema {
+public interface HasProtoSchema {
 
    void generateProto(IndentWriter iw);
 

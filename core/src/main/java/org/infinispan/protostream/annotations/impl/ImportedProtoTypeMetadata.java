@@ -2,6 +2,7 @@ package org.infinispan.protostream.annotations.impl;
 
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
@@ -14,14 +15,14 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
  * @author anistor@redhat.com
  * @since 4.3
  */
-final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
+public final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
 
    private final GenericDescriptor descriptor;
 
    private final BaseMarshaller<?> marshaller;
 
-   ImportedProtoTypeMetadata(GenericDescriptor descriptor, BaseMarshaller<?> marshaller) {
-      super(descriptor.getFullName(), marshaller.getJavaClass(), null);
+   ImportedProtoTypeMetadata(GenericDescriptor descriptor, BaseMarshaller<?> marshaller, XClass javaClass) {
+      super(descriptor.getFullName(), javaClass);
       this.descriptor = descriptor;
       this.marshaller = marshaller;
    }
@@ -45,7 +46,8 @@ final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
       if (evd == null) {
          return null;
       }
-      Enum ev = ((EnumMarshaller) marshaller).decode(evd.getNumber());
-      return new ProtoEnumValueMetadata(evd.getNumber(), name, ev, null);
+      Enum<?> enumConstant = ((EnumMarshaller) marshaller).decode(evd.getNumber());
+      return new ProtoEnumValueMetadata(evd.getNumber(), name,
+            enumConstant.ordinal(), enumConstant.getDeclaringClass().getName() + '.' + enumConstant.name(), null);
    }
 }

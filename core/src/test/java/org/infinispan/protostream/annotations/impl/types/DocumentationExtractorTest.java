@@ -1,8 +1,6 @@
-package org.infinispan.protostream.annotations.impl;
+package org.infinispan.protostream.annotations.impl.types;
 
 import static org.junit.Assert.assertEquals;
-
-import java.lang.reflect.Field;
 
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoDocs;
@@ -34,36 +32,50 @@ public class DocumentationExtractorTest {
 
       @ProtoDocs(@ProtoDoc("1"))
       public String field4;
+
+      @ProtoDoc("")
+      @ProtoDoc("1")
+      @ProtoDoc("")
+      @ProtoDoc("2")
+      @ProtoDoc("3")
+      @ProtoDoc("")
+      @ProtoDoc("")
+      public String field5;
    }
 
    @Test
    public void testSingleDoc1() throws Exception {
-      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field1"));
+      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field1").getAnnotationsByType(ProtoDoc.class));
       assertEquals("1", doc);
    }
 
    @Test
    public void testSingleDoc2() throws Exception {
-      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredMethod("method1", null));
+      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredMethod("method1").getAnnotationsByType(ProtoDoc.class));
       assertEquals("1", doc);
    }
 
    @Test
    public void testMultiDoc1() throws Exception {
-      Field field2 = TestDocs.class.getDeclaredField("field2");
-      String doc = DocumentationExtractor.getDocumentation(field2);
+      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field2").getAnnotationsByType(ProtoDoc.class));
       assertEquals("1\n2", doc);
    }
 
    @Test
    public void testMultiDoc2() throws Exception {
-      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field3"));
+      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field3").getAnnotationsByType(ProtoDoc.class));
       assertEquals("1\n2", doc);
    }
 
    @Test
    public void testMultiDoc3() throws Exception {
-      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field4"));
+      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field4").getAnnotationsByType(ProtoDoc.class));
       assertEquals("1", doc);
+   }
+
+   @Test
+   public void testMultiDoc4() throws Exception {
+      String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field5").getAnnotationsByType(ProtoDoc.class));
+      assertEquals("1\n\n2\n3", doc);
    }
 }

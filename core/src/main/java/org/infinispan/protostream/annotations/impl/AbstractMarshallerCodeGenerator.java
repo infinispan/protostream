@@ -1,47 +1,21 @@
 package org.infinispan.protostream.annotations.impl;
 
-import java.io.IOException;
-import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
-import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.Message;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
+import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.descriptors.JavaType;
-import org.infinispan.protostream.impl.BaseMarshallerDelegate;
-import org.infinispan.protostream.impl.EnumMarshallerDelegate;
-import org.infinispan.protostream.impl.Log;
 
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.CtMethod;
-import javassist.NotFoundException;
-
-// TODO [anistor] check which java classfile limits impose limits on the size of the supported Protobuf schema
-// TODO [anistor] what do we do with non-repeated fields that come repeated from stream?
-// TODO [anistor] bounded streams should be checked to be exactly as the size indicated
-
+//todo [anistor] detect situations when we generate an identical marshaller class to a previously generated one and reuse that
 /**
- * Generates bytecode for implementation classes of {@link EnumMarshaller} and {@link RawProtobufMarshaller}. This class
- * relies heavily on javassist library (and should be the only place where javassist is used throughout this project).
- *
  * @author anistor@readhat.com
- * @since 3.0
+ * @since 4.3
  */
-final class JavassistMarshallerCodeGenerator {
-
-   private static final Log log = Log.LogFactory.getLog(JavassistMarshallerCodeGenerator.class);
+public abstract class AbstractMarshallerCodeGenerator {
 
    private static final String PROTOSTREAM_PACKAGE = SerializationContext.class.getPackage().getName();
 
@@ -55,110 +29,35 @@ final class JavassistMarshallerCodeGenerator {
     */
    private static long nextId = 0;
 
+   private final UnifiedTypeFactory typeFactory;
+
    /**
     * Do nullable fields that do not have a user defined default value get a default type specific value if missing instead of just
     * null? This is currently implemented just for arrays/collections.
     * TODO Maybe numbers should also receive a 0 default value and booleans a false value. But what about strings?
     * Empty string does not sound like a good fit. See the spec we do not fully implement here: https://developers.google.com/protocol-buffers/docs/proto#optional
     */
-   private boolean noDefaults = false;
+   private final boolean noDefaults = false;
 
-   private final ClassPool cp;
-   private final CtClass ioExceptionClass;
-   private final CtClass enumMarshallerInterface;
-   private final CtClass rawProtobufMarshallerInterface;
-   private final CtClass generatedMarshallerBaseClass;
-   private final CtClass baseMarshallerDelegateClass;
-   private final CtClass enumMarshallerDelegateClass;
-   private final CtMethod readFromMethod;
-   private final CtMethod writeToMethod;
-   private final CtMethod decodeMethod;
-   private final CtMethod encodeMethod;
    private final String protobufSchemaPackage;
 
-   JavassistMarshallerCodeGenerator(String protobufSchemaPackage, ClassPool cp) throws NotFoundException {
+   protected AbstractMarshallerCodeGenerator(UnifiedTypeFactory typeFactory, String protobufSchemaPackage) {
+      this.typeFactory = typeFactory;
       this.protobufSchemaPackage = protobufSchemaPackage;
-      this.cp = cp;
-      ioExceptionClass = cp.getCtClass(IOException.class.getName());
-      enumMarshallerInterface = cp.getCtClass(EnumMarshaller.class.getName());
-      rawProtobufMarshallerInterface = cp.getCtClass(RawProtobufMarshaller.class.getName());
-      generatedMarshallerBaseClass = cp.getCtClass(GeneratedMarshallerBase.class.getName());
-      baseMarshallerDelegateClass = cp.getCtClass(BaseMarshallerDelegate.class.getName());
-      enumMarshallerDelegateClass = cp.getCtClass(EnumMarshallerDelegate.class.getName());
-      String rawProtobufInputStreamName = RawProtoStreamReader.class.getName().replace('.', '/');
-      String rawProtobufOutputStreamName = RawProtoStreamWriter.class.getName().replace('.', '/');
-      String serializationContextName = ImmutableSerializationContext.class.getName().replace('.', '/');
-      readFromMethod = rawProtobufMarshallerInterface.getMethod("readFrom", "(L" + serializationContextName + ";L" + rawProtobufInputStreamName + ";)Ljava/lang/Object;");
-      writeToMethod = rawProtobufMarshallerInterface.getMethod("writeTo", "(L" + serializationContextName + ";L" + rawProtobufOutputStreamName + ";Ljava/lang/Object;)V");
-      decodeMethod = enumMarshallerInterface.getMethod("decode", "(I)Ljava/lang/Enum;");
-      encodeMethod = enumMarshallerInterface.getMethod("encode", "(Ljava/lang/Enum;)I");
    }
 
    /**
-    * Generates a unique id to be used for generating unique class names.
+    * Generates a unique numeric id to be used for generating unique class names.
     */
-   private static synchronized long nextMarshallerClassId() {
+   protected static synchronized long nextMarshallerClassId() {
       return nextId++;
    }
 
-   private String makeMarshallerClassName() {
+   protected String makeUniqueMarshallerClassName() {
       return MARSHALLER_CLASS_NAME_PREFIX + nextMarshallerClassId();
    }
 
-   public void generateMarshaller(SerializationContext serializationContext, ProtoTypeMetadata ptm) throws Exception {
-      Class<? extends BaseMarshaller> marshallerClass = null;
-      if (ptm instanceof ProtoMessageTypeMetadata) {
-         marshallerClass = generateMessageMarshaller((ProtoMessageTypeMetadata) ptm);
-      } else if (ptm instanceof ProtoEnumTypeMetadata) {
-         marshallerClass = generateEnumMarshaller((ProtoEnumTypeMetadata) ptm);
-      }
-      if (marshallerClass != null) {
-         BaseMarshaller marshaller = marshallerClass.newInstance();
-         serializationContext.registerMarshaller(marshaller);
-      }
-   }
-
-   /**
-    * Generates an implementation of EnumMarshaller as a static nested class in the Enum class to be marshalled. The
-    * InnerClasses attribute of the outer class is not altered, so this is not officially considered a nested class.
-    */
-   private Class<EnumMarshaller> generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws NotFoundException, CannotCompileException {
-      CtClass enumClass = cp.get(petm.getJavaClass().getName());
-      CtClass marshallerImpl = enumClass.makeNestedClass(makeMarshallerClassName(), true);
-      if (log.isTraceEnabled()) {
-         log.tracef("Generating enum marshaller %s for %s", marshallerImpl.getName(), petm.getJavaClass().getName());
-      }
-      marshallerImpl.addInterface(enumMarshallerInterface);
-      marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
-
-      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + petm.getJavaClass().getName() + ".class; }", marshallerImpl));
-      marshallerImpl.addMethod(CtMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(petm.getFullName()) + "\"; }", marshallerImpl));
-
-      CtMethod ctDecodeMethod = new CtMethod(decodeMethod, marshallerImpl, null);
-      ctDecodeMethod.setModifiers(ctDecodeMethod.getModifiers() | Modifier.FINAL);
-      String decodeSrc = generateEnumDecodeMethod(petm);
-      if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctDecodeMethod.getLongName(), decodeSrc);
-      }
-      ctDecodeMethod.setBody(decodeSrc);
-      marshallerImpl.addMethod(ctDecodeMethod);
-
-      CtMethod ctEncodeMethod = new CtMethod(encodeMethod, marshallerImpl, null);
-      ctEncodeMethod.setModifiers(ctEncodeMethod.getModifiers() | Modifier.FINAL);
-      String encodeSrc = generateEnumEncodeMethod(petm);
-      if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctEncodeMethod.getLongName(), encodeSrc);
-      }
-      ctEncodeMethod.setBody(encodeSrc);
-      marshallerImpl.addMethod(ctEncodeMethod);
-
-      Class<EnumMarshaller> generatedMarshallerClass = (Class<EnumMarshaller>) marshallerImpl.toClass();
-      marshallerImpl.detach();
-
-      return generatedMarshallerClass;
-   }
-
-   private String generateEnumDecodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
+   protected String generateEnumDecodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
@@ -175,7 +74,7 @@ final class JavassistMarshallerCodeGenerator {
       return iw.toString();
    }
 
-   private String generateEnumEncodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
+   protected String generateEnumEncodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
@@ -192,7 +91,8 @@ final class JavassistMarshallerCodeGenerator {
       return iw.toString();
    }
 
-   private String makeQualifiedTypeName(String fullName) {
+   //todo [anistor] make stable and readable names, for reproducible builds
+   protected String makeQualifiedTypeName(String fullName) {
       if (protobufSchemaPackage != null) {
          return protobufSchemaPackage + '.' + fullName;
       }
@@ -207,80 +107,11 @@ final class JavassistMarshallerCodeGenerator {
       return "__c$" + fieldMetadata.getName();
    }
 
-   private String makeMarshallerDelegateFieldName(ProtoFieldMetadata fieldMetadata) {
+   protected String makeMarshallerDelegateFieldName(ProtoFieldMetadata fieldMetadata) {
       return "__md$" + fieldMetadata.getJavaTypeName().replace('.', '$');
    }
 
-   /**
-    * Generates an implementation of {@link RawProtobufMarshaller} as a static nested class in the message class to be
-    * marshalled. The InnerClasses attribute of the outer class is not altered, so this is not officially considered a
-    * nested class.
-    */
-   private Class<RawProtobufMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException {
-      CtClass entityClass = cp.get(messageTypeMetadata.getJavaClass().getName());
-      CtClass marshallerImpl = entityClass.makeNestedClass(makeMarshallerClassName(), true);
-      if (log.isTraceEnabled()) {
-         log.tracef("Generating message marshaller %s for %s", marshallerImpl.getName(), messageTypeMetadata.getJavaClass().getName());
-      }
-      marshallerImpl.addInterface(rawProtobufMarshallerInterface);
-      marshallerImpl.setSuperclass(generatedMarshallerBaseClass);
-      marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
-
-      addMarshallerDelegateFields(marshallerImpl, messageTypeMetadata);
-
-      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + messageTypeMetadata.getJavaClass().getName() + ".class; }", marshallerImpl));
-      marshallerImpl.addMethod(CtMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(messageTypeMetadata.getFullName()) + "\"; }", marshallerImpl));
-
-      CtMethod ctReadFromMethod = new CtMethod(readFromMethod, marshallerImpl, null);
-      ctReadFromMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
-      ctReadFromMethod.setModifiers(ctReadFromMethod.getModifiers() | Modifier.FINAL);
-      String readFromSrc = generateReadFromMethod(messageTypeMetadata);
-      if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctReadFromMethod.getLongName(), readFromSrc);
-      }
-      ctReadFromMethod.setBody(readFromSrc);
-      marshallerImpl.addMethod(ctReadFromMethod);
-
-      CtMethod ctWriteToMethod = new CtMethod(writeToMethod, marshallerImpl, null);
-      ctWriteToMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
-      ctWriteToMethod.setModifiers(ctWriteToMethod.getModifiers() | Modifier.FINAL);
-      String writeToSrc = generateWriteToMethod(messageTypeMetadata);
-      if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctWriteToMethod.getLongName(), writeToSrc);
-      }
-      ctWriteToMethod.setBody(writeToSrc);
-      marshallerImpl.addMethod(ctWriteToMethod);
-
-      Class<RawProtobufMarshaller> generatedMarshallerClass = (Class<RawProtobufMarshaller>) marshallerImpl.toClass();
-      marshallerImpl.detach();
-
-      return generatedMarshallerClass;
-   }
-
-   /**
-    * Add fields used to cache delegates to other marshalled types (message or enum). These fields are lazily
-    * initialized.
-    */
-   private void addMarshallerDelegateFields(CtClass marshallerImpl, ProtoMessageTypeMetadata messageTypeMetadata) throws CannotCompileException {
-      Set<String> addedFields = new HashSet<>();
-      for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
-         switch (fieldMetadata.getProtobufType()) {
-            case GROUP:
-            case MESSAGE:
-            case ENUM:
-               String fieldName = makeMarshallerDelegateFieldName(fieldMetadata);
-               // Add the field only if it does not already exist. If there is more than one usage of a marshaller then we could try to add it twice.
-               if (addedFields.add(fieldName)) {
-                  CtField marshallerDelegateField = new CtField(fieldMetadata.getJavaType().isEnum() ? enumMarshallerDelegateClass : baseMarshallerDelegateClass, fieldName, marshallerImpl);
-                  marshallerDelegateField.setModifiers(Modifier.PRIVATE);
-                  marshallerImpl.addField(marshallerDelegateField);
-               }
-               break;
-         }
-      }
-   }
-
-   private String generateReadFromMethod(ProtoMessageTypeMetadata messageTypeMetadata) {
+   protected String generateReadFromMethod(ProtoMessageTypeMetadata messageTypeMetadata) {
       String getUnknownFieldSetFieldStatement = null;
       String setUnknownFieldSetFieldStatement = null;
       if (messageTypeMetadata.getUnknownFieldSetField() != null) {
@@ -289,7 +120,7 @@ final class JavassistMarshallerCodeGenerator {
       } else if (messageTypeMetadata.getUnknownFieldSetGetter() != null) {
          getUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetGetter().getName() + "()";
          setUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetSetter().getName() + "(u)";
-      } else if (Message.class.isAssignableFrom(messageTypeMetadata.getJavaClass())) {
+      } else if (messageTypeMetadata.getJavaClass().isAssignableTo(typeFactory.fromClass(Message.class))) {
          getUnknownFieldSetFieldStatement = "o.getUnknownFieldSet()";
          setUnknownFieldSetFieldStatement = "o.setUnknownFieldSet(u)";
       }
@@ -431,9 +262,9 @@ final class JavassistMarshallerCodeGenerator {
             iw.append("if (!").append(makeFieldWasSetFlag(fieldMetadata)).append(") {\n");
             iw.inc();
             String v;
-            if (Date.class.isAssignableFrom(fieldMetadata.getJavaType())) {
+            if (fieldMetadata.getJavaType().isAssignableTo(typeFactory.fromClass(Date.class))) {
                v = defaultValue + "L";
-            } else if (Instant.class.isAssignableFrom(fieldMetadata.getJavaType())) {
+            } else if (fieldMetadata.getJavaType().isAssignableTo(typeFactory.fromClass(Instant.class))) {
                v = defaultValue + "L";
             } else if (defaultValue instanceof ProtoEnumValueMetadata) {
                v = ((ProtoEnumValueMetadata) defaultValue).getJavaEnumName();
@@ -458,7 +289,7 @@ final class JavassistMarshallerCodeGenerator {
                   String collectionImpl = fieldMetadata.isArray() ? "java.util.ArrayList" : fieldMetadata.getCollectionImplementation().getName();
                   iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(collectionImpl).append("();\n");
                }
-               iw.append(c).append(".add(").append(box(v, defaultValue.getClass())).append(");\n");
+               iw.append(c).append(".add(").append(box(v, typeFactory.fromClass(defaultValue.getClass()))).append(");\n");
             } else {
                iw.append("o.").append(createSetProp(fieldMetadata, box(v, fieldMetadata.getJavaType()))).append(";\n");
             }
@@ -473,7 +304,7 @@ final class JavassistMarshallerCodeGenerator {
                iw.append("if (").append(c).append(" != null) { ");
                if (fieldMetadata.getJavaType().isPrimitive()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append("[] _c = new ").append(fieldMetadata.getJavaTypeName()).append("[").append(c).append(".size()]; ");
-                  Class<?> boxedType = box(fieldMetadata.getJavaType());
+                  XClass boxedType = box(fieldMetadata.getJavaType());
                   iw.append("for (int i = 0; i < _c.length; i++) _c[i] = ").append(unbox("((" + boxedType.getName() + ")" + c + ".get(i))", boxedType)).append("; ");
                   c = "_c";
                } else {
@@ -532,13 +363,13 @@ final class JavassistMarshallerCodeGenerator {
       }
    }
 
-   private String generateWriteToMethod(ProtoMessageTypeMetadata messageTypeMetadata) {
+   protected String generateWriteToMethod(ProtoMessageTypeMetadata messageTypeMetadata) {
       String getUnknownFieldSetFieldStatement = null;
       if (messageTypeMetadata.getUnknownFieldSetField() != null) {
          getUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetField().getName();
       } else if (messageTypeMetadata.getUnknownFieldSetGetter() != null) {
          getUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetGetter().getName() + "()";
-      } else if (Message.class.isAssignableFrom(messageTypeMetadata.getJavaClass())) {
+      } else if (messageTypeMetadata.getJavaClass().isAssignableTo(typeFactory.fromClass(Message.class))) {
          getUnknownFieldSetFieldStatement = "o.getUnknownFieldSet()";
       }
 
@@ -738,11 +569,11 @@ final class JavassistMarshallerCodeGenerator {
     * integers because of Protobuf's lack of support for integral types of 8 and 16 bits.
     */
    private String convert(String v, ProtoFieldMetadata fieldMetadata) {
-      if (fieldMetadata.getJavaType() == Character.class) {
+      if (fieldMetadata.getJavaType() == typeFactory.fromClass(Character.class) || fieldMetadata.getJavaType() == typeFactory.fromClass(char.class)) {
          return "(char) " + v;
-      } else if (fieldMetadata.getJavaType() == Short.class) {
+      } else if (fieldMetadata.getJavaType() == typeFactory.fromClass(Short.class) || fieldMetadata.getJavaType() == typeFactory.fromClass(short.class)) {
          return "(short) " + v;
-      } else if (fieldMetadata.getJavaType() == Byte.class) {
+      } else if (fieldMetadata.getJavaType() == typeFactory.fromClass(Byte.class) || fieldMetadata.getJavaType() == typeFactory.fromClass(byte.class)) {
          return "(byte) " + v;
       }
       return v;
@@ -751,23 +582,23 @@ final class JavassistMarshallerCodeGenerator {
    /**
     * Return the corresponding 'boxed' Class given a Class, or {@code null} if no type change is required.
     */
-   private Class<?> box(Class<?> clazz) {
-      if (clazz == Float.TYPE) {
-         return Float.class;
-      } else if (clazz == Double.TYPE) {
-         return Double.class;
-      } else if (clazz == Boolean.TYPE) {
-         return Boolean.class;
-      } else if (clazz == Long.TYPE) {
-         return Long.class;
-      } else if (clazz == Integer.TYPE) {
-         return Integer.class;
-      } else if (clazz == Short.TYPE) {
-         return Short.class;
-      } else if (clazz == Byte.TYPE) {
-         return Byte.class;
-      } else if (clazz == Character.TYPE) {
-         return Character.class;
+   private XClass box(XClass clazz) {
+      if (clazz == typeFactory.fromClass(float.class)) {
+         return typeFactory.fromClass(Float.class);
+      } else if (clazz == typeFactory.fromClass(double.class)) {
+         return typeFactory.fromClass(Double.class);
+      } else if (clazz == typeFactory.fromClass(boolean.class)) {
+         return typeFactory.fromClass(Boolean.class);
+      } else if (clazz == typeFactory.fromClass(long.class)) {
+         return typeFactory.fromClass(Long.class);
+      } else if (clazz == typeFactory.fromClass(int.class)) {
+         return typeFactory.fromClass(Integer.class);
+      } else if (clazz == typeFactory.fromClass(short.class)) {
+         return typeFactory.fromClass(Short.class);
+      } else if (clazz == typeFactory.fromClass(byte.class)) {
+         return typeFactory.fromClass(Byte.class);
+      } else if (clazz == typeFactory.fromClass(char.class)) {
+         return typeFactory.fromClass(Character.class);
       }
       // if no boxing is required then return null to indicate this
       return null;
@@ -776,59 +607,57 @@ final class JavassistMarshallerCodeGenerator {
    /**
     * Boxes a given value. The Class parameter can be {@code null} to indicate that no boxing should actually be performed.
     */
-   private String box(String v, Class<?> clazz) {
+   private String box(String v, XClass clazz) {
       if (clazz != null) {
-         if (Date.class.isAssignableFrom(clazz)) {
-            try {
-               // just check this type really has a constructor that accepts a long timestamp param
-               clazz.getConstructor(Long.TYPE);
-            } catch (NoSuchMethodException e) {
+         if (clazz.isAssignableTo(typeFactory.fromClass(Date.class))) {
+            // just check this type really has a constructor that accepts a long timestamp param
+            if (clazz.getDeclaredConstructor(typeFactory.fromClass(long.class)) == null) {
                throw new ProtoSchemaBuilderException("Type " + clazz.getCanonicalName() + " is not a valid Date type because it does not have a constructor that accepts a 'long' timestamp parameter");
             }
             return "new " + clazz.getName() + "(" + v + ")";
-         } else if (Instant.class.isAssignableFrom(clazz)) {
+         } else if (clazz.isAssignableTo(typeFactory.fromClass(Instant.class))) {
             return "java.time.Instant.ofEpochMilli(" + v + ")";
-         } else if (clazz == Float.class) {
+         } else if (clazz == typeFactory.fromClass(Float.class)) {
             return "new java.lang.Float(" + v + ")";
-         } else if (clazz == Double.class) {
+         } else if (clazz == typeFactory.fromClass(Double.class)) {
             return "new java.lang.Double(" + v + ")";
-         } else if (clazz == Boolean.class) {
+         } else if (clazz == typeFactory.fromClass(Boolean.class)) {
             return "new java.lang.Boolean(" + v + ")";
-         } else if (clazz == Long.class) {
+         } else if (clazz == typeFactory.fromClass(Long.class)) {
             return "new java.lang.Long(" + v + ")";
-         } else if (clazz == Integer.class) {
+         } else if (clazz == typeFactory.fromClass(Integer.class)) {
             return "new java.lang.Integer(" + v + ")";
-         } else if (clazz == Short.class) {
+         } else if (clazz == typeFactory.fromClass(Short.class)) {
             return "new java.lang.Short(" + v + ")";
-         } else if (clazz == Byte.class) {
+         } else if (clazz == typeFactory.fromClass(Byte.class)) {
             return "new java.lang.Byte(" + v + ")";
-         } else if (clazz == Character.class) {
+         } else if (clazz == typeFactory.fromClass(Character.class)) {
             return "new java.lang.Character(" + v + ")";
          }
       }
       return v;
    }
 
-   private String unbox(String v, Class<?> clazz) {
-      if (Date.class.isAssignableFrom(clazz)) {
+   private String unbox(String v, XClass clazz) {
+      if (clazz.isAssignableTo(typeFactory.fromClass(Date.class))) {
          return v + ".getTime()";
-      } else if (Instant.class.isAssignableFrom(clazz)) {
+      } else if (clazz.isAssignableTo(typeFactory.fromClass(Instant.class))) {
          return v + ".toEpochMilli()";
-      } else if (clazz == Float.class) {
+      } else if (clazz == typeFactory.fromClass(Float.class)) {
          return v + ".floatValue()";
-      } else if (clazz == Double.class) {
+      } else if (clazz == typeFactory.fromClass(Double.class)) {
          return v + ".doubleValue()";
-      } else if (clazz == Boolean.class) {
+      } else if (clazz == typeFactory.fromClass(Boolean.class)) {
          return v + ".booleanValue()";
-      } else if (clazz == Long.class) {
+      } else if (clazz == typeFactory.fromClass(Long.class)) {
          return v + ".longValue()";
-      } else if (clazz == Integer.class) {
+      } else if (clazz == typeFactory.fromClass(Integer.class)) {
          return v + ".intValue()";
-      } else if (clazz == Short.class) {
+      } else if (clazz == typeFactory.fromClass(Short.class)) {
          return v + ".shortValue()";
-      } else if (clazz == Byte.class) {
+      } else if (clazz == typeFactory.fromClass(Byte.class)) {
          return v + ".byteValue()";
-      } else if (clazz == Character.class) {
+      } else if (clazz == typeFactory.fromClass(Character.class)) {
          return v + ".charValue()";
       }
       return v;
@@ -858,4 +687,6 @@ final class JavassistMarshallerCodeGenerator {
       }
       return fieldMetadata.getSetter().getName() + '(' + value + ')';
    }
+
+   public abstract void generateMarshaller(SerializationContext serCtx, ProtoTypeMetadata ptm) throws Exception;
 }

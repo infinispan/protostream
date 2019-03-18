@@ -1,12 +1,12 @@
 package org.infinispan.protostream.annotations.impl;
 
 import java.lang.reflect.Executable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
 import java.util.Date;
 
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.annotations.impl.types.XField;
+import org.infinispan.protostream.annotations.impl.types.XMember;
+import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 
@@ -14,12 +14,12 @@ import org.infinispan.protostream.descriptors.Type;
  * @author anistor@redhat.com
  * @since 3.0
  */
-final class ProtoFieldMetadata implements HasProtoSchema {
+public final class ProtoFieldMetadata implements HasProtoSchema {
 
    private final int number;
    private final String name;
-   private final Class<?> javaType;
-   private final Class<?> collectionImplementation;
+   private final XClass javaType;
+   private final XClass collectionImplementation;
    private final Type protobufType;
    private final String documentation;
    private final ProtoTypeMetadata protoTypeMetadata;
@@ -28,15 +28,15 @@ final class ProtoFieldMetadata implements HasProtoSchema {
    private final boolean isArray;
    private final Object defaultValue;
 
-   private final Member declaringMember;
-   private final Field field;
-   private final Method getter;
-   private final Method setter;
+   private final XMember declaringMember;
+   private final XField field;
+   private final XMethod getter;
+   private final XMethod setter;
 
-   ProtoFieldMetadata(int number, String name, Class<?> javaType,
-                      Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
+   ProtoFieldMetadata(int number, String name, XClass javaType,
+                      XClass collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
                       boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
-                      Field field) {
+                      XField field) {
       this.number = number;
       this.name = name;
       this.javaType = javaType;
@@ -51,13 +51,13 @@ final class ProtoFieldMetadata implements HasProtoSchema {
       this.field = field;
       this.getter = null;
       this.setter = null;
-      this.documentation = DocumentationExtractor.getDocumentation(field);
+      this.documentation = field.getDocumentation();
    }
 
-   ProtoFieldMetadata(int number, String name, Class<?> javaType,
-                      Class<?> collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
+   ProtoFieldMetadata(int number, String name, XClass javaType,
+                      XClass collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
                       boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
-                      Method definingMethod, Method getter, Method setter) {
+                      XMethod definingMethod, XMethod getter, XMethod setter) {
       this.number = number;
       this.name = name;
       this.javaType = javaType;
@@ -72,7 +72,7 @@ final class ProtoFieldMetadata implements HasProtoSchema {
       this.declaringMember = definingMethod;
       this.getter = getter;
       this.setter = setter;
-      this.documentation = DocumentationExtractor.getDocumentation(definingMethod);
+      this.documentation = definingMethod.getDocumentation();
    }
 
    public int getNumber() {
@@ -83,7 +83,7 @@ final class ProtoFieldMetadata implements HasProtoSchema {
       return name;
    }
 
-   public Class<?> getJavaType() {
+   public XClass getJavaType() {
       return javaType;
    }
 
@@ -92,7 +92,7 @@ final class ProtoFieldMetadata implements HasProtoSchema {
       return canonicalName != null ? canonicalName : javaType.getName();
    }
 
-   public Class<?> getCollectionImplementation() {
+   public XClass getCollectionImplementation() {
       return collectionImplementation;
    }
 
@@ -124,15 +124,15 @@ final class ProtoFieldMetadata implements HasProtoSchema {
       return defaultValue;
    }
 
-   public Field getField() {
+   public XField getField() {
       return field;
    }
 
-   public Method getGetter() {
+   public XMethod getGetter() {
       return getter;
    }
 
-   public Method getSetter() {
+   public XMethod getSetter() {
       return setter;
    }
 
@@ -220,7 +220,7 @@ final class ProtoFieldMetadata implements HasProtoSchema {
          iw.append(" [default = ").append(v).append(']');
       }
 
-      if (ProtoSchemaBuilder.generateSchemaDebugComments) {
+      if (BaseProtoSchemaGenerator.generateSchemaDebugComments) {
          iw.append(" /* ");
          if (field != null) {
             iw.append("field = ").append(field.getDeclaringClass().getCanonicalName()).append('.').append(field.getName());
@@ -235,7 +235,7 @@ final class ProtoFieldMetadata implements HasProtoSchema {
    }
 
    public boolean isBoxedPrimitive() {
-      Class<?> c = javaType;
+      Class<?> c = javaType.asClass();
       return c == Float.class || c == Double.class || c == Long.class || c == Integer.class
             || c == Short.class || c == Byte.class || c == Boolean.class || c == Character.class;
    }

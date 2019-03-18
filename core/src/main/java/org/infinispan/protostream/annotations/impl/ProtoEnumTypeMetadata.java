@@ -1,6 +1,5 @@
 package org.infinispan.protostream.annotations.impl;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -8,8 +7,9 @@ import java.util.TreeMap;
 import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoName;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.annotations.impl.types.XEnumConstant;
 import org.infinispan.protostream.impl.Log;
 
 /**
@@ -19,7 +19,7 @@ import org.infinispan.protostream.impl.Log;
  * @author anistor@redhat.com
  * @since 3.0
  */
-final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
+public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
    private static final Log log = Log.LogFactory.getLog(ProtoEnumTypeMetadata.class);
 
@@ -27,11 +27,11 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
    private Map<String, ProtoEnumValueMetadata> membersByName;
 
-   ProtoEnumTypeMetadata(Class<? extends Enum> enumClass) {
-      super(getProtoName(enumClass), enumClass, DocumentationExtractor.getDocumentation(enumClass));
+   ProtoEnumTypeMetadata(XClass enumClass) {
+      super(getProtoName(enumClass), enumClass);
    }
 
-   private static String getProtoName(Class<? extends Enum> enumClass) {
+   private static String getProtoName(XClass enumClass) {
       ProtoName annotation = enumClass.getAnnotation(ProtoName.class);
       ProtoEnum protoEnumAnnotation = enumClass.getAnnotation(ProtoEnum.class);
       if (annotation != null) {
@@ -48,32 +48,25 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       if (membersByNumber == null) {
          membersByNumber = new TreeMap<>();
          membersByName = new HashMap<>();
-         for (Field f : javaClass.getDeclaredFields()) {
-            if (f.isEnumConstant()) {
-               ProtoEnumValue annotation = f.getAnnotation(ProtoEnumValue.class);
-               if (annotation == null) {
-                  throw new ProtoSchemaBuilderException("Enum members must have the @ProtoEnumValue annotation: " + getJavaClassName() + '.' + f.getName());
-               }
-               if (membersByNumber.containsKey(annotation.number())) {
-                  throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + annotation.number() + " on enum member: " + getJavaClassName() + '.' + f.getName());
-               }
-               String name = annotation.name();
-               if (name.isEmpty()) {
-                  name = f.getName();
-               }
-               Enum e = null;
-               try {
-                  e = (Enum) f.get(javaClass);
-               } catch (IllegalAccessException iae) {
-                  // not really possible, enum constants are public
-               }
-               if (membersByName.containsKey(name)) {
-                  throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum constant " + name + " on enum member: " + getJavaClassName() + '.' + f.getName());
-               }
-               ProtoEnumValueMetadata pevm = new ProtoEnumValueMetadata(annotation.number(), name, e, DocumentationExtractor.getDocumentation(f));
-               membersByNumber.put(annotation.number(), pevm);
-               membersByName.put(pevm.getProtoName(), pevm);
+         for (XEnumConstant ec : javaClass.getEnumConstants()) {
+            ProtoEnumValue annotation = ec.getAnnotation(ProtoEnumValue.class);
+            if (annotation == null) {
+               throw new ProtoSchemaBuilderException("Enum constants must have the @ProtoEnumValue annotation: " + getJavaClassName() + '.' + ec.getName());
             }
+            if (membersByNumber.containsKey(annotation.number())) {
+               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + annotation.number() + " on enum constant: " + getJavaClassName() + '.' + ec.getName());
+            }
+            String name = annotation.name();
+            if (name.isEmpty()) {
+               name = ec.getName();
+            }
+            if (membersByName.containsKey(name)) {
+               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum constant " + name + " on enum constant: " + getJavaClassName() + '.' + ec.getName());
+            }
+            ProtoEnumValueMetadata pevm = new ProtoEnumValueMetadata(annotation.number(), name,
+                  ec.getOrdinal(), ec.getDeclaringClass().getName() + '.' + ec.getName(), ec.getDocumentation());
+            membersByNumber.put(annotation.number(), pevm);
+            membersByName.put(pevm.getProtoName(), pevm);
          }
          if (membersByNumber.isEmpty()) {
             throw new ProtoSchemaBuilderException("Enums without members are not allowed: " + getJavaClassName());
@@ -102,9 +95,9 @@ final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       scanMemberAnnotations();
 
       iw.append("\n\n");
-      appendDocumentation(iw, documentation);
+      appendDocumentation(iw, getDocumentation());
       iw.append("enum ").append(name);
-      if (ProtoSchemaBuilder.generateSchemaDebugComments) {
+      if (BaseProtoSchemaGenerator.generateSchemaDebugComments) {
          iw.append(" /* ").append(getJavaClassName()).append(" */");
       }
       iw.append(" {\n");
