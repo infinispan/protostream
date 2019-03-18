@@ -533,6 +533,7 @@ final class MarshallerCodeGenerator {
          iw.append(' ').append(v).append(" = o.").append(createGetter(fieldMetadata)).append(";\n");
          if (fieldMetadata.isRequired()) {
             boolean couldBeNull = fieldMetadata.isRepeated()
+                  || fieldMetadata.isBoxedPrimitive()
                   || fieldMetadata.getProtobufType().getJavaType() == JavaType.STRING
                   || fieldMetadata.getProtobufType().getJavaType() == JavaType.BYTE_STRING
                   || fieldMetadata.getProtobufType().getJavaType() == JavaType.ENUM
