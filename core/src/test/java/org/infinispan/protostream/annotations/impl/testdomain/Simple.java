@@ -12,6 +12,7 @@ import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
 @ProtoDoc("@TypeId(10)")
 public class Simple {
 
+   @ProtoDoc("Simple is elegant")
    @ProtoField(number = 1111)
    public Simple simple;
 
@@ -23,6 +24,17 @@ public class Simple {
 
    @ProtoField(number = 314, name = "my_enum_field", defaultValue = "AX")
    public TestEnum myEnumField;
+
+   private Float width = 0.71f;
+
+   public Float getWidth() {
+      return width;
+   }
+
+   @ProtoField(number = 103, required = true, defaultValue = "0.71")
+   public void setWidth(Float width) {
+      this.width = width;
+   }
 
    @ProtoUnknownFieldSet
    public UnknownFieldSet unknownFieldSet;

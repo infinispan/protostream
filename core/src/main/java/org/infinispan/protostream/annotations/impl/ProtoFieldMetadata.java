@@ -232,4 +232,10 @@ final class ProtoFieldMetadata implements HasProtoSchema {
 
       iw.append(";\n");
    }
+
+   public boolean isBoxedPrimitive() {
+      Class<?> c = javaType;
+      return c == Float.class || c == Double.class || c == Long.class || c == Integer.class
+            || c == Short.class || c == Byte.class || c == Boolean.class || c == Character.class;
+   }
 }
