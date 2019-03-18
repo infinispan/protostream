@@ -1274,4 +1274,55 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertNotNull(o.testField10);
       assertEquals(0, o.testField10.size());
    }
+
+   interface ByteBuffer {
+
+      @ProtoField(number = 1, name = "theBytes")
+      byte[] getBytes();
+   }
+
+   static class ByteBufferImpl implements ByteBuffer {
+
+      private byte[] bytes;
+
+      @Override
+      public byte[] getBytes() {
+         return bytes;
+      }
+
+      public void setBytes(byte[] bytes) {
+         this.bytes = bytes;
+      }
+   }
+
+   static class ByteBufferWrapper {
+
+      private ByteBufferImpl buffer;
+
+      @ProtoField(number = 5, name = "value", javaType = ByteBufferImpl.class)
+      public ByteBuffer getBuffer() {
+         return buffer;
+      }
+
+      public void setBuffer(ByteBuffer buffer) {
+         this.buffer = (ByteBufferImpl) buffer;
+      }
+   }
+
+   @Test
+   public void testImplementInterface() throws Exception {
+      SerializationContext ctx = createContext();
+      new ProtoSchemaBuilder()
+            .fileName("test.proto")
+            .addClass(ByteBufferWrapper.class)
+            .build(ctx);
+
+      ByteBufferWrapper wrapper = new ByteBufferWrapper();
+      wrapper.setBuffer(new ByteBufferImpl());
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, wrapper);
+      ByteBufferWrapper o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertNotNull(o);
+      assertTrue(o.getBuffer() instanceof ByteBufferImpl);
+   }
 }

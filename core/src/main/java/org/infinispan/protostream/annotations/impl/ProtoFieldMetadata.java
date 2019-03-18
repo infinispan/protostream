@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.util.Date;
 
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
+import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 
 /**
@@ -149,7 +150,7 @@ final class ProtoFieldMetadata implements HasProtoSchema {
          iw.append(isRequired ? "required " : "optional ");
       }
       String typeName;
-      if (protobufType == Type.ENUM || protobufType == Type.MESSAGE || protobufType == Type.GROUP) {
+      if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
          typeName = protoTypeMetadata.getFullName();
       } else {
          switch (protobufType) {

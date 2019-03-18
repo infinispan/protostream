@@ -20,6 +20,7 @@ import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
+import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 
 /**
@@ -235,7 +236,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                Type protobufType = getProtobufType(javaType, annotation.type());
                ProtoTypeMetadata protoTypeMetadata = null;
-               if (protobufType == Type.ENUM || protobufType == Type.MESSAGE || protobufType == Type.GROUP) {
+               if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
                }
                ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(annotation.number(), fieldName, javaType, collectionImplementation,
@@ -362,7 +363,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                Type protobufType = getProtobufType(javaType, annotation.type());
                ProtoTypeMetadata protoTypeMetadata = null;
-               if (protobufType == Type.ENUM || protobufType == Type.MESSAGE || protobufType == Type.GROUP) {
+               if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
                }
 

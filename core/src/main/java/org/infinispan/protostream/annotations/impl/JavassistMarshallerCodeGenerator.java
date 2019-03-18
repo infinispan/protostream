@@ -460,7 +460,7 @@ final class JavassistMarshallerCodeGenerator {
                }
                iw.append(c).append(".add(").append(box(v, defaultValue.getClass())).append(");\n");
             } else {
-               iw.append("o.").append(createSetter(fieldMetadata, box(v, fieldMetadata.getJavaType()))).append(";\n");
+               iw.append("o.").append(createSetProp(fieldMetadata, box(v, fieldMetadata.getJavaType()))).append(";\n");
             }
             iw.dec();
             iw.append("}\n");
@@ -480,7 +480,7 @@ final class JavassistMarshallerCodeGenerator {
                   c = "(" + fieldMetadata.getJavaTypeName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaTypeName() + "[0])";
                }
             }
-            iw.append("o.").append(createSetter(fieldMetadata, c)).append(';');
+            iw.append("o.").append(createSetProp(fieldMetadata, c)).append(';');
             if (fieldMetadata.isArray()) {
                iw.append(" }");
             }
@@ -525,7 +525,7 @@ final class JavassistMarshallerCodeGenerator {
          iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(collectionImpl).append("();\n");
          iw.append(c).append(".add(").append(box("v", box(fieldMetadata.getJavaType()))).append(");\n");
       } else {
-         iw.append("o.").append(createSetter(fieldMetadata, "v")).append(";\n");
+         iw.append("o.").append(createSetProp(fieldMetadata, "v")).append(";\n");
       }
       if (fieldMetadata.isRequired() || fieldMetadata.getDefaultValue() != null) {
          iw.append(makeFieldWasSetFlag(fieldMetadata)).append(" = true;\n");
@@ -560,7 +560,7 @@ final class JavassistMarshallerCodeGenerator {
          } else {
             iw.append(fieldMetadata.getJavaTypeName());
          }
-         iw.append(' ').append(v).append(" = o.").append(createGetter(fieldMetadata)).append(";\n");
+         iw.append(' ').append(v).append(" = ").append(createGetProp(fieldMetadata, "o")).append(";\n");
          if (fieldMetadata.isRequired()) {
             boolean couldBeNull = fieldMetadata.isRepeated()
                   || fieldMetadata.isBoxedPrimitive()
@@ -834,16 +834,27 @@ final class JavassistMarshallerCodeGenerator {
       return v;
    }
 
-   private String createGetter(ProtoFieldMetadata fieldMetadata) {
-      if (fieldMetadata.getField() != null) {
-         return fieldMetadata.getField().getName();
+   private String createGetProp(ProtoFieldMetadata fieldMetadata, String obj) {
+      StringBuilder readPropExpr = new StringBuilder();
+      if (fieldMetadata.getProtobufType().getJavaType() == JavaType.MESSAGE || fieldMetadata.getProtobufType().getJavaType() == JavaType.ENUM) {
+         readPropExpr.append("(").append(fieldMetadata.getJavaTypeName());
+         if (fieldMetadata.isArray()) {
+            readPropExpr.append("[]");
+         }
+         readPropExpr.append(") ");
       }
-      return fieldMetadata.getGetter().getName() + "()";
+      readPropExpr.append(obj).append('.');
+      if (fieldMetadata.getField() != null) {
+         readPropExpr.append(fieldMetadata.getField().getName());
+      } else {
+         readPropExpr.append(fieldMetadata.getGetter().getName()).append("()");
+      }
+      return readPropExpr.toString();
    }
 
-   private String createSetter(ProtoFieldMetadata fieldMetadata, String value) {
+   private String createSetProp(ProtoFieldMetadata fieldMetadata, String value) {
       if (fieldMetadata.getField() != null) {
-         return fieldMetadata.getField().getName() + '=' + value;
+         return fieldMetadata.getField().getName() + " = " + value;
       }
       return fieldMetadata.getSetter().getName() + '(' + value + ')';
    }
