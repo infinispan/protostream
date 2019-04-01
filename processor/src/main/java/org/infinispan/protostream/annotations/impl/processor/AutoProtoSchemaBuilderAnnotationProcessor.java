@@ -34,6 +34,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypesException;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
@@ -246,11 +247,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
    private void process(TypeElement typeElement, AutoProtoSchemaBuilder annotation, Collection<? extends TypeMirror> classes) throws IOException {
       if (typeElement.getNestingKind() == NestingKind.LOCAL || typeElement.getNestingKind() == NestingKind.ANONYMOUS) {
-         reportError(typeElement, "Classes annotated with @AutoProtoSchemaBuilder must not be local or anonymous.");
+         reportError(typeElement, "Classes or interfaces annotated with @AutoProtoSchemaBuilder must not be local or anonymous.");
          return;
       }
       if (typeElement.getNestingKind() == NestingKind.MEMBER && !typeElement.getModifiers().contains(Modifier.STATIC)) {
-         reportError(typeElement, "Nested classes annotated with @AutoProtoSchemaBuilder must be static.");
+         reportError(typeElement, "Nested classes or interfaces annotated with @AutoProtoSchemaBuilder must be static.");
          return;
       }
       if (typeElement.getModifiers().contains(Modifier.FINAL)) {
@@ -262,7 +263,15 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          return;
       }
 
-      PackageElement packageElement = processingEnv.getElementUtils().getPackageOf(typeElement);
+      Types types = processingEnv.getTypeUtils();
+      Elements elements = processingEnv.getElementUtils();
+
+      if (!types.isSubtype(typeElement.asType(), elements.getTypeElement(SerializationContextInitializer.class.getName()).asType())) {
+         reportError(typeElement, "Classes or interfaces annotated with @AutoProtoSchemaBuilder must implement/extend %s", SerializationContextInitializer.class.getName());
+         return;
+      }
+
+      PackageElement packageElement = elements.getPackageOf(typeElement);
       String packageName = packageElement.isUnnamed() ? null : packageElement.getQualifiedName().toString();
       String initializerClassName = annotation.className().isEmpty() ? typeElement.getSimpleName() + "Impl" : annotation.className();
       String protobufPackageName = annotation.packageName().isEmpty() ? null : annotation.packageName();
@@ -303,7 +312,15 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                                                                String packageName, String initializerClassName,
                                                                String fileName, String schemaSrc,
                                                                Set<String> generatedClasses) throws IOException {
-      Filer filer = processingEnv.getFiler();
+      Elements elements = processingEnv.getElementUtils();
+      
+      String initializerFqn = packageName != null ? packageName + '.' + initializerClassName : initializerClassName;
+
+      if (elements.getTypeElement(initializerFqn) != null) {
+         reportError(annotatedElement, "The class to be generated already exists in source path: %s", initializerFqn);
+         return;
+      }
+
       Types types = processingEnv.getTypeUtils();
 
       Element[] originatingElements = new Element[classes.size() + 1];
@@ -318,7 +335,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          writeSchema(annotation.filePath(), fileName, schemaSrc, originatingElements);
       }
 
-      String initializerFqn = packageName != null ? packageName + '.' + initializerClassName : initializerClassName;
+      Filer filer = processingEnv.getFiler();
 
       JavaFileObject initializerFile;
       try {
