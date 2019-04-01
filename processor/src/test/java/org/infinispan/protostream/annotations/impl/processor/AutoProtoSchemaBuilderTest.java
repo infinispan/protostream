@@ -142,7 +142,8 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       ProtobufUtil.toWrappedByteArray(ctx, new Simple());
    }
 
-   @AutoProtoSchemaBuilder(filePath = "second_initializer", fileName = "TestInitializer.proto", className = "TestInitializer", service = true)
+   @AutoProtoSchemaBuilder(filePath = "second_initializer", fileName = "TestInitializer.proto", className = "TestInitializer",
+         packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    abstract static class SecondInitializer implements SerializationContextInitializer {
       SecondInitializer() {
       }
@@ -164,10 +165,10 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    @Test
    public void testLocalAnnotatedClassesAreSkipped() {
-
       // Standard Java annotation processors do not process the bodies of methods, so LocalInitializer is never seen by our AP and no code is generated for it, and that is OK.
       // If we ever decide to process method bodies we should probably study the approach used by "The Checker Framework" (https://checkerframework.org).
-      @AutoProtoSchemaBuilder(fileName = "LocalInitializer.proto", className = "NeverEverGenerated", service = true)
+      @AutoProtoSchemaBuilder(fileName = "LocalInitializer.proto", className = "NeverEverGenerated",
+            packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
       abstract class LocalInitializer implements SerializationContextInitializer {
       }
 
@@ -178,8 +179,9 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       }
    }
 
-   // this is not the normal use case but some users might need this too and we support it
-   @AutoProtoSchemaBuilder(fileName = "NonAbstractInitializer.proto", className = "NonAbstractInitializerImpl", service = true)
+   // Using a fully implemented initializer as a base is not the usual use case but some users might need this and we do support it.
+   @AutoProtoSchemaBuilder(fileName = "NonAbstractInitializer.proto", className = "NonAbstractInitializerImpl",
+         packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    static class NonAbstractInitializer implements SerializationContextInitializer {
 
       @Override

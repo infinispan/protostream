@@ -11,15 +11,15 @@ import org.infinispan.protostream.SerializationContextInitializer;
 /**
  * Generates compile-time auto-implementations of {@link SerializationContextInitializer}. Annotate a class or interface
  * extending from {@link SerializationContextInitializer} with this annotation and a new concrete public class named
- * XyzImpl having a default no-arguments public constructor will be generated at compile time. The implementations of
- * the methods from {@link SerializationContextInitializer} will be generated based on the information provided in the
- * attributes of this annotation.
+ * based on {@link #className}, having a default no-arguments public constructor will be generated at compile time. The
+ * implementations of the methods from {@link SerializationContextInitializer} will be generated based on the
+ * information provided in the attributes of this annotation.
  *
  * @author anistor@redhat.com
  * @since 4.3
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)  // SOURCE is too restrictive
 public @interface AutoProtoSchemaBuilder {
 
    /**
@@ -47,35 +47,44 @@ public @interface AutoProtoSchemaBuilder {
    String packageName() default "";
 
    /**
-    * Annotated classes to process (optional).  If missing, all @ProtoXyz annotated classes that belong to the packages
+    * Annotated classes to process (optional). If missing, all @ProtoXyz annotated classes that belong to the packages
     * listed in {@link #packages} will be scanned.
     */
    Class[] classes() default {};
 
    /**
-    * The packages to scan if {@link #classes} is not specified (the cannot be both present). The packages are scanned
-    * recursively. If neither {@link #classes} nor {@code packages} was specified then all source files will be
-    * scanned.
+    * The list of packages to scan if {@link #classes} was not specified. The packages are scanned for annotated classes
+    * recursively. {@link #classes} and {@code packages} cannot be both present. If neither {@link #classes} nor {@code
+    * packages} was specified then all available source files will be scanned. This last option should only be used by
+    * very lazy people.
     */
    String[] packages() default {};
 
    /**
-    * Do we accept classes not explicitly added in {@link #classes} to be auto-detected by reference from the already
-    * added classes and be included automatically or should we fail if such a case is encountered? This option can only
-    * be set to {@code false} if {@link #classes} is non-empty.
+    * Indicates if we accept classes not explicitly listed in {@link #classes} to be auto-detected by reference from the
+    * already specified classes and to be included automatically. If this is set to {@code false} it fails if such a
+    * case is encountered. This option can only be set to {@code false} if {@link #classes} is not empty.
     */
    boolean autoImportClasses() default true;
 
    /**
-    * Do we also generate a META-INF/services file for the generated implementation of the
-    * SerializationContextInitializer implementation to be loadable by the java.util.ServiceLoader.
+    * Enable generation of a {@code META-INF/services} file for the generated class of the {@link
+    * SerializationContextInitializer} implementation to be loadable by the {@link java.util.ServiceLoader}. This is
+    * optional, is provided for convenience and is not required by the library.
     */
    boolean service() default false;
 
    /**
-    * Schema resource paths to import in the {@link org.infinispan.protostream.SerializationContext} <em>before</em>
-    * starting the generation (optional). These resource files are used at compile time only and they do not need to be
-    * loadable at runtime.
+    * The initializers to execute before this one. List here instantiable classes implementing {@link
+    * SerializationContextInitializer} or classes or interfaces annotated with {@code AutoProtoSchemaBuilder}.
+    */
+   Class<? extends SerializationContextInitializer>[] dependencies() default {};
+
+   /**
+    * Additional schema resource paths to import in the {@link org.infinispan.protostream.SerializationContext}
+    * <em>before</em> starting the generation (optional). <em>These resource files are used at compile time only and
+    * they do not need to be loadable from class path at runtime but they do need to be registered by other means in the
+    * {@link org.infinispan.protostream.SerializationContext} before this initializer is executed</em>.
     */
    String[] schemaResources() default {};  //TODO implement!
 

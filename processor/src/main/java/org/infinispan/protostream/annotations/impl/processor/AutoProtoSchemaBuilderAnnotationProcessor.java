@@ -7,7 +7,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -131,6 +130,10 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
             Collection<? extends TypeMirror> classes = getClassesToProcess(roundEnv, annotatedTypeElement, annotation);
 
+            if (classes.isEmpty()) {
+               reportError(annotatedElement, "No annotated classes found matching the criteria. Please review the 'classes' and 'packages' attributes.");
+            }
+
             try {
                process(annotatedTypeElement, annotation, classes);
             } catch (ProtoSchemaBuilderException e) {
@@ -149,10 +152,10 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return true;
    }
 
-   private Collection<? extends TypeMirror> getClassesToProcess(RoundEnvironment roundEnv, TypeElement e, AutoProtoSchemaBuilder annotation) {
+   private Collection<? extends TypeMirror> getClassesToProcess(RoundEnvironment roundEnv, TypeElement builderTypeElement, AutoProtoSchemaBuilder builderAnnotation) {
       Collection<? extends TypeMirror> specifiedClasses = Collections.emptyList();
       try {
-         annotation.classes(); // this is expected to fail
+         builderAnnotation.classes(); // this is expected to fail
       } catch (MirroredTypesException mte) {
          specifiedClasses = mte.getTypeMirrors();
       }
@@ -160,15 +163,17 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       Map<String, TypeMirror> classes = new TreeMap<>();  // keep them sorted by FQN for predictable and repeatable order of processing
 
       if (specifiedClasses.isEmpty()) {
-         Set<String> packages = annotation.packages().length != 0 ? new HashSet<>(Arrays.asList(annotation.packages())) : null;
+         Set<String> packages = builderAnnotation.packages().length != 0 ? new HashSet<>(Arrays.asList(builderAnnotation.packages())) : null;
 
-         // no explicit class set specified so we gather all @ProtoXyz annotated classes from source path
+         // no explicit list of classes is specified so we gather all @ProtoXyz annotated classes from source path and filter them based on the specified packages
+
+         boolean initializerInUnnamedPackage = processingEnv.getElementUtils().getPackageOf(builderTypeElement).isUnnamed();
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoField.class)) {
             Element enclosingElement = annotatedElement.getEnclosingElement();
             if (enclosingElement.getKind() == ElementKind.CLASS || enclosingElement.getKind() == ElementKind.INTERFACE) {
                TypeElement typeElement = (TypeElement) enclosingElement;
-               filterByPackage(classes, typeElement, packages);
+               filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
             }
          }
 
@@ -178,7 +183,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                reportError(annotatedElement, "@ProtoEnumValue can only be applied to enum constants.");
             }
             TypeElement typeElement = (TypeElement) enclosingElement;
-            filterByPackage(classes, typeElement, packages);
+            filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnum.class)) {
@@ -186,7 +191,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                reportError(annotatedElement, "@ProtoEnum can only be applied to enums.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, packages);
+            filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoMessage.class)) {
@@ -194,7 +199,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                reportError(annotatedElement, "@ProtoMessage can only be applied to classes and interfaces.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, packages);
+            filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoName.class)) {
@@ -202,11 +207,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                reportError(annotatedElement, "@ProtoName can only be applied to classes, interfaces and enums.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement.getEnclosingElement();
-            filterByPackage(classes, typeElement, packages);
+            filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
          }
       } else {
-         if (annotation.packages().length != 0) {
-            reportError(e, "@AutoProtoSchemaBuilder.packages cannot be specified if @AutoProtoSchemaBuilder.classes is not empty.");
+         if (builderAnnotation.packages().length != 0) {
+            reportError(builderTypeElement, "@AutoProtoSchemaBuilder.packages cannot be specified if @AutoProtoSchemaBuilder.classes is not empty.");
          }
 
          // deduplicate the specified classes
@@ -220,23 +225,49 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return classes.values();
    }
 
-   private void filterByPackage(Map<String, TypeMirror> classes, TypeElement typeElement, Set<String> packages) {
-      // skip interfaces and abstract classes when scanning packages
+   private void filterByPackage(Map<String, TypeMirror> classes, TypeElement typeElement, Set<String> packages, boolean initializerInUnnamedPackage) {
+      // Skip interfaces and abstract classes when scanning packages. We only generate for instantiable classes.
       if (typeElement.getKind() == ElementKind.INTERFACE || typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
+         return;
+      }
+
+      PackageElement packageOfElement = processingEnv.getElementUtils().getPackageOf(typeElement);
+      if (packageOfElement.isUnnamed() && !initializerInUnnamedPackage) {
+         // classes from default package are ignored unless the initializer is itself in the default package
          return;
       }
 
       String fqn = typeElement.getQualifiedName().toString();
 
       if (packages != null) {
-         PackageElement packageOfElement = processingEnv.getElementUtils().getPackageOf(typeElement);
          String packageName = packageOfElement.getQualifiedName().toString();
-         if (!packages.contains(packageName)) {  //todo [anistor] also implement prefix matching to enable recursive package scan
+         if (!isPackageIncluded(packages, packageName)) {
             return;
          }
       }
 
       classes.putIfAbsent(fqn, typeElement.asType());
+   }
+
+   /**
+    * Checks if a package is included in a given set of packages, considering subpackages also.
+    */
+   private boolean isPackageIncluded(Set<String> packages, String packageName) {
+      String p = packageName;
+
+      while (true) {
+         if (packages.contains(p)) {
+            return true;
+         }
+
+         int pos = p.lastIndexOf('.');
+         if (pos == -1) {
+            break;
+         }
+         p = p.substring(0, pos);
+      }
+
+      return false;
    }
 
    private static String getStackTraceAsString(Throwable throwable) {
@@ -332,7 +363,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       // write Protobuf schema as a resource file if we were asked to
       if (!annotation.filePath().isEmpty()) {
-         writeSchema(annotation.filePath(), fileName, schemaSrc, originatingElements);
+         writeSchema(annotation.filePath(), fileName, schemaSrc, originatingElements, annotatedElement);
       }
 
       Filer filer = processingEnv.getFiler();
@@ -349,7 +380,6 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       IndentWriter iw = new IndentWriter();
       iw.append("/*\n");
       iw.append(" Generated by ").append(getClass().getName()).append("\n");
-      iw.append(" at ").append(String.valueOf(Calendar.getInstance().getTime())).append("\n");
       iw.append(" from class ").append(annotatedElement.getQualifiedName()).append("\n");
       iw.append(" annotated with ").append(String.valueOf(annotation)).append("\n");
       iw.append(" */\n\n");
@@ -410,7 +440,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
    }
 
-   private void writeSchema(String filePath, String fileName, String schemaSrc, Element[] originatingElements) throws IOException {
+   private void writeSchema(String filePath, String fileName, String schemaSrc, Element[] originatingElements, TypeElement annotatedElement) throws IOException {
       // reinterpret the path as a package
       String pkg = filePath;
       if (pkg.startsWith("/")) {
@@ -418,7 +448,14 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
       pkg = pkg.replace('/', '.');
 
-      FileObject schemaFile = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, pkg, fileName, originatingElements);
+      FileObject schemaFile;
+      try {
+         schemaFile = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, pkg, fileName, originatingElements);
+      } catch (FilerException e) {
+         reportError(annotatedElement, "Package %s already contains a resource file named %s", pkg, fileName);
+         return;
+      }
+
       try (PrintWriter out = new PrintWriter(schemaFile.openWriter())) {
          out.print(schemaSrc);
       }
