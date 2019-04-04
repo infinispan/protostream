@@ -31,20 +31,20 @@ public @interface AutoProtoSchemaBuilder {
    /**
     * Generated Protobuf schema file name (required). Must end with ".proto" suffix.
     */
-   String fileName();
+   String schemaFileName();
 
    /**
-    * Generated Protobuf schema resource path (optional). If this is present then a resource file is generated in the
-    * designated path, with the given file name, and will be available to the ClassLoader at runtime, otherwise the
-    * generated schema is directly baked as a String constant into the generated class.
+    * Generated Protobuf schema resource file path (optional). If this is present then a resource file is generated in
+    * the designated path, with the given file name, and will be available to the ClassLoader at runtime, otherwise the
+    * generated schema file is directly baked as a String constant into the generated class.
     */
-   String filePath() default "";
+   String schemaFilePath() default "";
 
    /**
     * Package of the generated Protobuf schema. This is optional. If the package name is not specified then the
     * generated Protobuf types will end up in the unnamed/default package.
     */
-   String packageName() default "";
+   String schemaPackageName() default "";
 
    /**
     * Annotated classes to process (optional). If missing, all @ProtoXyz annotated classes that belong to the packages
@@ -70,13 +70,14 @@ public @interface AutoProtoSchemaBuilder {
    /**
     * Enable generation of a {@code META-INF/services} file for the generated class of the {@link
     * SerializationContextInitializer} implementation to be loadable by the {@link java.util.ServiceLoader}. This is
-    * optional, is provided for convenience and is not required by the library.
+    * optional and is only provided for convenience without being required by the library.
     */
    boolean service() default false;
 
    /**
     * The initializers to execute before this one. List here instantiable classes implementing {@link
-    * SerializationContextInitializer} or classes or interfaces annotated with {@code AutoProtoSchemaBuilder}.
+    * SerializationContextInitializer} or classes or interfaces annotated with {@code AutoProtoSchemaBuilder} from which
+    * a {@link SerializationContextInitializer} is being generated.
     */
    Class<? extends SerializationContextInitializer>[] dependencies() default {};
 

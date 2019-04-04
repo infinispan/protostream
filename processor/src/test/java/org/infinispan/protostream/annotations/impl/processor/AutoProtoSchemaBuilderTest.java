@@ -109,8 +109,7 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(filePath = "org/infinispan.protostream/generated_schemas", fileName = "TestFile.proto",
-         packageName = "firstTestPackage",
+   @AutoProtoSchemaBuilder(schemaFileName = "TestFile.proto", schemaFilePath = "org/infinispan.protostream/generated_schemas",  schemaPackageName = "firstTestPackage",
          service = true,
          classes = {
                Note.class,
@@ -142,7 +141,8 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       ProtobufUtil.toWrappedByteArray(ctx, new Simple());
    }
 
-   @AutoProtoSchemaBuilder(filePath = "second_initializer", fileName = "TestInitializer.proto", className = "TestInitializer",
+   @AutoProtoSchemaBuilder(schemaFileName = "TestInitializer.proto", schemaFilePath = "second_initializer",
+         className = "TestInitializer",
          packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    abstract static class SecondInitializer implements SerializationContextInitializer {
       SecondInitializer() {
@@ -167,7 +167,7 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    public void testLocalAnnotatedClassesAreSkipped() {
       // Standard Java annotation processors do not process the bodies of methods, so LocalInitializer is never seen by our AP and no code is generated for it, and that is OK.
       // If we ever decide to process method bodies we should probably study the approach used by "The Checker Framework" (https://checkerframework.org).
-      @AutoProtoSchemaBuilder(fileName = "LocalInitializer.proto", className = "NeverEverGenerated",
+      @AutoProtoSchemaBuilder(schemaFileName = "LocalInitializer.proto", className = "NeverEverGenerated",
             packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
       abstract class LocalInitializer implements SerializationContextInitializer {
       }
@@ -180,7 +180,7 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    }
 
    // Using a fully implemented initializer as a base is not the usual use case but some users might need this and we do support it.
-   @AutoProtoSchemaBuilder(fileName = "NonAbstractInitializer.proto", className = "NonAbstractInitializerImpl",
+   @AutoProtoSchemaBuilder(schemaFileName = "NonAbstractInitializer.proto", className = "NonAbstractInitializerImpl",
          packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    static class NonAbstractInitializer implements SerializationContextInitializer {
 

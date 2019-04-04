@@ -305,7 +305,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       PackageElement packageElement = elements.getPackageOf(typeElement);
       String packageName = packageElement.isUnnamed() ? null : packageElement.getQualifiedName().toString();
       String initializerClassName = annotation.className().isEmpty() ? typeElement.getSimpleName() + "Impl" : annotation.className();
-      String protobufPackageName = annotation.packageName().isEmpty() ? null : annotation.packageName();
+      String protobufPackageName = annotation.schemaPackageName().isEmpty() ? null : annotation.schemaPackageName();
 
       MirrorClassFactory typeFactory = new MirrorClassFactory(processingEnv);
 
@@ -323,11 +323,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       Set<String> generatedClasses = new LinkedHashSet<>();
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, processingEnv, serCtx,
-            annotation.fileName(), protobufPackageName, xclasses, annotation.autoImportClasses(), generatedClasses);
+            annotation.schemaFileName(), protobufPackageName, xclasses, annotation.autoImportClasses(), generatedClasses);
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializerSourceFile(annotation, typeElement, classes,
-            packageName, initializerClassName, annotation.fileName(), schemaSrc, generatedClasses);
+            packageName, initializerClassName, annotation.schemaFileName(), schemaSrc, generatedClasses);
    }
 
    private void warnOverrideExistingMethod(XClass xclass, String methodName, XClass... argTypes) {
@@ -348,6 +348,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       String initializerFqn = packageName != null ? packageName + '.' + initializerClassName : initializerClassName;
 
       if (elements.getTypeElement(initializerFqn) != null) {
+         //todo [anistor] duplicates?
          reportError(annotatedElement, "The class to be generated already exists in source path: %s", initializerFqn);
          return;
       }
@@ -362,8 +363,8 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       originatingElements[i] = annotatedElement;
 
       // write Protobuf schema as a resource file if we were asked to
-      if (!annotation.filePath().isEmpty()) {
-         writeSchema(annotation.filePath(), fileName, schemaSrc, originatingElements, annotatedElement);
+      if (!annotation.schemaFilePath().isEmpty()) {
+         writeSchema(annotation.schemaFilePath(), fileName, schemaSrc, originatingElements, annotatedElement);
       }
 
       Filer filer = processingEnv.getFiler();
@@ -393,13 +394,13 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       iw.append(annotatedElement.getKind() == ElementKind.INTERFACE ? " implements " : " extends ").append(annotatedElement.getQualifiedName()).append(" {\n\n");
       iw.inc();
 
-      if (annotation.filePath().isEmpty()) {
+      if (annotation.schemaFilePath().isEmpty()) {
          iw.append("private static final String PROTO_SCHEMA = ").append(makeStringLiteral(schemaSrc)).append(";\n\n");
       }
 
       iw.append("@Override\npublic String getProtoFileName() { return \"").append(fileName).append("\"; }\n\n");
       iw.append("@Override\npublic String getProtoFile() { return ");
-      if (annotation.filePath().isEmpty()) {
+      if (annotation.schemaFilePath().isEmpty()) {
          iw.append("PROTO_SCHEMA");
       } else {
          iw.append("org.infinispan.protostream.FileDescriptorSource.getResourceAsString(getClass(), getProtoFileName())");
@@ -409,10 +410,10 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       iw.append("@Override\n");
       iw.append("public void registerSchema(org.infinispan.protostream.SerializationContext serCtx) throws java.io.IOException {\n");
       iw.inc();
-      if (annotation.filePath().isEmpty()) {
+      if (annotation.schemaFilePath().isEmpty()) {
          iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromString(getProtoFileName(), PROTO_SCHEMA));\n");
       } else {
-         String resourceFile = annotation.filePath().isEmpty() ? fileName : annotation.filePath().replace('.', '/') + '/' + fileName;
+         String resourceFile = annotation.schemaFilePath().isEmpty() ? fileName : annotation.schemaFilePath().replace('.', '/') + '/' + fileName;
          iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromResources(\"").append(resourceFile).append("\"));\n");
       }
       iw.dec();
