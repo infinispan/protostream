@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,8 +19,6 @@ import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
-
-import com.google.common.base.Charsets;
 
 /**
  * Generate a META-INF/services resource suitable for {@link java.util.ServiceLoader}.
@@ -46,7 +45,7 @@ final class ServiceLoaderFileGenerator {
       originatingElements.add(originatingElement);
    }
 
-   void generate(Filer filer) throws IOException {
+   void generateResources(Filer filer) throws IOException {
       if (!providers.isEmpty()) {
          Set<String> serviceProviders;
          try {
@@ -66,7 +65,7 @@ final class ServiceLoaderFileGenerator {
 
    private static Set<String> readServiceFile(InputStream in) throws IOException {
       Set<String> services = new LinkedHashSet<>();
-      try (BufferedReader r = new BufferedReader(new InputStreamReader(in, Charsets.UTF_8))) {
+      try (BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
          String line;
          while ((line = r.readLine()) != null) {
             int commentPos = line.indexOf('#');
@@ -86,7 +85,7 @@ final class ServiceLoaderFileGenerator {
    }
 
    private static void writeServiceFile(Collection<String> services, OutputStream out) throws IOException {
-      try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(out, Charsets.UTF_8))) {
+      try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
          for (String service : services) {
             w.write(service);
             w.newLine();

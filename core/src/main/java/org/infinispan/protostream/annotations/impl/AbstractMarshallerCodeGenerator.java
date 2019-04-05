@@ -10,7 +10,6 @@ import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.descriptors.JavaType;
 
-//todo [anistor] detect situations when we generate an identical marshaller class to a previously generated one and reuse that
 /**
  * @author anistor@readhat.com
  * @since 4.3
@@ -18,16 +17,6 @@ import org.infinispan.protostream.descriptors.JavaType;
 public abstract class AbstractMarshallerCodeGenerator {
 
    private static final String PROTOSTREAM_PACKAGE = SerializationContext.class.getPackage().getName();
-
-   /**
-    * The prefix of class names of generated marshallers.
-    */
-   private static final String MARSHALLER_CLASS_NAME_PREFIX = "___ProtostreamGeneratedMarshaller";
-
-   /**
-    * A numeric id that is appended to generated class names to avoid potential collisions.
-    */
-   private static long nextId = 0;
 
    private final UnifiedTypeFactory typeFactory;
 
@@ -44,17 +33,6 @@ public abstract class AbstractMarshallerCodeGenerator {
    protected AbstractMarshallerCodeGenerator(UnifiedTypeFactory typeFactory, String protobufSchemaPackage) {
       this.typeFactory = typeFactory;
       this.protobufSchemaPackage = protobufSchemaPackage;
-   }
-
-   /**
-    * Generates a unique numeric id to be used for generating unique class names.
-    */
-   protected static synchronized long nextMarshallerClassId() {
-      return nextId++;
-   }
-
-   protected String makeUniqueMarshallerClassName() {
-      return MARSHALLER_CLASS_NAME_PREFIX + nextMarshallerClassId();
    }
 
    protected String generateEnumDecodeMethod(ProtoEnumTypeMetadata enumTypeMetadata) {

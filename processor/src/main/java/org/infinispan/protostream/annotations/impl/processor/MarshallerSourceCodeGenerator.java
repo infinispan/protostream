@@ -2,9 +2,14 @@ package org.infinispan.protostream.annotations.impl.processor;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.processing.FilerException;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.tools.JavaFileObject;
@@ -55,13 +60,35 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       }
    }
 
-   @Override
-   protected String makeUniqueMarshallerClassName() {
-      return "_Marshaller" + nextMarshallerClassId();
+   private String makeUniqueMarshallerClassName(ProtoTypeMetadata ptm) {
+      String hash = hashStrings(ptm.getJavaClass().getName(), makeQualifiedTypeName(ptm.getFullName()));
+      return ptm.getJavaClass().getSimpleName() + "$___Marshaller" + hash;
+   }
+
+   /**
+    * Computes the SHA-1 hash over the input strings and returns the result encoded as a base 16 integer with all
+    * leading zeroes stripped down.
+    */
+   private static String hashStrings(String... strings) {
+      try {
+         MessageDigest md = MessageDigest.getInstance("SHA-1");
+         for (int i = 0; i < strings.length; i++) {
+            if (i > 0) {
+               // add a null separator between strings
+               md.update((byte) 0);
+            }
+            byte[] bytes = strings[i].getBytes(StandardCharsets.UTF_8);
+            md.update(bytes);
+         }
+         byte[] digest = md.digest();
+         return new BigInteger(1, digest).toString(16);
+      } catch (NoSuchAlgorithmException e) {
+         throw new RuntimeException("Failed to compute SHA-1 digest of strings", e);
+      }
    }
 
    private void generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws IOException {
-      String marshallerClassName = petm.getJavaClass().getSimpleName() + '$' + makeUniqueMarshallerClassName();
+      String marshallerClassName = makeUniqueMarshallerClassName(petm);
       if (log.isTraceEnabled()) {
          log.tracef("Generating enum marshaller %s for %s", marshallerClassName, petm.getJavaClass().getName());
       }
@@ -103,7 +130,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
    }
 
    private void generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) throws IOException {
-      String marshallerClassName = pmtm.getJavaClass().getSimpleName() + '$' + makeUniqueMarshallerClassName();
+      String marshallerClassName = makeUniqueMarshallerClassName(pmtm);
       if (log.isTraceEnabled()) {
          log.tracef("Generating message marshaller %s for %s", marshallerClassName, pmtm.getJavaClass().getName());
       }
@@ -167,16 +194,20 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
                   Class<?> marshallerDelegateClass = fieldMetadata.getJavaType().isEnum() ? EnumMarshallerDelegate.class : BaseMarshallerDelegate.class;
                   iw.append("private ").append(marshallerDelegateClass.getName()).append(' ').append(fieldName).append(";\n\n");
                }
-               break;
          }
       }
    }
 
-   private void writeSourceFile(String className, String classSource, Element typeElement) throws IOException {
-      JavaFileObject file = processingEnv.getFiler().createSourceFile(className, typeElement);
+   private void writeSourceFile(String className, String classSource, Element originatingElement) throws IOException {
       generatedClasses.add(className);
-      try (PrintWriter out = new PrintWriter(file.openWriter())) {
-         out.print(classSource);
+
+      try {
+         JavaFileObject file = processingEnv.getFiler().createSourceFile(className, originatingElement);
+         try (PrintWriter out = new PrintWriter(file.openWriter())) {
+            out.print(classSource);
+         }
+      } catch (FilerException e) {
+         // ignore if already generated
       }
    }
 }

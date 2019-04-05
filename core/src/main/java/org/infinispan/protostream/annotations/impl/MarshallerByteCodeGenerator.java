@@ -24,6 +24,7 @@ import javassist.CtField;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 
+// TODO [anistor] detect situations when we generate an identical marshaller class to a previously generated one (and in the same classloader) and reuse it
 // TODO [anistor] check which java classfile limits impose limits on the size of the supported Protobuf schema
 // TODO [anistor] what do we do with non-repeated fields that come repeated from stream?
 // TODO [anistor] bounded streams should be checked to be exactly as the size indicated
@@ -38,6 +39,16 @@ import javassist.NotFoundException;
 final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator {
 
    private static final Log log = Log.LogFactory.getLog(MarshallerByteCodeGenerator.class);
+
+   /**
+    * The prefix of class names of generated marshallers.
+    */
+   private static final String MARSHALLER_CLASS_NAME_PREFIX = "___ProtostreamGeneratedMarshaller";
+
+   /**
+    * A numeric id that is appended to generated class names to avoid potential collisions.
+    */
+   private static long nextId = 0;
 
    private final ClassPool cp;
    private final CtClass ioExceptionClass;
@@ -67,6 +78,17 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       writeToMethod = rawProtobufMarshallerInterface.getMethod("writeTo", "(L" + serializationContextName + ";L" + rawProtobufOutputStreamName + ";Ljava/lang/Object;)V");
       decodeMethod = enumMarshallerInterface.getMethod("decode", "(I)Ljava/lang/Enum;");
       encodeMethod = enumMarshallerInterface.getMethod("encode", "(Ljava/lang/Enum;)I");
+   }
+
+   /**
+    * Generates a unique numeric id to be used for generating unique class names.
+    */
+   private static synchronized long nextMarshallerClassId() {
+      return nextId++;
+   }
+
+   private static String makeUniqueMarshallerClassName() {
+      return MARSHALLER_CLASS_NAME_PREFIX + nextMarshallerClassId();
    }
 
    @Override
@@ -129,26 +151,26 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
     * marshalled. The InnerClasses attribute of the outer class is not altered, so this is not officially considered a
     * nested class.
     */
-   private Class<RawProtobufMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata messageTypeMetadata) throws NotFoundException, CannotCompileException {
+   private Class<RawProtobufMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) throws NotFoundException, CannotCompileException {
       String marshallerClassName = makeUniqueMarshallerClassName();
-      CtClass entityClass = cp.get(messageTypeMetadata.getJavaClass().getName());
+      CtClass entityClass = cp.get(pmtm.getJavaClass().getName());
       CtClass marshallerImpl = entityClass.makeNestedClass(marshallerClassName, true);
       if (log.isTraceEnabled()) {
-         log.tracef("Generating message marshaller %s for %s", marshallerImpl.getName(), messageTypeMetadata.getJavaClass().getName());
+         log.tracef("Generating message marshaller %s for %s", marshallerImpl.getName(), pmtm.getJavaClass().getName());
       }
       marshallerImpl.addInterface(rawProtobufMarshallerInterface);
       marshallerImpl.setSuperclass(generatedMarshallerBaseClass);
       marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
-      addMarshallerDelegateFields(marshallerImpl, messageTypeMetadata);
+      addMarshallerDelegateFields(marshallerImpl, pmtm);
 
-      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + messageTypeMetadata.getJavaClass().getName() + ".class; }", marshallerImpl));
-      marshallerImpl.addMethod(CtMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(messageTypeMetadata.getFullName()) + "\"; }", marshallerImpl));
+      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + pmtm.getJavaClass().getName() + ".class; }", marshallerImpl));
+      marshallerImpl.addMethod(CtMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(pmtm.getFullName()) + "\"; }", marshallerImpl));
 
       CtMethod ctReadFromMethod = new CtMethod(readFromMethod, marshallerImpl, null);
       ctReadFromMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
       ctReadFromMethod.setModifiers(ctReadFromMethod.getModifiers() | Modifier.FINAL);
-      String readFromSrc = generateReadFromMethod(messageTypeMetadata);
+      String readFromSrc = generateReadFromMethod(pmtm);
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", ctReadFromMethod.getLongName(), readFromSrc);
       }
@@ -158,7 +180,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       CtMethod ctWriteToMethod = new CtMethod(writeToMethod, marshallerImpl, null);
       ctWriteToMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
       ctWriteToMethod.setModifiers(ctWriteToMethod.getModifiers() | Modifier.FINAL);
-      String writeToSrc = generateWriteToMethod(messageTypeMetadata);
+      String writeToSrc = generateWriteToMethod(pmtm);
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", ctWriteToMethod.getLongName(), writeToSrc);
       }
@@ -189,7 +211,6 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
                   marshallerDelegateField.setModifiers(Modifier.PRIVATE);
                   marshallerImpl.addField(marshallerDelegateField);
                }
-               break;
          }
       }
    }

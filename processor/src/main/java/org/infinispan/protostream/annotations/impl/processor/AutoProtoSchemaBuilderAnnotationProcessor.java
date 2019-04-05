@@ -139,7 +139,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          }
 
          if (roundEnv.processingOver()) {
-            serviceLoaderFileGenerator.generate(processingEnv.getFiler());
+            serviceLoaderFileGenerator.generateResources(processingEnv.getFiler());
          }
       } catch (Exception e) {
          reportError(null, "@AutoProtoSchemaBuilder processor threw an exception: %s", getStackTraceAsString(e));
