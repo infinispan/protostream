@@ -6,7 +6,6 @@ import java.io.StringWriter;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -102,11 +101,12 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    }
 
    /**
-    * Log a message, only if debug option is enabled.
+    * Log a debug message, only if debug option is enabled.
     */
-   private void log(String message) {
+   private void logDebug(String message, Object... msgParams) {
       if (processingEnv.getOptions().containsKey(DEBUG_OPTION)) {
-         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, message);
+         String formatted = String.format(message, msgParams);
+         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, formatted);
       }
    }
 
@@ -152,6 +152,9 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return true;
    }
 
+   /**
+    * Gathers the message/enum classes to process and generate marshallers for.
+    */
    private Collection<? extends TypeMirror> getClassesToProcess(RoundEnvironment roundEnv, TypeElement builderTypeElement, AutoProtoSchemaBuilder builderAnnotation) {
       Collection<? extends TypeMirror> specifiedClasses = Collections.emptyList();
       try {
@@ -163,10 +166,17 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       Map<String, TypeMirror> classes = new TreeMap<>();  // keep them sorted by FQN for predictable and repeatable order of processing
 
       if (specifiedClasses.isEmpty()) {
-         Set<String> packages = builderAnnotation.packages().length != 0 ? new HashSet<>(Arrays.asList(builderAnnotation.packages())) : null;
-
          // no explicit list of classes is specified so we gather all @ProtoXyz annotated classes from source path and filter them based on the specified packages
 
+         Set<String> packages = builderAnnotation.packages().length == 0 ? null : new HashSet<>(builderAnnotation.packages().length);
+         for (String p : builderAnnotation.packages()) {
+            if (!SourceVersion.isName(p)) {
+               reportError(builderTypeElement, "@AutoProtoSchemaBuilder.packages contains and invalid package name : \"%s\"", p);
+            }
+            packages.add(p);
+         }
+
+         // message classes from unnamed package cannot be imported so they can only be used by initializers also located in unnamed package
          boolean initializerInUnnamedPackage = processingEnv.getElementUtils().getPackageOf(builderTypeElement).isUnnamed();
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoField.class)) {
@@ -211,7 +221,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          }
       } else {
          if (builderAnnotation.packages().length != 0) {
-            reportError(builderTypeElement, "@AutoProtoSchemaBuilder.packages cannot be specified if @AutoProtoSchemaBuilder.classes is not empty.");
+            reportError(builderTypeElement, "@AutoProtoSchemaBuilder.packages cannot be specified unless @AutoProtoSchemaBuilder.classes is empty.");
          }
 
          // deduplicate the specified classes
@@ -225,7 +235,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return classes.values();
    }
 
-   private void filterByPackage(Map<String, TypeMirror> classes, TypeElement typeElement, Set<String> packages, boolean initializerInUnnamedPackage) {
+   private void filterByPackage(Map<String, TypeMirror> collectedClasses, TypeElement typeElement, Set<String> packages, boolean initializerInUnnamedPackage) {
       // Skip interfaces and abstract classes when scanning packages. We only generate for instantiable classes.
       if (typeElement.getKind() == ElementKind.INTERFACE || typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
          return;
@@ -246,11 +256,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          }
       }
 
-      classes.putIfAbsent(fqn, typeElement.asType());
+      collectedClasses.putIfAbsent(fqn, typeElement.asType());
    }
 
    /**
-    * Checks if a package is included in a given set of packages, considering subpackages also.
+    * Checks if a package is included in a given set of packages, considering also their subpackages recursively.
     */
    private boolean isPackageIncluded(Set<String> packages, String packageName) {
       String p = packageName;
@@ -289,7 +299,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          reportError(typeElement, "Classes annotated with @AutoProtoSchemaBuilder must not be final.");
          return;
       }
-      if (!annotation.className().isEmpty() && !SourceVersion.isIdentifier(annotation.className())) {
+      if (!annotation.className().isEmpty() && (!SourceVersion.isIdentifier(annotation.className()) || SourceVersion.isKeyword(annotation.className()))) {
          reportError(typeElement, "Invalid 'AutoProtoSchemaBuilder.className' annotation attribute. Should be a valid Java class name and must not be fully qualified.");
          return;
       }
@@ -344,13 +354,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                                                                String fileName, String schemaSrc,
                                                                Set<String> generatedClasses) throws IOException {
       Elements elements = processingEnv.getElementUtils();
-      
+
       String initializerFqn = packageName != null ? packageName + '.' + initializerClassName : initializerClassName;
 
       if (elements.getTypeElement(initializerFqn) != null) {
-         //todo [anistor] duplicates?
-         reportError(annotatedElement, "The class to be generated already exists in source path: %s", initializerFqn);
-         return;
+         logDebug("The class to be generated for %s already exists in source path: %s", annotatedElement.getQualifiedName().toString(), initializerFqn);
       }
 
       Types types = processingEnv.getTypeUtils();
@@ -362,8 +370,8 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
       originatingElements[i] = annotatedElement;
 
-      // write Protobuf schema as a resource file if we were asked to
       if (!annotation.schemaFilePath().isEmpty()) {
+         // write Protobuf schema as a resource file
          writeSchema(annotation.schemaFilePath(), fileName, schemaSrc, originatingElements, annotatedElement);
       }
 
@@ -466,7 +474,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       String ISO8601Date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
       iw.append("@javax.annotation.Generated(value=\"").append(AutoProtoSchemaBuilderAnnotationProcessor.class.getName())
             .append("\", date=\"").append(ISO8601Date)
-            .append("\",\n      comments=\"Please do not edit this file\")\n");
+            .append("\",\n      comments=\"Please do not edit this file!\")\n");
    }
 
    private String makeStringLiteral(String s) {
