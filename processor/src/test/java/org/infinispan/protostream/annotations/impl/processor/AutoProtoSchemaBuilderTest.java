@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -175,6 +176,41 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
             fail("Local classes should not be processed by AutoProtoSchemaBuilderAnnotationProcessor.");
          }
       }
+   }
+
+   // this is not the normal use case but some users might need this too and we support it
+   @AutoProtoSchemaBuilder(fileName = "NonAbstractInitializer.proto", service = true)
+   static class NonAbstractInitializer implements SerializationContextInitializer {
+
+      @Override
+      public String getProtoFileName() {
+         return null;
+      }
+
+      @Override
+      public String getProtoFile() {
+         return null;
+      }
+
+      @Override
+      public void registerSchema(SerializationContext serCtx) throws IOException {
+      }
+
+      @Override
+      public void registerMarshallers(SerializationContext serCtx) {
+      }
+   }
+
+   @Test
+   public void testNonAbstractInitializer() {
+      boolean found = false;
+      for (SerializationContextInitializer sci : ServiceLoader.load(SerializationContextInitializer.class)) {
+         if (sci.getClass().getSimpleName().equals("NonAbstractInitializerImpl")) {
+            found = true;
+            break;
+         }
+      }
+      assertTrue("Non-abstract initializers must be supported", found);
    }
 
    //todo test enum with members and without

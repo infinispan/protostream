@@ -84,12 +84,6 @@
         </dependency>
 
         <dependency>
-            <groupId>net.jcip</groupId>
-            <artifactId>jcip-annotations</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
             <version>${version.auto-service}</version>
@@ -98,24 +92,6 @@
     </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <includes>
-                    <include>**/*.proto</include>
-                </includes>
-            </resource>
-
-            <!-- [anistor] TODO do not include features.xml in jar artifact, Karaf does not actually use it from there, it uses the attached features.xml -->
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>features.xml</include>
-                </includes>
-            </resource>
-        </resources>
-
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
