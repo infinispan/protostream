@@ -67,9 +67,6 @@ public abstract class BaseProtoSchemaGenerator {
       if (fileName == null) {
          throw new ProtoSchemaBuilderException("fileName cannot be null");
       }
-      if (classes.isEmpty()) {
-         throw new ProtoSchemaBuilderException("At least one class must be specified");
-      }
 
       this.typeFactory = typeFactory;
       this.serializationContext = serializationContext;

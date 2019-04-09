@@ -39,6 +39,9 @@ public final class RuntimeProtoSchemaGenerator extends BaseProtoSchemaGenerator 
    public RuntimeProtoSchemaGenerator(UnifiedTypeFactory typeFactory, SerializationContext serializationContext,
                                       String fileName, String packageName, Set<XClass> classes, boolean autoImportClasses) {
       super(typeFactory, serializationContext, fileName, packageName, classes, autoImportClasses);
+      if (classes.isEmpty()) {
+         throw new ProtoSchemaBuilderException("At least one class must be specified");
+      }
    }
 
    @Override
