@@ -18,8 +18,8 @@ import org.infinispan.protostream.SerializationContextInitializer;
  * @author anistor@redhat.com
  * @since 4.3
  */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)  // SOURCE is too restrictive
+@Target({ElementType.TYPE, ElementType.PACKAGE})
+@Retention(RetentionPolicy.RUNTIME)  // SOURCE is too restrictive
 public @interface AutoProtoSchemaBuilder {
 
    /**
@@ -29,9 +29,10 @@ public @interface AutoProtoSchemaBuilder {
    String className() default "";
 
    /**
-    * Generated Protobuf schema file name (required). Must end with ".proto" suffix.
+    * Generated Protobuf schema file name (required). Must end with ".proto" suffix. The schema will be registered under
+    * this name in the {@link org.infinispan.protostream.SerializationContext}.
     */
-   String schemaFileName();
+   String schemaFileName();  //todo [anistor] make it optional, defaulting to the class name of the annotated element
 
    /**
     * Generated Protobuf schema resource file path (optional). If this is present then a resource file is generated in
@@ -79,7 +80,7 @@ public @interface AutoProtoSchemaBuilder {
     * SerializationContextInitializer} or classes or interfaces annotated with {@code AutoProtoSchemaBuilder} from which
     * a {@link SerializationContextInitializer} is being generated.
     */
-   Class<? extends SerializationContextInitializer>[] dependencies() default {};
+   Class<? extends SerializationContextInitializer>[] dependsOn() default {};   //todo [anistor] check for cycles!
 
    /**
     * Additional schema resource paths to import in the {@link org.infinispan.protostream.SerializationContext}

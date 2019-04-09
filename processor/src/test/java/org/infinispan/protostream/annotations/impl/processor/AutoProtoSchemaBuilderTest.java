@@ -109,7 +109,7 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(schemaFileName = "TestFile.proto", schemaFilePath = "org/infinispan.protostream/generated_schemas",  schemaPackageName = "firstTestPackage",
+   @AutoProtoSchemaBuilder(schemaFileName = "TestFile.proto", schemaFilePath = "org/infinispan.protostream/generated_schemas", schemaPackageName = "firstTestPackage",
          service = true,
          classes = {
                Note.class,
@@ -214,6 +214,28 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       }
       assertTrue("Non-abstract initializers must be supported", found);
    }
+
+   @AutoProtoSchemaBuilder(schemaFileName = "ReusableInitializer.proto",
+         classes = {ReusableInitializer.A.class, ReusableInitializer.B.class})
+   interface ReusableInitializer extends SerializationContextInitializer {
+
+
+      class A {
+         @ProtoField(number = 1, required = true)
+         boolean flag;
+      }
+
+      class B {
+         @ProtoField(number = 1, required = true)
+         boolean flag;
+      }
+   }
+
+   @AutoProtoSchemaBuilder(schemaFileName = "DependentInitializer.proto", dependsOn = {ReusableInitializer.class}, packages = "none", service = true)
+   interface DependentInitializer extends SerializationContextInitializer {
+
+   }
+
 
    //todo test enum with members and without
 

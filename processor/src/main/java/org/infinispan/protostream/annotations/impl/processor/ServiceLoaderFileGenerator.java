@@ -32,12 +32,15 @@ final class ServiceLoaderFileGenerator {
 
    private final String resourceFile;
 
+   private final Filer filer;
+
    private final Set<String> providers = new HashSet<>();
 
    private final List<Element> originatingElements = new ArrayList<>();
 
-   ServiceLoaderFileGenerator(Class<?> serviceInterface) {
-      resourceFile = META_INF_SERVICES + serviceInterface.getName();
+   ServiceLoaderFileGenerator(Class<?> serviceInterface, Filer filer) {
+      this.resourceFile = META_INF_SERVICES + serviceInterface.getName();
+      this.filer = filer;
    }
 
    void addProvider(String providerClass, Element originatingElement) {
@@ -45,7 +48,7 @@ final class ServiceLoaderFileGenerator {
       originatingElements.add(originatingElement);
    }
 
-   void generateResources(Filer filer) throws IOException {
+   void generateResources() throws IOException {
       if (!providers.isEmpty()) {
          Set<String> serviceProviders;
          try {
