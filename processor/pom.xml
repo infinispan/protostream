@@ -86,7 +86,6 @@
         <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
-            <version>${version.auto-service}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
