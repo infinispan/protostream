@@ -18,10 +18,9 @@ import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.impl.testdomain.Simple;
 import org.infinispan.protostream.annotations.impl.testdomain.TestEnum;
-import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
 
-public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
+public class AutoProtoSchemaBuilderTest {
 
    @ProtoDoc("This is the only info we have")
    public static class Note {
@@ -128,7 +127,7 @@ public class AutoProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    @Test
    public void testGeneratedInitializer() throws Exception {
-      SerializationContext ctx = createContext();
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       TestSerializationContextInitializer serCtxInitializer = new TestSerializationContextInitializerImpl();
       serCtxInitializer.registerSchema(ctx);
