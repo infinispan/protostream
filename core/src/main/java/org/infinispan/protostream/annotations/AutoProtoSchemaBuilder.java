@@ -29,10 +29,12 @@ public @interface AutoProtoSchemaBuilder {
    String className() default "";
 
    /**
-    * Generated Protobuf schema file name (required). Must end with ".proto" suffix. The schema will be registered under
-    * this name in the {@link org.infinispan.protostream.SerializationContext}.
+    * The generated Protobuf schema file name (optional). Must end with ".proto" suffix. The schema will be registered
+    * under this name in the {@link org.infinispan.protostream.SerializationContext}.
+    * <p>
+    * If missing, the simple name of the annotated element will be used plus the ".proto" suffix.
     */
-   String schemaFileName();  //todo [anistor] make it optional, defaulting to the class name of the annotated element
+   String schemaFileName() default "";
 
    /**
     * Generated Protobuf schema resource file path (optional). If this is present then a resource file is generated in

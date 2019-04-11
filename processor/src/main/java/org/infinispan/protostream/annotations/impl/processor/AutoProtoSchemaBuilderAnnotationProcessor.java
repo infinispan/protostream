@@ -168,27 +168,27 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    @Override
    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
       try {
-         boolean claimed = annotations.size() == 1 && annotations.iterator().next().getQualifiedName().contentEquals(PROTO_SCHEMA_TOOL_ANNOTATION_NAME);
-         if (!claimed && !roundEnv.processingOver()) {
-            return false;
-         }
+         TypeElement annotationTypeElement = null;
+         boolean claimed = annotations.size() == 1 && (annotationTypeElement = annotations.iterator().next()).getQualifiedName().contentEquals(PROTO_SCHEMA_TOOL_ANNOTATION_NAME);
 
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(AutoProtoSchemaBuilder.class)) {
-            AutoProtoSchemaBuilder builderAnnotation = annotatedElement.getAnnotation(AutoProtoSchemaBuilder.class);
+         if (claimed) {
+            for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(annotationTypeElement)) {
+               AutoProtoSchemaBuilder builderAnnotation = annotatedElement.getAnnotation(AutoProtoSchemaBuilder.class);
 
-            if (annotatedElement.getKind() != ElementKind.PACKAGE && annotatedElement.getKind() != ElementKind.INTERFACE && annotatedElement.getKind() != ElementKind.CLASS) {
-               throw new AnnotationProcessingException(annotatedElement, "@AutoProtoSchemaBuilder can only be applied to classes, interfaces and packages.");
-            }
+               if (annotatedElement.getKind() != ElementKind.PACKAGE && annotatedElement.getKind() != ElementKind.INTERFACE && annotatedElement.getKind() != ElementKind.CLASS) {
+                  throw new AnnotationProcessingException(annotatedElement, "@AutoProtoSchemaBuilder can only be applied to classes, interfaces and packages.");
+               }
 
-            Collection<? extends TypeMirror> protoClasses = getClassesToProcess(roundEnv, annotatedElement, builderAnnotation);
-            if (protoClasses.isEmpty()) {
-               reportWarning(annotatedElement, "No ProtoStream annotated classes found matching the criteria. Please review the 'classes' / 'packages' attribute of the @AutoProtoSchemaBuilder annotation.");
-            }
+               Collection<? extends TypeMirror> protoClasses = getClassesToProcess(roundEnv, annotatedElement, builderAnnotation);
+               if (protoClasses.isEmpty()) {
+                  reportWarning(annotatedElement, "No ProtoStream annotated classes found matching the criteria. Please review the 'classes' / 'packages' attribute of the @AutoProtoSchemaBuilder annotation.");
+               }
 
-            try {
-               processElement(annotatedElement, builderAnnotation, protoClasses);
-            } catch (ProtoSchemaBuilderException e) {
-               throw new AnnotationProcessingException(e, annotatedElement, "%s", e.getMessage());
+               try {
+                  processElement(annotatedElement, builderAnnotation, protoClasses);
+               } catch (ProtoSchemaBuilderException e) {
+                  throw new AnnotationProcessingException(e, annotatedElement, "%s", e.getMessage());
+               }
             }
          }
 
@@ -370,12 +370,16 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       Set<String> generatedClasses = new LinkedHashSet<>();
 
+      String fileName = annotation.schemaFileName();
+      if (fileName.isEmpty()) {
+         fileName = packageElement.getSimpleName().toString() + ".proto";
+      }
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, processingEnv, serCtx,
-            annotation.schemaFileName(), protobufPackageName, xclasses, annotation.autoImportClasses(), generatedClasses);
+            fileName, protobufPackageName, xclasses, annotation.autoImportClasses(), generatedClasses);
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializerSourceFile(packageElement, packageElement.getQualifiedName().toString(), annotation,
-            deps, classes, packageName, initializerClassName, annotation.schemaFileName(), schemaSrc, generatedClasses);
+            deps, classes, packageName, initializerClassName, fileName, schemaSrc, generatedClasses);
    }
 
    private void processClass(TypeElement typeElement, AutoProtoSchemaBuilder annotation, Collection<? extends TypeMirror> classes) throws IOException {
@@ -418,12 +422,16 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       Set<String> generatedClasses = new LinkedHashSet<>();
 
+      String fileName = annotation.schemaFileName();
+      if (fileName.isEmpty()) {
+         fileName = typeElement.getSimpleName() + ".proto";
+      }
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, processingEnv, serCtx,
-            annotation.schemaFileName(), protobufPackageName, xclasses, annotation.autoImportClasses(), generatedClasses);
+            fileName, protobufPackageName, xclasses, annotation.autoImportClasses(), generatedClasses);
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializerSourceFile(typeElement, typeElement.getQualifiedName().toString(), annotation,
-            deps, classes, packageName, initializerClassName, annotation.schemaFileName(), schemaSrc, generatedClasses);
+            deps, classes, packageName, initializerClassName, fileName, schemaSrc, generatedClasses);
    }
 
    private String getInitializerClassName(Element annotatedElement, AutoProtoSchemaBuilder builderAnnotation) {

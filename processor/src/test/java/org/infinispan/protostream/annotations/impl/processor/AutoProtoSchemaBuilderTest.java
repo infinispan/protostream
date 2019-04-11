@@ -140,8 +140,7 @@ public class AutoProtoSchemaBuilderTest {
       ProtobufUtil.toWrappedByteArray(ctx, new Simple());
    }
 
-   @AutoProtoSchemaBuilder(schemaFileName = "TestInitializer.proto", schemaFilePath = "second_initializer",
-         className = "TestInitializer",
+   @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer",
          packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    abstract static class SecondInitializer implements SerializationContextInitializer {
       SecondInitializer() {
@@ -166,7 +165,7 @@ public class AutoProtoSchemaBuilderTest {
    public void testLocalAnnotatedClassesAreSkipped() {
       // Standard Java annotation processors do not process the bodies of methods, so LocalInitializer is never seen by our AP and no code is generated for it, and that is OK.
       // If we ever decide to process method bodies we should probably study the approach used by "The Checker Framework" (https://checkerframework.org).
-      @AutoProtoSchemaBuilder(schemaFileName = "LocalInitializer.proto", className = "NeverEverGenerated",
+      @AutoProtoSchemaBuilder(className = "NeverEverGenerated",
             packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
       abstract class LocalInitializer implements SerializationContextInitializer {
       }
@@ -179,7 +178,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    // Using a fully implemented initializer as a base is not the usual use case but some users might need this and we do support it.
-   @AutoProtoSchemaBuilder(schemaFileName = "NonAbstractInitializer.proto", className = "NonAbstractInitializerImpl",
+   @AutoProtoSchemaBuilder(className = "NonAbstractInitializerImpl",
          packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    static class NonAbstractInitializer implements SerializationContextInitializer {
 
@@ -214,10 +213,8 @@ public class AutoProtoSchemaBuilderTest {
       assertTrue("Non-abstract initializers must be supported", found);
    }
 
-   @AutoProtoSchemaBuilder(schemaFileName = "ReusableInitializer.proto",
-         classes = {ReusableInitializer.A.class, ReusableInitializer.B.class})
+   @AutoProtoSchemaBuilder(classes = {ReusableInitializer.A.class, ReusableInitializer.B.class})
    interface ReusableInitializer extends SerializationContextInitializer {
-
 
       class A {
          @ProtoField(number = 1, required = true)
@@ -230,9 +227,34 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(schemaFileName = "DependentInitializer.proto", dependsOn = {ReusableInitializer.class}, packages = "none", service = true)
+   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class,
+         classes = {DependentInitializer.C.class}, service = true)
    interface DependentInitializer extends SerializationContextInitializer {
+      class C {
+         @ProtoField(number = 1, required = true)
+         boolean flag;
+      }
+   }
 
+   @Test
+   public void testDependsOn() throws Exception {
+      DependentInitializer dependentInitializer = null;
+      for (SerializationContextInitializer sci : ServiceLoader.load(SerializationContextInitializer.class)) {
+         if (sci instanceof DependentInitializer) {
+            dependentInitializer = (DependentInitializer) sci;
+            break;
+         }
+      }
+
+      assertNotNull("DependentInitializer implementation not found by ServiceLoader", dependentInitializer);
+
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      dependentInitializer.registerSchema(ctx);
+      dependentInitializer.registerMarshallers(ctx);
+
+      assertTrue(ctx.canMarshall(ReusableInitializer.A.class));
+      assertTrue(ctx.canMarshall(ReusableInitializer.B.class));
+      assertTrue(ctx.canMarshall(DependentInitializer.C.class));
    }
 
 
