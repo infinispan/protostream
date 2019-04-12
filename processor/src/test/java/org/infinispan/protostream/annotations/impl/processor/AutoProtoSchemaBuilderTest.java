@@ -228,7 +228,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class,
-         classes = {DependentInitializer.C.class}, service = true)
+         classes = DependentInitializer.C.class, service = true)
    interface DependentInitializer extends SerializationContextInitializer {
       class C {
          @ProtoField(number = 1, required = true)
