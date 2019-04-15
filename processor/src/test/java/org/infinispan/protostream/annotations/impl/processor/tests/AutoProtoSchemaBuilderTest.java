@@ -1,4 +1,4 @@
-package org.infinispan.protostream.annotations.impl.processor;
+package org.infinispan.protostream.annotations.impl.processor.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -158,7 +158,7 @@ public class AutoProtoSchemaBuilderTest {
       }
 
       assertNotNull("SecondInitializer implementation not found by ServiceLoader", initializer);
-      assertEquals("org.infinispan.protostream.annotations.impl.processor.TestInitializer", initializer.getClass().getName());
+      assertEquals("org.infinispan.protostream.annotations.impl.processor.tests.TestInitializer", initializer.getClass().getName());
    }
 
    @Test
@@ -213,26 +213,15 @@ public class AutoProtoSchemaBuilderTest {
       assertTrue("Non-abstract initializers must be supported", found);
    }
 
-   @AutoProtoSchemaBuilder(classes = {ReusableInitializer.A.class, ReusableInitializer.B.class})
-   interface ReusableInitializer extends SerializationContextInitializer {
-
-      class A {
-         @ProtoField(number = 1, required = true)
-         boolean flag;
-      }
-
-      class B {
-         @ProtoField(number = 1, required = true)
-         boolean flag;
-      }
-   }
-
    @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class,
-         classes = DependentInitializer.C.class, service = true)
-   interface DependentInitializer extends SerializationContextInitializer {
+         classes = DependentInitializer.C.class, service = true, autoImportClasses = false)
+   public interface DependentInitializer extends SerializationContextInitializer {
       class C {
          @ProtoField(number = 1, required = true)
-         boolean flag;
+         public boolean flag;
+
+         //@ProtoField(number = 2)
+         //public ReusableInitializer.A a;
       }
    }
 

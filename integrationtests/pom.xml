@@ -6,15 +6,16 @@
     <parent>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>parent</artifactId>
-        <version>4.3.0.Alpha1</version>
+        <version>4.3.0-SNAPSHOT</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>integration</artifactId>
+    <artifactId>protostream-integrationtests</artifactId>
     <packaging>jar</packaging>
 
     <name>Integration tests</name>
     <description>
+        Tests for: multi-module annotation processing, compatibility with the reference protostream-java implementation.
     </description>
 
     <dependencies>
@@ -29,8 +30,28 @@
         </dependency>
 
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>protostream-processor</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.testing.compile</groupId>
+            <artifactId>compile-testing</artifactId>
+            <version>0.15</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

@@ -3,6 +3,7 @@ package org.infinispan.protostream.annotations.impl;
 import java.lang.reflect.Executable;
 import java.util.Date;
 
+import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMember;
@@ -235,8 +236,10 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    }
 
    public boolean isBoxedPrimitive() {
-      Class<?> c = javaType.asClass();
-      return c == Float.class || c == Double.class || c == Long.class || c == Integer.class
-            || c == Short.class || c == Byte.class || c == Boolean.class || c == Character.class;
+      UnifiedTypeFactory factory = javaType.getFactory();
+      return javaType == factory.fromClass(Float.class) || javaType == factory.fromClass(Double.class) ||
+            javaType == factory.fromClass(Long.class) || javaType == factory.fromClass(Integer.class) ||
+            javaType == factory.fromClass(Short.class) || javaType == factory.fromClass(Byte.class) ||
+            javaType == factory.fromClass(Boolean.class) || javaType == factory.fromClass(Character.class);
    }
 }

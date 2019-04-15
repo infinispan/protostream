@@ -14,12 +14,15 @@ import org.infinispan.protostream.SerializationContextInitializer;
  * based on {@link #className}, having a default no-arguments public constructor will be generated at compile time. The
  * implementations of the methods from {@link SerializationContextInitializer} will be generated based on the
  * information provided in the attributes of this annotation.
+ * <p>
+ * This annotation is used at compile time only and should not be relied upon at runtime, so its retention is set to
+ * {@link RetentionPolicy#CLASS}
  *
  * @author anistor@redhat.com
  * @since 4.3
  */
 @Target({ElementType.TYPE, ElementType.PACKAGE})
-@Retention(RetentionPolicy.RUNTIME)  // SOURCE is too restrictive
+@Retention(RetentionPolicy.CLASS)
 public @interface AutoProtoSchemaBuilder {
 
    /**

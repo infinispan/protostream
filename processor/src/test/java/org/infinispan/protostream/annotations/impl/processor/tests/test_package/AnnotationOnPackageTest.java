@@ -1,4 +1,4 @@
-package org.infinispan.protostream.annotations.impl.processor.test_package;
+package org.infinispan.protostream.annotations.impl.processor.tests.test_package;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

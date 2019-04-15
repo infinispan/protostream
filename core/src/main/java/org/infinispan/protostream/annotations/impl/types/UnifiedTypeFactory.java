@@ -17,7 +17,7 @@ public interface UnifiedTypeFactory {
     * Wraps the given Class in an XClass.
     *
     * @param clazz can be null
-    * @return the wrapper XClass, or null if the actual argument is null
+    * @return the wrapper XClass, or null iff the actual argument is null
     */
    XClass fromClass(Class<?> clazz);
 
@@ -25,7 +25,7 @@ public interface UnifiedTypeFactory {
     * Wraps the given TypeMirror in an XClass.
     *
     * @param typeMirror can be null
-    * @return the wrapper XClass, or null if the actual argument is null
+    * @return the wrapper XClass, or null iff the actual argument is null
     */
    XClass fromTypeMirror(TypeMirror typeMirror);
 }

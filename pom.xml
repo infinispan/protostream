@@ -26,7 +26,7 @@
         <module>core</module>
         <module>processor</module>
         <module>sample-domain-implementation</module>
-        <module>integration</module>
+        <module>integrationtests</module>
     </modules>
 
     <build>

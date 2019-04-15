@@ -49,27 +49,36 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
    private final Map<String, XClass> classCache = new HashMap<>();
 
-   private final MirrorPrimitiveType voidType = new MirrorPrimitiveType(void.class);
+   private final MirrorPrimitiveType voidType;
 
-   private final MirrorPrimitiveType booleanType = new MirrorPrimitiveType(boolean.class);
+   private final MirrorPrimitiveType booleanType;
 
-   private final MirrorPrimitiveType byteType = new MirrorPrimitiveType(byte.class);
+   private final MirrorPrimitiveType byteType;
 
-   private final MirrorPrimitiveType shortType = new MirrorPrimitiveType(short.class);
+   private final MirrorPrimitiveType shortType;
 
-   private final MirrorPrimitiveType intType = new MirrorPrimitiveType(int.class);
+   private final MirrorPrimitiveType intType;
 
-   private final MirrorPrimitiveType longType = new MirrorPrimitiveType(long.class);
+   private final MirrorPrimitiveType longType;
 
-   private final MirrorPrimitiveType charType = new MirrorPrimitiveType(char.class);
+   private final MirrorPrimitiveType charType;
 
-   private final MirrorPrimitiveType floatType = new MirrorPrimitiveType(float.class);
+   private final MirrorPrimitiveType floatType;
 
-   private final MirrorPrimitiveType doubleType = new MirrorPrimitiveType(double.class);
+   private final MirrorPrimitiveType doubleType;
 
    public MirrorClassFactory(ProcessingEnvironment processingEnv) {
       elements = processingEnv.getElementUtils();
       types = processingEnv.getTypeUtils();
+      voidType = new MirrorPrimitiveType(void.class, types.getNoType(TypeKind.VOID));
+      booleanType = new MirrorPrimitiveType(boolean.class, types.getPrimitiveType(TypeKind.BOOLEAN));
+      byteType = new MirrorPrimitiveType(byte.class, types.getPrimitiveType(TypeKind.BYTE));
+      shortType = new MirrorPrimitiveType(short.class, types.getPrimitiveType(TypeKind.SHORT));
+      intType = new MirrorPrimitiveType(int.class, types.getPrimitiveType(TypeKind.INT));
+      longType = new MirrorPrimitiveType(long.class, types.getPrimitiveType(TypeKind.LONG));
+      charType = new MirrorPrimitiveType(char.class, types.getPrimitiveType(TypeKind.CHAR));
+      floatType = new MirrorPrimitiveType(float.class, types.getPrimitiveType(TypeKind.FLOAT));
+      doubleType = new MirrorPrimitiveType(double.class, types.getPrimitiveType(TypeKind.DOUBLE));
    }
 
    @Override
@@ -121,6 +130,9 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
          typeName = c.getName();
       }
       TypeElement typeElement = elements.getTypeElement(typeName);
+      if (typeElement == null) {
+         throw new RuntimeException("Type not found : " + typeName);
+      }
       return fromTypeMirror(typeElement.asType());
    }
 
@@ -131,6 +143,8 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       switch (typeMirror.getKind()) {
+         case ERROR:
+            throw new IllegalStateException("Unresolved type : " + typeMirror.toString());
          case VOID:
             return voidType;
          case BOOLEAN:
@@ -229,8 +243,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       private final Class<?> clazz;
 
-      MirrorPrimitiveType(Class<?> clazz) {
+      private final TypeMirror primitiveType;
+
+      MirrorPrimitiveType(Class<?> clazz, TypeMirror primitiveType) {
          this.clazz = clazz;
+         this.primitiveType = primitiveType;
       }
 
       @Override
@@ -305,7 +322,12 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public boolean isAssignableTo(XClass c) {
-         return clazz == c.asClass(); // todo [anistor] support for isAssignableTo java.lang.Number or other interfaces is TBD
+         String secondTypeName = c.getCanonicalName();
+         TypeElement secondType = elements.getTypeElement(secondTypeName);
+         if (secondType == null) {
+            throw new RuntimeException("Type not found : " + secondTypeName);
+         }
+         return types.isSameType(primitiveType, secondType.asType());
       }
 
       @Override
@@ -482,6 +504,9 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       @Override
       public boolean isAssignableTo(XClass c) {
          TypeElement secondType = elements.getTypeElement(c.getCanonicalName());
+         if (secondType == null) {
+            throw new RuntimeException("Type not found : " + c.getCanonicalName());
+         }
          return types.isAssignable(types.erasure(typeMirror), types.erasure(secondType.asType()));
       }
 
