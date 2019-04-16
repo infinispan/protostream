@@ -64,7 +64,7 @@ public interface ImmutableSerializationContext {
     *
     * @param fullTypeName the type name
     * @return the marshaller
-    * @throws IllegalArgumentException if the given type name is unknown
+    * @throws IllegalArgumentException if the given type name is not known to this context
     */
    <T> BaseMarshaller<T> getMarshaller(String fullTypeName);
 
@@ -73,7 +73,7 @@ public interface ImmutableSerializationContext {
     *
     * @param clazz the class
     * @return the marshaller
-    * @throws IllegalArgumentException if the given Java type is unknown
+    * @throws IllegalArgumentException if the given Java type is not known to this context
     */
    <T> BaseMarshaller<T> getMarshaller(Class<T> clazz);
 
@@ -82,7 +82,7 @@ public interface ImmutableSerializationContext {
     *
     * @param typeId the numeric type id
     * @return the fully qualified type name
-    * @throws IllegalArgumentException if the given type id is unknown
+    * @throws IllegalArgumentException if the given type id is not known to this context
     * @deprecated replaced by {@code getDescriptorByTypeId(typeId).getFullName()}
     */
    @Deprecated
@@ -93,7 +93,7 @@ public interface ImmutableSerializationContext {
     *
     * @param fullTypeName the fully qualified type name
     * @return the type id or {@code null} if no type id is associated with the type
-    * @throws IllegalArgumentException if the given type name is unknown
+    * @throws IllegalArgumentException if the given type name is not known to this context
     * @deprecated replaced by {@code getDescriptorByName(fullTypeName).getTypeId()}
     */
    @Deprecated
@@ -104,7 +104,7 @@ public interface ImmutableSerializationContext {
     *
     * @param typeId the numeric type id
     * @return the descriptor
-    * @throws IllegalArgumentException if the given type id is unknown
+    * @throws IllegalArgumentException if the given type id is not known to this context
     */
    GenericDescriptor getDescriptorByTypeId(Integer typeId);
 
@@ -113,7 +113,7 @@ public interface ImmutableSerializationContext {
     *
     * @param fullTypeName the fully qualified type name
     * @return the descriptor
-    * @throws IllegalArgumentException if the given type name is unknown
+    * @throws IllegalArgumentException if the given type name is not known to this context
     */
    GenericDescriptor getDescriptorByName(String fullTypeName);
 }
