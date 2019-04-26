@@ -303,7 +303,8 @@ public final class FileDescriptor {
             } else if (res instanceof Descriptor) {
                fieldDescriptor.setMessageType((Descriptor) res);
             } else {
-               throw new DescriptorParserException("Field type " + fieldDescriptor.getTypeName() + " not found");
+               throw new DescriptorParserException("Failed to resolve type of field \"" + fieldDescriptor.getFullName()
+                     + "\". Type not found : " + fieldDescriptor.getTypeName());
             }
          }
       }

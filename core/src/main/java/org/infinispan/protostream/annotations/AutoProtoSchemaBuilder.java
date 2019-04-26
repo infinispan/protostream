@@ -5,7 +5,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
@@ -56,7 +55,7 @@ public @interface AutoProtoSchemaBuilder {
     * Annotated classes to process (optional). If missing, all @ProtoXyz annotated classes that belong to the packages
     * listed in {@link #packages} will be scanned.
     */
-   Class[] classes() default {};
+   Class<?>[] classes() default {};
 
    /**
     * The list of packages to scan if {@link #classes} was not specified. The packages are scanned for annotated classes
@@ -81,23 +80,8 @@ public @interface AutoProtoSchemaBuilder {
    boolean service() default false;
 
    /**
-    * The initializers to execute before this one. List here instantiable classes implementing {@link
-    * SerializationContextInitializer} or classes or interfaces annotated with {@code AutoProtoSchemaBuilder} from which
-    * a {@link SerializationContextInitializer} is being generated.
+    * The initializers to execute before this one. List here classes or interfaces annotated with {@code
+    * AutoProtoSchemaBuilder} from which a {@link SerializationContextInitializer} is being generated.
     */
    Class<? extends SerializationContextInitializer>[] dependsOn() default {};   //todo [anistor] check for cycles!
-
-   /**
-    * Additional schema resource paths to import in the {@link org.infinispan.protostream.SerializationContext}
-    * <em>before</em> starting the generation (optional). <em>These resource files are used at compile time only and
-    * they do not need to be loadable from class path at runtime but they do need to be registered by other means in the
-    * {@link org.infinispan.protostream.SerializationContext} before this initializer is executed</em>.
-    */
-   String[] schemaResources() default {};  //TODO implement!
-
-   /**
-    * Marshallers to register in the {@link org.infinispan.protostream.SerializationContext} <em>before</em> starting
-    * the generation (optional).
-    */
-   Class<? extends BaseMarshaller<?>>[] marshallers() default {}; //TODO implement!
 }

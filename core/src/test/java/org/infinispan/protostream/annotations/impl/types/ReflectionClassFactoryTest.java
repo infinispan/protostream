@@ -25,14 +25,14 @@ public class ReflectionClassFactoryTest {
 
       XClass integerClass = typeFactory.fromClass(Integer.class);
 
-      assertSame(Integer.class, integerClass.asClass());
+      assertSame("java.lang.Integer", integerClass.getName());
       assertFalse(integerClass.isArray());
    }
 
    @Test
    public void testFromTypeMirror() {
       expectedException.expect(UnsupportedOperationException.class);
-      expectedException.expectMessage("javax.lang.model type mirrors are only supported at compile time. Please use reflection during run time.");
+      expectedException.expectMessage("javax.lang.model.type.TypeMirror is only supported when processing annotations at compile time.");
 
       ReflectionClassFactory typeFactory = new ReflectionClassFactory();
 

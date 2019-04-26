@@ -77,7 +77,7 @@ public class SerializationContextImplTest {
       assertEquals(1, successful.size());
       DescriptorParserException exception = failed.get("file2.proto");
       assertNotNull(exception);
-      assertEquals("Field type b.A not found", exception.getMessage());
+      assertEquals("Failed to resolve type of field \"org.infinispan.B.ma\". Type not found : b.A", exception.getMessage());
       assertTrue(successful.contains("file1.proto"));
 
       Map<String, FileDescriptor> fileDescriptors = ctx.getFileDescriptors();

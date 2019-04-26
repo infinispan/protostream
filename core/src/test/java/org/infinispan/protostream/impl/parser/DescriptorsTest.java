@@ -495,7 +495,7 @@ public class DescriptorsTest {
    @Test
    public void testNotImportedInSamePackage() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Field type M1 not found");
+      exception.expectMessage("Failed to resolve type of field \"test.M2.b\". Type not found : M1");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -517,7 +517,7 @@ public class DescriptorsTest {
    @Test
    public void testNotImportedInAnotherPackage() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Field type test1.M1 not found");
+      exception.expectMessage("Failed to resolve type of field \"test2.M2.b\". Type not found : test1.M1");
 
       String file1 = "package test1;\n" +
             "message M1 {\n" +
@@ -616,7 +616,7 @@ public class DescriptorsTest {
    @Test
    public void testPrivateImport() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Field type M1 not found");
+      exception.expectMessage("Failed to resolve type of field \"M3.a\". Type not found : M1");
 
       String file1 = "message M1 {\n" +
             "  required string a = 1;\n" +

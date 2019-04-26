@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import javax.annotation.Generated;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.FilerException;
@@ -28,7 +30,6 @@ import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.PackageElement;
@@ -62,7 +63,7 @@ import org.infinispan.protostream.annotations.impl.types.XMethod;
 import com.google.auto.service.AutoService;
 
 @SupportedOptions(AutoProtoSchemaBuilderAnnotationProcessor.DEBUG_OPTION)
-@SupportedAnnotationTypes(AutoProtoSchemaBuilderAnnotationProcessor.PROTO_SCHEMA_TOOL_ANNOTATION_NAME)
+@SupportedAnnotationTypes(AutoProtoSchemaBuilderAnnotationProcessor.AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME)
 @AutoService(Processor.class)
 public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractProcessor {
 
@@ -74,11 +75,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    /**
     * The FQN of the one and only annotation we claim.
     */
-   public static final String PROTO_SCHEMA_TOOL_ANNOTATION_NAME = "org.infinispan.protostream.annotations.AutoProtoSchemaBuilder";
+   public static final String AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME = "org.infinispan.protostream.annotations.AutoProtoSchemaBuilder";
 
-   private ServiceLoaderFileGenerator serviceLoaderFileGenerator;
+   private ServiceLoaderFileGenerator serviceLoaderFileGenerator = new ServiceLoaderFileGenerator(SerializationContextInitializer.class);
 
-   private boolean debugEnabled;
+   private boolean isDebugEnabled;
 
    private Types types;
 
@@ -90,7 +91,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
    /**
     * An exception thrown to stop processing of annotations abruptly whenever the conditions do not allow to continue
-    * (ie. annotation data is invalid).
+    * (ie. annotation values are not invalid) and a compilation error is to be issued immediately.
     */
    private static final class AnnotationProcessingException extends RuntimeException {
 
@@ -116,19 +117,29 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    public synchronized void init(ProcessingEnvironment processingEnv) {
       super.init(processingEnv);
 
-      debugEnabled = processingEnv.getOptions().containsKey(DEBUG_OPTION);
+      isDebugEnabled = processingEnv.getOptions().containsKey(DEBUG_OPTION);
 
       types = processingEnv.getTypeUtils();
       elements = processingEnv.getElementUtils();
       filer = processingEnv.getFiler();
       messager = processingEnv.getMessager();
-
-      serviceLoaderFileGenerator = new ServiceLoaderFileGenerator(SerializationContextInitializer.class, filer);
    }
 
    @Override
    public SourceVersion getSupportedSourceVersion() {
       return SourceVersion.latestSupported(); //TODO [anistor] or maybe return processingEnv.getSourceVersion(), or hardcoded @SupportedSourceVersion(SourceVersion.RELEASE_8) ?
+   }
+
+   /**
+    * Issue a compilation error.
+    */
+   private void reportError(AnnotationProcessingException ex) {
+      String formatted = String.format(ex.message, ex.msgParams);
+      if (ex.location != null) {
+         messager.printMessage(Diagnostic.Kind.ERROR, formatted, ex.location);
+      } else {
+         messager.printMessage(Diagnostic.Kind.ERROR, formatted);
+      }
    }
 
    /**
@@ -159,7 +170,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
     * Log a debug message, only if debug option is enabled.
     */
    private void logDebug(String message, Object... msgParams) {
-      if (debugEnabled) {
+      if (isDebugEnabled) {
          String formatted = String.format(message, msgParams);
          messager.printMessage(Diagnostic.Kind.NOTE, formatted);
       }
@@ -169,44 +180,51 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
       try {
          TypeElement annotationTypeElement = null;
-         boolean claimed = annotations.size() == 1 && (annotationTypeElement = annotations.iterator().next()).getQualifiedName().contentEquals(PROTO_SCHEMA_TOOL_ANNOTATION_NAME);
+         boolean claimed = annotations.size() == 1 && (annotationTypeElement = annotations.iterator().next())
+               .getQualifiedName().contentEquals(AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME);
 
          if (claimed) {
             for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(annotationTypeElement)) {
-               AutoProtoSchemaBuilder builderAnnotation = annotatedElement.getAnnotation(AutoProtoSchemaBuilder.class);
-
-               if (annotatedElement.getKind() != ElementKind.PACKAGE && annotatedElement.getKind() != ElementKind.INTERFACE && annotatedElement.getKind() != ElementKind.CLASS) {
-                  throw new AnnotationProcessingException(annotatedElement, "@AutoProtoSchemaBuilder annotation can only be applied to classes, interfaces and packages.");
-               }
-
-               Collection<? extends TypeMirror> protoClasses = getClassesToProcess(roundEnv, annotatedElement, builderAnnotation);
-               if (protoClasses.isEmpty()) {
-                  reportWarning(annotatedElement, "No ProtoStream annotated classes found matching the criteria. Please review the 'classes' / 'packages' attribute of the @AutoProtoSchemaBuilder annotation.");
-               }
-
-               try {
-                  processElement(annotatedElement, builderAnnotation, protoClasses);
-               } catch (ProtoSchemaBuilderException e) {
-                  throw new AnnotationProcessingException(e, annotatedElement, "%s", e.getMessage());
+               // if generated by us, skip re-processing it
+               if (!isGeneratedByMe(annotatedElement)) {
+                  AutoProtoSchemaBuilder builderAnnotation = annotatedElement.getAnnotation(AutoProtoSchemaBuilder.class);
+                  SerializationContext serCtx = ProtobufUtil.newSerializationContext();
+                  try {
+                     processElement(true, roundEnv, serCtx, annotatedElement, builderAnnotation);
+                  } catch (ProtoSchemaBuilderException e) {
+                     throw new AnnotationProcessingException(e, annotatedElement, "%s", e.getMessage());
+                  }
                }
             }
          }
 
          if (roundEnv.processingOver()) {
-            serviceLoaderFileGenerator.generateResources();
+            serviceLoaderFileGenerator.generateResources(filer);
          }
       } catch (AnnotationProcessingException e) {
          // this is caused by the user supplying incorrect data in the annotation or related classes
-         reportError(e.location, e.message, e.msgParams);
-         if (debugEnabled) {
+         if (isDebugEnabled) {
             logDebug("@AutoProtoSchemaBuilder processor threw an exception: %s", getStackTraceAsString(e));
          }
+         reportError(e);
       } catch (Exception e) {
          // this may be a fatal programming error in the annotation processor itself
          reportError(null, "@AutoProtoSchemaBuilder processor threw a fatal exception: %s", getStackTraceAsString(e));
       }
 
       return true;
+   }
+
+   private boolean isGeneratedByMe(Element annotatedElement) {
+      Generated generated = annotatedElement.getAnnotation(Generated.class);
+      if (generated != null) {
+         for (String generator : generated.value()) {
+            if (generator.equals(AutoProtoSchemaBuilderAnnotationProcessor.class.getName())) {
+               return true;
+            }
+         }
+      }
+      return false;
    }
 
    private static String getStackTraceAsString(Throwable throwable) {
@@ -221,7 +239,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    private Collection<? extends TypeMirror> getClassesToProcess(RoundEnvironment roundEnv, Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
       Collection<? extends TypeMirror> specifiedClasses = Collections.emptyList();
       try {
-         builderAnnotation.classes(); // this is guaranteed to fail
+         builderAnnotation.classes(); // this is guaranteed to fail, see MirroredTypesException javadoc
       } catch (MirroredTypesException mte) {
          specifiedClasses = mte.getTypeMirrors();
       }
@@ -240,13 +258,13 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          }
 
          // message classes from unnamed package cannot be imported so they can only be used by initializers also located in unnamed package
-         boolean initializerInUnnamedPackage = elements.getPackageOf(builderElement).isUnnamed();
+         PackageElement packageOfInitializer = elements.getPackageOf(builderElement);
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoField.class)) {
             Element enclosingElement = annotatedElement.getEnclosingElement();
             if (enclosingElement.getKind() == ElementKind.CLASS || enclosingElement.getKind() == ElementKind.INTERFACE) {
                TypeElement typeElement = (TypeElement) enclosingElement;
-               filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
+               filterByPackage(classes, typeElement, packages, packageOfInitializer);
             }
          }
 
@@ -256,7 +274,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                throw new AnnotationProcessingException(annotatedElement, "@ProtoEnumValue can only be applied to enum constants.");
             }
             TypeElement typeElement = (TypeElement) enclosingElement;
-            filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
+            filterByPackage(classes, typeElement, packages, packageOfInitializer);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnum.class)) {
@@ -264,7 +282,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                throw new AnnotationProcessingException(annotatedElement, "@ProtoEnum can only be applied to enums.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
+            filterByPackage(classes, typeElement, packages, packageOfInitializer);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoMessage.class)) {
@@ -272,7 +290,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                throw new AnnotationProcessingException(annotatedElement, "@ProtoMessage can only be applied to classes and interfaces.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
+            filterByPackage(classes, typeElement, packages, packageOfInitializer);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoName.class)) {
@@ -280,7 +298,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                throw new AnnotationProcessingException(annotatedElement, "@ProtoName can only be applied to classes, interfaces and enums.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement.getEnclosingElement();
-            filterByPackage(classes, typeElement, packages, initializerInUnnamedPackage);
+            filterByPackage(classes, typeElement, packages, packageOfInitializer);
          }
       } else {
          if (builderAnnotation.packages().length != 0) {
@@ -298,16 +316,23 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return classes.values();
    }
 
-   private void filterByPackage(Map<String, TypeMirror> collectedClasses, TypeElement typeElement, Set<String> packages, boolean initializerInUnnamedPackage) {
+   private void filterByPackage(Map<String, TypeMirror> collectedClasses, TypeElement typeElement, Set<String> packages, PackageElement packageOfInitializer) {
       // Skip interfaces and abstract classes when scanning packages. We only generate for instantiable classes.
       if (typeElement.getKind() == ElementKind.INTERFACE || typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
          return;
       }
 
       PackageElement packageOfElement = elements.getPackageOf(typeElement);
-      if (packageOfElement.isUnnamed() && !initializerInUnnamedPackage) {
+      if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed()) {
          // classes from default package are ignored unless the initializer is itself in the default package
          return;
+      }
+
+      if (!typeElement.getModifiers().contains(Modifier.PUBLIC)) {   //todo [anistor] compute actual visibility based on outer class visibility
+         if (!packageOfElement.equals(packageOfInitializer)) {
+            // classes with non-public visibility are ignored unless the initializer is in the same package
+            return;
+         }
       }
 
       String fqn = typeElement.getQualifiedName().toString();
@@ -343,16 +368,25 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return false;
    }
 
-   private void processElement(Element annotatedElement, AutoProtoSchemaBuilder builderAnnotation, Collection<? extends TypeMirror> protoClasses) throws IOException {
+   private Map<XClass, String> processElement(boolean generateFiles, RoundEnvironment roundEnv, SerializationContext serCtx, Element annotatedElement, AutoProtoSchemaBuilder annotation) throws IOException {
+      if (annotatedElement.getKind() != ElementKind.PACKAGE && annotatedElement.getKind() != ElementKind.INTERFACE && annotatedElement.getKind() != ElementKind.CLASS) {
+         throw new AnnotationProcessingException(annotatedElement, "@AutoProtoSchemaBuilder annotation can only be applied to classes, interfaces and packages.");
+      }
+
+      Collection<? extends TypeMirror> protoClasses = getClassesToProcess(roundEnv, annotatedElement, annotation);
+      if (protoClasses.isEmpty()) {
+         reportWarning(annotatedElement, "No ProtoStream annotated classes found matching the criteria. Please review the 'classes' / 'packages' attribute of the @AutoProtoSchemaBuilder annotation.");
+      }
+
       if (annotatedElement.getKind() == ElementKind.PACKAGE) {
-         processPackage((PackageElement) annotatedElement, builderAnnotation, protoClasses);
+         return processPackage(generateFiles, roundEnv, serCtx, (PackageElement) annotatedElement, annotation, protoClasses);
       } else {
-         processClass((TypeElement) annotatedElement, builderAnnotation, protoClasses);
+         return processClass(generateFiles, roundEnv, serCtx, (TypeElement) annotatedElement, annotation, protoClasses);
       }
    }
 
-   private void processPackage(PackageElement packageElement, AutoProtoSchemaBuilder annotation, Collection<? extends TypeMirror> classes) throws IOException {
-      String initializerClassName = annotation.className();
+   private Map<XClass, String> processPackage(boolean generateFiles, RoundEnvironment roundEnv, SerializationContext serCtx, PackageElement packageElement, AutoProtoSchemaBuilder builderAnnotation, Collection<? extends TypeMirror> classes) throws IOException {
+      String initializerClassName = builderAnnotation.className();
       if (initializerClassName.isEmpty()) {
          throw new AnnotationProcessingException(packageElement, "@AutoProtoSchemaBuilder.className is required when annotating a package.");
       }
@@ -360,55 +394,41 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          throw new AnnotationProcessingException(packageElement, "@AutoProtoSchemaBuilder.className annotation attribute must be a valid Java identifier and must not be fully qualified.");
       }
 
-      String packageName = packageElement.isUnnamed() ? null : packageElement.getQualifiedName().toString();
-      String protobufPackageName = annotation.schemaPackageName().isEmpty() ? null : annotation.schemaPackageName();
+      String initializerPackageName = packageElement.isUnnamed() ? null : packageElement.getQualifiedName().toString();
+      String protobufPackageName = builderAnnotation.schemaPackageName().isEmpty() ? null : builderAnnotation.schemaPackageName();
+      String protobufFileName = builderAnnotation.schemaFileName();
+      if (protobufFileName.isEmpty()) {
+         protobufFileName = packageElement.getSimpleName().toString() + ".proto";
+      }
+      String protobufFilePath = builderAnnotation.schemaFilePath().isEmpty() ? protobufFileName : builderAnnotation.schemaFilePath().replace('.', '/') + '/' + protobufFileName;
 
-      Set<String> deps = gatherDependencies(packageElement, annotation);
+      InitializerDependencies dependencies = processDependencies(roundEnv, serCtx, packageElement, builderAnnotation);
 
       MirrorClassFactory typeFactory = new MirrorClassFactory(processingEnv);
-
       Set<XClass> xclasses = classes.stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
-
-      SerializationContext serCtx = ProtobufUtil.newSerializationContext();
-
-      registerDeps(packageElement, deps, typeFactory, serCtx);
-
-      Set<String> generatedClasses = new LinkedHashSet<>();
-
-      String fileName = annotation.schemaFileName();
-      if (fileName.isEmpty()) {
-         fileName = packageElement.getSimpleName().toString() + ".proto";
+      Map<XClass, String> result = new HashMap<>(dependencies.depClasses);
+      for (XClass x : xclasses) {
+         result.put(x, protobufFilePath);
       }
-      CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, processingEnv, serCtx,
-            fileName, protobufPackageName, xclasses, annotation.autoImportClasses(), generatedClasses);
+
+      SourceFileWriter sourceFileWriter = new SourceFileWriter();
+
+      CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, sourceFileWriter, serCtx,
+            protobufFilePath, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
-      writeSerializationContextInitializerSourceFile(packageElement, packageElement.getQualifiedName().toString(), annotation,
-            deps, classes, packageName, initializerClassName, fileName, schemaSrc, generatedClasses);
-   }
+      if (generateFiles) {
+         sourceFileWriter.writeFiles(processingEnv.getFiler());
 
-   private void registerDeps(Element packageElement, Set<String> deps, MirrorClassFactory typeFactory, SerializationContext serCtx) throws IOException {
-      for (String typeName : deps) {
-         TypeElement dependencyElement = elements.getTypeElement(typeName);
-         if (dependencyElement == null) {
-            throw new RuntimeException("Type not found : " + typeName);
-         }
-         XClass dependencyType = typeFactory.fromTypeMirror(dependencyElement.asType());
-         Class<?> dependencyClass = dependencyType.asClass();
-
-         SerializationContextInitializer dependencyInstance;
-         try {
-            dependencyInstance = (SerializationContextInitializer) dependencyClass.newInstance();
-         } catch (Throwable th) {
-            throw new AnnotationProcessingException(th, packageElement, "Failed to instantiate a SerializationContextInitializer of type %s", typeName);
-         }
-
-         dependencyInstance.registerSchema(serCtx);
-         dependencyInstance.registerMarshallers(serCtx);
+         generateSerializationContextInitializer(packageElement, packageElement.getQualifiedName().toString(), builderAnnotation,
+               dependencies.initializerClassNames, classes, initializerPackageName, initializerClassName, protobufFileName,
+               protobufPackageName, schemaSrc, sourceFileWriter.getGeneratedMarshallerClasses());
       }
+
+      return result;
    }
 
-   private void processClass(TypeElement typeElement, AutoProtoSchemaBuilder annotation, Collection<? extends TypeMirror> classes) throws IOException {
+   private Map<XClass, String> processClass(boolean generateFiles, RoundEnvironment roundEnv, SerializationContext serCtx, TypeElement typeElement, AutoProtoSchemaBuilder builderAnnotation, Collection<? extends TypeMirror> classes) throws IOException {
       if (typeElement.getNestingKind() == NestingKind.LOCAL || typeElement.getNestingKind() == NestingKind.ANONYMOUS) {
          throw new AnnotationProcessingException(typeElement, "Classes or interfaces annotated with @AutoProtoSchemaBuilder must not be local or anonymous.");
       }
@@ -418,92 +438,110 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       if (typeElement.getModifiers().contains(Modifier.FINAL)) {
          throw new AnnotationProcessingException(typeElement, "Classes annotated with @AutoProtoSchemaBuilder must not be final.");
       }
-      if (!annotation.className().isEmpty() && (!SourceVersion.isIdentifier(annotation.className()) || SourceVersion.isKeyword(annotation.className()))) {
+      if (!builderAnnotation.className().isEmpty() && (!SourceVersion.isIdentifier(builderAnnotation.className()) || SourceVersion.isKeyword(builderAnnotation.className()))) {
          throw new AnnotationProcessingException(typeElement, "@AutoProtoSchemaBuilder.className annotation attribute must be a valid Java identifier and must not be fully qualified.");
       }
 
-      if (!types.isSubtype(typeElement.asType(), getSerializationContextInitializerTypeMirror())) {
+      TypeMirror serializationContextInitializerTypeMirror = elements.getTypeElement(SerializationContextInitializer.class.getName()).asType();
+      if (!types.isSubtype(typeElement.asType(), serializationContextInitializerTypeMirror)) {
          throw new AnnotationProcessingException(typeElement, "Classes or interfaces annotated with @AutoProtoSchemaBuilder must implement/extend %s", SerializationContextInitializer.class.getName());
       }
 
       PackageElement packageElement = elements.getPackageOf(typeElement);
-      String packageName = packageElement.isUnnamed() ? null : packageElement.getQualifiedName().toString();
-      String initializerClassName = getInitializerClassName(typeElement, annotation);
-      String protobufPackageName = annotation.schemaPackageName().isEmpty() ? null : annotation.schemaPackageName();
+      String initializerPackageName = packageElement.isUnnamed() ? null : packageElement.getQualifiedName().toString();
+      String initializerClassName = getInitializerClassName(typeElement, builderAnnotation);
+      String protobufPackageName = builderAnnotation.schemaPackageName().isEmpty() ? null : builderAnnotation.schemaPackageName();
+      String protobufFileName = builderAnnotation.schemaFileName();
+      if (protobufFileName.isEmpty()) {
+         protobufFileName = typeElement.getSimpleName() + ".proto";
+      }
+      String protobufFilePath = builderAnnotation.schemaFilePath().isEmpty() ? protobufFileName : builderAnnotation.schemaFilePath().replace('.', '/') + '/' + protobufFileName;
 
-      Set<String> deps = gatherDependencies(typeElement, annotation);
+      InitializerDependencies dependencies = processDependencies(roundEnv, serCtx, typeElement, builderAnnotation);
 
       MirrorClassFactory typeFactory = new MirrorClassFactory(processingEnv);
-
-      XClass annotatedType = typeFactory.fromTypeMirror(typeElement.asType());
-      warnOverrideExistingMethod(annotatedType, "getProtoFileName");
-      warnOverrideExistingMethod(annotatedType, "getProtoFile");
-      XClass serializationContextClass = typeFactory.fromClass(SerializationContext.class);
-      warnOverrideExistingMethod(annotatedType, "registerSchema", serializationContextClass);
-      warnOverrideExistingMethod(annotatedType, "registerMarshallers", serializationContextClass);
+      warnOverrideExistingMethods(typeElement, typeFactory);
 
       Set<XClass> xclasses = classes.stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
-
-      SerializationContext serCtx = ProtobufUtil.newSerializationContext();
-
-      registerDeps(typeElement, deps, typeFactory, serCtx);
-
-      Set<String> generatedClasses = new LinkedHashSet<>();
-
-      String fileName = annotation.schemaFileName();
-      if (fileName.isEmpty()) {
-         fileName = typeElement.getSimpleName() + ".proto";
+      Map<XClass, String> result = new HashMap<>(dependencies.depClasses);
+      for (XClass x : xclasses) {
+         result.put(x, protobufFilePath);
       }
-      CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, processingEnv, serCtx,
-            fileName, protobufPackageName, xclasses, annotation.autoImportClasses(), generatedClasses);
+
+      SourceFileWriter sourceFileWriter = new SourceFileWriter();
+
+      CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, sourceFileWriter, serCtx,
+            protobufFilePath, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
-      writeSerializationContextInitializerSourceFile(typeElement, typeElement.getQualifiedName().toString(), annotation,
-            deps, classes, packageName, initializerClassName, fileName, schemaSrc, generatedClasses);
+      if (generateFiles) {
+         sourceFileWriter.writeFiles(processingEnv.getFiler());
+
+         generateSerializationContextInitializer(typeElement, typeElement.getQualifiedName().toString(), builderAnnotation,
+               dependencies.initializerClassNames, classes, initializerPackageName, initializerClassName, protobufFileName, protobufPackageName,
+               schemaSrc, sourceFileWriter.getGeneratedMarshallerClasses());
+      }
+
+      return result;
    }
 
    private String getInitializerClassName(Element annotatedElement, AutoProtoSchemaBuilder builderAnnotation) {
       return builderAnnotation.className().isEmpty() ? annotatedElement.getSimpleName() + "Impl" : builderAnnotation.className();
    }
 
-   private Set<String> gatherDependencies(Element annotatedElement, AutoProtoSchemaBuilder builderAnnotation) {
+   private String getInitializerFQClassName(TypeElement annotatedElement, AutoProtoSchemaBuilder builderAnnotation) {
+      String initializerClassName = getInitializerClassName(annotatedElement, builderAnnotation);
+      PackageElement packageElement = elements.getPackageOf(annotatedElement);
+      return packageElement.isUnnamed() ? initializerClassName : packageElement.getQualifiedName().toString() + '.' + initializerClassName;
+   }
+
+   static final class InitializerDependencies {
+
+      final Set<String> initializerClassNames;
+
+      final Map<XClass, String> depClasses;
+
+      InitializerDependencies(Set<String> initializerClassNames, Map<XClass, String> depClasses) {
+         this.initializerClassNames = initializerClassNames;
+         this.depClasses = depClasses;
+      }
+   }
+
+   private InitializerDependencies processDependencies(RoundEnvironment roundEnv, SerializationContext serCtx, Element annotatedElement, AutoProtoSchemaBuilder builderAnnotation) throws IOException {
       List<? extends TypeMirror> dependencies = Collections.emptyList();
       try {
-         builderAnnotation.dependsOn(); // this is guaranteed to fail
+         builderAnnotation.dependsOn(); // this is guaranteed to fail, see MirroredTypesException javadoc
       } catch (MirroredTypesException mte) {
          dependencies = mte.getTypeMirrors();
       }
 
-      TypeMirror serializationContextInitializer = getSerializationContextInitializerTypeMirror();
-
-      Set<String> classNames = new LinkedHashSet<>(dependencies.size());
+      Set<String> initializerClassNames = new LinkedHashSet<>(dependencies.size());
+      Map<XClass, String> depClasses = new HashMap<>();
       for (TypeMirror dependencyType : dependencies) {
          TypeElement dependencyElement = (TypeElement) types.asElement(dependencyType);
          AutoProtoSchemaBuilder dependencyAnnotation = dependencyElement.getAnnotation(AutoProtoSchemaBuilder.class);
-         if (dependencyAnnotation != null) {
-            String initializerClassName = getInitializerClassName(dependencyElement, dependencyAnnotation);
-            PackageElement packageElement = elements.getPackageOf(dependencyElement);
-            String initializerFqn = packageElement.isUnnamed() ? initializerClassName : packageElement.getQualifiedName().toString() + '.' + initializerClassName;
-            classNames.add(initializerFqn);
-         } else {
-            if (!types.isSubtype(dependencyType, serializationContextInitializer)) {
-               throw new AnnotationProcessingException(annotatedElement, "Dependency %s must be annotated with @AutoProtoSchemaBuilder or must be an instantiable subtype of %s", dependencyElement.getQualifiedName().toString(), SerializationContextInitializer.class.getName());
-            }
-            ExecutableElement ctor = (ExecutableElement) dependencyElement.getEnclosedElements().stream()
-                  .filter(e -> e.getKind() == ElementKind.CONSTRUCTOR && ((ExecutableElement) e).getParameters().isEmpty())
-                  .findFirst().orElse(null);
-            if (ctor == null) {
-               throw new AnnotationProcessingException(annotatedElement, "Dependency %s is not instantiable using a no-arguments constructor", dependencyElement.getQualifiedName().toString());
-            }
-
-            classNames.add(dependencyElement.getQualifiedName().toString());
+         if (dependencyAnnotation == null) {
+            throw new AnnotationProcessingException(annotatedElement, "Dependency %s is not annotated with @AutoProtoSchemaBuilder annotation", dependencyElement.getQualifiedName().toString());
          }
+
+         String initializerFqn = getInitializerFQClassName(dependencyElement, dependencyAnnotation);
+         initializerClassNames.add(initializerFqn);
+
+         // here we (re)process the dependency!
+         Map<XClass, String> xclasses = processElement(false, roundEnv, serCtx, dependencyElement, dependencyAnnotation);
+         depClasses.putAll(xclasses);
       }
-      return classNames;
+
+      return new InitializerDependencies(initializerClassNames, depClasses);
    }
 
-   private TypeMirror getSerializationContextInitializerTypeMirror() {
-      return elements.getTypeElement(SerializationContextInitializer.class.getName()).asType();
+   private void warnOverrideExistingMethods(TypeElement typeElement, MirrorClassFactory typeFactory) {
+      XClass annotatedType = typeFactory.fromTypeMirror(typeElement.asType());
+      warnOverrideExistingMethod(annotatedType, "getProtoFileName");
+      warnOverrideExistingMethod(annotatedType, "getProtoFile");
+      XClass serializationContextClass = typeFactory.fromClass(SerializationContext.class);
+      warnOverrideExistingMethod(annotatedType, "registerSchema", serializationContextClass);
+      warnOverrideExistingMethod(annotatedType, "registerMarshallers", serializationContextClass);
    }
 
    private void warnOverrideExistingMethod(XClass xclass, String methodName, XClass... argTypes) {
@@ -514,12 +552,12 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
    }
 
-   private void writeSerializationContextInitializerSourceFile(Element annotatedElement, String annotatedElementFQN, AutoProtoSchemaBuilder annotation,
-                                                               Set<String> deps,
-                                                               Collection<? extends TypeMirror> classes,
-                                                               String packageName, String initializerClassName,
-                                                               String fileName, String schemaSrc,
-                                                               Set<String> generatedClasses) throws IOException {
+   private void generateSerializationContextInitializer(Element annotatedElement, String annotatedElementFQN, AutoProtoSchemaBuilder annotation,
+                                                        Set<String> serCtxInitDeps,
+                                                        Collection<? extends TypeMirror> classes,
+                                                        String packageName, String initializerClassName,
+                                                        String fileName, String protobufPackageName, String schemaSrc,
+                                                        Set<String> generatedMarshallerClasses) throws IOException {
       String initializerFQN = packageName != null ? packageName + '.' + initializerClassName : initializerClassName;
 
       if (elements.getTypeElement(initializerFQN) != null) {
@@ -533,9 +571,12 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
       originatingElements[i] = annotatedElement;
 
-      if (!annotation.schemaFilePath().isEmpty()) {
+      String schemaFilePath = annotation.schemaFilePath();
+      if (!schemaFilePath.isEmpty()) {
          // write Protobuf schema as a resource file
-         writeSchema(annotation.schemaFilePath(), fileName, schemaSrc, originatingElements, annotatedElement);
+         writeSchema(schemaFilePath, fileName, schemaSrc, originatingElements, annotatedElement);
+      } else {
+         schemaFilePath = null;
       }
 
       JavaFileObject initializerFile;
@@ -557,7 +598,8 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          iw.append("package ").append(packageName).append(";\n\n");
       }
 
-      addGeneratedBy(iw);
+      addGeneratedAnnotation(iw);
+      addSchemaBuilderAnnotation(iw, initializerClassName, fileName, schemaFilePath, protobufPackageName, classes, serCtxInitDeps, annotation.service());
 
       iw.append("public class ").append(initializerClassName);
       if (annotatedElement.getKind() == ElementKind.PACKAGE) {
@@ -567,18 +609,18 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
       iw.inc();
 
-      if (annotation.schemaFilePath().isEmpty()) {
+      if (schemaFilePath == null) {
          iw.append("private static final String PROTO_SCHEMA = ").append(makeStringLiteral(schemaSrc)).append(";\n\n");
       }
 
       int k = 0;
-      for (String s : deps) {
+      for (String s : serCtxInitDeps) {
          iw.append("private final ").append(s).append(" dep").append(String.valueOf(k++)).append(" = new ").append(s).append("();\n\n");
       }
 
       iw.append("@Override\npublic String getProtoFileName() { return \"").append(fileName).append("\"; }\n\n");
       iw.append("@Override\npublic String getProtoFile() { return ");
-      if (annotation.schemaFilePath().isEmpty()) {
+      if (schemaFilePath == null) {
          iw.append("PROTO_SCHEMA");
       } else {
          iw.append("org.infinispan.protostream.FileDescriptorSource.getResourceAsString(getClass(), getProtoFileName())");
@@ -588,13 +630,13 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       iw.append("@Override\n");
       iw.append("public void registerSchema(org.infinispan.protostream.SerializationContext serCtx) throws java.io.IOException {\n");
       iw.inc();
-      for (int j = 0; j < deps.size(); j++) {
+      for (int j = 0; j < serCtxInitDeps.size(); j++) {
          iw.append("dep").append(String.valueOf(j)).append(".registerSchema(serCtx);\n");
       }
-      if (annotation.schemaFilePath().isEmpty()) {
+      if (schemaFilePath == null) {
          iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromString(getProtoFileName(), PROTO_SCHEMA));\n");
       } else {
-         String resourceFile = annotation.schemaFilePath().isEmpty() ? fileName : annotation.schemaFilePath().replace('.', '/') + '/' + fileName;
+         String resourceFile = schemaFilePath.replace('.', '/') + '/' + fileName;
          iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromResources(\"").append(resourceFile).append("\"));\n");
       }
       iw.dec();
@@ -603,10 +645,10 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       iw.append("@Override\n");
       iw.append("public void registerMarshallers(org.infinispan.protostream.SerializationContext serCtx) {\n");
       iw.inc();
-      for (int j = 0; j < deps.size(); j++) {
+      for (int j = 0; j < serCtxInitDeps.size(); j++) {
          iw.append("dep").append(String.valueOf(j)).append(".registerMarshallers(serCtx);\n");
       }
-      for (String name : generatedClasses) {
+      for (String name : generatedMarshallerClasses) {
          iw.append("serCtx.registerMarshaller(new ").append(name).append("());\n");
       }
       iw.dec();
@@ -645,11 +687,67 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
    }
 
-   static void addGeneratedBy(IndentWriter iw) {
+   // todo [anistor] the maven generated xyz-sources.jar seems to contain these generated source files also, probably leading to exactly 100% reproducible builds due to this timestamp and maybe due to source element ordering
+   static void addGeneratedAnnotation(IndentWriter iw) {
+      iw.append("/**\n" +
+            " * WARNING: Generated code!\n" +
+            " */\n");
       String ISO8601Date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
       iw.append("@javax.annotation.Generated(value=\"").append(AutoProtoSchemaBuilderAnnotationProcessor.class.getName())
             .append("\", date=\"").append(ISO8601Date)
             .append("\",\n      comments=\"Please do not edit this file!\")\n");
+   }
+
+   // This annotation is added to generated code just for debugging/documentation purposes
+   private static void addSchemaBuilderAnnotation(IndentWriter iw, String className, String schemaFileName,
+                                                  String schemaFilePath, String schemaPackageName,
+                                                  Collection<? extends TypeMirror> classes, Set<String> dependsOn, boolean service) {
+      iw.append("@").append(AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME).append("(\n");
+      iw.inc();
+      iw.append("className = \"").append(className).append("\",\n");
+      iw.append("schemaFileName = \"").append(schemaFileName).append("\",\n");
+      if (schemaFilePath != null) {
+         iw.append("schemaFilePath = \"").append(schemaFilePath).append("\",\n");
+      }
+      if (schemaPackageName != null) {
+         iw.append("schemaPackageName = \"").append(schemaPackageName).append("\",\n");
+      }
+      if (!dependsOn.isEmpty()) {
+         iw.append("dependsOn = {\n");
+         iw.inc();
+         boolean first = true;
+         for (String s : dependsOn) {
+            if (first) {
+               first = false;
+            } else {
+               iw.append(",\n");
+            }
+            iw.append(s).append(".class");
+         }
+         iw.append("\n");
+         iw.dec();
+         iw.append("},\n");
+      }
+      iw.append("service = ").append(String.valueOf(service)).append(",\n");
+      iw.append("autoImportClasses = false,\n");
+      if (!classes.isEmpty()) {
+         iw.append("classes = {\n");
+         iw.inc();
+         boolean first = true;
+         for (TypeMirror t : classes) {
+            if (first) {
+               first = false;
+            } else {
+               iw.append(",\n");
+            }
+            iw.append(t.toString()).append(".class");
+         }
+         iw.append("\n");
+         iw.dec();
+         iw.append("}\n");
+      }
+      iw.dec();
+      iw.append(")\n");
    }
 
    private String makeStringLiteral(String s) {

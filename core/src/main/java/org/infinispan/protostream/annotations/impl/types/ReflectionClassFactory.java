@@ -45,7 +45,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
    @Override
    public XClass fromTypeMirror(TypeMirror typeMirror) {
-      throw new UnsupportedOperationException("javax.lang.model type mirrors are only supported at compile time. Please use reflection during run time.");
+      throw new UnsupportedOperationException("javax.lang.model.type.TypeMirror is only supported when processing annotations at compile time.");
    }
 
    private static Class<?> determineCollectionElementType(java.lang.reflect.Type genericType) {
@@ -79,7 +79,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
    private final class ReflectionClass implements XClass {
 
-      private final Class<?> c;
+      private final Class<?> clazz;
 
       private final Map<Field, ReflectionEnumConstant> enumConstants;
 
@@ -89,16 +89,16 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
       private final Map<Field, ReflectionField> fieldCache = new HashMap<>();
 
-      ReflectionClass(Class<?> c) {
-         this.c = c;
+      ReflectionClass(Class<?> clazz) {
+         this.clazz = clazz;
 
-         if (c.isEnum()) {
+         if (clazz.isEnum()) {
             enumConstants = new LinkedHashMap<>();
-            for (Field f : c.getDeclaredFields()) {
+            for (Field f : clazz.getDeclaredFields()) {
                if (f.isEnumConstant()) {
                   Enum<?> e;
                   try {
-                     e = (Enum<?>) f.get(c);
+                     e = (Enum<?>) f.get(clazz);
                   } catch (IllegalAccessException iae) {
                      // this is never going to happen, enum constants are always accessible
                      throw new IllegalStateException("Failed to access enum constant field", iae);
@@ -118,65 +118,65 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
       @Override
       public Class<?> asClass() {
-         return c;
+         return clazz;
       }
 
       @Override
       public String getName() {
-         return c.getName();
+         return clazz.getName();
       }
 
       @Override
       public String getSimpleName() {
-         return c.getSimpleName();
+         return clazz.getSimpleName();
       }
 
       @Override
       public String getCanonicalName() {
-         return c.getCanonicalName();
+         return clazz.getCanonicalName();
       }
 
       @Override
       public String getPackageName() {
-         return c.getPackage().getName();
+         return clazz.getPackage().getName();
       }
 
       @Override
       public boolean isPrimitive() {
-         return c.isPrimitive();
+         return clazz.isPrimitive();
       }
 
       @Override
       public boolean isEnum() {
-         return c.isEnum();
+         return clazz.isEnum();
       }
 
       @Override
       public boolean isArray() {
-         return c.isArray();
+         return clazz.isArray();
       }
 
       @Override
       public XClass getComponentType() {
-         if (!c.isArray()) {
+         if (!clazz.isArray()) {
             throw new IllegalStateException(getName() + " is not an array");
          }
-         return fromClass(c.getComponentType());
+         return fromClass(clazz.getComponentType());
       }
 
       @Override
       public XClass getEnclosingClass() {
-         return fromClass(c.getEnclosingClass());
+         return fromClass(clazz.getEnclosingClass());
       }
 
       @Override
       public XClass getSuperclass() {
-         return fromClass(c.getSuperclass());
+         return fromClass(clazz.getSuperclass());
       }
 
       @Override
       public XClass[] getInterfaces() {
-         Class<?>[] interfaces = c.getInterfaces();
+         Class<?>[] interfaces = clazz.getInterfaces();
          XClass[] xInterfaces = new XClass[interfaces.length];
          for (int i = 0; i < interfaces.length; i++) {
             xInterfaces[i] = fromClass(interfaces[i]);
@@ -186,22 +186,22 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
       @Override
       public boolean isAssignableTo(XClass other) {
-         return other.asClass().isAssignableFrom(c);
+         return other.asClass().isAssignableFrom(clazz);
       }
 
       @Override
       public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-         return c.getAnnotation(annotationClass);
+         return clazz.getAnnotation(annotationClass);
       }
 
       @Override
       public String getDocumentation() {
-         return DocumentationExtractor.getDocumentation(c.getAnnotationsByType(ProtoDoc.class));
+         return DocumentationExtractor.getDocumentation(clazz.getAnnotationsByType(ProtoDoc.class));
       }
 
       @Override
       public int getModifiers() {
-         return c.getModifiers();
+         return clazz.getModifiers();
       }
 
       private ReflectionMethod cacheMethod(Method method) {
@@ -250,7 +250,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
             }
          }
          try {
-            return cacheConstructor(c.getDeclaredConstructor(argTypes));
+            return cacheConstructor(clazz.getDeclaredConstructor(argTypes));
          } catch (NoSuchMethodException e) {
             return null;
          }
@@ -259,7 +259,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       @Override
       public Iterable<? extends XMethod> getDeclaredMethods() {
          List<XMethod> methods = new ArrayList<>();
-         for (Method m : c.getDeclaredMethods()) {
+         for (Method m : clazz.getDeclaredMethods()) {
             methods.add(cacheMethod(m));
          }
          return methods;
@@ -275,7 +275,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
             }
          }
          try {
-            return cacheMethod(c.getMethod(methodName, argTypes));
+            return cacheMethod(clazz.getMethod(methodName, argTypes));
          } catch (NoSuchMethodException e) {
             return null;
          }
@@ -283,13 +283,13 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
       @Override
       public boolean isLocal() {
-         return c.getEnclosingMethod() != null || c.getEnclosingConstructor() != null;
+         return clazz.getEnclosingMethod() != null || clazz.getEnclosingConstructor() != null;
       }
 
       @Override
       public Iterable<? extends XField> getDeclaredFields() {
          List<XField> fields = new ArrayList<>();
-         for (Field f : c.getDeclaredFields()) {
+         for (Field f : clazz.getDeclaredFields()) {
             fields.add(cacheField(f));
          }
          return fields;
@@ -304,8 +304,25 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public boolean equals(Object obj) {
+         if (obj == this) {
+            return true;
+         }
+         if (!(obj instanceof ReflectionClass)) {
+            return false;
+         }
+         ReflectionClass other = (ReflectionClass) obj;
+         return clazz == other.clazz;
+      }
+
+      @Override
+      public int hashCode() {
+         return clazz.hashCode();
+      }
+
+      @Override
       public String toString() {
-         return c.toString();
+         return clazz.toString();
       }
    }
 

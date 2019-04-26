@@ -371,6 +371,23 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public boolean equals(Object obj) {
+         if (obj == this) {
+            return true;
+         }
+         if (!(obj instanceof MirrorPrimitiveType)) {
+            return false;
+         }
+         MirrorPrimitiveType other = (MirrorPrimitiveType) obj;
+         return clazz == other.clazz;
+      }
+
+      @Override
+      public int hashCode() {
+         return clazz.hashCode();
+      }
+
+      @Override
       public String toString() {
          return clazz.toString();
       }
@@ -422,12 +439,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public Class<?> asClass() {
-         String name = getName();
-         try {
-            return Class.forName(name); // TODO [anistor] not sure it is right to load user classes from CP at compile time
-         } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Failed to load class : " + name, e);
-         }
+         throw new UnsupportedOperationException();
       }
 
       @Override
@@ -621,6 +633,23 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public boolean equals(Object obj) {
+         if (obj == this) {
+            return true;
+         }
+         if (!(obj instanceof XClass)) {
+            return false;
+         }
+         XClass other = (XClass) obj;
+         return getName().equals(other.getName());
+      }
+
+      @Override
+      public int hashCode() {
+         return getName().hashCode();
+      }
+
+      @Override
       public String toString() {
          return typeMirror.toString();
       }
@@ -684,12 +713,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public Class<?> asClass() {
-         String name = getName();
-         try {
-            return Class.forName(name); // TODO [anistor] not sure it is right to load user classes from CP at compile time
-         } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Failed to load class : " + name, e);
-         }
+         throw new UnsupportedOperationException();
       }
 
       @Override
@@ -796,6 +820,23 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       @Override
       public Iterable<? extends XMethod> getDeclaredMethods() {
          return Collections.emptyList();
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (obj == this) {
+            return true;
+         }
+         if (!(obj instanceof XClass)) {
+            return false;
+         }
+         XClass other = (XClass) obj;
+         return other.isArray() && getName().equals(other.getName());
+      }
+
+      @Override
+      public int hashCode() {
+         return getName().hashCode();
       }
 
       @Override

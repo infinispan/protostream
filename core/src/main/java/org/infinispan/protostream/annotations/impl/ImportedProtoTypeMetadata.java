@@ -15,7 +15,7 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
  * @author anistor@redhat.com
  * @since 4.3
  */
-public final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
+final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
 
    private final GenericDescriptor descriptor;
 
@@ -28,8 +28,18 @@ public final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
+   public String getFullName() {
+      return descriptor.getFullName();
+   }
+
+   @Override
    public boolean isImported() {
       return true;
+   }
+
+   @Override
+   public String getFileName() {
+      return descriptor.getFileDescriptor().getName();
    }
 
    @Override

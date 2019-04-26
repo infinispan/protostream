@@ -1,7 +1,6 @@
 package org.infinispan.protostream.annotations.impl.processor.types;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -49,7 +48,6 @@ public class MirrorClassFactoryTest {
 
       XClass integerClass = typeFactory.fromClass(Integer.class);
 
-      assertSame(Integer.class, integerClass.asClass());
       assertFalse(integerClass.isArray());
    }
 
@@ -79,7 +77,6 @@ public class MirrorClassFactoryTest {
 
       XClass integerClass = typeFactory.fromTypeMirror(typeMirrorMock);
 
-      assertSame(Integer.class, integerClass.asClass());
       assertFalse(integerClass.isArray());
    }
 }

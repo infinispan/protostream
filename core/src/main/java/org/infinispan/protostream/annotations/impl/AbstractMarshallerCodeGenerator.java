@@ -312,9 +312,17 @@ public abstract class AbstractMarshallerCodeGenerator {
          iw.append("))\n{\n");
          iw.inc();
          iw.append("StringBuilder missingFields = null;\n");
+         boolean firstRequiredField = true;
          for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
             if (fieldMetadata.isRequired()) {
-               iw.append("if (!").append(makeFieldWasSetFlag(fieldMetadata)).append(") { if (missingFields == null) missingFields = new StringBuilder(); else missingFields.append(\", \"); missingFields.append(\"").append(fieldMetadata.getName()).append("\"); }\n");
+               iw.append("if (!").append(makeFieldWasSetFlag(fieldMetadata)).append(") { ");
+               if (firstRequiredField) {
+                  firstRequiredField = false;
+                  iw.append("missingFields = new StringBuilder(\"");
+               } else {
+                  iw.append("if (missingFields == null) missingFields = new StringBuilder(); else missingFields.append(\", \"); missingFields.append(\"");
+               }
+               iw.append(fieldMetadata.getName()).append("\"); }\n");
             }
          }
          iw.append("if (missingFields != null) throw new java.io.IOException(\"Required field(s) missing from input stream : \" + missingFields);\n");

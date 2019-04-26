@@ -1,18 +1,11 @@
 package org.infinispan.protostream.annotations.impl.processor;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.annotation.processing.FilerException;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
-import javax.tools.JavaFileObject;
 
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ImmutableSerializationContext;
@@ -34,6 +27,9 @@ import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.Log;
 
 /**
+ * Generates almost identical code as MarshallerByteCodeGenerator but it generates it in compilable Java source form
+ * rather than directly in bytecode.
+ *
  * @author anistor@readhat.com
  * @since 4.3
  */
@@ -41,18 +37,15 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
 
    private static final Log log = Log.LogFactory.getLog(MarshallerSourceCodeGenerator.class);
 
-   private final ProcessingEnvironment processingEnv;
+   private final SourceFileWriter sourceFileWriter;
 
-   private final Set<String> generatedClasses;
-
-   MarshallerSourceCodeGenerator(ProcessingEnvironment processingEnv, UnifiedTypeFactory typeFactory, String protobufSchemaPackage, Set<String> generatedClasses) {
+   MarshallerSourceCodeGenerator(SourceFileWriter sourceFileWriter, UnifiedTypeFactory typeFactory, String protobufSchemaPackage) {
       super(typeFactory, protobufSchemaPackage);
-      this.processingEnv = processingEnv;
-      this.generatedClasses = generatedClasses;
+      this.sourceFileWriter = sourceFileWriter;
    }
 
    @Override
-   public void generateMarshaller(SerializationContext serCtx, ProtoTypeMetadata ptm) throws IOException {
+   public void generateMarshaller(SerializationContext serCtx, ProtoTypeMetadata ptm) {
       if (ptm instanceof ProtoMessageTypeMetadata) {
          generateMessageMarshaller((ProtoMessageTypeMetadata) ptm);
       } else if (ptm instanceof ProtoEnumTypeMetadata) {
@@ -87,7 +80,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       }
    }
 
-   private void generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws IOException {
+   private void generateEnumMarshaller(ProtoEnumTypeMetadata petm) {
       String marshallerClassName = makeUniqueMarshallerClassName(petm);
       if (log.isTraceEnabled()) {
          log.tracef("Generating enum marshaller %s for %s", marshallerClassName, petm.getJavaClass().getName());
@@ -126,10 +119,10 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.dec();
       iw.append("}\n");
 
-      writeSourceFile(fqn, iw.toString(), ((HasModelElement) petm.getJavaClass()).getElement());
+      sourceFileWriter.writeSourceFile(fqn, iw.toString(), ((HasModelElement) petm.getJavaClass()).getElement());
    }
 
-   private void generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) throws IOException {
+   private void generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) {
       String marshallerClassName = makeUniqueMarshallerClassName(pmtm);
       if (log.isTraceEnabled()) {
          log.tracef("Generating message marshaller %s for %s", marshallerClassName, pmtm.getJavaClass().getName());
@@ -143,7 +136,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       } else {
          fqn = marshallerClassName;
       }
-      AutoProtoSchemaBuilderAnnotationProcessor.addGeneratedBy(iw);
+      AutoProtoSchemaBuilderAnnotationProcessor.addGeneratedAnnotation(iw);
       iw.append("public final class ").append(marshallerClassName)
             .append(" extends ").append(GeneratedMarshallerBase.class.getName())
             .append(" implements ").append(RawProtobufMarshaller.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>')
@@ -178,9 +171,13 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.dec();
       iw.append("}\n");
 
-      writeSourceFile(fqn, iw.toString(), ((HasModelElement) pmtm.getJavaClass()).getElement());
+      sourceFileWriter.writeSourceFile(fqn, iw.toString(), ((HasModelElement) pmtm.getJavaClass()).getElement());
    }
 
+   /**
+    * Add fields used to cache delegates to other marshalled types (message or enum). These fields are lazily
+    * initialized.
+    */
    private void addMarshallerDelegateFields(IndentWriter iw, ProtoMessageTypeMetadata messageTypeMetadata) {
       Set<String> addedFields = new HashSet<>();
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
@@ -195,19 +192,6 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
                   iw.append("private ").append(marshallerDelegateClass.getName()).append(' ').append(fieldName).append(";\n\n");
                }
          }
-      }
-   }
-
-   private void writeSourceFile(String className, String classSource, Element originatingElement) throws IOException {
-      generatedClasses.add(className);
-
-      try {
-         JavaFileObject file = processingEnv.getFiler().createSourceFile(className, originatingElement);
-         try (PrintWriter out = new PrintWriter(file.openWriter())) {
-            out.print(classSource);
-         }
-      } catch (FilerException e) {
-         // ignore if already generated
       }
    }
 }

@@ -313,7 +313,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          protoSchemaBuilder2.build(ctx);
          fail("ProtoSchemaBuilderException expected");
       } catch (ProtoSchemaBuilderException e) {
-         assertTrue(e.getMessage().contains("Found a reference to class org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2 which was not explicitly added to the builder and 'autoImportClasses' is off."));
+         assertTrue(e.getMessage().contains("Found a reference to class org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2 which was not explicitly added to the builder and 'autoImportClasses' is disabled."));
       }
 
       assertFalse(ctx.canMarshall(TestClass.class));

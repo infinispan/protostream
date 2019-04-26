@@ -7,13 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
-import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.impl.Log;
 
 /**
@@ -40,7 +38,6 @@ public abstract class BaseProtoSchemaGenerator {
 
    protected final String packageName;
 
-   //TODO [anistor] need to have a flag to (optionally) prevent generation for classes that were not manually added but were auto-discovered
    protected final Set<XClass> classes;
 
    /**
@@ -87,7 +84,7 @@ public abstract class BaseProtoSchemaGenerator {
       // scan initial classes
       for (XClass c : classes) {
          ProtoTypeMetadata protoTypeMetadata = c.isEnum() ? new ProtoEnumTypeMetadata(c) : new ProtoMessageTypeMetadata(this, c);
-         defineType(protoTypeMetadata);
+         defineMetadata(protoTypeMetadata);
       }
 
       // scan member annotations and possibly discover more classes being referenced
@@ -133,10 +130,10 @@ public abstract class BaseProtoSchemaGenerator {
          iw.append("import \"").append(dependency).append("\";\n");
       }
 
-      // generate type definitions
+      // generate type definitions for top-level types
       for (XClass c : metadataByClass.keySet()) {
          ProtoTypeMetadata m = metadataByClass.get(c);
-         if (m.isTopLevel()) {
+         if (m.getOuterType() == null) {
             m.generateProto(iw);
          }
       }
@@ -187,53 +184,53 @@ public abstract class BaseProtoSchemaGenerator {
    protected ProtoTypeMetadata scanAnnotations(XClass javaType) {
       ProtoTypeMetadata protoTypeMetadata = metadataByClass.get(javaType);
       if (protoTypeMetadata != null) {
-         // already seen
+         // already seen and processed
          return protoTypeMetadata;
       }
 
-      // check if this is already marshallable
-      BaseMarshaller<?> marshaller = null;
-      try {
-         //TODO [anistor] getting back the Class object might fail at compile time annotation processing
-         marshaller = serializationContext.getMarshaller(javaType.asClass());
-      } catch (Exception e) {
-         // ignore
-      }
+      // try to import it from existing files before deciding we need to generate it based on annotations
+      protoTypeMetadata = importProtoTypeMetadata(javaType);
 
-      if (marshaller != null) {
-         // this is an already known type, defined in another schema file that we'll just need to import; nothing gets generated for it
-         GenericDescriptor descriptor = serializationContext.getDescriptorByName(marshaller.getTypeName());
-         XClass javaClass = typeFactory.fromClass(marshaller.getJavaClass());
-         protoTypeMetadata = new ImportedProtoTypeMetadata(descriptor, marshaller, javaClass);
-         imports.add(descriptor.getFileDescriptor().getName());
-      } else if (javaType.isEnum()) {
-         protoTypeMetadata = new ProtoEnumTypeMetadata(javaType);
+      if (protoTypeMetadata != null) {
+         // found it
+         imports.add(protoTypeMetadata.getFileName());
       } else {
-         protoTypeMetadata = new ProtoMessageTypeMetadata(this, javaType);
+         // nope, we need to generate it
+         protoTypeMetadata = makeProtoTypeMetadata(javaType);
       }
 
-      defineType(protoTypeMetadata);
+      defineMetadata(protoTypeMetadata);
+
       return protoTypeMetadata;
    }
 
-   private void defineType(ProtoTypeMetadata protoTypeMetadata) {
-      if (!autoImportClasses && !protoTypeMetadata.isImported() && !isKnown(protoTypeMetadata.getJavaClass())) {
+   /**
+    * Return an imported ProtoTypeMetadata implementation or null if it cannot be imported.
+    */
+   protected abstract ProtoTypeMetadata importProtoTypeMetadata(XClass javaType);
+
+   protected ProtoTypeMetadata makeProtoTypeMetadata(XClass javaType) {
+      return javaType.isEnum() ? new ProtoEnumTypeMetadata(javaType) : new ProtoMessageTypeMetadata(this, javaType);
+   }
+
+   private void defineMetadata(ProtoTypeMetadata protoTypeMetadata) {
+      if (!autoImportClasses && !protoTypeMetadata.isImported() && !isKnownClass(protoTypeMetadata.getJavaClass())) {
          // autoImportClasses is off and we are just expanding the class set
          throw new ProtoSchemaBuilderException("Found a reference to class "
-               + protoTypeMetadata.getJavaClassName() + " which was not explicitly added to the builder and 'autoImportClasses' is off.");
+               + protoTypeMetadata.getJavaClassName() + " which was not explicitly added to the builder and 'autoImportClasses' is disabled.");
       }
 
       String fullName = protoTypeMetadata.getFullName();
       ProtoTypeMetadata existing = metadataByTypeName.get(fullName);
       if (existing != null) {
-         throw new ProtoSchemaBuilderException("Duplicate type definition. Type '" + fullName + "' is defined by "
+         throw new ProtoSchemaBuilderException("Found a duplicate type definition. Type '" + fullName + "' is defined by "
                + protoTypeMetadata.getJavaClassName() + " and also by " + existing.getJavaClassName());
       }
       metadataByTypeName.put(fullName, protoTypeMetadata);
       metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);
    }
 
-   private boolean isKnown(XClass c) {
+   protected boolean isKnownClass(XClass c) {
       boolean isKnown;
       while (!(isKnown = knownClasses.contains(c))) {
          // try the outer class because inner classes are considered recursively added too

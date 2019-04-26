@@ -28,7 +28,7 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
       ProtoMessageTypeMetadata t = outerType;
       while (t != null) {
          sb.append(t.getName()).append('.');
-         t = t.getOuterType();
+         t = t.outerType;
       }
       sb.append(name);
       return sb.toString();
@@ -47,8 +47,18 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
       return canonicalName != null ? canonicalName : javaClass.getName();
    }
 
+   /**
+    * Indicates if this type comes from the currently processed/generated schema of from an external schema.
+    */
    public boolean isImported() {
       return false;
+   }
+
+   /**
+    * The schema file where this type comes from. Must be non-null for all imported types, can be null for others.
+    */
+   public String getFileName() {
+      return null;
    }
 
    public abstract boolean isEnum();
@@ -61,10 +71,6 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
 
    protected final void setOuterType(ProtoMessageTypeMetadata outerType) {
       this.outerType = outerType;
-   }
-
-   public final boolean isTopLevel() {
-      return outerType == null;
    }
 
    @Override

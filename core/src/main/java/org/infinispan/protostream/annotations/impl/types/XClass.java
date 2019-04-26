@@ -12,6 +12,7 @@ public interface XClass extends XElement {
     * This is the only place we can get back the java.lang.Class and should be used very sparingly. Abuse will void the
     * warranty.
     */
+   @Deprecated
    Class<?> asClass();
 
    String getSimpleName();

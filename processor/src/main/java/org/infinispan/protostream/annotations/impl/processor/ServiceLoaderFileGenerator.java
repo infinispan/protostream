@@ -21,7 +21,7 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
 /**
- * Generate a META-INF/services resource suitable for {@link java.util.ServiceLoader}.
+ * Generate a META-INF/services resource file suitable for {@link java.util.ServiceLoader} mechanism.
  *
  * @author anistor@redhat.com
  * @since 4.3
@@ -32,15 +32,12 @@ final class ServiceLoaderFileGenerator {
 
    private final String resourceFile;
 
-   private final Filer filer;
-
    private final Set<String> providers = new HashSet<>();
 
    private final List<Element> originatingElements = new ArrayList<>();
 
-   ServiceLoaderFileGenerator(Class<?> serviceInterface, Filer filer) {
+   ServiceLoaderFileGenerator(Class<?> serviceInterface) {
       this.resourceFile = META_INF_SERVICES + serviceInterface.getName();
-      this.filer = filer;
    }
 
    void addProvider(String providerClass, Element originatingElement) {
@@ -48,14 +45,14 @@ final class ServiceLoaderFileGenerator {
       originatingElements.add(originatingElement);
    }
 
-   void generateResources() throws IOException {
+   void generateResources(Filer filer) throws IOException {
       if (!providers.isEmpty()) {
          Set<String> serviceProviders;
          try {
             FileObject fileObject = filer.getResource(StandardLocation.CLASS_OUTPUT, "", resourceFile);
             serviceProviders = readServiceFile(fileObject.openInputStream());
          } catch (IOException e) {
-            // services resourceFile file does not exist yet
+            // service resource file does not exist yet
             serviceProviders = new LinkedHashSet<>();
          }
 
