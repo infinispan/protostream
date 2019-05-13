@@ -140,7 +140,7 @@ public class AutoProtoSchemaBuilderTest {
       ProtobufUtil.toWrappedByteArray(ctx, new Simple());
    }
 
-   @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer",
+   @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer", autoImportClasses = true,
          packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    abstract static class SecondInitializer implements SerializationContextInitializer {
       SecondInitializer() {
@@ -178,7 +178,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    // Using a fully implemented initializer as a base is not the usual use case but some users might need this and we do support it.
-   @AutoProtoSchemaBuilder(className = "NonAbstractInitializerImpl",
+   @AutoProtoSchemaBuilder(className = "NonAbstractInitializerImpl", autoImportClasses = true,
          packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    static class NonAbstractInitializer implements SerializationContextInitializer {
 
@@ -214,7 +214,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class,
-         classes = DependentInitializer.C.class, service = true, autoImportClasses = false)
+         classes = DependentInitializer.C.class, service = true)
    public interface DependentInitializer extends SerializationContextInitializer {
       class C {
          @ProtoField(number = 1, required = true)
@@ -246,6 +246,7 @@ public class AutoProtoSchemaBuilderTest {
       assertTrue(ctx.canMarshall(DependentInitializer.C.class));
    }
 
+   //todo provide a sensible value() alias for all @ProtoXyz annotations
 
    //todo test enum with members and without
 

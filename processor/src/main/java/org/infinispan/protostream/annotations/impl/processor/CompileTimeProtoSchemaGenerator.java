@@ -16,22 +16,22 @@ import org.infinispan.protostream.annotations.impl.types.XClass;
  */
 final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
 
-   private final SourceFileWriter sourceFileWriter;
-
    private final Map<XClass, String> dependencies;
 
-   CompileTimeProtoSchemaGenerator(UnifiedTypeFactory typeFactory, SourceFileWriter sourceFileWriter,
+   private final MarshallerSourceCodeGenerator marshallerSourceCodeGenerator;
+
+   CompileTimeProtoSchemaGenerator(UnifiedTypeFactory typeFactory, GeneratedFilesWriter generatedFilesWriter,
                                    SerializationContext serializationContext, String fileName, String packageName,
                                    Map<XClass, String> dependencies,
                                    Set<XClass> classes, boolean autoImportClasses) {
       super(typeFactory, serializationContext, fileName, packageName, classes, autoImportClasses);
-      this.sourceFileWriter = sourceFileWriter;
       this.dependencies = dependencies;
+      this.marshallerSourceCodeGenerator = new MarshallerSourceCodeGenerator(generatedFilesWriter, typeFactory, packageName);
    }
 
    @Override
    protected AbstractMarshallerCodeGenerator makeCodeGenerator() {
-      return new MarshallerSourceCodeGenerator(sourceFileWriter, typeFactory, packageName);
+      return marshallerSourceCodeGenerator;
    }
 
    @Override
@@ -45,7 +45,11 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    }
 
    @Override
-   protected boolean isKnownClass(XClass c) {
-      return dependencies.containsKey(c) || super.isKnownClass(c);
+   protected boolean isUnknownClass(XClass c) {
+      return !dependencies.containsKey(c) && super.isUnknownClass(c);
+   }
+
+   public Set<String> getGeneratedMarshallerClasses() {
+      return marshallerSourceCodeGenerator.getGeneratedClasses();
    }
 }

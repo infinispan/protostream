@@ -70,7 +70,7 @@ public @interface AutoProtoSchemaBuilder {
     * already specified classes and to be included automatically. If this is set to {@code false} it fails if such a
     * case is encountered. This option can only be set to {@code false} if {@link #classes} is not empty.
     */
-   boolean autoImportClasses() default true;
+   boolean autoImportClasses() default false;
 
    /**
     * Enable generation of a {@code META-INF/services} file for the generated class of the {@link
@@ -83,5 +83,5 @@ public @interface AutoProtoSchemaBuilder {
     * The initializers to execute before this one. List here classes or interfaces annotated with {@code
     * AutoProtoSchemaBuilder} from which a {@link SerializationContextInitializer} is being generated.
     */
-   Class<? extends SerializationContextInitializer>[] dependsOn() default {};   //todo [anistor] check for cycles!
+   Class<? extends SerializationContextInitializer>[] dependsOn() default {};
 }

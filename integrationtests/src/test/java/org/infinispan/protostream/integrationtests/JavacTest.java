@@ -50,6 +50,14 @@ public class JavacTest {
          "   }" +
          "}\n";
 
+   private static final String src4 = "package test_depends;\n" +
+         "import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;\n" +
+         "import org.infinispan.protostream.SerializationContextInitializer;\n" +
+         "@AutoProtoSchemaBuilder(dependsOn = InitializerB.class)\n" +
+         "interface InitializerA extends SerializationContextInitializer { }\n" +
+         "@AutoProtoSchemaBuilder(dependsOn = InitializerA.class)\n" +
+         "public interface InitializerB extends SerializationContextInitializer { }\n";
+
    @Test
    public void testAnnotationProcessing() {
       Compilation compilation =
@@ -64,5 +72,15 @@ public class JavacTest {
       assertTrue(compilation.generatedFile(CLASS_OUTPUT, "second_initializer/SecondInitializer.proto").isPresent());
       assertTrue(compilation.generatedFile(CLASS_OUTPUT, "DependentInitializer.proto").isPresent());
       assertTrue(compilation.generatedFile(CLASS_OUTPUT, "META-INF/services/org.infinispan.protostream.SerializationContextInitializer").isPresent());
+   }
+
+   @Test
+   public void testDependsOnCycles() {
+      Compilation compilation =
+            javac().withProcessors(new AutoProtoSchemaBuilderAnnotationProcessor())
+                  .compile(JavaFileObjects.forSourceString("InitializerB", src4));
+
+      assertThat(compilation).failed();
+      assertThat(compilation).hadErrorContaining("Illegal recursive dependency on test_depends.InitializerB");
    }
 }

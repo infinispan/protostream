@@ -4,9 +4,9 @@ import org.infinispan.protostream.annotations.impl.ProtoEnumValueMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
 
 /**
- * A {@link ProtoTypeMetadata} for a message or enum type that is defined in an external protobuf schema and its
- * definition was not created based on annotations during the current execution of a {@link
- * org.infinispan.protostream.annotations.ProtoSchemaBuilder}.
+ * A {@link ProtoTypeMetadata} for a message or enum type that is not present in the current set of classes and is
+ * expected to be defined in another protobuf schema that was created based on annotations during the processing on a
+ * different module, so it just gets to be imported from the file that defines it.
  *
  * @author anistor@redhat.com
  * @since 4.3
@@ -15,8 +15,14 @@ final class AnnotationBasedImportedProtoTypeMetadata extends ProtoTypeMetadata {
 
    private final ProtoTypeMetadata protoTypeMetadata;
 
+   /**
+    * The file that defines this.
+    */
    private final String fileName;
 
+   /**
+    * Fully qualified protobuf type name.
+    */
    private final String fullName;
 
    AnnotationBasedImportedProtoTypeMetadata(ProtoTypeMetadata protoTypeMetadata, String packageName, String fileName) {

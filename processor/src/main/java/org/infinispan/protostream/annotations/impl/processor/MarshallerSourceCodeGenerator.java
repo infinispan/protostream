@@ -1,10 +1,12 @@
 package org.infinispan.protostream.annotations.impl.processor;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.infinispan.protostream.EnumMarshaller;
@@ -37,15 +39,17 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
 
    private static final Log log = Log.LogFactory.getLog(MarshallerSourceCodeGenerator.class);
 
-   private final SourceFileWriter sourceFileWriter;
+   private final GeneratedFilesWriter generatedFilesWriter;
 
-   MarshallerSourceCodeGenerator(SourceFileWriter sourceFileWriter, UnifiedTypeFactory typeFactory, String protobufSchemaPackage) {
+   private final Set<String> generatedClasses = new LinkedHashSet<>();
+
+   MarshallerSourceCodeGenerator(GeneratedFilesWriter generatedFilesWriter, UnifiedTypeFactory typeFactory, String protobufSchemaPackage) {
       super(typeFactory, protobufSchemaPackage);
-      this.sourceFileWriter = sourceFileWriter;
+      this.generatedFilesWriter = generatedFilesWriter;
    }
 
    @Override
-   public void generateMarshaller(SerializationContext serCtx, ProtoTypeMetadata ptm) {
+   public void generateMarshaller(SerializationContext serCtx, ProtoTypeMetadata ptm) throws IOException {
       if (ptm instanceof ProtoMessageTypeMetadata) {
          generateMessageMarshaller((ProtoMessageTypeMetadata) ptm);
       } else if (ptm instanceof ProtoEnumTypeMetadata) {
@@ -80,7 +84,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       }
    }
 
-   private void generateEnumMarshaller(ProtoEnumTypeMetadata petm) {
+   private void generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws IOException {
       String marshallerClassName = makeUniqueMarshallerClassName(petm);
       if (log.isTraceEnabled()) {
          log.tracef("Generating enum marshaller %s for %s", marshallerClassName, petm.getJavaClass().getName());
@@ -119,10 +123,10 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.dec();
       iw.append("}\n");
 
-      sourceFileWriter.writeSourceFile(fqn, iw.toString(), ((HasModelElement) petm.getJavaClass()).getElement());
+      emitSource(fqn, iw.toString(), petm);
    }
 
-   private void generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) {
+   private void generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) throws IOException {
       String marshallerClassName = makeUniqueMarshallerClassName(pmtm);
       if (log.isTraceEnabled()) {
          log.tracef("Generating message marshaller %s for %s", marshallerClassName, pmtm.getJavaClass().getName());
@@ -137,6 +141,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
          fqn = marshallerClassName;
       }
       AutoProtoSchemaBuilderAnnotationProcessor.addGeneratedAnnotation(iw);
+      iw.append("@SuppressWarnings(\"unchecked\")\n");
       iw.append("public final class ").append(marshallerClassName)
             .append(" extends ").append(GeneratedMarshallerBase.class.getName())
             .append(" implements ").append(RawProtobufMarshaller.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>')
@@ -171,7 +176,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.dec();
       iw.append("}\n");
 
-      sourceFileWriter.writeSourceFile(fqn, iw.toString(), ((HasModelElement) pmtm.getJavaClass()).getElement());
+      emitSource(fqn, iw.toString(), pmtm);
    }
 
    /**
@@ -193,5 +198,14 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
                }
          }
       }
+   }
+
+   private void emitSource(String fqn, String source, ProtoTypeMetadata ptm) throws IOException {
+      generatedFilesWriter.addMarshallerSourceFile(fqn, source, ((HasModelElement) ptm.getJavaClass()).getElement());
+      generatedClasses.add(fqn);
+   }
+
+   public Set<String> getGeneratedClasses() {
+      return generatedClasses;
    }
 }

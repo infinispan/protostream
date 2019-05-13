@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
@@ -17,6 +18,8 @@ import org.infinispan.protostream.impl.Log;
 /**
  * This class is not to be directly invoked by users. See {@link org.infinispan.protostream.annotations.ProtoSchemaBuilder}
  * instead.
+ * <p>
+ * Generators are not expected to be stateless, so reuse must be done taking this into account.
  *
  * @author anistor@redhat.com
  * @since 3.0
@@ -34,10 +37,19 @@ public abstract class BaseProtoSchemaGenerator {
 
    protected final SerializationContext serializationContext;
 
+   /**
+    * Protobuf schema file name.
+    */
    protected final String fileName;
 
+   /**
+    * Protobuf schema package name.
+    */
    protected final String packageName;
 
+   /**
+    * Initial set of classes.
+    */
    protected final Set<XClass> classes;
 
    /**
@@ -47,7 +59,7 @@ public abstract class BaseProtoSchemaGenerator {
 
    /**
     * Known classes: the user-added classes ({@link #classes}) plus all their superclasses and superinterfaces. This is
-    * only used when auto-import is off.
+    * only used when auto-import is disabled.
     */
    private final Set<XClass> knownClasses = new HashSet<>();
 
@@ -83,8 +95,7 @@ public abstract class BaseProtoSchemaGenerator {
 
       // scan initial classes
       for (XClass c : classes) {
-         ProtoTypeMetadata protoTypeMetadata = c.isEnum() ? new ProtoEnumTypeMetadata(c) : new ProtoMessageTypeMetadata(this, c);
-         defineMetadata(protoTypeMetadata);
+         defineMetadata(makeProtoTypeMetadata(c));
       }
 
       // scan member annotations and possibly discover more classes being referenced
@@ -130,10 +141,10 @@ public abstract class BaseProtoSchemaGenerator {
          iw.append("import \"").append(dependency).append("\";\n");
       }
 
-      // generate type definitions for top-level types
+      // generate type definitions for all top-level types, except the ones found in imported files
       for (XClass c : metadataByClass.keySet()) {
          ProtoTypeMetadata m = metadataByClass.get(c);
-         if (m.getOuterType() == null) {
+         if (m.getOuterType() == null && !m.isImported()) {
             m.generateProto(iw);
          }
       }
@@ -175,10 +186,22 @@ public abstract class BaseProtoSchemaGenerator {
       AbstractMarshallerCodeGenerator marshallerCodeGenerator = makeCodeGenerator();
       for (XClass c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
-         marshallerCodeGenerator.generateMarshaller(serializationContext, ptm);
+         if (!ptm.isImported()) {
+            marshallerCodeGenerator.generateMarshaller(serializationContext, ptm);
+         }
       }
    }
 
+   public Set<XClass> getMarshalledClasses() {
+      return metadataByClass.entrySet().stream()
+            .filter(e -> !e.getValue().isImported())
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+   }
+
+   /**
+    * Creates a code generator for marshallers.
+    */
    protected abstract AbstractMarshallerCodeGenerator makeCodeGenerator();
 
    protected ProtoTypeMetadata scanAnnotations(XClass javaType) {
@@ -214,8 +237,8 @@ public abstract class BaseProtoSchemaGenerator {
    }
 
    private void defineMetadata(ProtoTypeMetadata protoTypeMetadata) {
-      if (!autoImportClasses && !protoTypeMetadata.isImported() && !isKnownClass(protoTypeMetadata.getJavaClass())) {
-         // autoImportClasses is off and we are just expanding the class set
+      if (!autoImportClasses && !protoTypeMetadata.isImported() && isUnknownClass(protoTypeMetadata.getJavaClass())) {
+         // autoImportClasses is off and we are attempting expanding the class set
          throw new ProtoSchemaBuilderException("Found a reference to class "
                + protoTypeMetadata.getJavaClassName() + " which was not explicitly added to the builder and 'autoImportClasses' is disabled.");
       }
@@ -230,7 +253,7 @@ public abstract class BaseProtoSchemaGenerator {
       metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);
    }
 
-   protected boolean isKnownClass(XClass c) {
+   protected boolean isUnknownClass(XClass c) {
       boolean isKnown;
       while (!(isKnown = knownClasses.contains(c))) {
          // try the outer class because inner classes are considered recursively added too
@@ -239,9 +262,12 @@ public abstract class BaseProtoSchemaGenerator {
             break;
          }
       }
-      return isKnown;
+      return !isKnown;
    }
 
+   /**
+    * Collect all superclasses and superinterfaces.
+    */
    private void collectKnownClasses(XClass c) {
       knownClasses.add(c);
       if (c.getSuperclass() != null) {

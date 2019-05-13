@@ -45,7 +45,7 @@ final class ServiceLoaderFileGenerator {
       originatingElements.add(originatingElement);
    }
 
-   void generateResources(Filer filer) throws IOException {
+   void writeServiceFile(Filer filer) throws IOException {
       if (!providers.isEmpty()) {
          Set<String> serviceProviders;
          try {
