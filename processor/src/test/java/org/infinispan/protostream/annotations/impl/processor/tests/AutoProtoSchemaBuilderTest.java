@@ -193,6 +193,10 @@ public class AutoProtoSchemaBuilderTest {
       }
 
       @Override
+      public void registerSchema(ClassLoader classLoader, SerializationContext serCtx) throws IOException {
+      }
+
+      @Override
       public void registerSchema(SerializationContext serCtx) throws IOException {
       }
 

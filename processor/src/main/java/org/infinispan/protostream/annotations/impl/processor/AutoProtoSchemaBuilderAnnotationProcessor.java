@@ -540,6 +540,8 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       warnOverrideExistingMethod(annotatedType, "getProtoFileName");
       warnOverrideExistingMethod(annotatedType, "getProtoFile");
       XClass serializationContextClass = typeFactory.fromClass(SerializationContext.class);
+      XClass classLoaderClass = typeFactory.fromClass(ClassLoader.class);
+      warnOverrideExistingMethod(annotatedType, "registerSchema", classLoaderClass, serializationContextClass);
       warnOverrideExistingMethod(annotatedType, "registerSchema", serializationContextClass);
       warnOverrideExistingMethod(annotatedType, "registerMarshallers", serializationContextClass);
    }
@@ -626,6 +628,21 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          iw.append("org.infinispan.protostream.FileDescriptorSource.getResourceAsString(getClass(), getProtoFileName())");
       }
       iw.append("; }\n\n");
+
+      iw.append("@Override\n");
+      iw.append("public void registerSchema(java.lang.ClassLoader classLoader, org.infinispan.protostream.SerializationContext serCtx) throws java.io.IOException {\n");
+      iw.inc();
+      for (int j = 0; j < serCtxInitDeps.size(); j++) {
+         iw.append("dep").append(String.valueOf(j)).append(".registerSchema(classLoader, serCtx);\n");
+      }
+      if (schemaFilePath == null) {
+         iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromString(getProtoFileName(), PROTO_SCHEMA));\n");
+      } else {
+         String resourceFile = schemaFilePath.replace('.', '/') + '/' + fileName;
+         iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromResources(classLoader, \"").append(resourceFile).append("\"));\n");
+      }
+      iw.dec();
+      iw.append("}\n\n");
 
       iw.append("@Override\n");
       iw.append("public void registerSchema(org.infinispan.protostream.SerializationContext serCtx) throws java.io.IOException {\n");

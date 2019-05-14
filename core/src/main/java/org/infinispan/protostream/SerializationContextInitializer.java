@@ -17,6 +17,8 @@ public interface SerializationContextInitializer {
 
    String getProtoFile(); //todo IOException
 
+   void registerSchema(ClassLoader classLoader, SerializationContext serCtx) throws IOException;
+
    void registerSchema(SerializationContext serCtx) throws IOException;
 
    void registerMarshallers(SerializationContext serCtx);
