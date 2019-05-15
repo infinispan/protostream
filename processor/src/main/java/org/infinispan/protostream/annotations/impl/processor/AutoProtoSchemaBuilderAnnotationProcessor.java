@@ -637,7 +637,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromString(getProtoFileName(), PROTO_SCHEMA));\n");
       } else {
          String resourceFile = schemaFilePath.replace('.', '/') + '/' + fileName;
-         iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromResources(\"").append(resourceFile).append("\"));\n");
+         iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromResources(getClass().getClassLoader(), \"").append(resourceFile).append("\"));\n");
       }
       iw.dec();
       iw.append("}\n\n");
