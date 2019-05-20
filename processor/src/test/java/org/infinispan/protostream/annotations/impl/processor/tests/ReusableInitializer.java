@@ -4,7 +4,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@AutoProtoSchemaBuilder(classes = {ReusableInitializer.A.class, ReusableInitializer.B.class})
+@AutoProtoSchemaBuilder(includeClasses = {ReusableInitializer.A.class, ReusableInitializer.B.class}, excludeClasses = java.lang.Object.class)
 public interface ReusableInitializer extends SerializationContextInitializer {
 
    class A {

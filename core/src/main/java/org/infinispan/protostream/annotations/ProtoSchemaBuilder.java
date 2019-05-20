@@ -232,10 +232,11 @@ public final class ProtoSchemaBuilder {
    }
 
    /**
-    * A flag to control processing of classes that were not directly added but were discovered by auto-import. When such
-    * a class is found an error will be generated if autoImportClasses is turned off. This flag is {@code true} by
-    * default to make your life easier but can be turned off when you need to be very specific about which classes are
-    * to be processed.
+    * A flag to control processing of classes that were not directly added but were discovered by analyzing the
+    * annotated fields/properties of the added classes. When such a class is found an error will be generated if
+    * autoImportClasses is disabled. This flag is {@code true} by default to simplify usability (and also for backward
+    * compatibility) but can be turned off whenever you need to be very specific about which classes are to be
+    * processed. We encourage you to turn it off for maximum control.
     *
     * @param autoImportClasses
     * @return itself, to help chaining calls

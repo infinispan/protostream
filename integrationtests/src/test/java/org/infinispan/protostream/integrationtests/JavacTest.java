@@ -29,7 +29,7 @@ public class JavacTest {
          "import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;\n" +
          "import org.infinispan.protostream.SerializationContextInitializer;\n" +
          "@AutoProtoSchemaBuilder(schemaFilePath = \"second_initializer\", className = \"TestInitializer\",\n" +
-         "         packages = {\"org.infinispan.protostream.integrationtests\", \"test\"}, service = true)\n" +
+         "         basePackages = {\"org.infinispan.protostream.integrationtests\", \"test\"}, service = true)\n" +
          "public abstract class SecondInitializer implements SerializationContextInitializer {\n" +
          "}\n";
 
@@ -39,7 +39,7 @@ public class JavacTest {
          "import org.infinispan.protostream.SerializationContextInitializer;\n" +
          "import test.TestMessage;\n" +
          "@AutoProtoSchemaBuilder(schemaFilePath = \"/\", dependsOn = test.SecondInitializer.class,\n" +
-         "         classes = DependentInitializer.A.class, autoImportClasses = false, service = true)\n" +
+         "         includeClasses = DependentInitializer.A.class, autoImportClasses = false, service = true)\n" +
          "interface DependentInitializer extends SerializationContextInitializer {\n" +
          "   class A {\n" +
          "      @ProtoField(number = 1, required = true)\n" +
@@ -57,6 +57,11 @@ public class JavacTest {
          "interface InitializerA extends SerializationContextInitializer { }\n" +
          "@AutoProtoSchemaBuilder(dependsOn = InitializerA.class)\n" +
          "public interface InitializerB extends SerializationContextInitializer { }\n";
+
+   private static final String src5 = "package test;\n" +
+         "@org.infinispan.protostream.annotations.AutoProtoSchemaBuilder(\"test!\")\n" +
+         "public interface BrokenInitializer extends org.infinispan.protostream.SerializationContextInitializer {\n" +
+         "}\n";
 
    @Test
    public void testAnnotationProcessing() {
@@ -82,5 +87,15 @@ public class JavacTest {
 
       assertThat(compilation).failed();
       assertThat(compilation).hadErrorContaining("Illegal recursive dependency on test_depends.InitializerB");
+   }
+
+   @Test
+   public void testBadBasePackage() {
+      Compilation compilation =
+            javac().withProcessors(new AutoProtoSchemaBuilderAnnotationProcessor())
+                  .compile(JavaFileObjects.forSourceString("BrokenInitializer", src5));
+
+      assertThat(compilation).failed();
+      assertThat(compilation).hadErrorContaining("@AutoProtoSchemaBuilder.value contains an invalid package name : \"test!\"");
    }
 }

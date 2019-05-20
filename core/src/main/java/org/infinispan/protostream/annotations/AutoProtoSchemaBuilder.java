@@ -10,12 +10,12 @@ import org.infinispan.protostream.SerializationContextInitializer;
 /**
  * Generates compile-time auto-implementations of {@link SerializationContextInitializer}. Annotate a class or interface
  * extending from {@link SerializationContextInitializer} with this annotation and a new concrete public class named
- * based on {@link #className}, having a default no-arguments public constructor will be generated at compile time. The
- * implementations of the methods from {@link SerializationContextInitializer} will be generated based on the
- * information provided in the attributes of this annotation.
+ * based on {@link #className}, having a default no-arguments public constructor will be generated at compile time in
+ * the same package. The implementations of the methods from {@link SerializationContextInitializer} will be generated
+ * based on the information provided in the attributes of this annotation.
  * <p>
- * This annotation is used at compile time only and should not be relied upon at runtime, so its retention is set to
- * {@link RetentionPolicy#CLASS}
+ * This annotation is used at compile time annotation processing only and should not be relied upon at runtime, so its
+ * retention is set to {@link RetentionPolicy#CLASS}.
  *
  * @author anistor@redhat.com
  * @since 4.3
@@ -32,9 +32,8 @@ public @interface AutoProtoSchemaBuilder {
 
    /**
     * The generated Protobuf schema file name (optional). Must end with ".proto" suffix. The schema will be registered
-    * under this name in the {@link org.infinispan.protostream.SerializationContext}.
-    * <p>
-    * If missing, the simple name of the annotated element will be used plus the ".proto" suffix.
+    * under this name in the {@link org.infinispan.protostream.SerializationContext}. If missing, the simple name of the
+    * annotated element will be used plus the ".proto" suffix.
     */
    String schemaFileName() default "";
 
@@ -52,36 +51,51 @@ public @interface AutoProtoSchemaBuilder {
    String schemaPackageName() default "";
 
    /**
-    * Annotated classes to process (optional). If missing, all @ProtoXyz annotated classes that belong to the packages
-    * listed in {@link #packages} will be scanned.
+    * Alias for {@link #basePackages}. {@code value} and {@link #basePackages} are mutually exclusive.
     */
-   Class<?>[] classes() default {};
+   String[] value() default {};
 
    /**
-    * The list of packages to scan if {@link #classes} was not specified. The packages are scanned for annotated classes
-    * recursively. {@link #classes} and {@code packages} cannot be both present. If neither {@link #classes} nor {@code
-    * packages} was specified then all available source files will be scanned. This last option should only be used by
-    * very lazy people.
+    * The list of packages to scan (optional). The packages are scanned for annotated classes recursively. If {@code
+    * basePackages} is empty then all packages are considered. The packages are filtered based on the {@link
+    * #includeClasses}/{@link #excludeClasses} filter. If neither {@link #includeClasses} nor {@code basePackages} was
+    * specified then the entire source path will be scanned. This last option should only be used in very simple demo
+    * projects.
     */
-   String[] packages() default {};
+   String[] basePackages() default {};
 
    /**
-    * Indicates if we accept classes not explicitly listed in {@link #classes} to be auto-detected by reference from the
-    * already specified classes and to be included automatically. If this is set to {@code false} it fails if such a
-    * case is encountered. This option can only be set to {@code false} if {@link #classes} is not empty.
+    * Annotated classes to process (optional). These classes must be located in the packages (or the subpackages) listed
+    * under {@link #basePackages} (if specified) or they will be skipped. If {@code includeClasses} is empty, all {@code
+    * ProtoXyz} annotated classes that belong to the packages listed in {@link #basePackages} will be scanned. If
+    * neither {@code includeClasses} nor {@link #basePackages} was specified then the entire source path will be
+    * scanned. This last option should only be used in very simple demo projects.
+    */
+   Class<?>[] includeClasses() default {};
+
+   /**
+    * Classes to be explicitly excluded.
+    */
+   Class<?>[] excludeClasses() default {};
+
+   /**
+    * Indicates if we accept classes not explicitly included by {@link #includeClasses} and {@link #basePackages} to be
+    * auto-detected by reference from the already included classes and to be added automatically. If this is set to
+    * {@code false} it fails if such a case is encountered.
     */
    boolean autoImportClasses() default false;
 
    /**
     * Enable generation of a {@code META-INF/services} file for the generated class of the {@link
     * SerializationContextInitializer} implementation to be loadable by the {@link java.util.ServiceLoader}. This is
-    * optional and is only provided for convenience without being required by the library.
+    * optional and provided for convenience.
     */
    boolean service() default false;
 
    /**
     * The initializers to execute before this one. List here classes or interfaces annotated with {@code
-    * AutoProtoSchemaBuilder} from which a {@link SerializationContextInitializer} is being generated.
+    * AutoProtoSchemaBuilder} from which a {@link SerializationContextInitializer} is being generated at compile-time
+    * annotation processing.
     */
    Class<? extends SerializationContextInitializer>[] dependsOn() default {};
 }

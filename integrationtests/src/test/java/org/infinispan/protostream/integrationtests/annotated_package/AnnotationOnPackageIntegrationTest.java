@@ -41,8 +41,7 @@ public class AnnotationOnPackageIntegrationTest {
       assertTrue(serCtx.canMarshall(TestMessage.class));
    }
 
-   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class,
-         classes = DependentInitializer.C.class, service = true)
+   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, service = true)
    interface DependentInitializer extends SerializationContextInitializer {
       class C {
          @ProtoField(number = 1, required = true)

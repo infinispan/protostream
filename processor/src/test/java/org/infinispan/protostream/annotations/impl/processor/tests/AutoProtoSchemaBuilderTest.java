@@ -1,6 +1,7 @@
 package org.infinispan.protostream.annotations.impl.processor.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -110,7 +111,7 @@ public class AutoProtoSchemaBuilderTest {
 
    @AutoProtoSchemaBuilder(schemaFileName = "TestFile.proto", schemaFilePath = "org/infinispan.protostream/generated_schemas", schemaPackageName = "firstTestPackage",
          service = true,
-         classes = {
+         includeClasses = {
                Note.class,
                Simple.class,
                Simple.class, // duplicates are handled nicely
@@ -136,12 +137,12 @@ public class AutoProtoSchemaBuilderTest {
       assertTrue(ctx.canMarshall(Note.class));
       ProtobufUtil.toWrappedByteArray(ctx, new Note());
 
-      assertTrue(ctx.canMarshall(Simple.class));
-      ProtobufUtil.toWrappedByteArray(ctx, new Simple());
+      // Simple is not in the right package so it is not included
+      assertFalse(ctx.canMarshall(Simple.class));
    }
 
    @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer", autoImportClasses = true,
-         packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
+         basePackages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    abstract static class SecondInitializer implements SerializationContextInitializer {
       SecondInitializer() {
       }
@@ -166,7 +167,7 @@ public class AutoProtoSchemaBuilderTest {
       // Standard Java annotation processors do not process the bodies of methods, so LocalInitializer is never seen by our AP and no code is generated for it, and that is OK.
       // If we ever decide to process method bodies we should probably study the approach used by "The Checker Framework" (https://checkerframework.org).
       @AutoProtoSchemaBuilder(className = "NeverEverGenerated",
-            packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
+            basePackages = "org.infinispan.protostream.annotations.impl.processor", service = true)
       abstract class LocalInitializer implements SerializationContextInitializer {
       }
 
@@ -179,7 +180,7 @@ public class AutoProtoSchemaBuilderTest {
 
    // Using a fully implemented initializer as a base is not the usual use case but some users might need this and we do support it.
    @AutoProtoSchemaBuilder(className = "NonAbstractInitializerImpl", autoImportClasses = true,
-         packages = "org.infinispan.protostream.annotations.impl.processor", service = true)
+         basePackages = "org.infinispan.protostream.annotations.impl.processor", service = true)
    static class NonAbstractInitializer implements SerializationContextInitializer {
 
       @Override
@@ -213,8 +214,7 @@ public class AutoProtoSchemaBuilderTest {
       assertTrue("Non-abstract initializers must be supported", found);
    }
 
-   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class,
-         classes = DependentInitializer.C.class, service = true)
+   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, service = true)
    public interface DependentInitializer extends SerializationContextInitializer {
       class C {
          @ProtoField(number = 1, required = true)

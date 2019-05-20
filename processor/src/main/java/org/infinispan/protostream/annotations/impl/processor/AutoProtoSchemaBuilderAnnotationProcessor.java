@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -30,7 +29,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypesException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -41,11 +39,6 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoEnum;
-import org.infinispan.protostream.annotations.ProtoEnumValue;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoMessage;
-import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.IndentWriter;
 import org.infinispan.protostream.annotations.impl.processor.types.HasModelElement;
@@ -198,151 +191,17 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return stringWriter.toString();
    }
 
-   /**
-    * Gathers the message/enum classes to process and generate marshallers for.
-    */
-   private Collection<? extends TypeMirror> getClassesToProcess(RoundEnvironment roundEnv, Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
-      Collection<? extends TypeMirror> specifiedClasses = Collections.emptyList();
-      try {
-         builderAnnotation.classes(); // this is guaranteed to fail, see MirroredTypesException javadoc
-      } catch (MirroredTypesException mte) {
-         specifiedClasses = mte.getTypeMirrors();
-      }
-
-      Map<String, TypeMirror> classes = new TreeMap<>();  // keep them sorted by FQN for predictable and repeatable order of processing
-
-      if (specifiedClasses.isEmpty()) {
-         // no explicit list of classes is specified so we gather all @ProtoXyz annotated classes from source path and filter them based on the specified packages
-
-         Set<String> packages = builderAnnotation.packages().length == 0 ? null : new HashSet<>(builderAnnotation.packages().length);
-         for (String p : builderAnnotation.packages()) {
-            if (!SourceVersion.isName(p)) {
-               throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.packages contains and invalid package name : \"%s\"", p);
-            }
-            packages.add(p);
-         }
-
-         // message classes from unnamed package cannot be imported so they can only be used by initializers also located in unnamed package
-         PackageElement packageOfInitializer = elements.getPackageOf(builderElement);
-
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoField.class)) {
-            Element enclosingElement = annotatedElement.getEnclosingElement();
-            if (enclosingElement.getKind() == ElementKind.CLASS || enclosingElement.getKind() == ElementKind.INTERFACE) {
-               TypeElement typeElement = (TypeElement) enclosingElement;
-               filterByPackage(classes, typeElement, packages, packageOfInitializer);
-            }
-         }
-
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnumValue.class)) {
-            Element enclosingElement = annotatedElement.getEnclosingElement();
-            if (annotatedElement.getKind() != ElementKind.ENUM_CONSTANT || enclosingElement.getKind() != ElementKind.ENUM) {
-               throw new AnnotationProcessingException(annotatedElement, "@ProtoEnumValue can only be applied to enum constants.");
-            }
-            TypeElement typeElement = (TypeElement) enclosingElement;
-            filterByPackage(classes, typeElement, packages, packageOfInitializer);
-         }
-
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnum.class)) {
-            if (annotatedElement.getKind() != ElementKind.CLASS && annotatedElement.getKind() != ElementKind.INTERFACE) {
-               throw new AnnotationProcessingException(annotatedElement, "@ProtoEnum can only be applied to enums.");
-            }
-            TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, packages, packageOfInitializer);
-         }
-
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoMessage.class)) {
-            if (annotatedElement.getKind() != ElementKind.CLASS && annotatedElement.getKind() != ElementKind.INTERFACE) {
-               throw new AnnotationProcessingException(annotatedElement, "@ProtoMessage can only be applied to classes and interfaces.");
-            }
-            TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, packages, packageOfInitializer);
-         }
-
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoName.class)) {
-            if (annotatedElement.getKind() != ElementKind.CLASS && annotatedElement.getKind() != ElementKind.INTERFACE && annotatedElement.getKind() != ElementKind.ENUM) {
-               throw new AnnotationProcessingException(annotatedElement, "@ProtoName can only be applied to classes, interfaces and enums.");
-            }
-            TypeElement typeElement = (TypeElement) annotatedElement.getEnclosingElement();
-            filterByPackage(classes, typeElement, packages, packageOfInitializer);
-         }
-      } else {
-         if (builderAnnotation.packages().length != 0) {
-            throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.packages cannot be specified unless @AutoProtoSchemaBuilder.classes is empty.");
-         }
-
-         // deduplicate the specified classes
-         for (TypeMirror c : specifiedClasses) {
-            TypeElement typeElement = (TypeElement) ((DeclaredType) c).asElement();
-            String fqn = typeElement.getQualifiedName().toString();
-            classes.putIfAbsent(fqn, c);
-         }
-      }
-
-      return classes.values();
-   }
-
-   private void filterByPackage(Map<String, TypeMirror> collectedClasses, TypeElement typeElement, Set<String> packages, PackageElement packageOfInitializer) {
-      // Skip interfaces and abstract classes when scanning packages. We only generate for instantiable classes.
-      if (typeElement.getKind() == ElementKind.INTERFACE || typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
-         return;
-      }
-
-      PackageElement packageOfElement = elements.getPackageOf(typeElement);
-      if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed()) {
-         // classes from default package are ignored unless the initializer is itself in the default package
-         return;
-      }
-
-      if (!typeElement.getModifiers().contains(Modifier.PUBLIC)) {   //todo [anistor] compute actual visibility based on outer class visibility
-         if (!packageOfElement.equals(packageOfInitializer)) {
-            // classes with non-public visibility are ignored unless the initializer is in the same package
-            return;
-         }
-      }
-
-      String fqn = typeElement.getQualifiedName().toString();
-
-      if (packages != null) {
-         String packageName = packageOfElement.getQualifiedName().toString();
-         if (!isPackageIncluded(packages, packageName)) {
-            return;
-         }
-      }
-
-      collectedClasses.putIfAbsent(fqn, typeElement.asType());
-   }
-
-   /**
-    * Checks if a package is included in a given set of packages, considering also their subpackages recursively.
-    */
-   private boolean isPackageIncluded(Set<String> packages, String packageName) {
-      String p = packageName;
-
-      while (true) {
-         if (packages.contains(p)) {
-            return true;
-         }
-
-         int pos = p.lastIndexOf('.');
-         if (pos == -1) {
-            break;
-         }
-         p = p.substring(0, pos);
-      }
-
-      return false;
-   }
-
    private Map<XClass, String> processElement(RoundEnvironment roundEnv, SerializationContext serCtx, Element annotatedElement, AutoProtoSchemaBuilder annotation) throws IOException {
       if (annotatedElement.getKind() != ElementKind.PACKAGE && annotatedElement.getKind() != ElementKind.INTERFACE && annotatedElement.getKind() != ElementKind.CLASS) {
          throw new AnnotationProcessingException(annotatedElement, "@AutoProtoSchemaBuilder annotation can only be applied to classes, interfaces and packages.");
       }
 
-      Collection<? extends TypeMirror> protoAnnotatedClasses = getClassesToProcess(roundEnv, annotatedElement, annotation);
-      logDebug("AutoProtoSchemaBuilderAnnotationProcessor.getClassesToProcess returned: %s", protoAnnotatedClasses);
+      Collection<? extends TypeMirror> protoAnnotatedClasses = new AnnotatedClassScanner(elements, annotatedElement, annotation)
+            .discoverClasses(roundEnv);
+      logDebug("AnnotatedClassScanner.discoverClasses returned: %s", protoAnnotatedClasses);
 
       if (protoAnnotatedClasses.isEmpty()) {
-         reportWarning(annotatedElement, "No ProtoStream annotated classes found matching the criteria. Please review the 'classes' / 'packages' attribute of the @AutoProtoSchemaBuilder annotation.");
+         reportWarning(annotatedElement, "No ProtoStream annotated classes found matching the criteria. Please review the 'classes' / 'basePackages' attribute of the @AutoProtoSchemaBuilder annotation.");
       }
 
       if (annotatedElement.getKind() == ElementKind.PACKAGE) {
