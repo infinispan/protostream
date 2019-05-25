@@ -397,11 +397,19 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       if (schemaFilePath.isEmpty()) {
          schemaFilePath = null;
       } else {
-         // write Protobuf schema as a resource file
          // reinterpret the path as a package
-         String pkg = (schemaFilePath.startsWith("/") ? schemaFilePath.substring(1) : schemaFilePath).replace('/', '.');
+         String schemaResourcePackage;
+         if (schemaFilePath.startsWith("/")) {
+            schemaResourcePackage = schemaFilePath.substring(1);
+         } else {
+            schemaResourcePackage = schemaFilePath;
+            schemaFilePath = '/' + schemaFilePath;
+         }
+         schemaFilePath = schemaFilePath.replace('.', '/');
+         schemaResourcePackage = schemaResourcePackage.replace('/', '.');
 
-         generatedFilesWriter.addSchemaResourceFile(pkg, fileName, schemaSrc, originatingElements);
+         // write Protobuf schema as a resource file
+         generatedFilesWriter.addSchemaResourceFile(schemaResourcePackage, fileName, schemaSrc, originatingElements);
       }
 
       if (annotation.service()) {
@@ -455,7 +463,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       if (schemaFilePath == null) {
          iw.append("PROTO_SCHEMA");
       } else {
-         iw.append("org.infinispan.protostream.FileDescriptorSource.getResourceAsString(getClass(), getProtoFileName())");
+         iw.append("org.infinispan.protostream.FileDescriptorSource.getResourceAsString(getClass(), \"").append(schemaFilePath).append('/').append(fileName).append("\")");
       }
       iw.append("; }\n\n");
 
@@ -465,12 +473,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       for (int j = 0; j < serCtxInitDeps.size(); j++) {
          iw.append("dep").append(String.valueOf(j)).append(".registerSchema(serCtx);\n");
       }
-      if (schemaFilePath == null) {
-         iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromString(getProtoFileName(), PROTO_SCHEMA));\n");
-      } else {
-         String resourceFile = schemaFilePath.replace('.', '/') + '/' + fileName;
-         iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromResources(getClass().getClassLoader(), \"").append(resourceFile).append("\"));\n");
-      }
+      iw.append("serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromString(getProtoFileName(), getProtoFile()));\n");
       iw.dec();
       iw.append("}\n\n");
 

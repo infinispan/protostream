@@ -137,8 +137,7 @@ public class AutoProtoSchemaBuilderTest {
       assertTrue(ctx.canMarshall(Note.class));
       ProtobufUtil.toWrappedByteArray(ctx, new Note());
 
-      // Simple is not in the right package so it is not included
-      assertFalse(ctx.canMarshall(Simple.class));
+      assertTrue(ctx.canMarshall(Simple.class));
    }
 
    @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer", autoImportClasses = true,

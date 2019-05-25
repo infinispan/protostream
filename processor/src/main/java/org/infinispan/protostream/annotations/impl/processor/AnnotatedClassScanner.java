@@ -69,7 +69,7 @@ final class AnnotatedClassScanner {
             Element enclosingElement = annotatedElement.getEnclosingElement();
             if (enclosingElement.getKind() == ElementKind.CLASS || enclosingElement.getKind() == ElementKind.INTERFACE) {
                TypeElement typeElement = (TypeElement) enclosingElement;
-               filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer);
+               filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
             }
          }
 
@@ -79,7 +79,7 @@ final class AnnotatedClassScanner {
                throw new AnnotationProcessingException(annotatedElement, "@ProtoEnumValue can only be applied to enum constants.");
             }
             TypeElement typeElement = (TypeElement) enclosingElement;
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer);
+            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnum.class)) {
@@ -87,7 +87,7 @@ final class AnnotatedClassScanner {
                throw new AnnotationProcessingException(annotatedElement, "@ProtoEnum can only be applied to enums.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer);
+            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoMessage.class)) {
@@ -95,7 +95,7 @@ final class AnnotatedClassScanner {
                throw new AnnotationProcessingException(annotatedElement, "@ProtoMessage can only be applied to classes and interfaces.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer);
+            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoName.class)) {
@@ -103,13 +103,13 @@ final class AnnotatedClassScanner {
                throw new AnnotationProcessingException(annotatedElement, "@ProtoName can only be applied to classes, interfaces and enums.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer);
+            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
          }
       } else {
          // filter the included classes by package and exclude the explicitly excluded ones
          for (TypeMirror c : includedClasses) {
             TypeElement typeElement = (TypeElement) ((DeclaredType) c).asElement();
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer);
+            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, false);
          }
       }
 
@@ -164,31 +164,36 @@ final class AnnotatedClassScanner {
     * collectedClasses if it satisfies all conditions.
     */
    private void filterByPackage(Map<String, TypeMirror> collectedClasses, TypeElement typeElement,
-                                Set<TypeMirror> excludedClasses, Set<String> packages, PackageElement packageOfInitializer) {
-      // Skip interfaces and abstract classes when scanning packages. We only generate for instantiable classes.
-      if (typeElement.getKind() == ElementKind.INTERFACE || typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
-         return;
-      }
-
-      PackageElement packageOfElement = elements.getPackageOf(typeElement);
-      if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed()) {
-         // classes from default/unnamed package cannot be imported so are ignored unless the initializer is itself located in the default package
-         return;
-      }
-
-      if (!isPublicElement(typeElement) && !packageOfElement.equals(packageOfInitializer)) {
-         // classes with non-public visibility are ignored unless the initializer is in the same package
-         return;
-      }
-
+                                Set<TypeMirror> excludedClasses, Set<String> basePackages, PackageElement packageOfInitializer,
+                                boolean isScanning) {
       TypeMirror type = typeElement.asType();
       if (excludedClasses.contains(type)) {
          return;
       }
 
-      if (!packages.isEmpty()) {
+      PackageElement packageOfElement = elements.getPackageOf(typeElement);
+
+      // when scanning we have some additional rules
+      if (isScanning) {
+         // Skip interfaces and abstract classes when scanning packages. We only generate for instantiable classes.
+         if (typeElement.getKind() == ElementKind.INTERFACE || typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
+            return;
+         }
+
+         // classes from default/unnamed package cannot be imported so are ignored unless the initializer is itself located in the default package
+         if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed()) {
+            return;
+         }
+
+         // classes with non-public visibility are ignored unless the initializer is in the same package
+         if (!isPublicElement(typeElement) && !packageOfElement.equals(packageOfInitializer)) {
+            return;
+         }
+      }
+
+      if (!basePackages.isEmpty()) {
          String packageName = packageOfElement.getQualifiedName().toString();
-         if (!isPackageIncluded(packages, packageName)) {
+         if (!isPackageIncluded(basePackages, packageName)) {
             return;
          }
       }
@@ -202,14 +207,18 @@ final class AnnotatedClassScanner {
     */
    private boolean isPublicElement(TypeElement typeElement) {
       Element e = typeElement;
-
-      while (e != null) {
+      while (true) {
          if (!e.getModifiers().contains(Modifier.PUBLIC)) {
             return false;
          }
          e = e.getEnclosingElement();
+         if (e == null || e.getKind() == ElementKind.PACKAGE) {
+            break;
+         }
+         if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE && e.getKind() != ElementKind.ENUM) {
+            return false;
+         }
       }
-
       return true;
    }
 
