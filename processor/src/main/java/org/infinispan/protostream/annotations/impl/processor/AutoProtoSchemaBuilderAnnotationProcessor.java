@@ -35,6 +35,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
+import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -162,7 +163,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                SerializationContext serCtx = ProtobufUtil.newSerializationContext();
                try {
                   processElement(roundEnv, serCtx, annotatedElement, builderAnnotation);
-               } catch (ProtoSchemaBuilderException e) {
+               } catch (ProtoSchemaBuilderException | DescriptorParserException e) {
                   throw new AnnotationProcessingException(e, annotatedElement, "%s", e.getMessage());
                }
             }
@@ -196,22 +197,22 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          throw new AnnotationProcessingException(annotatedElement, "@AutoProtoSchemaBuilder annotation can only be applied to classes, interfaces and packages.");
       }
 
-      Collection<? extends TypeMirror> protoAnnotatedClasses = new AnnotatedClassScanner(messager, elements, annotatedElement, annotation)
-            .discoverClasses(roundEnv);
-      logDebug("AnnotatedClassScanner.discoverClasses returned: %s", protoAnnotatedClasses);
+      AnnotatedClassScanner classScanner = new AnnotatedClassScanner(messager, elements, annotatedElement, annotation);
+      classScanner.discoverClasses(roundEnv);  //todo [anistor] current round might have only a subset of the source path
+      logDebug("AnnotatedClassScanner.discoverClasses returned: %s", classScanner.getClasses());
 
-      if (protoAnnotatedClasses.isEmpty()) {
+      if (classScanner.getClasses().isEmpty()) {
          reportWarning(annotatedElement, "No ProtoStream annotated classes found matching the criteria. Please review the 'includeClasses' / 'basePackages' attribute of the @AutoProtoSchemaBuilder annotation.");
       }
 
       if (annotatedElement.getKind() == ElementKind.PACKAGE) {
-         return processPackage(roundEnv, serCtx, (PackageElement) annotatedElement, annotation, protoAnnotatedClasses);
+         return processPackage(roundEnv, serCtx, (PackageElement) annotatedElement, annotation, classScanner);
       } else {
-         return processClass(roundEnv, serCtx, (TypeElement) annotatedElement, annotation, protoAnnotatedClasses);
+         return processClass(roundEnv, serCtx, (TypeElement) annotatedElement, annotation, classScanner);
       }
    }
 
-   private Map<XClass, String> processPackage(RoundEnvironment roundEnv, SerializationContext serCtx, PackageElement packageElement, AutoProtoSchemaBuilder builderAnnotation, Collection<? extends TypeMirror> classes) throws IOException {
+   private Map<XClass, String> processPackage(RoundEnvironment roundEnv, SerializationContext serCtx, PackageElement packageElement, AutoProtoSchemaBuilder builderAnnotation, AnnotatedClassScanner classScanner) throws IOException {
       String initializerClassName = builderAnnotation.className();
       if (initializerClassName.isEmpty()) {
          throw new AnnotationProcessingException(packageElement, "@AutoProtoSchemaBuilder.className is required when annotating a package.");
@@ -227,21 +228,21 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       InitializerDependencies dependencies = processDependencies(roundEnv, serCtx, packageElement, builderAnnotation);
 
-      Set<XClass> xclasses = classes.stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
+      Set<XClass> xclasses = classScanner.getClasses().stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
-            initializerPackageName, protobufFileName, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
+            initializerPackageName, protobufFileName, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses(), classScanner);
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializer(packageElement, packageElement.getQualifiedName().toString(), builderAnnotation,
-            dependencies.initializerClassNames, classes, protoSchemaGenerator.getGeneratedMarshallerClasses(),
+            dependencies.initializerClassNames, classScanner.getClasses(), protoSchemaGenerator.getGeneratedMarshallerClasses(),
             initializerPackageName, initializerClassName, initializerFQN,
             protobufFileName, protobufPackageName, schemaSrc);
 
       return protoSchemaGenerator.getMarshalledClasses().stream().collect(Collectors.toMap(c -> c, c -> protobufFileName));
    }
 
-   private Map<XClass, String> processClass(RoundEnvironment roundEnv, SerializationContext serCtx, TypeElement typeElement, AutoProtoSchemaBuilder builderAnnotation, Collection<? extends TypeMirror> classes) throws IOException {
+   private Map<XClass, String> processClass(RoundEnvironment roundEnv, SerializationContext serCtx, TypeElement typeElement, AutoProtoSchemaBuilder builderAnnotation, AnnotatedClassScanner classScanner) throws IOException {
       if (typeElement.getNestingKind() == NestingKind.LOCAL || typeElement.getNestingKind() == NestingKind.ANONYMOUS) {
          throw new AnnotationProcessingException(typeElement, "Classes or interfaces annotated with @AutoProtoSchemaBuilder must not be local or anonymous.");
       }
@@ -270,14 +271,14 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       warnOverrideExistingMethods(typeElement);
 
-      Set<XClass> xclasses = classes.stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
+      Set<XClass> xclasses = classScanner.getClasses().stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
-            typeElement.getQualifiedName().toString(), protobufFileName, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
+            typeElement.getQualifiedName().toString(), protobufFileName, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses(), classScanner);
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializer(typeElement, typeElement.getQualifiedName().toString(), builderAnnotation,
-            dependencies.initializerClassNames, classes, protoSchemaGenerator.getGeneratedMarshallerClasses(),
+            dependencies.initializerClassNames, classScanner.getClasses(), protoSchemaGenerator.getGeneratedMarshallerClasses(),
             initializerPackageName, initializerClassName, initializerFQN,
             protobufFileName, protobufPackageName, schemaSrc);
 
@@ -294,7 +295,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return packageElement.isUnnamed() ? initializerClassName : packageElement.getQualifiedName().toString() + '.' + initializerClassName;
    }
 
-   static final class InitializerDependencies {
+   private static final class InitializerDependencies {
 
       final Set<String> initializerClassNames;
 

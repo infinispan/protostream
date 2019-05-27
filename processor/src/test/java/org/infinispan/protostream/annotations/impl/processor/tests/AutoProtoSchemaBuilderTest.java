@@ -1,7 +1,6 @@
 package org.infinispan.protostream.annotations.impl.processor.tests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -17,13 +16,15 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.impl.testdomain.Simple;
 import org.infinispan.protostream.annotations.impl.testdomain.TestEnum;
 import org.junit.Test;
 
 public class AutoProtoSchemaBuilderTest {
 
-   @ProtoDoc("This is the only info we have")
+   @ProtoDoc("This the documentation")
+   @ProtoName("NoteMsg")
    public static class Note {
 
       @ProtoField(number = 1, required = true)
@@ -135,6 +136,7 @@ public class AutoProtoSchemaBuilderTest {
       serCtxInitializer.registerMarshallers(ctx);
 
       assertTrue(ctx.canMarshall(Note.class));
+      assertTrue(ctx.canMarshall("firstTestPackage.NoteMsg"));
       ProtobufUtil.toWrappedByteArray(ctx, new Note());
 
       assertTrue(ctx.canMarshall(Simple.class));
@@ -219,8 +221,8 @@ public class AutoProtoSchemaBuilderTest {
          @ProtoField(number = 1, required = true)
          public boolean flag;
 
-         //@ProtoField(number = 2)
-         //public ReusableInitializer.A a;
+         @ProtoField(number = 2)
+         public ReusableInitializer.A a;
       }
    }
 

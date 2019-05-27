@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -39,32 +38,43 @@ import org.infinispan.protostream.annotations.ProtoName;
  */
 final class AnnotatedClassScanner {
 
-   private final Messager messager;
+   /**
+    * Keep them sorted by FQN for predictable and repeatable order of processing.
+    */
+   private TreeMap<String, TypeMirror> classes;
 
+   private final Messager messager;
    private final Elements elements;
 
    private final Element builderElement;
-
    private final AutoProtoSchemaBuilder builderAnnotation;
+
+   private final Set<String> basePackages;
+   private final Set<TypeMirror> includedClasses;
+   private final Set<TypeMirror> excludedClasses;
+   private final PackageElement packageOfInitializer;
 
    AnnotatedClassScanner(Messager messager, Elements elements, Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
       this.messager = messager;
       this.elements = elements;
       this.builderElement = builderElement;
       this.builderAnnotation = builderAnnotation;
+
+      includedClasses = getIncludedClasses();
+      excludedClasses = getExcludedClasses();
+      basePackages = getBasePackages();
+      packageOfInitializer = elements.getPackageOf(builderElement);
+   }
+
+   Collection<? extends TypeMirror> getClasses() {
+      return classes.values();
    }
 
    /**
     * Gathers the message/enum classes to process and generate marshallers for.
     */
-   Collection<? extends TypeMirror> discoverClasses(RoundEnvironment roundEnv) throws AnnotationProcessingException {
-      Set<String> packages = getBasePackages();
-      Set<TypeMirror> includedClasses = getIncludedClasses();
-      Set<TypeMirror> excludedClasses = getExcludedClasses();
-
-      PackageElement packageOfInitializer = elements.getPackageOf(builderElement);
-
-      Map<String, TypeMirror> classes = new TreeMap<>();  // keep them sorted by FQN for predictable and repeatable order of processing
+   void discoverClasses(RoundEnvironment roundEnv) throws AnnotationProcessingException {
+      classes = new TreeMap<>();
 
       if (includedClasses.isEmpty()) {
          // no explicit list of classes is specified so we gather all @ProtoXyz annotated classes from source path
@@ -74,7 +84,7 @@ final class AnnotatedClassScanner {
             Element enclosingElement = annotatedElement.getEnclosingElement();
             if (enclosingElement.getKind() == ElementKind.CLASS || enclosingElement.getKind() == ElementKind.INTERFACE) {
                TypeElement typeElement = (TypeElement) enclosingElement;
-               filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
+               collectClasses(typeElement);
             }
          }
 
@@ -84,7 +94,7 @@ final class AnnotatedClassScanner {
                throw new AnnotationProcessingException(annotatedElement, "@ProtoEnumValue can only be applied to enum constants.");
             }
             TypeElement typeElement = (TypeElement) enclosingElement;
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
+            collectClasses(typeElement);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnum.class)) {
@@ -92,7 +102,7 @@ final class AnnotatedClassScanner {
                throw new AnnotationProcessingException(annotatedElement, "@ProtoEnum can only be applied to enums.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
+            collectClasses(typeElement);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoMessage.class)) {
@@ -100,7 +110,7 @@ final class AnnotatedClassScanner {
                throw new AnnotationProcessingException(annotatedElement, "@ProtoMessage can only be applied to classes and interfaces.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
+            collectClasses(typeElement);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoName.class)) {
@@ -108,17 +118,35 @@ final class AnnotatedClassScanner {
                throw new AnnotationProcessingException(annotatedElement, "@ProtoName can only be applied to classes, interfaces and enums.");
             }
             TypeElement typeElement = (TypeElement) annotatedElement;
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, true);
+            collectClasses(typeElement);
          }
       } else {
          // filter the included classes by package and exclude the explicitly excluded ones
          for (TypeMirror c : includedClasses) {
             TypeElement typeElement = (TypeElement) ((DeclaredType) c).asElement();
-            filterByPackage(classes, typeElement, excludedClasses, packages, packageOfInitializer, false);
+            collectClasses(typeElement);
          }
       }
+   }
 
-      return classes.values();
+   boolean isIncluded(String classFQN) {
+      TypeElement typeElement = elements.getTypeElement(classFQN);
+      TypeMirror type = typeElement.asType();
+
+      if (excludedClasses.contains(type)) {
+         return false;
+      }
+
+      PackageElement packageOfElement = elements.getPackageOf(typeElement);
+      if (!isPackageIncluded(packageOfElement)) {
+         return false;
+      }
+
+      if (!includedClasses.isEmpty() && includedClasses.contains(type)) {
+         return true;
+      }
+
+      return builderAnnotation.autoImportClasses() || includedClasses.isEmpty();
    }
 
    private Set<String> getBasePackages() {
@@ -165,54 +193,42 @@ final class AnnotatedClassScanner {
    }
 
    /**
-    * Checks if the type is included by given set of packages and is visible to the initializer and adds it to
-    * collectedClasses if it satisfies all conditions.
+    * Checks if the type is included by given set of packages and is visible to the initializer and adds it to collected
+    * classes Map if it satisfies all conditions.
     */
-   private void filterByPackage(Map<String, TypeMirror> collectedClasses, TypeElement typeElement,
-                                Set<TypeMirror> excludedClasses, Set<String> basePackages, PackageElement packageOfInitializer,
-                                boolean isScanning) {
+   private void collectClasses(TypeElement typeElement) {
       TypeMirror type = typeElement.asType();
       if (excludedClasses.contains(type)) {
          return;
       }
 
       PackageElement packageOfElement = elements.getPackageOf(typeElement);
+      if (!isPackageIncluded(packageOfElement)) {
+         return;
+      }
 
-      // when scanning we have some additional rules
-      if (isScanning) {
+      // when no explicit list of classes is given we will scan packages, and when scanning we have some additional rules
+      if (includedClasses.isEmpty()) {
          // Skip interfaces and abstract classes when scanning packages. We only generate for instantiable classes.
          if (typeElement.getKind() == ElementKind.INTERFACE || typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
             return;
          }
 
          // classes from default/unnamed package cannot be imported so are ignored unless the initializer is itself located in the default package
-         if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed()) {
-            messager.printMessage(Diagnostic.Kind.WARNING, String.format("Type %s is not visible to %s so it is ignored!",
-                  typeElement.getQualifiedName(), packageOfInitializer.getQualifiedName()));
-            return;
-         }
-
          // classes with non-public visibility are ignored unless the initializer is in the same package
-         if (!isPublicElement(typeElement) && !packageOfElement.equals(packageOfInitializer)) {
+         if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed() || !packageOfElement.equals(packageOfInitializer) && !isPublicElement(typeElement)) {
             messager.printMessage(Diagnostic.Kind.WARNING, String.format("Type %s is not visible to %s so it is ignored!",
-                  typeElement.getQualifiedName(), packageOfInitializer.getQualifiedName()));
+                  typeElement.getQualifiedName(), packageOfInitializer.getQualifiedName()), builderElement);
             return;
          }
       }
 
-      if (!basePackages.isEmpty()) {
-         String packageName = packageOfElement.getQualifiedName().toString();
-         if (!isPackageIncluded(basePackages, packageName)) {
-            return;
-         }
-      }
-
-      // yay!
-      collectedClasses.putIfAbsent(typeElement.getQualifiedName().toString(), type);
+      classes.putIfAbsent(typeElement.getQualifiedName().toString(), type);
    }
 
    /**
-    * Checks if the element and all enclosing elements have the PUBLIC modifier.
+    * Checks if the type and all its outer types up to top level have the PUBLIC modifier which ensures their visibility
+    * to a different package.
     */
    private boolean isPublicElement(TypeElement typeElement) {
       Element e = typeElement;
@@ -232,13 +248,17 @@ final class AnnotatedClassScanner {
    }
 
    /**
-    * Checks if a package is included in a given set of packages, considering also their subpackages recursively.
+    * Checks if a package is included in the given set of packages, considering also their subpackages recursively.
     */
-   private boolean isPackageIncluded(Set<String> packages, String packageName) {
-      String p = packageName;
+   private boolean isPackageIncluded(PackageElement packageElement) {
+      if (basePackages.isEmpty()) {
+         return true;
+      }
+
+      String p = packageElement.getQualifiedName().toString();
 
       while (true) {
-         if (packages.contains(p)) {
+         if (basePackages.contains(p)) {
             return true;
          }
 

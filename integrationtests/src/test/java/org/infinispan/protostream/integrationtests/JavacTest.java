@@ -63,6 +63,20 @@ public class JavacTest {
          "public interface BrokenInitializer extends org.infinispan.protostream.SerializationContextInitializer {\n" +
          "}\n";
 
+   private static final String src6 = "package test;\n" +
+         "@org.infinispan.protostream.annotations.AutoProtoSchemaBuilder\n" +
+         "public interface SimplestInitializer extends org.infinispan.protostream.SerializationContextInitializer {\n" +
+         "}\n\n" +
+         "abstract class AbstractInnerMessage {\n" +
+         "   @org.infinispan.protostream.annotations.ProtoField(number = 1, required = true)\n" +
+         "   boolean field1;\n" +
+         "}\n\n" +
+         "class InnerMessage extends AbstractInnerMessage { }\n\n" +
+         "class OuterMessage {\n" +
+         "   @org.infinispan.protostream.annotations.ProtoField(number = 1)\n" +
+         "   InnerMessage inner;\n" +
+         "}\n";
+
    @Test
    public void testAnnotationProcessing() {
       Compilation compilation =
@@ -97,5 +111,15 @@ public class JavacTest {
 
       assertThat(compilation).failed();
       assertThat(compilation).hadErrorContaining("@AutoProtoSchemaBuilder.value contains an invalid package name : \"test!\"");
+   }
+
+   @Test
+   public void testDiscoveryWithNoAutoImport() {
+      Compilation compilation =
+            javac().withProcessors(new AutoProtoSchemaBuilderAnnotationProcessor())
+                  .compile(JavaFileObjects.forSourceString("SimplestInitializer", src6));
+
+      assertThat(compilation).succeeded();
+      assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test/SimplestInitializerImpl.java").isPresent());
    }
 }

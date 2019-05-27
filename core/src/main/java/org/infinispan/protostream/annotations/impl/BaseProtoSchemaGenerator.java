@@ -246,7 +246,9 @@ public abstract class BaseProtoSchemaGenerator {
    }
 
    private void defineMetadata(ProtoTypeMetadata protoTypeMetadata) {
-      if (!autoImportClasses && !protoTypeMetadata.isImported() && isUnknownClass(protoTypeMetadata.getJavaClass())) {
+      boolean isUnknownClass = isUnknownClass(protoTypeMetadata.getJavaClass());
+
+      if (!autoImportClasses && !protoTypeMetadata.isImported() && isUnknownClass) {
          // autoImportClasses is off and we are attempting expanding the class set
          throw new ProtoSchemaBuilderException("Found a reference to class "
                + protoTypeMetadata.getJavaClassName() + " which was not explicitly added to the builder and 'autoImportClasses' is disabled.");
