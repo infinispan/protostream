@@ -524,7 +524,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-         return typeMirror.getAnnotation(annotationClass);
+         return typeElement.getAnnotation(annotationClass);
       }
 
       @Override
