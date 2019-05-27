@@ -21,10 +21,10 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    private final MarshallerSourceCodeGenerator marshallerSourceCodeGenerator;
 
    CompileTimeProtoSchemaGenerator(UnifiedTypeFactory typeFactory, GeneratedFilesWriter generatedFilesWriter,
-                                   SerializationContext serializationContext, String fileName, String packageName,
-                                   Map<XClass, String> dependencies,
+                                   SerializationContext serializationContext, String generator,
+                                   String fileName, String packageName, Map<XClass, String> dependencies,
                                    Set<XClass> classes, boolean autoImportClasses) {
-      super(typeFactory, serializationContext, fileName, packageName, classes, autoImportClasses);
+      super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses);
       this.dependencies = dependencies;
       this.marshallerSourceCodeGenerator = new MarshallerSourceCodeGenerator(generatedFilesWriter, typeFactory, packageName);
    }

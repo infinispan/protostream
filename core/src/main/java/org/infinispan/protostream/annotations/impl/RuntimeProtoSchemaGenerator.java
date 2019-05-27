@@ -38,9 +38,9 @@ public final class RuntimeProtoSchemaGenerator extends BaseProtoSchemaGenerator 
       IS_OSGI_CONTEXT = isOSGi;
    }
 
-   public RuntimeProtoSchemaGenerator(UnifiedTypeFactory typeFactory, SerializationContext serializationContext,
+   public RuntimeProtoSchemaGenerator(UnifiedTypeFactory typeFactory, SerializationContext serializationContext, String generator,
                                       String fileName, String packageName, Set<XClass> classes, boolean autoImportClasses) {
-      super(typeFactory, serializationContext, fileName, packageName, classes, autoImportClasses);
+      super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses);
       if (classes.isEmpty()) {
          throw new ProtoSchemaBuilderException("At least one class must be specified");
       }

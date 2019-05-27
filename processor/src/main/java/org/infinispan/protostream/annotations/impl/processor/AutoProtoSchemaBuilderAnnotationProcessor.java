@@ -234,7 +234,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       Set<XClass> xclasses = classes.stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
-            protobufFilePath, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
+            initializerPackageName, protobufFilePath, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializer(packageElement, packageElement.getQualifiedName().toString(), builderAnnotation,
@@ -285,7 +285,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       Set<XClass> xclasses = classes.stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
-            protobufFilePath, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
+            typeElement.getQualifiedName().toString(), protobufFilePath, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializer(typeElement, typeElement.getQualifiedName().toString(), builderAnnotation,
