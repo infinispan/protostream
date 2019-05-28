@@ -196,12 +196,12 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          throw new AnnotationProcessingException(annotatedElement, "@AutoProtoSchemaBuilder annotation can only be applied to classes, interfaces and packages.");
       }
 
-      Collection<? extends TypeMirror> protoAnnotatedClasses = new AnnotatedClassScanner(elements, annotatedElement, annotation)
+      Collection<? extends TypeMirror> protoAnnotatedClasses = new AnnotatedClassScanner(messager, elements, annotatedElement, annotation)
             .discoverClasses(roundEnv);
       logDebug("AnnotatedClassScanner.discoverClasses returned: %s", protoAnnotatedClasses);
 
       if (protoAnnotatedClasses.isEmpty()) {
-         reportWarning(annotatedElement, "No ProtoStream annotated classes found matching the criteria. Please review the 'classes' / 'basePackages' attribute of the @AutoProtoSchemaBuilder annotation.");
+         reportWarning(annotatedElement, "No ProtoStream annotated classes found matching the criteria. Please review the 'includeClasses' / 'basePackages' attribute of the @AutoProtoSchemaBuilder annotation.");
       }
 
       if (annotatedElement.getKind() == ElementKind.PACKAGE) {
@@ -223,18 +223,14 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       String initializerPackageName = packageElement.isUnnamed() ? null : packageElement.getQualifiedName().toString();
       String initializerFQN = initializerPackageName != null ? initializerPackageName + '.' + initializerClassName : initializerClassName;
       String protobufPackageName = builderAnnotation.schemaPackageName().isEmpty() ? null : builderAnnotation.schemaPackageName();
-      String protobufFileName = builderAnnotation.schemaFileName();
-      if (protobufFileName.isEmpty()) {
-         protobufFileName = packageElement.getSimpleName() + ".proto";
-      }
-      String protobufFilePath = builderAnnotation.schemaFilePath().isEmpty() ? protobufFileName : builderAnnotation.schemaFilePath().replace('.', '/') + '/' + protobufFileName;
+      String protobufFileName = builderAnnotation.schemaFileName().isEmpty() ? packageElement.getSimpleName() + ".proto" : builderAnnotation.schemaFileName();
 
       InitializerDependencies dependencies = processDependencies(roundEnv, serCtx, packageElement, builderAnnotation);
 
       Set<XClass> xclasses = classes.stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
-            initializerPackageName, protobufFilePath, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
+            initializerPackageName, protobufFileName, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializer(packageElement, packageElement.getQualifiedName().toString(), builderAnnotation,
@@ -242,11 +238,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
             initializerPackageName, initializerClassName, initializerFQN,
             protobufFileName, protobufPackageName, schemaSrc);
 
-      Map<XClass, String> result = new HashMap<>(dependencies.depClasses);
-      for (XClass c : protoSchemaGenerator.getMarshalledClasses()) {
-         result.put(c, protobufFilePath);
-      }
-      return result;
+      return protoSchemaGenerator.getMarshalledClasses().stream().collect(Collectors.toMap(c -> c, c -> protobufFileName));
    }
 
    private Map<XClass, String> processClass(RoundEnvironment roundEnv, SerializationContext serCtx, TypeElement typeElement, AutoProtoSchemaBuilder builderAnnotation, Collection<? extends TypeMirror> classes) throws IOException {
@@ -272,11 +264,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       String initializerClassName = getInitializerClassName(typeElement, builderAnnotation);
       String initializerFQN = initializerPackageName != null ? initializerPackageName + '.' + initializerClassName : initializerClassName;
       String protobufPackageName = builderAnnotation.schemaPackageName().isEmpty() ? null : builderAnnotation.schemaPackageName();
-      String protobufFileName = builderAnnotation.schemaFileName();
-      if (protobufFileName.isEmpty()) {
-         protobufFileName = typeElement.getSimpleName() + ".proto";
-      }
-      String protobufFilePath = builderAnnotation.schemaFilePath().isEmpty() ? protobufFileName : builderAnnotation.schemaFilePath().replace('.', '/') + '/' + protobufFileName;
+      String protobufFileName = builderAnnotation.schemaFileName().isEmpty() ? typeElement.getSimpleName() + ".proto" : builderAnnotation.schemaFileName();
 
       InitializerDependencies dependencies = processDependencies(roundEnv, serCtx, typeElement, builderAnnotation);
 
@@ -285,7 +273,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       Set<XClass> xclasses = classes.stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
-            typeElement.getQualifiedName().toString(), protobufFilePath, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
+            typeElement.getQualifiedName().toString(), protobufFileName, protobufPackageName, dependencies.depClasses, xclasses, builderAnnotation.autoImportClasses());
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializer(typeElement, typeElement.getQualifiedName().toString(), builderAnnotation,
@@ -293,11 +281,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
             initializerPackageName, initializerClassName, initializerFQN,
             protobufFileName, protobufPackageName, schemaSrc);
 
-      Map<XClass, String> result = new HashMap<>(dependencies.depClasses);
-      for (XClass c : protoSchemaGenerator.getMarshalledClasses()) {
-         result.put(c, protobufFilePath);
-      }
-      return result;
+      return protoSchemaGenerator.getMarshalledClasses().stream().collect(Collectors.toMap(c -> c, c -> protobufFileName));
    }
 
    private String getInitializerClassName(Element annotatedElement, AutoProtoSchemaBuilder builderAnnotation) {
@@ -353,8 +337,8 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
             throw new AnnotationProcessingException(annotatedElement, "Illegal recursive dependency on %s", dependencyFQN);
          }
 
-         Map<XClass, String> xclasses = processElement(roundEnv, serCtx, dependencyElement, dependencyAnnotation);
-         depClasses.putAll(xclasses);
+         Map<XClass, String> marshalledClasses = processElement(roundEnv, serCtx, dependencyElement, dependencyAnnotation);
+         depClasses.putAll(marshalledClasses);
 
          processedElementsFQN.remove(dependencyFQN);
 
@@ -393,23 +377,20 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          originatingElements[i++] = types.asElement(tm);
       }
 
-      String schemaFilePath = annotation.schemaFilePath();
-      if (schemaFilePath.isEmpty()) {
-         schemaFilePath = null;
+      String schemaResource = annotation.schemaFilePath();
+      if (schemaResource.isEmpty()) {
+         schemaResource = null;
       } else {
-         // reinterpret the path as a package
-         String schemaResourcePackage;
-         if (schemaFilePath.startsWith("/")) {
-            schemaResourcePackage = schemaFilePath.substring(1);
-         } else {
-            schemaResourcePackage = schemaFilePath;
-            schemaFilePath = '/' + schemaFilePath;
+         if (!schemaResource.startsWith("/")) {
+            schemaResource = '/' + schemaResource;
          }
-         schemaFilePath = schemaFilePath.replace('.', '/');
-         schemaResourcePackage = schemaResourcePackage.replace('/', '.');
+         if (!schemaResource.endsWith("/")) {
+            schemaResource = schemaResource + '/';
+         }
+         schemaResource += (fileName.startsWith("/") ? fileName.substring(1) : fileName);
 
          // write Protobuf schema as a resource file
-         generatedFilesWriter.addSchemaResourceFile(schemaResourcePackage, fileName, schemaSrc, originatingElements);
+         generatedFilesWriter.addSchemaResourceFile(schemaResource, schemaSrc, originatingElements);
       }
 
       if (annotation.service()) {
@@ -418,7 +399,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
 
       String initializerSrc = generateSerializationContextInitializer(annotatedElement, annotatedElementFQN, annotation,
-            serCtxInitDeps, classes, generatedMarshallerClasses, packageName, initializerClassName, fileName, protobufPackageName, schemaSrc, schemaFilePath);
+            serCtxInitDeps, classes, generatedMarshallerClasses, packageName, initializerClassName, fileName, protobufPackageName, schemaSrc, schemaResource);
 
       generatedFilesWriter.addInitializerSourceFile(initializerFQN, initializerSrc, originatingElements);
    }
@@ -426,7 +407,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    private String generateSerializationContextInitializer(Element annotatedElement, String annotatedElementFQN, AutoProtoSchemaBuilder annotation,
                                                           Set<String> serCtxInitDeps, Collection<? extends TypeMirror> classes, Set<String> generatedMarshallerClasses,
                                                           String packageName, String initializerClassName,
-                                                          String fileName, String protobufPackageName, String schemaSrc, String schemaFilePath) {
+                                                          String fileName, String protobufPackageName, String schemaSrc, String schemaResource) {
       IndentWriter iw = new IndentWriter();
       iw.append("/*\n");
       iw.append(" Generated by ").append(getClass().getName()).append("\n");
@@ -439,7 +420,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
 
       addGeneratedAnnotation(iw);
-      addSchemaBuilderAnnotation(iw, initializerClassName, fileName, schemaFilePath, protobufPackageName, classes, serCtxInitDeps, annotation.service());
+      addSchemaBuilderAnnotation(iw, initializerClassName, fileName, annotation.schemaFilePath(), protobufPackageName, classes, serCtxInitDeps, annotation.service());
 
       iw.append("public class ").append(initializerClassName);
       if (annotatedElement.getKind() == ElementKind.PACKAGE) {
@@ -449,7 +430,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
       iw.inc();
 
-      if (schemaFilePath == null) {
+      if (schemaResource == null) {
          iw.append("private static final String PROTO_SCHEMA = ").append(makeStringLiteral(schemaSrc)).append(";\n\n");
       }
 
@@ -460,10 +441,10 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       iw.append("@Override\npublic String getProtoFileName() { return \"").append(fileName).append("\"; }\n\n");
       iw.append("@Override\npublic String getProtoFile() { return ");
-      if (schemaFilePath == null) {
+      if (schemaResource == null) {
          iw.append("PROTO_SCHEMA");
       } else {
-         iw.append("org.infinispan.protostream.FileDescriptorSource.getResourceAsString(getClass(), \"").append(schemaFilePath).append('/').append(fileName).append("\")");
+         iw.append("org.infinispan.protostream.FileDescriptorSource.getResourceAsString(getClass(), \"").append(schemaResource).append("\")");
       }
       iw.append("; }\n\n");
 

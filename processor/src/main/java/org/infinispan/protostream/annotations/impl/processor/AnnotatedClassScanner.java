@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.annotation.processing.Messager;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -20,6 +21,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypesException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.tools.Diagnostic;
 
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoEnum;
@@ -37,13 +39,16 @@ import org.infinispan.protostream.annotations.ProtoName;
  */
 final class AnnotatedClassScanner {
 
+   private final Messager messager;
+
    private final Elements elements;
 
    private final Element builderElement;
 
    private final AutoProtoSchemaBuilder builderAnnotation;
 
-   AnnotatedClassScanner(Elements elements, Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
+   AnnotatedClassScanner(Messager messager, Elements elements, Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
+      this.messager = messager;
       this.elements = elements;
       this.builderElement = builderElement;
       this.builderAnnotation = builderAnnotation;
@@ -182,11 +187,15 @@ final class AnnotatedClassScanner {
 
          // classes from default/unnamed package cannot be imported so are ignored unless the initializer is itself located in the default package
          if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed()) {
+            messager.printMessage(Diagnostic.Kind.WARNING, String.format("Type %s is not visible to %s so it is ignored!",
+                  typeElement.getQualifiedName(), packageOfInitializer.getQualifiedName()));
             return;
          }
 
          // classes with non-public visibility are ignored unless the initializer is in the same package
          if (!isPublicElement(typeElement) && !packageOfElement.equals(packageOfInitializer)) {
+            messager.printMessage(Diagnostic.Kind.WARNING, String.format("Type %s is not visible to %s so it is ignored!",
+                  typeElement.getQualifiedName(), packageOfInitializer.getQualifiedName()));
             return;
          }
       }

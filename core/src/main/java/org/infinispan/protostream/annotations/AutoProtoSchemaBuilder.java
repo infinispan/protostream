@@ -25,15 +25,16 @@ import org.infinispan.protostream.SerializationContextInitializer;
 public @interface AutoProtoSchemaBuilder {
 
    /**
-    * The name of the generated implementation class (optional). If missing, the name of the current class plus the
+    * The name of the generated Java implementation class (optional). If missing, the name of the current class plus the
     * "Impl" suffix is assumed by default.
     */
    String className() default "";
 
    /**
-    * The generated Protobuf schema file name (optional). Must end with ".proto" suffix. The schema will be registered
-    * under this name in the {@link org.infinispan.protostream.SerializationContext}. If missing, the simple name of the
-    * annotated element will be used plus the ".proto" suffix.
+    * The generated Protobuf schema file name (optional). It can contain {@code '/'} characters, so it might appear like
+    * a relative name. Must end with ".proto" suffix. The schema will be registered under this name in the {@link
+    * org.infinispan.protostream.SerializationContext}. If missing, the simple name of the annotated class will be used
+    * plus the ".proto" suffix.
     */
    String schemaFileName() default "";
 
@@ -46,7 +47,7 @@ public @interface AutoProtoSchemaBuilder {
 
    /**
     * Package of the generated Protobuf schema. This is optional. If the package name is not specified then the
-    * generated Protobuf types will end up in the unnamed/default package.
+    * unnamed/default package is assumed.
     */
    String schemaPackageName() default "";
 

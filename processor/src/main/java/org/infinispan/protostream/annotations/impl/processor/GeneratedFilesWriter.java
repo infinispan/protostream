@@ -90,18 +90,16 @@ final class GeneratedFilesWriter {
 
       private final boolean isEnabled;
 
-      private final String pkg;
-
-      private final String relativeName;
+      // file name relative to root package
+      private final String fileName;
 
       private final String source;
 
       private final Element[] originatingElements;
 
-      ResourceFile(boolean isEnabled, String pkg, String relativeName, String source, Element... originatingElements) {
+      ResourceFile(boolean isEnabled, String fileName, String source, Element... originatingElements) {
          this.isEnabled = isEnabled;
-         this.pkg = pkg;
-         this.relativeName = relativeName;
+         this.fileName = fileName.startsWith("/") ? fileName.substring(1) : fileName;
          this.source = source;
          this.originatingElements = originatingElements;
       }
@@ -119,15 +117,15 @@ final class GeneratedFilesWriter {
       @Override
       public void write(Filer filer) throws IOException {
          // check disk contents
-         if (source.equals(getResourceFileContents(filer, pkg, relativeName))) {
+         if (source.equals(getResourceFileContents(filer, "", fileName))) {
             return;
          }
 
          FileObject file;
          try {
-            file = filer.createResource(StandardLocation.CLASS_OUTPUT, pkg, relativeName, originatingElements);
+            file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", fileName, originatingElements);
          } catch (FilerException e) {
-            throw new AnnotationProcessingException(e, originatingElements[0], "Package %s already contains a resource file named %s", pkg, relativeName);
+            throw new AnnotationProcessingException(e, originatingElements[0], "Failed to create resource file \"%s\". Name could be invalid or the file already exists?", fileName);
          }
 
          try (PrintWriter out = new PrintWriter(file.openWriter())) {
@@ -160,9 +158,8 @@ final class GeneratedFilesWriter {
       addGeneratedFile(className, new SourceFile(isEnabled, className, source, originatingElements));
    }
 
-   public void addSchemaResourceFile(String pkg, String relativeName, String source, Element[] originatingElements) throws IOException {
-      String fqn = pkg.isEmpty() ? relativeName : pkg + '/' + relativeName;
-      addGeneratedFile(fqn, new ResourceFile(isEnabled, pkg, relativeName, source, originatingElements));
+   public void addSchemaResourceFile(String fileName, String source, Element[] originatingElements) throws IOException {
+      addGeneratedFile(fileName, new ResourceFile(isEnabled, fileName, source, originatingElements));
    }
 
    private void addGeneratedFile(String fqn, GeneratedFile file) throws IOException {

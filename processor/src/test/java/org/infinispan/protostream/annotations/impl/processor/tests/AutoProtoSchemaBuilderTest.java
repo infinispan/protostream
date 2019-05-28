@@ -109,7 +109,7 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(schemaFileName = "TestFile.proto", schemaFilePath = "org/infinispan.protostream/generated_schemas", schemaPackageName = "firstTestPackage",
+   @AutoProtoSchemaBuilder(schemaFileName = "TestFile.proto", schemaFilePath = "org/infinispan/protostream/generated_schemas", schemaPackageName = "firstTestPackage",
          service = true,
          includeClasses = {
                Note.class,
