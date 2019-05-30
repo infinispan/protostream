@@ -89,6 +89,6 @@ public class Simple {
    }
 
    @ProtoUnknownFieldSet
-   @ProtoField(number = 314, name = "my_enum_field", defaultValue = "AX")
+   //@ProtoField(number = 314, name = "my_enum_field", defaultValue = "AX")
    public UnknownFieldSet unknownFieldSet;
 }
