@@ -432,6 +432,22 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public boolean equals(Object obj) {
+         if (obj == this) {
+            return true;
+         }
+         if (obj == null || obj.getClass() != ReflectionMethod.class) {
+            return false;
+         }
+         return method.equals(((ReflectionMethod) obj).method);
+      }
+
+      @Override
+      public int hashCode() {
+         return method.hashCode();
+      }
+
+      @Override
       public String toString() {
          return method.toString();
       }
@@ -561,6 +577,22 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       @Override
       public String getDocumentation() {
          return DocumentationExtractor.getDocumentation(field.getAnnotationsByType(ProtoDoc.class));
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (obj == this) {
+            return true;
+         }
+         if (obj == null || obj.getClass() != ReflectionField.class) {
+            return false;
+         }
+         return field.equals(((ReflectionField) obj).field);
+      }
+
+      @Override
+      public int hashCode() {
+         return field.hashCode();
       }
 
       @Override
