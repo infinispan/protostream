@@ -1000,8 +1000,32 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public boolean equals(Object obj) {
+         if (obj == this) {
+            return true;
+         }
+         if (obj == null || obj.getClass() != MirrorConstructor.class) {
+            return false;
+         }
+         return executableElement.equals(((MirrorConstructor) obj).executableElement);
+      }
+
+      @Override
+      public int hashCode() {
+         return executableElement.hashCode();
+      }
+
+      @Override
       public String toString() {
-         return executableElement.toString();
+         StringBuilder sb = new StringBuilder();
+         for (Modifier m : Modifier.values()) {
+            if (executableElement.getModifiers().contains(m)) {
+               sb.append(m).append(' ');
+            }
+         }
+         sb.append(executableElement.getEnclosingElement().getSimpleName())
+               .append(' ').append(executableElement);
+         return sb.toString();
       }
    }
 

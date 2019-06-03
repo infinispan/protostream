@@ -506,6 +506,22 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public boolean equals(Object obj) {
+         if (obj == this) {
+            return true;
+         }
+         if (obj == null || obj.getClass() != ReflectionConstructor.class) {
+            return false;
+         }
+         return constructor.equals(((ReflectionConstructor) obj).constructor);
+      }
+
+      @Override
+      public int hashCode() {
+         return constructor.hashCode();
+      }
+
+      @Override
       public String toString() {
          return constructor.toString();
       }
