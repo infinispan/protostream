@@ -13,7 +13,7 @@
     <artifactId>sample-domain-definition</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Sample domain model definitions in proto file</name>
+    <name>ProtoStream - sample domain model definition in proto file</name>
     <description>
         Defines some message and enum types in a *.proto schema file, for demo purposes and testing.
     </description>

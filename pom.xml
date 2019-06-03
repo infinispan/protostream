@@ -13,8 +13,8 @@
     <artifactId>protostream-aggregator</artifactId>
     <packaging>pom</packaging>
 
-    <name>Aggregator module for the ProtoStream project</name>
-    <description>Builds the distribution of the ProtoStream project</description>
+    <name>ProtoStream - aggregator</name>
+    <description>Aggregator module for the ProtoStream project. Builds the distribution of the project.</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

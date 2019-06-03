@@ -13,10 +13,10 @@
     <artifactId>sample-domain-implementation</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Sample domain model implementation, including marshallers</name>
+    <name>ProtoStream - sample domain model implementation and marshallers</name>
     <description>
         Defines the Java entities corresponding to the sample schema defined in the sample-domain-definition module and
-        the marshaller implementations for them.
+        the MessageMarshaller/EnumMarshaller implementations for them.
     </description>
 
     <dependencies>
