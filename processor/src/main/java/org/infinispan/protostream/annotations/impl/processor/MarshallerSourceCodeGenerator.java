@@ -140,7 +140,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       } else {
          fqn = marshallerClassName;
       }
-      AutoProtoSchemaBuilderAnnotationProcessor.addGeneratedAnnotation(iw);
+      AutoProtoSchemaBuilderAnnotationProcessor.addGeneratedAnnotation(iw, pmtm.getJavaClassName());
       iw.append("@SuppressWarnings(\"unchecked\")\n");
       iw.append("public final class ").append(marshallerClassName)
             .append(" extends ").append(GeneratedMarshallerBase.class.getName())

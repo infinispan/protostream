@@ -53,7 +53,7 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
       boolean isUnknownClass = !dependencies.containsKey(c) && super.isUnknownClass(c);
 
       if (isUnknownClass) {
-         if (!classScanner.isIncluded(c.getCanonicalName())) {
+         if (!classScanner.isClassIncluded(c.getCanonicalName())) {
             throw new ProtoSchemaBuilderException("Found a reference to class " + c.getName() +
                   " which was not explicitly included by the @AutoProtoSchemaBuilder and the annotation attributes do not allow it to be included.");
          }

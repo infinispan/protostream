@@ -54,16 +54,34 @@ final class AnnotatedClassScanner {
    private final Set<TypeMirror> excludedClasses;
    private final PackageElement packageOfInitializer;
 
+   private final String initializerClassName;
+   private final String initializerFQClassName;
+
    AnnotatedClassScanner(Messager messager, Elements elements, Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
+      if (builderElement.getKind() == ElementKind.PACKAGE && builderAnnotation.className().isEmpty()) {
+         throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.className is required when annotating a package.");
+      }
+
       this.messager = messager;
       this.elements = elements;
       this.builderElement = builderElement;
       this.builderAnnotation = builderAnnotation;
 
-      includedClasses = getIncludedClasses();
-      excludedClasses = getExcludedClasses();
+      includedClasses = getClasses(true);
+      excludedClasses = getClasses(false);
       basePackages = getBasePackages();
       packageOfInitializer = elements.getPackageOf(builderElement);
+
+      initializerClassName = builderAnnotation.className().isEmpty() ? builderElement.getSimpleName() + "Impl" : builderAnnotation.className();
+      initializerFQClassName = packageOfInitializer.isUnnamed() ? initializerClassName : packageOfInitializer.getQualifiedName().toString() + '.' + initializerClassName;
+   }
+
+   String getInitializerClassName() {
+      return initializerClassName;
+   }
+
+   String getInitializerFQClassName() {
+      return initializerFQClassName;
    }
 
    Collection<? extends TypeMirror> getClasses() {
@@ -77,51 +95,36 @@ final class AnnotatedClassScanner {
       classes = new TreeMap<>();
 
       if (includedClasses.isEmpty()) {
-         // no explicit list of classes is specified so we gather all @ProtoXyz annotated classes from source path
-         // and filter them based on the specified packages and also exclude the explicitly excluded classes
+         // No explicit list of classes is specified so we gather all relevant @ProtoXyz annotated classes from source
+         // path and filter them based on the specified packages and also exclude the explicitly excluded classes.
 
+         // Scan the elements in RoundEnv first.
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoField.class)) {
-            Element enclosingElement = annotatedElement.getEnclosingElement();
-            if (enclosingElement.getKind() == ElementKind.CLASS || enclosingElement.getKind() == ElementKind.INTERFACE) {
-               TypeElement typeElement = (TypeElement) enclosingElement;
-               collectClasses(typeElement);
-            }
+            visitProtoField(annotatedElement);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnumValue.class)) {
-            Element enclosingElement = annotatedElement.getEnclosingElement();
-            if (annotatedElement.getKind() != ElementKind.ENUM_CONSTANT || enclosingElement.getKind() != ElementKind.ENUM) {
-               throw new AnnotationProcessingException(annotatedElement, "@ProtoEnumValue can only be applied to enum constants.");
-            }
-            TypeElement typeElement = (TypeElement) enclosingElement;
-            collectClasses(typeElement);
+            visitProtoEnumValue(annotatedElement);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnum.class)) {
-            if (annotatedElement.getKind() != ElementKind.CLASS && annotatedElement.getKind() != ElementKind.INTERFACE) {
-               throw new AnnotationProcessingException(annotatedElement, "@ProtoEnum can only be applied to enums.");
-            }
-            TypeElement typeElement = (TypeElement) annotatedElement;
-            collectClasses(typeElement);
+            visitProtoEnum(annotatedElement);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoMessage.class)) {
-            if (annotatedElement.getKind() != ElementKind.CLASS && annotatedElement.getKind() != ElementKind.INTERFACE) {
-               throw new AnnotationProcessingException(annotatedElement, "@ProtoMessage can only be applied to classes and interfaces.");
-            }
-            TypeElement typeElement = (TypeElement) annotatedElement;
-            collectClasses(typeElement);
+            visitProtoMessage(annotatedElement);
          }
 
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoName.class)) {
-            if (annotatedElement.getKind() != ElementKind.CLASS && annotatedElement.getKind() != ElementKind.INTERFACE && annotatedElement.getKind() != ElementKind.ENUM) {
-               throw new AnnotationProcessingException(annotatedElement, "@ProtoName can only be applied to classes, interfaces and enums.");
-            }
-            TypeElement typeElement = (TypeElement) annotatedElement;
-            collectClasses(typeElement);
+            visitProtoName(annotatedElement);
+         }
+
+         // Scan the elements from a previous compilation/generation (if any). This helps incremental compilation.
+         for (TypeElement e : getPreviouslyProcessedElements()) {
+            visitTypeElement(e);
          }
       } else {
-         // filter the included classes by package and exclude the explicitly excluded ones
+         // We have a given list of classes, no scanning, just filter them by package and remove the excluded ones
          for (TypeMirror c : includedClasses) {
             TypeElement typeElement = (TypeElement) ((DeclaredType) c).asElement();
             collectClasses(typeElement);
@@ -129,7 +132,93 @@ final class AnnotatedClassScanner {
       }
    }
 
-   boolean isIncluded(String classFQN) {
+   private void visitTypeElement(TypeElement e) {
+      if (e.getAnnotation(ProtoName.class) != null) {
+         visitProtoName(e);
+      }
+      if (e.getAnnotation(ProtoMessage.class) != null) {
+         visitProtoMessage(e);
+      }
+      if (e.getAnnotation(ProtoEnum.class) != null) {
+         visitProtoEnum(e);
+      }
+
+      for (Element member : e.getEnclosedElements()) {
+         if (member.getAnnotation(ProtoField.class) != null) {
+            visitProtoField(member);
+         }
+         if (member.getAnnotation(ProtoEnumValue.class) != null) {
+            visitProtoEnumValue(member);
+         }
+
+         if (member.getKind() == ElementKind.CLASS || member.getKind() == ElementKind.INTERFACE) {
+            visitTypeElement((TypeElement) member);
+         }
+      }
+   }
+
+   private void visitProtoField(Element e) {
+      Element enclosingElement = e.getEnclosingElement();
+      if (e.getKind() != ElementKind.METHOD && e.getKind() != ElementKind.FIELD
+            || enclosingElement.getKind() != ElementKind.CLASS && enclosingElement.getKind() != ElementKind.INTERFACE) {
+         throw new AnnotationProcessingException(e, "@ProtoField can only be applied to fields and methods.");
+      }
+      collectClasses((TypeElement) enclosingElement);
+   }
+
+   private void visitProtoEnumValue(Element e) {
+      Element enclosingElement = e.getEnclosingElement();
+      if (e.getKind() != ElementKind.ENUM_CONSTANT || enclosingElement.getKind() != ElementKind.ENUM) {
+         throw new AnnotationProcessingException(e, "@ProtoEnumValue can only be applied to enum constants.");
+      }
+      collectClasses((TypeElement) enclosingElement);
+   }
+
+   private void visitProtoName(Element e) {
+      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE && e.getKind() != ElementKind.ENUM) {
+         throw new AnnotationProcessingException(e, "@ProtoName can only be applied to classes, interfaces and enums.");
+      }
+      collectClasses((TypeElement) e);
+   }
+
+   private void visitProtoMessage(Element e) {
+      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE) {
+         throw new AnnotationProcessingException(e, "@ProtoMessage can only be applied to classes and interfaces.");
+      }
+      collectClasses((TypeElement) e);
+   }
+
+   private void visitProtoEnum(Element e) {
+      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE) {
+         throw new AnnotationProcessingException(e, "@ProtoEnum can only be applied to enums.");
+      }
+      collectClasses((TypeElement) e);
+   }
+
+   /**
+    * Extracts the old root elements from the previously generated initializer code.
+    */
+   private Set<TypeElement> getPreviouslyProcessedElements() {
+      Set<TypeElement> typeElements = Collections.emptySet();
+
+      TypeElement initializer = elements.getTypeElement(initializerFQClassName);
+      if (initializer != null) {
+         OriginatingClasses originatingClasses = initializer.getAnnotation(OriginatingClasses.class);
+         if (originatingClasses != null) {
+            typeElements = new HashSet<>(originatingClasses.value().length);
+            for (String s : originatingClasses.value()) {
+               TypeElement typeElement = elements.getTypeElement(s);
+               if (typeElement != null) {
+                  typeElements.add(typeElement);
+               }
+            }
+         }
+      }
+
+      return typeElements;
+   }
+
+   boolean isClassIncluded(String classFQN) {
       TypeElement typeElement = elements.getTypeElement(classFQN);
       TypeMirror type = typeElement.asType();
 
@@ -172,21 +261,16 @@ final class AnnotatedClassScanner {
       return packages;
    }
 
-   private Set<TypeMirror> getIncludedClasses() {
+   private Set<TypeMirror> getClasses(boolean included) {
       List<? extends TypeMirror> classes = Collections.emptyList();
       try {
-         builderAnnotation.includeClasses();  // this is guaranteed to fail, see MirroredTypesException javadoc
+         if (included) {
+            builderAnnotation.includeClasses();
+         } else {
+            builderAnnotation.excludeClasses();
+         }
       } catch (MirroredTypesException mte) {
-         classes = mte.getTypeMirrors();
-      }
-      return new LinkedHashSet<>(classes);
-   }
-
-   private Set<TypeMirror> getExcludedClasses() {
-      List<? extends TypeMirror> classes = Collections.emptyList();
-      try {
-         builderAnnotation.excludeClasses();  // this is guaranteed to fail, see MirroredTypesException javadoc
-      } catch (MirroredTypesException mte) {
+         // this is guaranteed to happen, see MirroredTypesException javadoc
          classes = mte.getTypeMirrors();
       }
       return new LinkedHashSet<>(classes);
