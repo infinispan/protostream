@@ -124,7 +124,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
 
       CtMethod ctDecodeMethod = new CtMethod(decodeMethod, marshallerImpl, null);
       ctDecodeMethod.setModifiers(ctDecodeMethod.getModifiers() | Modifier.FINAL);
-      String decodeSrc = generateEnumDecodeMethod(petm);
+      String decodeSrc = generateEnumDecodeMethodBody(petm);
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", ctDecodeMethod.getLongName(), decodeSrc);
       }
@@ -133,7 +133,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
 
       CtMethod ctEncodeMethod = new CtMethod(encodeMethod, marshallerImpl, null);
       ctEncodeMethod.setModifiers(ctEncodeMethod.getModifiers() | Modifier.FINAL);
-      String encodeSrc = generateEnumEncodeMethod(petm);
+      String encodeSrc = generateEnumEncodeMethodBody(petm);
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", ctEncodeMethod.getLongName(), encodeSrc);
       }
@@ -170,7 +170,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       CtMethod ctReadFromMethod = new CtMethod(readFromMethod, marshallerImpl, null);
       ctReadFromMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
       ctReadFromMethod.setModifiers(ctReadFromMethod.getModifiers() | Modifier.FINAL);
-      String readFromSrc = generateReadFromMethod(pmtm);
+      String readFromSrc = generateReadFromMethodBody(pmtm);
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", ctReadFromMethod.getLongName(), readFromSrc);
       }
@@ -180,7 +180,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       CtMethod ctWriteToMethod = new CtMethod(writeToMethod, marshallerImpl, null);
       ctWriteToMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
       ctWriteToMethod.setModifiers(ctWriteToMethod.getModifiers() | Modifier.FINAL);
-      String writeToSrc = generateWriteToMethod(pmtm);
+      String writeToSrc = generateWriteToMethodBody(pmtm);
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", ctWriteToMethod.getLongName(), writeToSrc);
       }

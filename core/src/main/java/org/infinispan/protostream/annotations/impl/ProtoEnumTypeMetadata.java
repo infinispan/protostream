@@ -2,6 +2,7 @@ package org.infinispan.protostream.annotations.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.infinispan.protostream.annotations.ProtoEnum;
@@ -23,7 +24,7 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
    private static final Log log = Log.LogFactory.getLog(ProtoEnumTypeMetadata.class);
 
-   private Map<Integer, ProtoEnumValueMetadata> membersByNumber;
+   private SortedMap<Integer, ProtoEnumValueMetadata> membersByNumber;
 
    private Map<String, ProtoEnumValueMetadata> membersByName;
 
@@ -74,7 +75,7 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       }
    }
 
-   public Map<Integer, ProtoEnumValueMetadata> getMembers() {
+   public SortedMap<Integer, ProtoEnumValueMetadata> getMembers() {
       scanMemberAnnotations();
       return membersByNumber;
    }

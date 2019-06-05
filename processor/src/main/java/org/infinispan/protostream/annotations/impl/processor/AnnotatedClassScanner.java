@@ -25,6 +25,7 @@ import javax.tools.Diagnostic;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
@@ -103,6 +104,10 @@ final class AnnotatedClassScanner {
             visitProtoField(annotatedElement);
          }
 
+         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoFactory.class)) {
+            visitProtoFactory(annotatedElement);
+         }
+
          for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnumValue.class)) {
             visitProtoEnumValue(annotatedElement);
          }
@@ -155,6 +160,15 @@ final class AnnotatedClassScanner {
             visitTypeElement((TypeElement) member);
          }
       }
+   }
+
+   private void visitProtoFactory(Element e) {
+      Element enclosingElement = e.getEnclosingElement();
+      if (e.getKind() != ElementKind.METHOD && e.getKind() != ElementKind.CONSTRUCTOR
+            || enclosingElement.getKind() != ElementKind.CLASS && enclosingElement.getKind() != ElementKind.INTERFACE) {
+         throw new AnnotationProcessingException(e, "@ProtoFactory can only be applied to constructors and methods.");
+      }
+      collectClasses((TypeElement) enclosingElement);
    }
 
    private void visitProtoField(Element e) {

@@ -320,6 +320,8 @@
                         <source>${version.java}</source>
                         <target>${version.java}</target>
                         <encoding>UTF-8</encoding>
+                        <!-- Include method parameter debug info -->
+                        <parameters>true</parameters>
                     </configuration>
                 </plugin>
 

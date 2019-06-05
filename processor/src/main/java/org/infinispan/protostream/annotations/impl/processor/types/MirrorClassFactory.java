@@ -321,8 +321,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public boolean isAssignableTo(XClass c) {
-         String secondTypeName = c.getCanonicalName();
+      public boolean isAssignableTo(XClass other) {
+         if (this == other) {
+            return true;
+         }
+         String secondTypeName = other.getCanonicalName();
          TypeElement secondType = elements.getTypeElement(secondTypeName);
          if (secondType == null) {
             throw new RuntimeException("Type not found : " + secondTypeName);
@@ -353,6 +356,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       @Override
       public XConstructor getDeclaredConstructor(XClass... argTypes) {
          return null;
+      }
+
+      @Override
+      public Iterable<? extends XConstructor> getDeclaredConstructors() {
+         return Collections.emptyList();
       }
 
       @Override
@@ -524,6 +532,9 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public boolean isAssignableTo(XClass c) {
+         if (this == c) {
+            return true;
+         }
          TypeElement secondType = elements.getTypeElement(c.getCanonicalName());
          if (secondType == null) {
             throw new RuntimeException("Type not found : " + c.getCanonicalName());
@@ -594,6 +605,14 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       @Override
       public XConstructor getDeclaredConstructor(XClass... argTypes) {
          return cacheConstructor(findExecutableElement(true, null, argTypes));
+      }
+
+      @Override
+      public Iterable<? extends XConstructor> getDeclaredConstructors() {
+         return typeElement.getEnclosedElements().stream()
+               .filter(e -> e.getKind() == ElementKind.CONSTRUCTOR)
+               .map(e -> cacheConstructor((ExecutableElement) e))
+               .collect(Collectors.toList());
       }
 
       @Override
@@ -800,7 +819,13 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public boolean isAssignableTo(XClass c) {
-         return false;
+         if (this == c) {
+            return true;
+         }
+         if (!c.isArray()) {
+            return false;
+         }
+         return componentType.isAssignableTo(c.getComponentType());
       }
 
       @Override
@@ -841,6 +866,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       @Override
       public XConstructor getDeclaredConstructor(XClass... argTypes) {
          return null;
+      }
+
+      @Override
+      public Iterable<? extends XConstructor> getDeclaredConstructors() {
+         return Collections.emptyList();
       }
 
       @Override
@@ -906,13 +936,18 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public int getParameterCount() {
+         return executableElement.getParameters().size();
+      }
+
+      @Override
+      public String[] getParameterNames() {
+         return executableElement.getParameters().stream().map(p -> p.getSimpleName().toString()).toArray(String[]::new);
+      }
+
+      @Override
       public XClass[] getParameterTypes() {
-         List<? extends VariableElement> params = executableElement.getParameters();
-         XClass[] xclasses = new XClass[params.size()];
-         for (int i = 0; i < xclasses.length; i++) {
-            xclasses[i] = fromTypeMirror(params.get(i).asType());
-         }
-         return xclasses;
+         return executableElement.getParameters().stream().map(p -> fromTypeMirror(p.asType())).toArray(XClass[]::new);
       }
 
       @Override
@@ -976,8 +1011,13 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
          }
          sb.append(executableElement.getReturnType())
                .append(' ').append(executableElement.getEnclosingElement().getSimpleName())
-               .append(' ').append(executableElement);
+               .append('.').append(executableElement);
          return sb.toString();
+      }
+
+      @Override
+      public String toGenericString() {
+         return toString();
       }
    }
 
@@ -996,13 +1036,18 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public int getParameterCount() {
+         return executableElement.getParameters().size();
+      }
+
+      @Override
+      public String[] getParameterNames() {
+         return executableElement.getParameters().stream().map(p -> p.getSimpleName().toString()).toArray(String[]::new);
+      }
+
+      @Override
       public XClass[] getParameterTypes() {
-         List<? extends VariableElement> params = executableElement.getParameters();
-         XClass[] xclasses = new XClass[params.size()];
-         for (int i = 0; i < xclasses.length; i++) {
-            xclasses[i] = fromTypeMirror(params.get(i).asType());
-         }
-         return xclasses;
+         return executableElement.getParameters().stream().map(p -> fromTypeMirror(p.asType())).toArray(XClass[]::new);
       }
 
       @Override
@@ -1065,9 +1110,13 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
                sb.append(m).append(' ');
             }
          }
-         sb.append(executableElement.getEnclosingElement().getSimpleName())
-               .append(' ').append(executableElement);
+         sb.append(executableElement);
          return sb.toString();
+      }
+
+      @Override
+      public String toGenericString() {
+         return toString();
       }
    }
 

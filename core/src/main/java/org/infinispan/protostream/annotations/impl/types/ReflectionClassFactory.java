@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -186,6 +187,9 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
       @Override
       public boolean isAssignableTo(XClass other) {
+         if (this == other) {
+            return true;
+         }
          return other.asClass().isAssignableFrom(clazz);
       }
 
@@ -255,6 +259,15 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
             return null;
          }
          return cacheConstructor(ctor);
+      }
+
+      @Override
+      public Iterable<? extends XConstructor> getDeclaredConstructors() {
+         List<XConstructor> constructors = new ArrayList<>();
+         for (Constructor c : clazz.getDeclaredConstructors()) {
+            constructors.add(cacheConstructor(c));
+         }
+         return constructors;
       }
 
       @Override
@@ -410,6 +423,24 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public int getParameterCount() {
+         return method.getParameterCount();
+      }
+
+      @Override
+      public String[] getParameterNames() {
+         Parameter[] parameters = method.getParameters();
+         String[] parameterNames = new String[parameters.length];
+         for (int i = 0; i < parameters.length; i++) {
+            if (!parameters[i].isNamePresent()) {
+               throw new IllegalStateException("Method parameter names are not present in compiled class file!");
+            }
+            parameterNames[i] = parameters[i].getName();
+         }
+         return parameterNames;
+      }
+
+      @Override
       public XClass[] getParameterTypes() {
          Class<?>[] paramTypes = method.getParameterTypes();
          XClass[] xparamTypes = new XClass[paramTypes.length];
@@ -469,6 +500,11 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       public String toString() {
          return method.toString();
       }
+
+      @Override
+      public String toGenericString() {
+         return method.toGenericString();
+      }
    }
 
    private final class ReflectionConstructor implements XConstructor {
@@ -480,6 +516,24 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       ReflectionConstructor(ReflectionClass declaringClass, Constructor<?> constructor) {
          this.declaringClass = declaringClass;
          this.constructor = constructor;
+      }
+
+      @Override
+      public int getParameterCount() {
+         return constructor.getParameterCount();
+      }
+
+      @Override
+      public String[] getParameterNames() {
+         Parameter[] parameters = constructor.getParameters();
+         String[] parameterNames = new String[parameters.length];
+         for (int i = 0; i < parameters.length; i++) {
+            if (!parameters[i].isNamePresent()) {
+               throw new IllegalStateException("Method parameter names are not present in compiled class file!");
+            }
+            parameterNames[i] = parameters[i].getName();
+         }
+         return parameterNames;
       }
 
       @Override
@@ -547,6 +601,11 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       @Override
       public String toString() {
          return constructor.toString();
+      }
+
+      @Override
+      public String toGenericString() {
+         return constructor.toGenericString();
       }
    }
 

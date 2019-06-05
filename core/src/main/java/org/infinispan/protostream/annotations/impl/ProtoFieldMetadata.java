@@ -1,11 +1,11 @@
 package org.infinispan.protostream.annotations.impl;
 
-import java.lang.reflect.Executable;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.annotations.impl.types.XExecutable;
 import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMember;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
@@ -31,9 +31,10 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    private final Object defaultValue;
 
    private final XMember declaringMember;
-   private final XField field;
+   private final XField field;    // field or getter required (exclusively)
    private final XMethod getter;
-   private final XMethod setter;
+   private final XMethod setter;  // setter is optional
+   private final String propertyName;
 
    ProtoFieldMetadata(int number, String name, XClass javaType,
                       XClass collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
@@ -54,12 +55,13 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
       this.getter = null;
       this.setter = null;
       this.documentation = field.getDocumentation();
+      this.propertyName = field.getName();
    }
 
    ProtoFieldMetadata(int number, String name, XClass javaType,
                       XClass collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
                       boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
-                      XMethod definingMethod, XMethod getter, XMethod setter) {
+                      String propertyName, XMethod definingMethod, XMethod getter, XMethod setter) {
       this.number = number;
       this.name = name;
       this.javaType = javaType;
@@ -71,6 +73,7 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
       this.defaultValue = defaultValue;
       this.protobufType = protobufType;
       this.field = null;
+      this.propertyName = propertyName;
       this.declaringMember = definingMethod;
       this.getter = getter;
       this.setter = setter;
@@ -85,6 +88,13 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
       return name;
    }
 
+   public String getPropertyName() {
+      return propertyName;
+   }
+
+   /**
+    * The Java type. If this field is repeatable then the collection/array <em>element type</em> is returned here.
+    */
    public XClass getJavaType() {
       return javaType;
    }
@@ -139,7 +149,7 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    }
 
    public String getLocation() {
-      return declaringMember instanceof Executable ? ((Executable) declaringMember).toGenericString() : declaringMember.toString();
+      return declaringMember instanceof XExecutable ? ((XExecutable) declaringMember).toGenericString() : declaringMember.toString();
    }
 
    @Override
@@ -231,8 +241,10 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
          if (field != null) {
             iw.append("field = ").append(field.getDeclaringClass().getCanonicalName()).append('.').append(field.getName());
          } else {
-            iw.append("getter = ").append(getter.getDeclaringClass().getCanonicalName()).append('.').append(getter.getName())
-                  .append(", setter = ").append(setter.getDeclaringClass().getCanonicalName()).append('.').append(setter.getName());
+            iw.append("getter = ").append(getter.getDeclaringClass().getCanonicalName()).append('.').append(getter.getName());
+            if (setter != null) {
+               iw.append(", setter = ").append(setter.getDeclaringClass().getCanonicalName()).append('.').append(setter.getName());
+            }
          }
          iw.append(" */");
       }

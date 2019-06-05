@@ -35,6 +35,11 @@ public abstract class BaseProtoSchemaGenerator {
     */
    public static boolean generateSchemaDebugComments = false;
 
+   /**
+    * Set this flag to {@code true} to enable output of debug comments in the generated marshaller source code.
+    */
+   public static boolean generateMarshallerDebugComments = false;
+
    protected final UnifiedTypeFactory typeFactory;
 
    protected final SerializationContext serializationContext;

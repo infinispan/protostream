@@ -108,14 +108,14 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
 
       iw.append("@Override\npublic String getTypeName() { return \"").append(makeQualifiedTypeName(petm.getFullName())).append("\"; }\n\n");
 
-      String decodeSrc = generateEnumDecodeMethod(petm);
+      String decodeSrc = generateEnumDecodeMethodBody(petm);
       String decodeSig = "public " + petm.getJavaClassName() + " decode(int $1)";
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", decodeSig, decodeSrc);
       }
       iw.append("@Override\n").append(decodeSig).append(' ').append(decodeSrc).append('\n');
 
-      String encodeSrc = generateEnumEncodeMethod(petm);
+      String encodeSrc = generateEnumEncodeMethodBody(petm);
       String encodeSig = "public int encode(" + petm.getJavaClassName() + " $1) throws IllegalArgumentException";
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", encodeSig, encodeSrc);
@@ -156,7 +156,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
 
       iw.append("@Override\npublic String getTypeName() { return \"").append(makeQualifiedTypeName(pmtm.getFullName())).append("\"; }\n\n");
 
-      String readFromSrc = generateReadFromMethod(pmtm);
+      String readFromSrc = generateReadFromMethodBody(pmtm);
       String readFromSig = "public " + pmtm.getJavaClassName() + " readFrom("
             + ImmutableSerializationContext.class.getName() + " $1, "
             + RawProtoStreamReader.class.getName() + " $2) throws java.io.IOException";
@@ -165,7 +165,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       }
       iw.append("@Override\n").append(readFromSig).append(' ').append(readFromSrc).append('\n');
 
-      String writeToSrc = generateWriteToMethod(pmtm);
+      String writeToSrc = generateWriteToMethodBody(pmtm);
       String writeToSig = "public void writeTo("
             + ImmutableSerializationContext.class.getName() + " $1, "
             + RawProtoStreamWriter.class.getName() + " $2, "

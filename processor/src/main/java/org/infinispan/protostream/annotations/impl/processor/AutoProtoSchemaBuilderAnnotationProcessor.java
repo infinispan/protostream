@@ -169,7 +169,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                try {
                   processElement(roundEnv, serCtx, annotatedElement, builderAnnotation, new ProcessorContext());
                } catch (ProtoSchemaBuilderException | DescriptorParserException e) {
-                  throw new AnnotationProcessingException(e, annotatedElement, "%s", e.getMessage());
+                  throw new AnnotationProcessingException(e, annotatedElement, "%s", getStackTraceAsString(e));
                }
             }
          }

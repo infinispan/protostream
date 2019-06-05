@@ -3,16 +3,19 @@ package org.infinispan.protostream.annotations.impl;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import javax.lang.model.type.MirroredTypeException;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
@@ -21,6 +24,7 @@ import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
 import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XConstructor;
+import org.infinispan.protostream.annotations.impl.types.XExecutable;
 import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.descriptors.JavaType;
@@ -39,7 +43,11 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final UnifiedTypeFactory typeFactory;
 
-   private Map<Integer, ProtoFieldMetadata> fields = null;
+   private SortedMap<Integer, ProtoFieldMetadata> fieldsByNumber = null;
+
+   private Map<String, ProtoFieldMetadata> fieldsByName = null;
+
+   private XExecutable factory;
 
    private XField unknownFieldSetField;
 
@@ -69,6 +77,11 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return protoMessageAnnotation == null || protoMessageAnnotation.name().isEmpty() ? messageClass.getSimpleName() : protoMessageAnnotation.name();
    }
 
+   public XExecutable getFactory() {
+      scanMemberAnnotations();
+      return factory;
+   }
+
    public XField getUnknownFieldSetField() {
       scanMemberAnnotations();
       return unknownFieldSetField;
@@ -84,9 +97,9 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return unknownFieldSetSetter;
    }
 
-   public Map<Integer, ProtoFieldMetadata> getFields() {
+   public SortedMap<Integer, ProtoFieldMetadata> getFields() {
       scanMemberAnnotations();
-      return fields;
+      return fieldsByNumber;
    }
 
    protected void addInnerType(ProtoTypeMetadata typeMetadata) {
@@ -109,8 +122,8 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       ReservedProcessor reserved = new ReservedProcessor();
       reserved.scan(javaClass);
 
-      for (int memberNumber : fields.keySet()) {
-         ProtoFieldMetadata field = fields.get(memberNumber);
+      for (int memberNumber : fieldsByNumber.keySet()) {
+         ProtoFieldMetadata field = fieldsByNumber.get(memberNumber);
          XClass where = reserved.checkReserved(memberNumber);
          if (where != null) {
             throw new ProtoSchemaBuilderException("Protobuf field number " + memberNumber + " of field " + field.getLocation() +
@@ -129,7 +142,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          t.generateProto(iw);
       }
 
-      for (ProtoFieldMetadata f : fields.values()) {
+      for (ProtoFieldMetadata f : fieldsByNumber.values()) {
          f.generateProto(iw);
       }
 
@@ -149,23 +162,69 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    @Override
    public void scanMemberAnnotations() {
-      if (fields == null) {
-         // all the fields discovered in this class hierarchy, by number
-         // use a TreeMap to ensure ascending order by field number
-         fields = new TreeMap<>();
+      if (fieldsByNumber == null) {
+         // All the fields discovered in this class hierarchy, the key is their number.
+         // We use a TreeMap to ensure ascending order by field number.
+         fieldsByNumber = new TreeMap<>();
 
          // all the fields discovered in this class hierarchy, by name
-         Map<String, ProtoFieldMetadata> fieldsByName = new HashMap<>();
+         fieldsByName = new HashMap<>();
 
-         Set<XClass> examinedClasses = new HashSet<>();
-         discoverFields(javaClass, examinedClasses, fields, fieldsByName);
-         if (fields.isEmpty()) {
+         discoverFields(javaClass, new HashSet<>());
+         if (fieldsByNumber.isEmpty()) {
             throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.");
          }
-         checkInstantiability();
+
+         // if we have a factory method or constructor, ensure its params match the declared fields
+         if (factory != null) {
+            String[] parameterNames = factory.getParameterNames();
+            if (parameterNames.length != fieldsByNumber.size()) {
+               throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. Expected "
+                     + fieldsByNumber.size() + " parameters but found " + parameterNames.length + " : " + factory.toGenericString());
+            }
+            XClass[] parameterTypes = factory.getParameterTypes();
+            for (int i = 0; i < parameterNames.length; i++) {
+               String parameterName = parameterNames[i];
+               ProtoFieldMetadata fieldMetadata = getFieldByPropertyName(parameterName);
+               if (fieldMetadata == null) {
+                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '"
+                        + parameterName + "' does not match any field : " + factory.toGenericString());
+               }
+               XClass parameterType = parameterTypes[i];
+               if (fieldMetadata.isArray()) {
+                  if (!parameterType.isArray()) {
+                     throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '" + parameterName + "' does not match the field definition: " + factory.toGenericString());
+                  }
+                  if (parameterType.getComponentType() != fieldMetadata.getJavaType()) {
+                     throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '" + parameterName + "' does not match the field definition: " + factory.toGenericString());
+                  }
+               } else if (fieldMetadata.isRepeated()) {
+                  // todo [anistor] check collection type parameter also
+                  if (!fieldMetadata.getCollectionImplementation().isAssignableTo(parameterType)) {
+                     throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '" + parameterName + "' does not match the field definition: " + factory.toGenericString());
+                  }
+               } else {
+                  if (!fieldMetadata.getJavaType().isAssignableTo(parameterType)) {
+                     throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '" + parameterName + "' does not match the field definition: " + factory.toGenericString());
+                  }
+               }
+            }
+         }
       }
    }
 
+   private ProtoFieldMetadata getFieldByPropertyName(String propName) {
+      for (ProtoFieldMetadata field : fieldsByNumber.values()) {
+         if (propName.equals(field.getPropertyName())) {
+            return field;
+         }
+      }
+      return null;
+   }
+
+   /**
+    * Ensure we have a proper constructor or factory method.
+    */
    private void checkInstantiability() {
       // ensure the class is not abstract
       if (javaClass.isAbstract() || javaClass.isInterface()) {
@@ -179,24 +238,56 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       if (javaClass.getEnclosingClass() != null && !javaClass.isStatic()) {
          throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
       }
-      // ensure the class has an accessible no-argument constructor
-      XConstructor ctor = javaClass.getDeclaredConstructor();
-      if (ctor == null || ctor.isPrivate()) {
-         throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
+
+      for (XConstructor c : javaClass.getDeclaredConstructors()) {
+         if (c.getAnnotation(ProtoFactory.class) != null) {
+            if (factory != null) {
+               throw new ProtoSchemaBuilderException("Found more than one @ProtoFactory annotated method / constructor : " + c);
+            }
+            if (c.isPrivate()) {
+               throw new ProtoSchemaBuilderException("@ProtoFactory annotated constructor must not be private: " + c);
+            }
+            factory = c;
+         }
+      }
+      for (XMethod m : javaClass.getDeclaredMethods()) {
+         if (m.getAnnotation(ProtoFactory.class) != null) {
+            if (factory != null) {
+               throw new ProtoSchemaBuilderException("Found more than one @ProtoFactory annotated method / constructor : " + m);
+            }
+            if (!m.isStatic()) {
+               throw new ProtoSchemaBuilderException("@ProtoFactory annotated method must be static: " + m);
+            }
+            if (m.isPrivate()) {
+               throw new ProtoSchemaBuilderException("@ProtoFactory annotated method must not be private: " + m);
+            }
+            if (m.getReturnType() != javaClass) {
+               throw new ProtoSchemaBuilderException("@ProtoFactory annotated method has wrong return type: " + m);
+            }
+            factory = m;
+         }
+      }
+
+      if (factory == null) {
+         // If no factory method/constructor was found we need to ensure the class has an accessible no-argument constructor
+         XConstructor ctor = javaClass.getDeclaredConstructor();
+         if (ctor == null || ctor.isPrivate()) {
+            throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
+         }
       }
    }
 
-   private void discoverFields(XClass clazz, Set<XClass> examinedClasses, Map<Integer, ProtoFieldMetadata> fieldsByNumber, Map<String, ProtoFieldMetadata> fieldsByName) {
+   private void discoverFields(XClass clazz, Set<XClass> examinedClasses) {
       if (!examinedClasses.add(clazz)) {
          // avoid re-examining classes due to multiple interface inheritance
          return;
       }
 
       if (clazz.getSuperclass() != null) {
-         discoverFields(clazz.getSuperclass(), examinedClasses, fieldsByNumber, fieldsByName);
+         discoverFields(clazz.getSuperclass(), examinedClasses);
       }
       for (XClass i : clazz.getInterfaces()) {
-         discoverFields(i, examinedClasses, fieldsByNumber, fieldsByName);
+         discoverFields(i, examinedClasses);
       }
 
       for (XField field : clazz.getDeclaredFields()) {
@@ -211,7 +302,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (field.isStatic()) {
                   throw new ProtoSchemaBuilderException("Static fields cannot be @ProtoField annotated: " + field);
                }
-               if (field.isFinal()) {
+               if (factory == null && field.isFinal()) {
                   throw new ProtoSchemaBuilderException("Final fields cannot be @ProtoField annotated: " + field);
                }
                if (field.isPrivate()) {
@@ -249,10 +340,13 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation.defaultValue());
 
                if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
-                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " should be marked required or should have a default value.");
+                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " is not nullable and should be either marked required or should have a default value.");
                }
 
                XClass collectionImplementation = getCollectionImplementation(clazz, field.getType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
+               if (isArray) {
+                  collectionImplementation = typeFactory.fromClass(ArrayList.class);
+               }
 
                ProtoTypeMetadata protoTypeMetadata = null;
                if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
@@ -331,6 +425,9 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   if (method.getParameterTypes().length != 1) {
                      throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                   }
+                  if (factory != null) {
+                     throw new ProtoSchemaBuilderException("Setter methods should not be annotated with @ProtoField when @ProtoFactory is used by a class: " + method);
+                  }
                   setter = method;
                   getter = findGetter(propertyName, method.getParameterTypes()[0]);
                } else {
@@ -343,7 +440,11 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                      throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
                   }
                   getter = method;
-                  setter = findSetter(propertyName, getter.getReturnType());
+                  if (factory == null) {
+                     setter = findSetter(propertyName, getter.getReturnType());
+                  } else {
+                     setter = null;
+                  }
                }
                if (annotation.number() == 0) {
                   throw new ProtoSchemaBuilderException("0 is not a valid Protobuf field number: " + method);
@@ -378,10 +479,13 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation.defaultValue());
 
                if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
-                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " should be marked required or should have a default value.");
+                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " is not nullable and should be either marked required or should have a default value.");
                }
 
                XClass collectionImplementation = getCollectionImplementation(clazz, getter.getReturnType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
+               if (isArray) {
+                  collectionImplementation = typeFactory.fromClass(ArrayList.class);
+               }
 
                ProtoTypeMetadata protoTypeMetadata = null;
                if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
@@ -390,7 +494,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(annotation.number(), fieldName, javaType, collectionImplementation,
                      protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue,
-                     method, getter, setter);
+                     propertyName, method, getter, setter);
 
                ProtoFieldMetadata existing = fieldsByNumber.get(annotation.number());
                if (existing != null) {

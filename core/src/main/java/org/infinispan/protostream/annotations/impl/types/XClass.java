@@ -49,6 +49,8 @@ public interface XClass extends XElement {
 
    XConstructor getDeclaredConstructor(XClass... argTypes);
 
+   Iterable<? extends XConstructor> getDeclaredConstructors();
+
    Iterable<? extends XMethod> getDeclaredMethods();
 
    XMethod getMethod(String methodName, XClass... argTypes);

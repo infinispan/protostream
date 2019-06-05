@@ -6,5 +6,11 @@ package org.infinispan.protostream.annotations.impl.types;
  */
 public interface XExecutable extends XMember {
 
+   int getParameterCount();
+
+   String[] getParameterNames();
+
    XClass[] getParameterTypes();
+
+   String toGenericString();
 }

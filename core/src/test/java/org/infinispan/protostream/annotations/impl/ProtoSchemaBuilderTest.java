@@ -24,6 +24,7 @@ import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
@@ -44,6 +45,7 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -53,7 +55,7 @@ import org.junit.rules.ExpectedException;
  */
 public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
-   @org.junit.Rule
+   @Rule
    public ExpectedException exception = ExpectedException.none();
 
    @Test
@@ -1159,10 +1161,20 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
             .build(ctx);
 
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new MessageWithAllFieldTypes());
-      ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      Object o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertTrue(o instanceof MessageWithAllFieldTypes);
    }
 
    static class MessageWithRepeatedFields {
+
+      @ProtoField(number = 1001)
+      byte[] testField1001;
+
+      @ProtoField(number = 1002)
+      Byte[] testField1002;
+
+      @ProtoField(number = 1003, collectionImplementation = ArrayList.class)
+      List<Byte> testField1003;
 
       @ProtoField(number = 1)
       int[] testField1;
@@ -1329,5 +1341,106 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       assertNotNull(o);
       assertTrue(o.getBuffer() instanceof ByteBufferImpl);
+   }
+
+   static final class RGBColor {
+
+      private final int r;
+
+      private final int g;
+
+      private final int b;
+
+      @ProtoFactory
+      public RGBColor(int r, int g, int b) {
+         this.r = r;
+         this.g = g;
+         this.b = b;
+      }
+
+      @ProtoField(number = 1, defaultValue = "-1")
+      public int getR() {
+         return r;
+      }
+
+      @ProtoField(number = 2, defaultValue = "-1")
+      public int getG() {
+         return g;
+      }
+
+      @ProtoField(number = 3, defaultValue = "-1")
+      public int getB() {
+         return b;
+      }
+   }
+
+   static final class ImmutableColor {
+
+      @ProtoField(number = 1, defaultValue = "1")
+      byte r;
+
+      //@ProtoField(number = 1, defaultValue = "1")
+      public void setR(byte r) {
+         this.r = r;
+      }
+
+      byte g;
+
+      byte[] b;
+
+      @ProtoField(number = 12, defaultValue = "12")
+      int[] i;
+
+      @ProtoField(number = 13, defaultValue = "13", collectionImplementation = ArrayList.class)
+      public List<Integer> li;
+
+      public List<Integer> getLi() {
+         return li;
+      }
+
+      public void setLi(List<Integer> li) {
+         this.li = li;
+      }
+
+      //@ProtoFactory
+      ImmutableColor(byte r, byte g, byte[] b, int[] i, ArrayList<Integer> li) {
+         this.r = r;
+         this.g = g;
+         this.b = b;
+         this.i = i;
+      }
+
+      @ProtoFactory
+      static ImmutableColor make(byte r, byte g, byte[] b, int[] i, List<Integer> li) {
+         return new ImmutableColor(r, g, b, i, (ArrayList<Integer>) li);
+      }
+
+      @ProtoField(number = 2, defaultValue = "2")
+      byte getG() {
+         return g;
+      }
+
+      @ProtoField(number = 3, defaultValue = "3")
+      byte[] getB() {
+         return b;
+      }
+   }
+
+   @Test
+   public void testFactoryMethod() throws Exception {
+      SerializationContext ctx = createContext();
+      new ProtoSchemaBuilder()
+            .fileName("immutable.proto")
+            .addClass(RGBColor.class)
+            .addClass(ImmutableColor.class)
+            .build(ctx);
+
+      RGBColor color = new RGBColor(55, 66, 77);
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, color);
+      RGBColor o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertEquals(55, o.r);
+      assertEquals(66, o.g);
+      assertEquals(77, o.b);
    }
 }
