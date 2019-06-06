@@ -146,7 +146,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          Set<XClass> examinedClasses = new HashSet<>();
          discoverFields(javaClass, examinedClasses, fields, fieldsByName);
          if (fields.isEmpty()) {
-            throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller.");
+            throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.");
          }
          checkInstantiability();
       }
@@ -166,7 +166,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
       // ensure the class has a non-private no-argument constructor
-      XConstructor ctor = javaClass.getDeclaredConstructor();  //todo [anistor] vs getConstructor()
+      XConstructor ctor = javaClass.getDeclaredConstructor();
       if (ctor == null || Modifier.isPrivate(ctor.getModifiers())) {
          throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
@@ -609,8 +609,8 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          if (Modifier.isAbstract(collectionImplementation.getModifiers())) {
             throw new ProtoSchemaBuilderException("The collection class (" + collectionImplementation.getCanonicalName() + ") of repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " must not be abstract. Please specify an appropriate class in collectionImplementation member.");
          }
-         XConstructor ctor = collectionImplementation.getDeclaredConstructor();   //todo [anistor] vs getConstructor()
-         if (ctor == null) {
+         XConstructor ctor = collectionImplementation.getDeclaredConstructor();
+         if (ctor == null || Modifier.isPrivate(ctor.getModifiers())) {
             throw new ProtoSchemaBuilderException("The collection class ('" + collectionImplementation.getCanonicalName() + "') of repeated field '"
                   + fieldName + "' of " + clazz.getCanonicalName() + " must have a public no-argument constructor.");
          }

@@ -242,18 +242,14 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
       @Override
       public XConstructor getDeclaredConstructor(XClass... xArgTypes) {
-         Class<?>[] argTypes = null;
-         if (xArgTypes != null) {
-            argTypes = new Class[xArgTypes.length];
-            for (int i = 0; i < xArgTypes.length; i++) {
-               argTypes[i] = xArgTypes[i].asClass();
-            }
-         }
+         Class<?>[] argTypes = argsAsClass(xArgTypes);
+         Constructor<?> ctor;
          try {
-            return cacheConstructor(clazz.getDeclaredConstructor(argTypes));
+            ctor = clazz.getDeclaredConstructor(argTypes);
          } catch (NoSuchMethodException e) {
             return null;
          }
+         return cacheConstructor(ctor);
       }
 
       @Override
@@ -267,6 +263,17 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
       @Override
       public XMethod getMethod(String methodName, XClass... xArgTypes) {
+         Class<?>[] argTypes = argsAsClass(xArgTypes);
+         Method method;
+         try {
+            method = clazz.getMethod(methodName, argTypes);
+         } catch (NoSuchMethodException e) {
+            return null;
+         }
+         return cacheMethod(method);
+      }
+
+      private Class<?>[] argsAsClass(XClass[] xArgTypes) {
          Class<?>[] argTypes = null;
          if (xArgTypes != null) {
             argTypes = new Class[xArgTypes.length];
@@ -274,11 +281,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
                argTypes[i] = xArgTypes[i].asClass();
             }
          }
-         try {
-            return cacheMethod(clazz.getMethod(methodName, argTypes));
-         } catch (NoSuchMethodException e) {
-            return null;
-         }
+         return argTypes;
       }
 
       @Override

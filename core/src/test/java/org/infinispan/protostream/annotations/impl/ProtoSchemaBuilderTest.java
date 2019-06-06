@@ -91,7 +91,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    @Test
    public void testNoAnnotations() throws Exception {
       exception.expect(ProtoSchemaBuilderException.class);
-      exception.expectMessage("Class java.lang.Object does not have any @ProtoField annotated fields. The class should be either annotated or it should have a custom marshaller");
+      exception.expectMessage("Class java.lang.Object does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller");
 
       SerializationContext ctx = createContext();
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();

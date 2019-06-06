@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
+import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.Date;
 
@@ -8,6 +9,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.annotations.impl.types.XConstructor;
 import org.infinispan.protostream.descriptors.JavaType;
 
 /**
@@ -620,9 +622,10 @@ public abstract class AbstractMarshallerCodeGenerator {
    private String box(String v, XClass clazz) {
       if (clazz != null) {
          if (clazz.isAssignableTo(typeFactory.fromClass(Date.class))) {
-            // just check this type really has a constructor that accepts a long timestamp param
-            if (clazz.getDeclaredConstructor(typeFactory.fromClass(long.class)) == null) {
-               throw new ProtoSchemaBuilderException("Type " + clazz.getCanonicalName() + " is not a valid Date type because it does not have a constructor that accepts a 'long' timestamp parameter");
+            // just check this type really has a public constructor that accepts a long timestamp param
+            XConstructor ctor = clazz.getDeclaredConstructor(typeFactory.fromClass(long.class));
+            if (ctor == null || !Modifier.isPublic(ctor.getModifiers())) {
+               throw new ProtoSchemaBuilderException("Type " + clazz.getCanonicalName() + " is not a valid Date type because it does not have an accessible constructor that accepts a 'long' timestamp parameter");
             }
             return "new " + clazz.getName() + "(" + v + ")";
          } else if (clazz.isAssignableTo(typeFactory.fromClass(Instant.class))) {
