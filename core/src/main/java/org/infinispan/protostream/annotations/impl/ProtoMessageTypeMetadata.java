@@ -156,7 +156,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       } catch (NoSuchMethodException ignored) {
       }
       if (ctor == null || Modifier.isPrivate(ctor.getModifiers())) {
-         throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must must be instantiable using a non-private no-argument constructor.");
+         throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
    }
 
