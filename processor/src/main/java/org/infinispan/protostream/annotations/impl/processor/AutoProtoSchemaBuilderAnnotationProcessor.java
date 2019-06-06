@@ -167,7 +167,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                AutoProtoSchemaBuilder builderAnnotation = annotatedElement.getAnnotation(AutoProtoSchemaBuilder.class);
                SerializationContext serCtx = ProtobufUtil.newSerializationContext();
                try {
-                  processElement(roundEnv, serCtx, annotatedElement, builderAnnotation, new GeneratorContext());
+                  processElement(roundEnv, serCtx, annotatedElement, builderAnnotation, new ProcessorContext());
                } catch (ProtoSchemaBuilderException | DescriptorParserException e) {
                   throw new AnnotationProcessingException(e, annotatedElement, "%s", e.getMessage());
                }
@@ -198,7 +198,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    }
 
    private void processElement(RoundEnvironment roundEnv, SerializationContext serCtx, Element annotatedElement,
-                               AutoProtoSchemaBuilder annotation, GeneratorContext generatorContext) throws IOException {
+                               AutoProtoSchemaBuilder annotation, ProcessorContext processorContext) throws IOException {
       if (annotatedElement.getKind() != ElementKind.PACKAGE && annotatedElement.getKind() != ElementKind.INTERFACE && annotatedElement.getKind() != ElementKind.CLASS) {
          throw new AnnotationProcessingException(annotatedElement, "@AutoProtoSchemaBuilder annotation can only be applied to classes, interfaces and packages.");
       }
@@ -212,14 +212,14 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
 
       if (annotatedElement.getKind() == ElementKind.PACKAGE) {
-         processPackage(roundEnv, serCtx, (PackageElement) annotatedElement, annotation, classScanner, generatorContext);
+         processPackage(roundEnv, serCtx, (PackageElement) annotatedElement, annotation, classScanner, processorContext);
       } else {
-         processClass(roundEnv, serCtx, (TypeElement) annotatedElement, annotation, classScanner, generatorContext);
+         processClass(roundEnv, serCtx, (TypeElement) annotatedElement, annotation, classScanner, processorContext);
       }
    }
 
    private void processPackage(RoundEnvironment roundEnv, SerializationContext serCtx, PackageElement packageElement, AutoProtoSchemaBuilder builderAnnotation,
-                               AnnotatedClassScanner classScanner, GeneratorContext generatorContext) throws IOException {
+                               AnnotatedClassScanner classScanner, ProcessorContext processorContext) throws IOException {
       String initializerClassName = builderAnnotation.className();
       if (initializerClassName.isEmpty()) {
          throw new AnnotationProcessingException(packageElement, "@AutoProtoSchemaBuilder.className is required when annotating a package.");
@@ -233,7 +233,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       String protobufPackageName = builderAnnotation.schemaPackageName().isEmpty() ? null : builderAnnotation.schemaPackageName();
       String protobufFileName = builderAnnotation.schemaFileName().isEmpty() ? packageElement.getSimpleName() + ".proto" : builderAnnotation.schemaFileName();
 
-      GeneratorContext dependencies = processDependencies(roundEnv, serCtx, packageElement, builderAnnotation);
+      ProcessorContext dependencies = processDependencies(roundEnv, serCtx, packageElement, builderAnnotation);
 
       Set<XClass> xclasses = classScanner.getClasses().stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -246,11 +246,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
             initializerPackageName, initializerClassName, initializerFQN,
             protobufFileName, protobufPackageName, schemaSrc);
 
-      generatorContext.add(classScanner.getInitializerFQClassName(), protobufFileName, protoSchemaGenerator.getMarshalledClasses());
+      processorContext.add(classScanner.getInitializerFQClassName(), protobufFileName, protoSchemaGenerator.getMarshalledClasses());
    }
 
    private void processClass(RoundEnvironment roundEnv, SerializationContext serCtx, TypeElement typeElement, AutoProtoSchemaBuilder builderAnnotation,
-                             AnnotatedClassScanner classScanner, GeneratorContext generatorContext) throws IOException {
+                             AnnotatedClassScanner classScanner, ProcessorContext processorContext) throws IOException {
       if (typeElement.getNestingKind() == NestingKind.LOCAL || typeElement.getNestingKind() == NestingKind.ANONYMOUS) {
          throw new AnnotationProcessingException(typeElement, "Classes or interfaces annotated with @AutoProtoSchemaBuilder must not be local or anonymous.");
       }
@@ -275,7 +275,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       String protobufPackageName = builderAnnotation.schemaPackageName().isEmpty() ? null : builderAnnotation.schemaPackageName();
       String protobufFileName = builderAnnotation.schemaFileName().isEmpty() ? typeElement.getSimpleName() + ".proto" : builderAnnotation.schemaFileName();
 
-      GeneratorContext dependencies = processDependencies(roundEnv, serCtx, typeElement, builderAnnotation);
+      ProcessorContext dependencies = processDependencies(roundEnv, serCtx, typeElement, builderAnnotation);
 
       warnOverrideExistingMethods(typeElement);
 
@@ -290,13 +290,19 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
             initializerPackageName, initializerClassName, initializerFQN,
             protobufFileName, protobufPackageName, schemaSrc);
 
-      generatorContext.add(classScanner.getInitializerFQClassName(), protobufFileName, protoSchemaGenerator.getMarshalledClasses());
+      processorContext.add(classScanner.getInitializerFQClassName(), protobufFileName, protoSchemaGenerator.getMarshalledClasses());
    }
 
-   private static final class GeneratorContext {
+   private static final class ProcessorContext {
 
+      /**
+       * Names of SerializationContextInitializer generated so far.
+       */
       final Set<String> initializerClassNames = new LinkedHashSet<>();
 
+      /**
+       * The key is a marshalled class, the value is the name of the protobuf file that contains it.
+       */
       final Map<XClass, String> marshalledClasses = new HashMap<>();
 
       void add(String initializerFQN, String protobufFileName, Set<XClass> classes) {
@@ -308,7 +314,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    }
 
    //todo [anistor] we do not support yet dependencies on packages, only on types
-   private GeneratorContext processDependencies(RoundEnvironment roundEnv, SerializationContext serCtx,
+   private ProcessorContext processDependencies(RoundEnvironment roundEnv, SerializationContext serCtx,
                                                 Element annotatedElement, AutoProtoSchemaBuilder builderAnnotation) throws IOException {
       List<? extends TypeMirror> dependencies = Collections.emptyList();
       try {
@@ -317,7 +323,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          dependencies = mte.getTypeMirrors();
       }
 
-      GeneratorContext generatorContext = new GeneratorContext();
+      ProcessorContext processorContext = new ProcessorContext();
       for (TypeMirror dependencyType : dependencies) {
          TypeElement dependencyElement = (TypeElement) types.asElement(dependencyType);
          String dependencyFQN = dependencyElement.getQualifiedName().toString();
@@ -334,14 +340,14 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          boolean wasEnabled = generatedFilesWriter.isEnabled();
          generatedFilesWriter.setEnabled(false);
 
-         processElement(roundEnv, serCtx, dependencyElement, dependencyAnnotation, generatorContext);
+         processElement(roundEnv, serCtx, dependencyElement, dependencyAnnotation, processorContext);
 
          generatedFilesWriter.setEnabled(wasEnabled);
 
          processedElementsFQN.remove(dependencyFQN);
       }
 
-      return generatorContext;
+      return processorContext;
    }
 
    private void warnOverrideExistingMethods(TypeElement typeElement) {
