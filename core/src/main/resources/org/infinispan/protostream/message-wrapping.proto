@@ -78,7 +78,8 @@ message WrappedMessage {
 
       /**
        * This is used as an alternative to wrappedDescriptorFullName if a unique id was assigned to the type with the
-       * TypeId annotation.
+       * TypeId annotation. Values starting at 1000000 are reserved for internal use by Protostream and other projects
+       * from the Infinispan organisation.
        */
       int32 wrappedDescriptorId = 19;
    }

@@ -14,9 +14,10 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
 public interface Configuration {
 
    /**
-    * The TypeId annotation. This optional annotation defines a unique integer type identifier for each message or enum
-    * type. This can be used alternatively instead of the fully qualified type name during marshalling to save some
-    * bandwidth.
+    * The TypeId annotation name. This optional annotation defines a unique integer type identifier for each message or
+    * enum type. This can be used alternatively instead of the fully qualified type name during marshalling to save some
+    * bandwidth. Values starting at 1000000 are reserved for internal use by Protostream and other projects from the
+    * Infinispan organisation.
     */
    String TYPE_ID_ANNOTATION = "TypeId";
 
