@@ -410,6 +410,8 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       private final Map<VariableElement, MirrorField> fieldCache = new HashMap<>();
 
+      private final int modifiers;
+
       MirrorClass(DeclaredType typeMirror) {
          this.typeMirror = typeMirror;
          typeElement = (TypeElement) typeMirror.asElement();
@@ -430,6 +432,8 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
          } else {
             enumConstants = null;
          }
+
+         modifiers = getModifiersOfElement(typeElement);
       }
 
       @Override
@@ -568,7 +572,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public int getModifiers() {
-         return getModifiersOfElement(typeElement);
+         return modifiers;
       }
 
       @Override
@@ -657,14 +661,16 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
    private static final class MirrorEnumConstant implements XEnumConstant {
 
-      private XClass declaringClass;
-      private VariableElement e;
-      private int ordinal;
+      private final XClass declaringClass;
+      private final VariableElement e;
+      private final int ordinal;
+      private final int modifiers;
 
       MirrorEnumConstant(XClass declaringClass, VariableElement e, int ordinal) {
          this.declaringClass = declaringClass;
          this.e = e;
          this.ordinal = ordinal;
+         this.modifiers = getModifiersOfElement(e);
       }
 
       @Override
@@ -679,7 +685,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public int getModifiers() {
-         return getModifiersOfElement(e);
+         return modifiers;
       }
 
       @Override
@@ -851,9 +857,12 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       private final ExecutableElement executableElement;
 
+      private final int modifiers;
+
       MirrorMethod(MirrorClass declaringClass, ExecutableElement executableElement) {
          this.declaringClass = declaringClass;
          this.executableElement = executableElement;
+         this.modifiers = getModifiersOfElement(executableElement);
       }
 
       @Override
@@ -893,7 +902,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public int getModifiers() {
-         return getModifiersOfElement(executableElement);
+         return modifiers;
       }
 
       @Override
@@ -953,9 +962,12 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       private final ExecutableElement executableElement;
 
+      private final int modifiers;
+
       MirrorConstructor(MirrorClass c, ExecutableElement executableElement) {
          this.c = c;
          this.executableElement = executableElement;
+         this.modifiers = getModifiersOfElement(executableElement);
       }
 
       @Override
@@ -975,7 +987,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public int getModifiers() {
-         return getModifiersOfElement(executableElement);
+         return modifiers;
       }
 
       @Override
@@ -1037,10 +1049,13 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       private final XEnumConstant enumConstant;
 
+      private final int modifiers;
+
       MirrorField(MirrorClass c, VariableElement field, XEnumConstant enumConstant) {
          this.c = c;
          this.field = field;
          this.enumConstant = enumConstant;
+         this.modifiers = getModifiersOfElement(field);
       }
 
       @Override
@@ -1083,7 +1098,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public int getModifiers() {
-         return getModifiersOfElement(field);
+         return modifiers;
       }
 
       @Override

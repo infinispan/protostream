@@ -1,5 +1,7 @@
 package org.infinispan.protostream.annotations.impl.types;
 
+import java.lang.reflect.Modifier;
+
 /**
  * @author anistor@redhat.com
  * @since 4.3
@@ -57,4 +59,12 @@ public interface XClass extends XElement {
     * Is it a local or anonymous class?
     */
    boolean isLocal();
+
+   default boolean isAbstract() {
+      return Modifier.isAbstract(getModifiers());
+   }
+
+   default boolean isInterface() {
+      return Modifier.isInterface(getModifiers());
+   }
 }

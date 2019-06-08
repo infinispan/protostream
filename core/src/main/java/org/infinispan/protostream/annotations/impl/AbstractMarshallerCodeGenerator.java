@@ -1,6 +1,5 @@
 package org.infinispan.protostream.annotations.impl;
 
-import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.Date;
 
@@ -624,7 +623,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          if (clazz.isAssignableTo(typeFactory.fromClass(Date.class))) {
             // just check this type really has a public constructor that accepts a long timestamp param
             XConstructor ctor = clazz.getDeclaredConstructor(typeFactory.fromClass(long.class));
-            if (ctor == null || !Modifier.isPublic(ctor.getModifiers())) {
+            if (ctor == null || !ctor.isPublic()) {
                throw new ProtoSchemaBuilderException("Type " + clazz.getCanonicalName() + " is not a valid Date type because it does not have an accessible constructor that accepts a 'long' timestamp parameter");
             }
             return "new " + clazz.getName() + "(" + v + ")";

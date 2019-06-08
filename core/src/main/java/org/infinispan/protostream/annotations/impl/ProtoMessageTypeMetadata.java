@@ -1,7 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
 import java.io.ByteArrayOutputStream;
-import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collection;
@@ -154,7 +153,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private void checkInstantiability() {
       // ensure the class is not abstract
-      if (Modifier.isAbstract(javaClass.getModifiers())) {
+      if (javaClass.isAbstract() || javaClass.isInterface()) {
          throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + getJavaClassName());
       }
       // ensure it is not a local or anonymous class
@@ -162,12 +161,12 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
       // ensure the class is not a non-static inner class
-      if (javaClass.getEnclosingClass() != null && !Modifier.isStatic(javaClass.getModifiers())) {
+      if (javaClass.getEnclosingClass() != null && !javaClass.isStatic()) {
          throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
       // ensure the class has a non-private no-argument constructor
       XConstructor ctor = javaClass.getDeclaredConstructor();
-      if (ctor == null || Modifier.isPrivate(ctor.getModifiers())) {
+      if (ctor == null || ctor.isPrivate()) {
          throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
       }
    }
@@ -194,13 +193,13 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          } else {
             ProtoField annotation = field.getAnnotation(ProtoField.class);
             if (annotation != null) {
-               if (Modifier.isStatic(field.getModifiers())) {
+               if (field.isStatic()) {
                   throw new ProtoSchemaBuilderException("Static fields cannot be @ProtoField annotated: " + field);
                }
-               if (Modifier.isFinal(field.getModifiers())) {
+               if (field.isFinal()) {
                   throw new ProtoSchemaBuilderException("Final fields cannot be @ProtoField annotated: " + field);
                }
-               if (Modifier.isPrivate(field.getModifiers())) {
+               if (field.isPrivate()) {
                   throw new ProtoSchemaBuilderException("Private fields cannot be @ProtoField annotated: " + field);
                }
                if (annotation.number() == 0) {
@@ -226,7 +225,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (javaType == typeFactory.fromClass(void.class)) {
                   javaType = isRepeated ? field.determineRepeatedElementType() : field.getType();
                }
-               if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
+               if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract()) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 
@@ -297,10 +296,10 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          } else {
             ProtoField annotation = method.getAnnotation(ProtoField.class);
             if (annotation != null) {
-               if (Modifier.isPrivate(method.getModifiers())) {
+               if (method.isPrivate()) {
                   throw new ProtoSchemaBuilderException("Private methods cannot be @ProtoField annotated: " + method);
                }
-               if (Modifier.isStatic(method.getModifiers())) {
+               if (method.isStatic()) {
                   throw new ProtoSchemaBuilderException("Static methods cannot be @ProtoField annotated: " + method);
                }
                String propertyName;
@@ -355,7 +354,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (javaType == typeFactory.fromClass(void.class)) {
                   javaType = isRepeated ? getter.determineRepeatedElementType() : getter.getReturnType();
                }
-               if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
+               if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract()) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 
@@ -598,19 +597,21 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private XClass getCollectionImplementation(XClass clazz, XClass fieldType, XClass configuredCollection, String fieldName, boolean isRepeated) {
       XClass collectionImplementation;
+
+      XClass javaUtilCollectionClass = typeFactory.fromClass(Collection.class);
       if (isRepeated && !fieldType.isArray()) {
          collectionImplementation = configuredCollection;
-         if (collectionImplementation == typeFactory.fromClass(Collection.class)) {
+         if (collectionImplementation == javaUtilCollectionClass) {
             collectionImplementation = fieldType;
          }
-         if (!collectionImplementation.isAssignableTo(typeFactory.fromClass(Collection.class))) {
+         if (!collectionImplementation.isAssignableTo(javaUtilCollectionClass)) {
             throw new ProtoSchemaBuilderException("The collection class of repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " must implement java.util.Collection.");
          }
-         if (Modifier.isAbstract(collectionImplementation.getModifiers())) {
+         if (collectionImplementation.isAbstract()) {
             throw new ProtoSchemaBuilderException("The collection class (" + collectionImplementation.getCanonicalName() + ") of repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " must not be abstract. Please specify an appropriate class in collectionImplementation member.");
          }
          XConstructor ctor = collectionImplementation.getDeclaredConstructor();
-         if (ctor == null || Modifier.isPrivate(ctor.getModifiers())) {
+         if (ctor == null || ctor.isPrivate()) {
             throw new ProtoSchemaBuilderException("The collection class ('" + collectionImplementation.getCanonicalName() + "') of repeated field '"
                   + fieldName + "' of " + clazz.getCanonicalName() + " must have a public no-argument constructor.");
          }
@@ -619,11 +620,12 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   + fieldName + "' of " + clazz.getCanonicalName() + " is not assignable to this field's type.");
          }
       } else {
-         if (configuredCollection != typeFactory.fromClass(Collection.class)) {
+         if (configuredCollection != javaUtilCollectionClass) {
             throw new ProtoSchemaBuilderException("Specifying the collection implementation class is only allowed for repeated/collection fields: '" + fieldName + "' of " + clazz.getCanonicalName());
          }
          collectionImplementation = null;
       }
+
       return collectionImplementation;
    }
 
