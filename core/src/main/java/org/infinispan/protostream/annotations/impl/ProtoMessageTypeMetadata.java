@@ -158,16 +158,16 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
       // ensure it is not a local or anonymous class
       if (javaClass.isLocal()) {
-         throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
+         throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
       }
       // ensure the class is not a non-static inner class
       if (javaClass.getEnclosingClass() != null && !javaClass.isStatic()) {
-         throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
+         throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
       }
-      // ensure the class has a non-private no-argument constructor
+      // ensure the class has an accessible no-argument constructor
       XConstructor ctor = javaClass.getDeclaredConstructor();
       if (ctor == null || ctor.isPrivate()) {
-         throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must be instantiable using a non-private no-argument constructor.");
+         throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
       }
    }
 
