@@ -17,13 +17,15 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoReserved;
+import org.infinispan.protostream.annotations.ProtoReserved.Range;
 import org.infinispan.protostream.annotations.impl.testdomain.Simple;
 import org.infinispan.protostream.annotations.impl.testdomain.TestEnum;
 import org.junit.Test;
 
 public class AutoProtoSchemaBuilderTest {
 
-   @ProtoDoc("This the documentation")
+   @ProtoDoc("This is the documentation")
    @ProtoName("NoteMsg")
    public static class Note {
 
@@ -42,12 +44,16 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
+   @ProtoReserved(42)
+   @ProtoReserved(ranges = @Range(from = 55))
+   @ProtoReserved(names = {"oldBytes", "ancientByteArray"})
    interface ByteBuffer {
 
       @ProtoField(number = 1, name = "theBytes")
       byte[] getBytes();
    }
 
+   @ProtoReserved(ranges = @Range(from = 45, to = 54))
    static class ByteBufferImpl implements ByteBuffer {
 
       private byte[] bytes;

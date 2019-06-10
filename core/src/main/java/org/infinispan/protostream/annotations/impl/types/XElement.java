@@ -39,6 +39,8 @@ public interface XElement {
     */
    <A extends Annotation> A getAnnotation(Class<A> annotationClass);
 
+   <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass);
+
    /**
     * Collect and concatenate the description text from the (multiple) {@code @ProtoDoc.value} annotations of the
     * element.

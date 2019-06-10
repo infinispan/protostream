@@ -102,9 +102,32 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       }
       iw.append(" {\n");
       iw.inc();
+
+      ReservedProcessor reserved = new ReservedProcessor();
+      reserved.scan(javaClass);
+
+      for (String memberName : membersByName.keySet()) {
+         XClass where = reserved.checkReserved(name);
+         if (where != null) {
+            throw new ProtoSchemaBuilderException("Protobuf enum value " + memberName + " of enum constant " +
+                  membersByName.get(memberName).getJavaEnumName() + " conflicts with 'reserved' statement in " + where.getCanonicalName());
+         }
+      }
+
+      for (int memberNumber : membersByNumber.keySet()) {
+         XClass where = reserved.checkReserved(memberNumber);
+         if (where != null) {
+            throw new ProtoSchemaBuilderException("Protobuf enum number " + memberNumber + " of enum constant " +
+                  membersByNumber.get(memberNumber).getJavaEnumName() + " conflicts with 'reserved' statement in " + where.getCanonicalName());
+         }
+      }
+
+      reserved.generate(iw);
+
       for (ProtoEnumValueMetadata m : membersByNumber.values()) {
          m.generateProto(iw);
       }
+
       iw.dec();
       iw.append("}\n");
    }

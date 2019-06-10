@@ -195,6 +195,11 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return clazz.getAnnotationsByType(annotationClass);
+      }
+
+      @Override
       public String getDocumentation() {
          return DocumentationExtractor.getDocumentation(clazz.getAnnotationsByType(ProtoDoc.class));
       }
@@ -362,6 +367,11 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return f.getAnnotationsByType(annotationClass);
+      }
+
+      @Override
       public String getDocumentation() {
          return DocumentationExtractor.getDocumentation(f.getAnnotationsByType(ProtoDoc.class));
       }
@@ -430,6 +440,11 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return method.getAnnotationsByType(annotationClass);
+      }
+
+      @Override
       public String getDocumentation() {
          return DocumentationExtractor.getDocumentation(method.getAnnotationsByType(ProtoDoc.class));
       }
@@ -495,6 +510,11 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       @Override
       public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
          return constructor.getAnnotation(annotationClass);
+      }
+
+      @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return constructor.getAnnotationsByType(annotationClass);
       }
 
       @Override
@@ -591,6 +611,11 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       @Override
       public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
          return field.getAnnotation(annotationClass);
+      }
+
+      @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return field.getAnnotationsByType(annotationClass);
       }
 
       @Override

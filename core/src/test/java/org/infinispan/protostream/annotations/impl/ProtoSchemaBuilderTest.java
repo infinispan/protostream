@@ -27,6 +27,8 @@ import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoReserved;
+import org.infinispan.protostream.annotations.ProtoReserved.Range;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.testdomain.Simple;
@@ -1281,6 +1283,9 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       byte[] getBytes();
    }
 
+   @ProtoReserved(numbers = 42)
+   @ProtoReserved(ranges = @Range(from = 55, to = 66))
+   @ProtoReserved(names = {"oldBytes", "ancientByteArray"})
    static class ByteBufferImpl implements ByteBuffer {
 
       private byte[] bytes;

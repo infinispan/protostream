@@ -336,6 +336,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return null;
+      }
+
+      @Override
       public String getDocumentation() {
          return null;
       }
@@ -532,16 +537,21 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return typeElement.getAnnotationsByType(annotationClass);
+      }
+
+      @Override
       public String getDocumentation() {
          return DocumentationExtractor.getDocumentation(typeElement.getAnnotationsByType(ProtoDoc.class));
       }
 
       @Override
       public XMethod getMethod(String methodName, XClass... argTypes) {
-         return cacheMethod(getExecutableElement(false, methodName, argTypes));
+         return cacheMethod(findExecutableElement(false, methodName, argTypes));
       }
 
-      private ExecutableElement getExecutableElement(boolean isConstructor, String name, XClass[] argTypes) {
+      private ExecutableElement findExecutableElement(boolean isConstructor, String name, XClass[] argTypes) {
          Predicate<ExecutableElement> argFilter = e -> {
             if (e.getParameters().size() != argTypes.length) {
                return false;
@@ -557,7 +567,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
          List<? extends Element> members = isConstructor ? typeElement.getEnclosedElements() : elements.getAllMembers(typeElement);
          return (ExecutableElement) members.stream()
-               .filter(e -> isConstructor ? e.getKind() == ElementKind.CONSTRUCTOR : e.getKind() == ElementKind.METHOD && name.equals(e.getSimpleName().toString()))
+               .filter(e -> isConstructor ? e.getKind() == ElementKind.CONSTRUCTOR : (e.getKind() == ElementKind.METHOD && name.equals(e.getSimpleName().toString())))
                .filter(e -> argFilter.test((ExecutableElement) e))
                .findFirst().orElse(null);
       }
@@ -583,7 +593,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public XConstructor getDeclaredConstructor(XClass... argTypes) {
-         return cacheConstructor(getExecutableElement(true, null, argTypes));
+         return cacheConstructor(findExecutableElement(true, null, argTypes));
       }
 
       @Override
@@ -694,6 +704,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return e.getAnnotationsByType(annotationClass);
+      }
+
+      @Override
       public String getDocumentation() {
          return DocumentationExtractor.getDocumentation(e.getAnnotationsByType(ProtoDoc.class));
       }
@@ -790,6 +805,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
+         return null;
+      }
+
+      @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
          return null;
       }
 
@@ -916,6 +936,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return executableElement.getAnnotationsByType(annotationClass);
+      }
+
+      @Override
       public String getDocumentation() {
          return DocumentationExtractor.getDocumentation(executableElement.getAnnotationsByType(ProtoDoc.class));
       }
@@ -998,6 +1023,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       @Override
       public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
          return executableElement.getAnnotation(annotationClass);
+      }
+
+      @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return executableElement.getAnnotationsByType(annotationClass);
       }
 
       @Override
@@ -1109,6 +1139,11 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       @Override
       public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
          return field.getAnnotation(annotationClass);
+      }
+
+      @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return field.getAnnotationsByType(annotationClass);
       }
 
       @Override

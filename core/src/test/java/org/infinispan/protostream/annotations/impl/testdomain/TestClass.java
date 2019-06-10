@@ -3,6 +3,8 @@ package org.infinispan.protostream.annotations.impl.testdomain;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoReserved;
+import org.infinispan.protostream.annotations.ProtoReserved.Range;
 import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2;
 
 /**
@@ -10,6 +12,8 @@ import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestCla
  * @since 3.0
  */
 @ProtoDoc("@Indexed()\nbla bla bla\nand some more bla")
+@ProtoReserved(numbers = {17, 42, 13}, ranges = @Range(from = 7777))
+@ProtoReserved(names = {"XX", "XY"})
 public class TestClass extends TestBaseClass implements TestBaseInterface /*, TestBaseInterface2 */, TestBaseInterface3 {
 
    //@ProtoField(number = 315)

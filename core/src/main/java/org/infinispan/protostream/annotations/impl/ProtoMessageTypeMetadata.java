@@ -104,21 +104,36 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          iw.append(" /* ").append(getJavaClassName()).append(" */");
       }
       iw.append(" {\n");
+      iw.inc();
 
-      if (!innerTypes.isEmpty()) {
-         iw.inc();
-         for (ProtoTypeMetadata t : innerTypes.values()) {
-            t.generateProto(iw);
+      ReservedProcessor reserved = new ReservedProcessor();
+      reserved.scan(javaClass);
+
+      for (int memberNumber : fields.keySet()) {
+         ProtoFieldMetadata field = fields.get(memberNumber);
+         XClass where = reserved.checkReserved(memberNumber);
+         if (where != null) {
+            throw new ProtoSchemaBuilderException("Protobuf field number " + memberNumber + " of field " + field.getLocation() +
+                  " conflicts with 'reserved' statement in " + where.getCanonicalName());
          }
-         iw.dec();
+         where = reserved.checkReserved(field.getName());
+         if (where != null) {
+            throw new ProtoSchemaBuilderException("Protobuf field number " + memberNumber + " of field " + field.getLocation() +
+                  " conflicts with 'reserved' statement in " + where.getCanonicalName());
+         }
       }
 
-      iw.inc();
+      reserved.generate(iw);
+
+      for (ProtoTypeMetadata t : innerTypes.values()) {
+         t.generateProto(iw);
+      }
+
       for (ProtoFieldMetadata f : fields.values()) {
          f.generateProto(iw);
       }
-      iw.dec();
 
+      iw.dec();
       iw.append("}\n");
    }
 
