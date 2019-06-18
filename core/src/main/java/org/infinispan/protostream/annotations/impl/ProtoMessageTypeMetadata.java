@@ -187,7 +187,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       for (XField field : clazz.getDeclaredFields()) {
          if (field.getAnnotation(ProtoUnknownFieldSet.class) != null) {
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
-               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not be used multiple times in one class hierarchy : " + field);
+               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + field);
             }
             unknownFieldSetField = field;
          } else {
@@ -266,7 +266,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       for (XMethod method : clazz.getDeclaredMethods()) {
          if (method.getAnnotation(ProtoUnknownFieldSet.class) != null) {
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
-               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not be used multiple times in one class hierarchy : " + method);
+               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + method);
             }
             String propertyName;
             if (method.getReturnType() == typeFactory.fromClass(void.class)) {
