@@ -56,7 +56,7 @@ public class ReservedProcessorTest {
       IndentWriter iw = new IndentWriter();
       rp.generate(iw);
 
-      assertEquals("//reserved 1 to 7;\n//reserved \"a\", \"b\";", iw.toString());
+      assertEquals("//reserved 1 to 7;\n//reserved \"a\", \"b\";\n", iw.toString());
    }
 
    @ProtoReserved({1, 2, 1})
