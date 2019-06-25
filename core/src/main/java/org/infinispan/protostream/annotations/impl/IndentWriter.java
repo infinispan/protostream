@@ -16,8 +16,10 @@ public final class IndentWriter extends Writer {
    /**
     * The 'equivalent' of one TAB character, because we do not use TABs.
     */
-   private static final String TAB = "   ";
+   private static final int TAB_SIZE = 3;
+
    private int indent = 0;
+
    private boolean indentNeeded = false;
 
    public IndentWriter() {
@@ -26,31 +28,31 @@ public final class IndentWriter extends Writer {
    /**
     * Increase indentation.
     */
-   public void inc() {
+   public IndentWriter inc() {
       indent++;
+      return this;
    }
 
    /**
     * Decrease indentation.
     */
-   public void dec() {
-      if (indent > 0) {
-         indent--;
+   public IndentWriter dec() {
+      if (indent == 0) {
+         throw new IllegalStateException();
       }
+      indent--;
+      return this;
    }
 
    @Override
    public void write(int c) {
       if (indentNeeded) {
-         indentNeeded = false;
-         for (int i = 0; i < indent; i++) {
-            sb.append(TAB);
+         for (int i = indent * TAB_SIZE; i > 0; i--) {
+            sb.append(' ');
          }
       }
       sb.append((char) c);
-      if (c == '\n') {
-         indentNeeded = true;
-      }
+      indentNeeded = c == '\n';
    }
 
    @Override
