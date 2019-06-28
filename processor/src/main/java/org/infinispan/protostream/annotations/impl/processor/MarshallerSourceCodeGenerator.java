@@ -30,7 +30,7 @@ import org.infinispan.protostream.impl.Log;
 
 /**
  * Generates almost identical code as MarshallerByteCodeGenerator but it generates it in compilable Java source form
- * rather than directly in bytecode.
+ * rather than directly in bytecode. Also, the syntax is not limited to the subset supported by javassist.
  *
  * @author anistor@readhat.com
  * @since 4.3
@@ -38,6 +38,8 @@ import org.infinispan.protostream.impl.Log;
 final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerator {
 
    private static final Log log = Log.LogFactory.getLog(MarshallerSourceCodeGenerator.class);
+
+   private static final String DIGEST_ALG = "SHA-256";
 
    private final GeneratedFilesWriter generatedFilesWriter;
 
@@ -63,12 +65,12 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
    }
 
    /**
-    * Computes the SHA-1 hash over the input strings and returns the result encoded as a base 16 integer with all
-    * leading zeroes stripped down.
+    * Computes the SHA-256 hash over the input strings and returns the resulting digest encoded as a base 16 integer
+    * from which all leading zeroes are stripped down.
     */
    private static String hashStrings(String... strings) {
       try {
-         MessageDigest md = MessageDigest.getInstance("SHA-1");
+         MessageDigest md = MessageDigest.getInstance(DIGEST_ALG);
          for (int i = 0; i < strings.length; i++) {
             if (i > 0) {
                // add a null separator between strings
@@ -80,7 +82,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
          byte[] digest = md.digest();
          return new BigInteger(1, digest).toString(16);
       } catch (NoSuchAlgorithmException e) {
-         throw new RuntimeException("Failed to compute SHA-1 digest of strings", e);
+         throw new RuntimeException("Failed to compute " + DIGEST_ALG + " digest of strings", e);
       }
    }
 
