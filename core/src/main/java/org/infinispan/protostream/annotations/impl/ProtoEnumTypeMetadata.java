@@ -132,4 +132,13 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       iw.dec();
       iw.append("}\n");
    }
+
+   @Override
+   public String toString() {
+      return "ProtoEnumTypeMetadata{" +
+            "name='" + name + '\'' +
+            ", javaClass=" + javaClass +
+            ", membersByNumber=" + membersByNumber +
+            '}';
+   }
 }

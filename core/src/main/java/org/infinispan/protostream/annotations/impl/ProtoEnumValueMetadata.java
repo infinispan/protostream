@@ -69,4 +69,15 @@ public final class ProtoEnumValueMetadata implements HasProtoSchema {
       }
       iw.append(";\n");
    }
+
+   @Override
+   public String toString() {
+      return "ProtoEnumValueMetadata{" +
+            "number=" + number +
+            ", protoName='" + protoName + '\'' +
+            ", javaEnumOrdinal=" + javaEnumOrdinal +
+            ", javaEnumName='" + javaEnumName + '\'' +
+            ", documentation='" + documentation + '\'' +
+            '}';
+   }
 }

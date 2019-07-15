@@ -30,11 +30,11 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    private final boolean isArray;
    private final Object defaultValue;
 
+   private final String propertyName;
    private final XMember declaringMember;
    private final XField field;    // field or getter required (exclusively)
    private final XMethod getter;
    private final XMethod setter;  // setter is optional
-   private final String propertyName;
 
    ProtoFieldMetadata(int number, String name, XClass javaType,
                       XClass collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
@@ -258,5 +258,27 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
             javaType == factory.fromClass(Long.class) || javaType == factory.fromClass(Integer.class) ||
             javaType == factory.fromClass(Short.class) || javaType == factory.fromClass(Byte.class) ||
             javaType == factory.fromClass(Boolean.class) || javaType == factory.fromClass(Character.class);
+   }
+
+   @Override
+   public String toString() {
+      return "ProtoFieldMetadata{" +
+            "number=" + number +
+            ", name='" + name + '\'' +
+            ", protobufType=" + protobufType +
+            ", javaType=" + javaType +
+            ", collectionImplementation=" + collectionImplementation +
+            ", documentation='" + documentation + '\'' +
+            ", protoTypeMetadata=" + (protoTypeMetadata != null ? protoTypeMetadata.getName() : null) +
+            ", isRequired=" + isRequired +
+            ", isRepeated=" + isRepeated +
+            ", isArray=" + isArray +
+            ", defaultValue=" + defaultValue +
+            ", propertyName='" + propertyName + '\'' +
+            ", declaringMember=" + declaringMember +
+            ", field=" + field +
+            ", getter=" + getter +
+            ", setter=" + setter +
+            '}';
    }
 }

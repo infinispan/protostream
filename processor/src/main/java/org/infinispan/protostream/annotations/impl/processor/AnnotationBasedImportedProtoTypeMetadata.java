@@ -56,4 +56,15 @@ final class AnnotationBasedImportedProtoTypeMetadata extends ProtoTypeMetadata {
    public String getFileName() {
       return fileName;
    }
+
+   @Override
+   public String toString() {
+      return "AnnotationBasedImportedProtoTypeMetadata{" +
+            "name='" + name + '\'' +
+            ", javaClass=" + javaClass +
+            ", protoTypeMetadata=" + protoTypeMetadata.getName() +
+            ", fileName='" + fileName + '\'' +
+            ", fullName='" + fullName + '\'' +
+            '}';
+   }
 }

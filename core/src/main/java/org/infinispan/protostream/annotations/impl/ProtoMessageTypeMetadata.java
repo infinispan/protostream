@@ -887,4 +887,18 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
       return setter;
    }
+
+   @Override
+   public String toString() {
+      return "ProtoMessageTypeMetadata{" +
+            "name='" + name + '\'' +
+            ", javaClass=" + javaClass +
+            ", fieldsByNumber=" + fieldsByNumber +
+            ", factory=" + factory +
+            ", unknownFieldSetField=" + unknownFieldSetField +
+            ", unknownFieldSetGetter=" + unknownFieldSetGetter +
+            ", unknownFieldSetSetter=" + unknownFieldSetSetter +
+            ", innerTypes=" + innerTypes +
+            '}';
+   }
 }

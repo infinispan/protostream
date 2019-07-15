@@ -60,4 +60,14 @@ final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
       return new ProtoEnumValueMetadata(evd.getNumber(), name,
             enumConstant.ordinal(), enumConstant.getDeclaringClass().getName() + '.' + enumConstant.name(), null);
    }
+
+   @Override
+   public String toString() {
+      return "ImportedProtoTypeMetadata{" +
+            "name='" + name + '\'' +
+            ", javaClass=" + javaClass +
+            ", descriptor=" + descriptor +
+            ", marshaller=" + marshaller.getClass() +
+            '}';
+   }
 }
