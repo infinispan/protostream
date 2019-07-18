@@ -29,6 +29,7 @@ import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.impl.Log;
 
 /**
  * A {@link ProtoTypeMetadata} for a message type created based on annotations during the current execution of {@link
@@ -38,6 +39,8 @@ import org.infinispan.protostream.descriptors.Type;
  * @since 3.0
  */
 public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
+
+   private static final Log log = Log.LogFactory.getLog(ProtoMessageTypeMetadata.class);
 
    private final BaseProtoSchemaGenerator protoSchemaGenerator;
 
@@ -172,7 +175,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
          discoverFields(javaClass, new HashSet<>());
          if (fieldsByNumber.isEmpty()) {
-            throw new ProtoSchemaBuilderException("Class " + javaClass.getCanonicalName() + " does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.");
+           log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", javaClass.getCanonicalName());
          }
 
          // if we have a factory method or constructor, ensure its params match the declared fields

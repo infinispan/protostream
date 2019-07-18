@@ -1018,6 +1018,27 @@ public class AutoProtoSchemaBuilderTest {
       assertEquals(77, o.b);
    }
 
+   /**
+    * Demonstrates that a class with no fields is legal (but a warning is logged).
+    */
+   @ProtoName("NoFields")
+   static class NoProtoFields {
+   }
+
+   @Test
+   public void testNoAnnotatedFields() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      TestInitializer serCtxInitializer = new TestInitializer();
+      serCtxInitializer.registerSchema(ctx);
+      serCtxInitializer.registerMarshallers(ctx);
+
+      assertTrue(serCtxInitializer.getProtoFile().contains("message NoFields {\n}\n"));
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new NoProtoFields());
+      Object o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertTrue(o instanceof NoProtoFields);
+   }
+
    //todo provide a sensible value() alias for all @ProtoXyz annotations
 
    //todo test enum with members and without

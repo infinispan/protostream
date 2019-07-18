@@ -18,11 +18,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Level;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -45,6 +47,7 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
+import org.infinispan.protostream.test.ExpectedLogMessage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -57,6 +60,9 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    @Rule
    public ExpectedException exception = ExpectedException.none();
+
+   @Rule
+   public ExpectedLogMessage expectedLogMessage = ExpectedLogMessage.any();
 
    @Test
    public void testMain() throws Exception {
@@ -92,15 +98,28 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       protoSchemaBuilder.addClass(Simple.class).build(ctx);
    }
 
+   /**
+    * Demonstrates that a class with no fields is legal (but a warning is logged).
+    */
+   @ProtoDoc("@TypeId(100)")
+   @ProtoName("NoFields")
+   static class NoProtoFields {
+   }
+
    @Test
-   public void testNoAnnotations() throws Exception {
-      exception.expect(ProtoSchemaBuilderException.class);
-      exception.expectMessage("Class java.lang.Object does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller");
+   public void testNoAnnotatedFields() throws Exception {
+      expectedLogMessage.expect(1, Level.WARN, ".*NoProtoFields does not have any @ProtoField annotated members.*");
 
       SerializationContext ctx = createContext();
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      protoSchemaBuilder.fileName("test.proto");
-      protoSchemaBuilder.addClass(Object.class).build(ctx);
+      String schema = new ProtoSchemaBuilder()
+            .fileName("no_fields.proto")
+            .addClass(NoProtoFields.class)
+            .build(ctx);
+      assertTrue(schema.contains("message NoFields {\n}\n"));
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new NoProtoFields());
+      Object o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertTrue(o instanceof NoProtoFields);
    }
 
    static class MessageWithAbstractFieldType {

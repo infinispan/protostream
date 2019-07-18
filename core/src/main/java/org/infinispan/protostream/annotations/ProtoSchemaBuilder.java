@@ -170,7 +170,7 @@ public final class ProtoSchemaBuilder {
          throw new IllegalArgumentException("fileName cannot be null or empty");
       }
       if (!fileName.endsWith(".proto")) {
-         log.warnf("fileName '%s' should end with '.proto'", fileName);
+         log.warnf("File name '%s' should end with '.proto'", fileName);
       }
       this.fileName = fileName;
       return this;
