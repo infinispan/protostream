@@ -321,7 +321,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                Type protobufType = annotation.type();
                if (field.getType() == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
-                  // MESSAGE is the default, so stands for undefined too.
+                  // MESSAGE is the default and stands for 'undefined', we can override it with a better default
                   protobufType = Type.BYTES;
                }
                boolean isArray = isArray(field.getType(), protobufType);
@@ -333,6 +333,10 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                XClass javaType = getJavaTypeFromAnnotation(annotation);
                if (javaType == typeFactory.fromClass(void.class)) {
                   javaType = isRepeated ? field.determineRepeatedElementType() : field.getType();
+               }
+               if (javaType == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
+                  // MESSAGE is the default and stands for 'undefined', we can override it with a better default
+                  protobufType = Type.BYTES;
                }
                if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract()) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
@@ -459,7 +463,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
                Type protobufType = annotation.type();
                if (getter.getReturnType() == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
-                  // MESSAGE is the default, so stands for undefined too.
+                  // MESSAGE is the default and stands for 'undefined', we can override it with a better default
                   protobufType = Type.BYTES;
                }
                boolean isArray = isArray(getter.getReturnType(), protobufType);
@@ -471,6 +475,10 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                XClass javaType = getJavaTypeFromAnnotation(annotation);
                if (javaType == typeFactory.fromClass(void.class)) {
                   javaType = isRepeated ? getter.determineRepeatedElementType() : getter.getReturnType();
+               }
+               if (javaType == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
+                  // MESSAGE is the default and stands for 'undefined', we can override it with a better default
+                  protobufType = Type.BYTES;
                }
                if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract()) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");

@@ -1501,4 +1501,26 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertEquals(66, o.g);
       assertEquals(77, o.b);
    }
+
+   static final class ListOfBytes {
+
+      @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+      List<byte[]> theListOfBytes;
+   }
+
+   @Test
+   public void testListOfBytes() throws Exception {
+      SerializationContext ctx = createContext();
+      new ProtoSchemaBuilder()
+            .fileName("test_list_of_bytes.proto")
+            .addClass(ListOfBytes.class)
+            .build(ctx);
+
+      ListOfBytes listOfBytes = new ListOfBytes();
+      listOfBytes.theListOfBytes = new ArrayList<>();
+      listOfBytes.theListOfBytes.add(new byte[]{1, 2, 3});
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, listOfBytes);
+      ListOfBytes o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+   }
 }
