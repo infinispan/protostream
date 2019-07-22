@@ -32,11 +32,17 @@ import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
 
 /**
- * Generates a Protocol Buffers schema definition file and associated marshallers based on a set of {@code @Proto*}
- * annotated classes.
+ * Generates a Protocol Buffers schema definition file and the associated marshallers instances based on a set of given
+ * {@code @Proto*} annotated classes. The generated schema and marshallers are registered to a {@link
+ * SerializationContext} given during creation. The needed types, on which the currently generated types depend on, are
+ * also looked up in the same {@link SerializationContext}.
  * <p>
- * See {@link ProtoName}, {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link ProtoEnumValue}, {@link
- * ProtoDoc} / {@link ProtoDocs} and {@link ProtoUnknownFieldSet}.
+ * See annotations {@link ProtoName}, {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link
+ * ProtoEnumValue}, {@link ProtoDoc}, {@link ProtoDocs}, {@link ProtoUnknownFieldSet}, {@link ProtoFactory}, {@link
+ * ProtoReserved} and {@link ProtoReservedStatements}.
+ * <p>
+ * <b>NOTE:</b> This builder contains state that cannot be reset making it impossible to reuse properly. Please create
+ * separate instances for each schema generation.
  * <p>
  * This class performs run-time generation. For a compile-time equivalent see {@link AutoProtoSchemaBuilder} and {@link
  * SerializationContextInitializer}.
