@@ -44,6 +44,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.IndentWriter;
+import org.infinispan.protostream.annotations.impl.OriginatingClasses;
 import org.infinispan.protostream.annotations.impl.processor.types.HasModelElement;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorClassFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;

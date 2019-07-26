@@ -29,6 +29,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.impl.OriginatingClasses;
 
 /**
  * Discovers the classes to process based on the package and class filter specified in the AutoProtoSchemaBuilder
