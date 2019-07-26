@@ -175,7 +175,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
          discoverFields(javaClass, new HashSet<>());
          if (fieldsByNumber.isEmpty()) {
-           log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", javaClass.getCanonicalName());
+            log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", javaClass.getCanonicalName());
          }
 
          // if we have a factory method or constructor, ensure its params match the declared fields
@@ -343,7 +343,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation.defaultValue());
 
                if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
-                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " is not nullable and should be either marked required or should have a default value.");
+                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " is not nullable so it should be either marked required or should have a default value.");
                }
 
                XClass collectionImplementation = getCollectionImplementation(clazz, field.getType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
@@ -423,7 +423,8 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   if (method.getName().startsWith("set") && method.getName().length() >= 4) {
                      propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
                   } else {
-                     throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
+                     // not a standard java-beans setter
+                     propertyName = method.getName();
                   }
                   if (method.getParameterTypes().length != 1) {
                      throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
@@ -440,14 +441,11 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   } else if (method.getName().startsWith("is") && method.getName().length() >= 3) {
                      propertyName = Character.toLowerCase(method.getName().charAt(2)) + method.getName().substring(3);
                   } else {
-                     throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
+                     // not a standard java-beans getter
+                     propertyName = method.getName();
                   }
                   getter = method;
-                  if (factory == null) {
-                     setter = findSetter(propertyName, getter.getReturnType());
-                  } else {
-                     setter = null;
-                  }
+                  setter = factory == null ? findSetter(propertyName, getter.getReturnType()) : null;
                }
                if (annotation.number() == 0) {
                   throw new ProtoSchemaBuilderException("0 is not a valid Protobuf field number: " + method);
@@ -482,7 +480,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                Object defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation.defaultValue());
 
                if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
-                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " is not nullable and should be either marked required or should have a default value.");
+                  throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " is not nullable so it should be either marked required or should have a default value.");
                }
 
                XClass collectionImplementation = getCollectionImplementation(clazz, getter.getReturnType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
@@ -858,12 +856,19 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    private XMethod findGetter(String propertyName, XClass propertyType) {
-      String prefix = "get";
-      if (propertyType == typeFactory.fromClass(boolean.class) || propertyType == typeFactory.fromClass(Boolean.class)) {
-         prefix = "is";
-      }
-      String methodName = prefix + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+      boolean isBoolean = propertyType == typeFactory.fromClass(boolean.class) || propertyType == typeFactory.fromClass(Boolean.class);
+      String methodName = (isBoolean ? "is" : "get") + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+      // lookup a java-bean style method first
       XMethod getter = javaClass.getMethod(methodName);
+      if (getter == null && isBoolean) {
+         // retry with 'get' instead of 'is'
+         methodName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+         getter = javaClass.getMethod(methodName);
+      }
+      if (getter == null) {
+         // try the property name directly
+         getter = javaClass.getMethod(propertyName);
+      }
       if (getter == null) {
          throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
@@ -878,7 +883,12 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private XMethod findSetter(String propertyName, XClass propertyType) {
       String methodName = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+      // lookup a java-bean style method first
       XMethod setter = javaClass.getMethod(methodName, propertyType);
+      if (setter == null) {
+         // try the property name directly
+         setter = javaClass.getMethod(propertyName, propertyType);
+      }
       if (setter == null) {
          throw new ProtoSchemaBuilderException("No setter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());

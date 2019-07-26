@@ -122,6 +122,45 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertTrue(o instanceof NoProtoFields);
    }
 
+   static class NonStandardPropertyAccessors {
+
+      private long ttl;
+
+      private long timestamp;
+
+      @ProtoField(number = 1, defaultValue = "100")
+      public long ttl() {
+         return ttl;
+      }
+
+      public void ttl(long ttl) {
+         this.ttl = ttl;
+      }
+
+      public long timestamp() {
+         return timestamp;
+      }
+
+      @ProtoField(number = 2, defaultValue = "0")
+      public void timestamp(long timestamp) {
+         this.timestamp = timestamp;
+      }
+   }
+
+   @Test
+   public void testNoAnnotatedFields2() throws Exception {
+      SerializationContext ctx = createContext();
+      String schema = new ProtoSchemaBuilder()
+            .fileName("no_fields.proto")
+            .addClass(NonStandardPropertyAccessors.class)
+            .build(ctx);
+      assertTrue(schema.contains("message NonStandardPropertyAccessors"));
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new NonStandardPropertyAccessors());
+      Object o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertTrue(o instanceof NonStandardPropertyAccessors);
+   }
+
    static class MessageWithAbstractFieldType {
 
       static abstract class AbstractType {

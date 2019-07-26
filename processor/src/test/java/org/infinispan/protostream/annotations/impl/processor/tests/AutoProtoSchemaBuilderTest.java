@@ -1039,6 +1039,47 @@ public class AutoProtoSchemaBuilderTest {
       assertTrue(o instanceof NoProtoFields);
    }
 
+   static class NonStandardPropertyAccessors {
+
+      private long ttl;
+
+      private long timestamp;
+
+      @ProtoField(number = 1, defaultValue = "100")
+      public long ttl() {
+         return ttl;
+      }
+
+      public void ttl(long ttl) {
+         this.ttl = ttl;
+      }
+
+      public long timestamp() {
+         return timestamp;
+      }
+
+      @ProtoField(number = 2, defaultValue = "0")
+      public void timestamp(long timestamp) {
+         this.timestamp = timestamp;
+      }
+   }
+
+   @Test
+   public void testNoAnnotatedFields2() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      TestInitializer serCtxInitializer = new TestInitializer();
+      serCtxInitializer.registerSchema(ctx);
+      serCtxInitializer.registerMarshallers(ctx);
+
+      assertTrue(serCtxInitializer.getProtoFile().contains("message NonStandardPropertyAccessors"));
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new NonStandardPropertyAccessors());
+      Object o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertTrue(o instanceof NonStandardPropertyAccessors);
+   }
+
+   //todo warnings logged to log4j during generation do not end up in compiler's message log
+
    //todo provide a sensible value() alias for all @ProtoXyz annotations
 
    //todo test enum with members and without
