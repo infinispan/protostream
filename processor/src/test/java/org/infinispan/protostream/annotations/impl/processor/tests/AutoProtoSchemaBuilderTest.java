@@ -8,8 +8,11 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 
 import org.infinispan.protostream.ProtobufUtil;
@@ -885,6 +888,7 @@ public class AutoProtoSchemaBuilderTest {
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new MessageWithRepeatedFields());
       MessageWithRepeatedFields o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
+      assertNotNull(o);
       assertNotNull(o.testField1);
       assertEquals(0, o.testField1.length);
       assertNotNull(o.testField2);
@@ -1009,10 +1013,14 @@ public class AutoProtoSchemaBuilderTest {
       serCtxInitializer.registerSchema(ctx);
       serCtxInitializer.registerMarshallers(ctx);
 
+      assertTrue(serCtxInitializer.getProtoFile().contains("message RGBColor"));
+      assertTrue(serCtxInitializer.getProtoFile().contains("message ImmutableColor"));
+
       RGBColor color = new RGBColor(55, 66, 77);
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, color);
       RGBColor o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
+      assertNotNull(o);
       assertEquals(55, o.r);
       assertEquals(66, o.g);
       assertEquals(77, o.b);
@@ -1065,7 +1073,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    @Test
-   public void testNoAnnotatedFields2() throws Exception {
+   public void testNonStandardPropertyAccessors() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       TestInitializer serCtxInitializer = new TestInitializer();
       serCtxInitializer.registerSchema(ctx);
@@ -1076,6 +1084,103 @@ public class AutoProtoSchemaBuilderTest {
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new NonStandardPropertyAccessors());
       Object o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
       assertTrue(o instanceof NonStandardPropertyAccessors);
+   }
+
+   /**
+    * Demonstrates an entity that has a field of type Map<CustomKey, String>.
+    */
+   static class CustomMap {
+
+      static class CustomKey {
+         @ProtoField(number = 1)
+         String key;
+
+         CustomKey() {
+         }
+
+         CustomKey(String key) {
+            this.key = key;
+         }
+
+         @Override
+         public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CustomKey customKey = (CustomKey) o;
+            return key != null ? key.equals(customKey.key) : customKey.key == null;
+         }
+
+         @Override
+         public int hashCode() {
+            return key != null ? key.hashCode() : 0;
+         }
+      }
+
+      static class KVPair {
+
+         @ProtoField(number = 1)
+         CustomKey key;
+
+         @ProtoField(number = 2)
+         String value;
+
+         KVPair() {
+         }
+
+         KVPair(Map.Entry<CustomKey, String> entry) {
+            this.key = entry.getKey();
+            this.value = entry.getValue();
+         }
+      }
+
+      private Map<CustomKey, String> myMap;
+
+      CustomMap() {
+      }
+
+      CustomMap(Map<CustomKey, String> myMap) {
+         this.myMap = myMap;
+      }
+
+      public Map<CustomKey, String> getMyMap() {
+         return myMap;
+      }
+
+      @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+      public List<KVPair> getMapEntries() {
+         if (myMap == null) {
+            return Collections.emptyList();
+         }
+         List<KVPair> pairs = new ArrayList<>(myMap.size());
+         for (Map.Entry<CustomKey, String> e : myMap.entrySet()) {
+            pairs.add(new KVPair(e));
+         }
+         return pairs;
+      }
+
+      public void setMapEntries(List<KVPair> entries) {
+         myMap = new HashMap<>();
+         entries.forEach(p -> myMap.put(p.key, p.value));
+      }
+   }
+
+   @Test
+   public void testCustomMap() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      TestInitializer serCtxInitializer = new TestInitializer();
+      serCtxInitializer.registerSchema(ctx);
+      serCtxInitializer.registerMarshallers(ctx);
+
+      assertTrue(serCtxInitializer.getProtoFile().contains("message CustomMap"));
+
+      Map<CustomMap.CustomKey, String> myMap = new HashMap<>();
+      myMap.put(new CustomMap.CustomKey("k"), "v");
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new CustomMap(myMap));
+      CustomMap o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertNotNull(o);
+      assertTrue(o.getMyMap() instanceof HashMap);
+      assertEquals("v", o.getMyMap().get(new CustomMap.CustomKey("k")));
    }
 
    //todo warnings logged to log4j during generation do not end up in compiler's message log
