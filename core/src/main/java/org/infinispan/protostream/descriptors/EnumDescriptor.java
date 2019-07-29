@@ -38,10 +38,16 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
          if (valueByName.containsKey(value.getName())) {
             throw new DescriptorParserException("Enum constant '" + value.getName() + "' is already defined in " + fullName);
          }
+
+         value.setContainingEnum(this);
+         checkReserved(value);
          valueByName.put(value.getName(), value);
          valueByNumber.put(value.getNumber(), value);
-         value.setContainingEnum(this);
       }
+   }
+
+   private void checkReserved(EnumValueDescriptor value) {
+      // TODO [anistor] IPROTO-98 check reserved values and names
    }
 
    @Override

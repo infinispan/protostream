@@ -311,8 +311,8 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (field.isPrivate()) {
                   throw new ProtoSchemaBuilderException("Private fields cannot be @ProtoField annotated: " + field);
                }
-               if (annotation.number() == 0) {
-                  throw new ProtoSchemaBuilderException("0 is not a valid Protobuf field number: " + field);
+               if (annotation.number() < 1) {
+                  throw new ProtoSchemaBuilderException("Protobuf field numbers must be greater than 0: " + field);
                }
                String fieldName = annotation.name();
                if (fieldName.isEmpty()) {
@@ -369,6 +369,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                         + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
 
+               checkReserved(fieldMetadata);
                fieldsByNumber.put(fieldMetadata.getNumber(), fieldMetadata);
                fieldsByName.put(fieldName, fieldMetadata);
             }
@@ -447,8 +448,8 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   getter = method;
                   setter = factory == null ? findSetter(propertyName, getter.getReturnType()) : null;
                }
-               if (annotation.number() == 0) {
-                  throw new ProtoSchemaBuilderException("0 is not a valid Protobuf field number: " + method);
+               if (annotation.number() < 1) {
+                  throw new ProtoSchemaBuilderException("Protobuf field numbers must be greater than 0: " + method);
                }
 
                String fieldName = annotation.name();
@@ -508,11 +509,20 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                         + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
 
+               checkReserved(fieldMetadata);
                fieldsByNumber.put(annotation.number(), fieldMetadata);
                fieldsByName.put(fieldName, fieldMetadata);
             }
          }
       }
+   }
+
+   private void checkReserved(ProtoFieldMetadata fieldMetadata) {
+      if (fieldMetadata.getNumber() >= 19000 && fieldMetadata.getNumber() <= 19999) {
+         throw new ProtoSchemaBuilderException("Protobuf field numbers 19000 through 19999 are reserved for internal use: "
+               + fieldMetadata.getLocation());
+      }
+      // TODO [anistor] IPROTO-98 also check reserved numbers and names
    }
 
    private XClass getCollectionImplementationFromAnnotation(ProtoField annotation) {
