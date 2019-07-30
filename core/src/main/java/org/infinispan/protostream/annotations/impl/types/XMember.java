@@ -8,6 +8,11 @@ public interface XMember extends XElement {
 
    XClass getDeclaringClass();
 
-   // for (non-constructor) members of type Collection or array only
-   XClass determineRepeatedElementType();
+   /**
+    * Determine element type of array or Collection. For (non-constructor) members of type Collection or array only.
+    * Other implementations can just return null.
+    */
+   default XClass determineRepeatedElementType() {
+      return null;
+   }
 }

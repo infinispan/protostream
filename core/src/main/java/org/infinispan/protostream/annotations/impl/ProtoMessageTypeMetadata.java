@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -422,6 +423,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                String propertyName;
                XMethod getter;
                XMethod setter;
+               XClass getterReturnType;
                // we can have the annotation present on either getter or setter but not both
                if (method.getReturnType() == typeFactory.fromClass(void.class)) {
                   // this method is expected to be a setter
@@ -439,6 +441,10 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   }
                   setter = method;
                   getter = findGetter(propertyName, method.getParameterTypes()[0]);
+                  getterReturnType = getter.getReturnType();
+                  if (getterReturnType == typeFactory.fromClass(Optional.class)) {
+                     getterReturnType = getter.determineOptionalReturnType();
+                  }
                } else {
                   // this method is expected to be a getter
                   if (method.getName().startsWith("get") && method.getName().length() >= 4) {
@@ -450,7 +456,11 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                      propertyName = method.getName();
                   }
                   getter = method;
-                  setter = factory == null ? findSetter(propertyName, getter.getReturnType()) : null;
+                  getterReturnType = getter.getReturnType();
+                  if (getterReturnType == typeFactory.fromClass(Optional.class)) {
+                     getterReturnType = getter.determineOptionalReturnType();
+                  }
+                  setter = factory == null ? findSetter(propertyName, getterReturnType) : null;
                }
                if (annotation.number() < 1) {
                   throw new ProtoSchemaBuilderException("Protobuf field numbers must be greater than 0: " + method);
@@ -462,19 +472,19 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                }
 
                Type protobufType = annotation.type();
-               if (getter.getReturnType() == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
+               if (getterReturnType == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
                   // MESSAGE is the default and stands for 'undefined', we can override it with a better default
                   protobufType = Type.BYTES;
                }
-               boolean isArray = isArray(getter.getReturnType(), protobufType);
-               boolean isRepeated = isRepeated(getter.getReturnType(), protobufType);
+               boolean isArray = isArray(getterReturnType, protobufType);
+               boolean isRepeated = isRepeated(getterReturnType, protobufType);
                boolean isRequired = annotation.required();
                if (isRepeated && isRequired) {
                   throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required.");
                }
                XClass javaType = getJavaTypeFromAnnotation(annotation);
                if (javaType == typeFactory.fromClass(void.class)) {
-                  javaType = isRepeated ? getter.determineRepeatedElementType() : getter.getReturnType();
+                  javaType = isRepeated ? getter.determineRepeatedElementType() : getterReturnType;
                }
                if (javaType == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
                   // MESSAGE is the default and stands for 'undefined', we can override it with a better default
@@ -492,7 +502,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " is not nullable so it should be either marked required or should have a default value.");
                }
 
-               XClass collectionImplementation = getCollectionImplementation(clazz, getter.getReturnType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
+               XClass collectionImplementation = getCollectionImplementation(clazz, getterReturnType, getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
                if (isArray) {
                   collectionImplementation = typeFactory.fromClass(ArrayList.class);
                }
@@ -891,7 +901,11 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
       }
-      if (getter.getReturnType() != propertyType) {
+      XClass returnType = getter.getReturnType();
+      if (returnType == typeFactory.fromClass(Optional.class)) {
+         returnType = getter.determineOptionalReturnType();
+      }
+      if (returnType != propertyType) {
          throw new ProtoSchemaBuilderException("No suitable getter method found for property '" + propertyName
                + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
                + ". The candidate method does not have a suitable return type: " + getter);

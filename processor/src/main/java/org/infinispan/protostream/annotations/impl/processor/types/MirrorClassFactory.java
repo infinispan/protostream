@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -922,17 +923,30 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public XClass determineRepeatedElementType() {
-         if (getReturnType().isArray()) {
-            return getReturnType().getComponentType();
+         XClass returnType = determineOptionalReturnType();
+         if (returnType.isArray()) {
+            return returnType.getComponentType();
          }
-         if (getReturnType().isAssignableTo(fromClass(Collection.class))) {
-            List<? extends TypeMirror> typeArguments = ((DeclaredType) executableElement.getReturnType()).getTypeArguments();
-            if (!typeArguments.isEmpty()) {
+         if (returnType.isAssignableTo(fromClass(Collection.class))) {
+            List<? extends TypeMirror> typeArguments = ((DeclaredType) unwrapOptionalReturnType()).getTypeArguments();
+            if (typeArguments.size() == 1) {
                TypeMirror arg = typeArguments.get(0);
                return fromTypeMirror(arg);
             }
          }
-         return null;
+         throw new IllegalStateException("Not a repeatable field");
+      }
+
+      @Override
+      public XClass determineOptionalReturnType() {
+         return fromTypeMirror(unwrapOptionalReturnType());
+      }
+
+      private TypeMirror unwrapOptionalReturnType() {
+         if (getReturnType() == fromClass(Optional.class)) {
+            return ((DeclaredType) executableElement.getReturnType()).getTypeArguments().get(0);
+         }
+         return executableElement.getReturnType();
       }
 
       @Override
@@ -1082,11 +1096,6 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public XClass determineRepeatedElementType() {
-         return null;
-      }
-
-      @Override
       public boolean equals(Object obj) {
          if (obj == this) {
             return true;
@@ -1149,12 +1158,12 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
          }
          if (getType().isAssignableTo(fromClass(Collection.class))) {
             List<? extends TypeMirror> typeArguments = ((DeclaredType) field.asType()).getTypeArguments();
-            if (!typeArguments.isEmpty()) {
+            if (typeArguments.size() == 1) {
                TypeMirror arg = typeArguments.get(0);
                return fromTypeMirror(arg);
             }
          }
-         return null;
+         throw new IllegalStateException("Not a repeatable field");
       }
 
       @Override

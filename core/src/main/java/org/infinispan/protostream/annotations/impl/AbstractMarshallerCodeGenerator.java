@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.infinispan.protostream.Message;
@@ -362,7 +363,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                iw.append(c).append(".add(").append(box(val, typeFactory.fromClass(defaultValue.getClass()))).append(");\n");
             } else {
                if (isMutableMessage) {
-                  iw.append("o.").append(createSetProp(fieldMetadata, box(val, fieldMetadata.getJavaType()))).append(";\n");
+                  iw.append("o.").append(createSetPropExpr(fieldMetadata, box(val, fieldMetadata.getJavaType()))).append(";\n");
                } else {
                   iw.append(makeFieldLocalVar(fieldMetadata)).append(" = ").append(box(val, fieldMetadata.getJavaType())).append(";\n");
                }
@@ -394,7 +395,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                }
             }
             if (isMutableMessage) {
-               iw.append("o.").append(createSetProp(fieldMetadata, c)).append(";\n");
+               iw.append("o.").append(createSetPropExpr(fieldMetadata, c)).append(";\n");
             } else if (fieldMetadata.isArray() && !fieldMetadata.getJavaType().isPrimitive()) {
                iw.append(makeArrayLocalVar(fieldMetadata)).append(" = ").append(c).append(";\n");
             }
@@ -404,7 +405,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                   c = "new " + fieldMetadata.getJavaTypeName() + "[0]";
                   iw.append(" else {\n").inc();
                   if (isMutableMessage) {
-                     iw.append("o.").append(createSetProp(fieldMetadata, c)).append(";\n");
+                     iw.append("o.").append(createSetPropExpr(fieldMetadata, c)).append(";\n");
                   } else {
                      iw.append(makeArrayLocalVar(fieldMetadata)).append(" = ").append(c).append(";\n");
                   }
@@ -542,7 +543,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          iw.append(c).append(".add(").append(box(v, box(fieldMetadata.getJavaType()))).append(");\n");
       } else {
          if (messageTypeMetadata.getFactory() == null) {
-            iw.append("o.").append(createSetProp(fieldMetadata, v)).append(";\n");
+            iw.append("o.").append(createSetPropExpr(fieldMetadata, v)).append(";\n");
          }
       }
       if (trackedFields.containsKey(fieldMetadata.getName())) {
@@ -589,7 +590,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          } else {
             iw.append(fieldMetadata.getJavaTypeName());
          }
-         iw.append(' ').append(f).append(" = ").append(createGetProp(fieldMetadata, "o")).append(";\n");
+         iw.append(' ').append(f).append(" = ").append(createGetPropExpr(fieldMetadata, "o")).append(";\n");
          if (fieldMetadata.isRequired()) {
             boolean couldBeNull = fieldMetadata.isRepeated()
                   || fieldMetadata.isBoxedPrimitive()
@@ -863,9 +864,11 @@ public abstract class AbstractMarshallerCodeGenerator {
       return v;
    }
 
-   private String createGetProp(ProtoFieldMetadata fieldMetadata, String obj) {
+   private String createGetPropExpr(ProtoFieldMetadata fieldMetadata, String obj) {
       StringBuilder readPropExpr = new StringBuilder();
-      if ((fieldMetadata.getProtobufType().getJavaType() == JavaType.MESSAGE || fieldMetadata.getProtobufType().getJavaType() == JavaType.ENUM)
+
+      boolean isJUOptional = fieldMetadata.getGetter() != null && fieldMetadata.getGetter().getReturnType() == typeFactory.fromClass(Optional.class);
+      if ((isJUOptional || fieldMetadata.getProtobufType().getJavaType() == JavaType.MESSAGE || fieldMetadata.getProtobufType().getJavaType() == JavaType.ENUM)
             && (fieldMetadata.isArray() || !fieldMetadata.isRepeated())) {
          readPropExpr.append("(").append(fieldMetadata.getJavaTypeName());
          if (fieldMetadata.isArray()) {
@@ -873,16 +876,22 @@ public abstract class AbstractMarshallerCodeGenerator {
          }
          readPropExpr.append(") ");
       }
-      readPropExpr.append(obj).append('.');
       if (fieldMetadata.getField() != null) {
-         readPropExpr.append(fieldMetadata.getField().getName());
+         readPropExpr.append(obj).append('.').append(fieldMetadata.getField().getName());
       } else {
-         readPropExpr.append(fieldMetadata.getGetter().getName()).append("()");
+         if (isJUOptional) {
+            readPropExpr.append('(');
+         }
+         readPropExpr.append(obj).append('.').append(fieldMetadata.getGetter().getName()).append("()");
+         if (isJUOptional) {
+            readPropExpr.append(".isPresent() ? ").append(obj).append('.').append(fieldMetadata.getGetter().getName()).append("().get() : null)");
+         }
       }
+
       return readPropExpr.toString();
    }
 
-   private String createSetProp(ProtoFieldMetadata fieldMetadata, String value) {
+   private String createSetPropExpr(ProtoFieldMetadata fieldMetadata, String value) {
       if (fieldMetadata.getField() != null) {
          return fieldMetadata.getField().getName() + " = " + value;
       }

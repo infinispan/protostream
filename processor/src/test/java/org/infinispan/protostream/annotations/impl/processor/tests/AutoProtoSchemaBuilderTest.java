@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ServiceLoader;
 
 import org.infinispan.protostream.ProtobufUtil;
@@ -1181,6 +1182,71 @@ public class AutoProtoSchemaBuilderTest {
       assertNotNull(o);
       assertTrue(o.getMyMap() instanceof HashMap);
       assertEquals("v", o.getMyMap().get(new CustomMap.CustomKey("k")));
+   }
+
+   static class Optionals {
+
+      private String field1;
+
+      private OptionalInner field2;
+
+      private OptionalInner[] field3;
+
+      @ProtoField(number = 1)
+      public Optional<String> getField1() {
+         return Optional.ofNullable(field1);
+      }
+
+      public void setField1(String field1) {
+         this.field1 = field1;
+      }
+
+      @ProtoField(number = 2)
+      public Optional<OptionalInner> getField2() {
+         return Optional.ofNullable(field2);
+      }
+
+      public void setField2(OptionalInner field2) {
+         this.field2 = field2;
+      }
+
+      @ProtoField(number = 3)
+      public Optional<OptionalInner[]> getField3() {
+         return Optional.ofNullable(field3);
+      }
+
+      public void setField3(OptionalInner[] field3) {
+         this.field3 = field3;
+      }
+
+      static class OptionalInner {
+
+         @ProtoField(number = 1)
+         String theString;
+      }
+   }
+
+   @Test
+   public void testOptional() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      TestInitializer serCtxInitializer = new TestInitializer();
+      serCtxInitializer.registerSchema(ctx);
+      serCtxInitializer.registerMarshallers(ctx);
+
+      assertTrue(serCtxInitializer.getProtoFile().contains("message Optionals"));
+
+      Optionals opt = new Optionals();
+      opt.field1 = "abc";
+      opt.field2 = new Optionals.OptionalInner();
+      opt.field2.theString = "xyz";
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, opt);
+      Optionals o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertNotNull(o);
+      assertEquals("abc", o.field1);
+      assertNotNull(o.field2);
+      assertEquals("xyz", o.field2.theString);
    }
 
    //todo warnings logged to log4j during generation do not end up in compiler's message log

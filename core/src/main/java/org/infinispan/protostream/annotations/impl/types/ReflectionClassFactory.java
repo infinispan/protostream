@@ -6,12 +6,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.lang.model.type.TypeMirror;
 
@@ -49,14 +52,19 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       throw new UnsupportedOperationException("javax.lang.model.type.TypeMirror is only supported when processing annotations at compile time.");
    }
 
-   private static Class<?> determineCollectionElementType(java.lang.reflect.Type genericType) {
+   private static Class<?> determineCollectionElementType(Type genericType) {
       if (genericType instanceof ParameterizedType) {
-         ParameterizedType type = (ParameterizedType) genericType;
-         java.lang.reflect.Type fieldArgType = type.getActualTypeArguments()[0];
-         if (fieldArgType instanceof Class) {
-            return (Class) fieldArgType;
+         Type[] actualTypeArguments = ((ParameterizedType) genericType).getActualTypeArguments();
+         if (actualTypeArguments.length == 1) {
+            Type typeArg = actualTypeArguments[0];
+            if (typeArg instanceof Class) {
+               return (Class) typeArg;
+            }
+            if (typeArg instanceof TypeVariable) {
+               return (Class<?>) ((TypeVariable) typeArg).getBounds()[0];
+            }
+            return (Class) ((ParameterizedType) typeArg).getRawType();
          }
-         return (Class) ((ParameterizedType) fieldArgType).getRawType();
       } else if (genericType instanceof Class) {
          Class c = (Class) genericType;
          if (c.getGenericSuperclass() != null && Collection.class.isAssignableFrom(c.getSuperclass())) {
@@ -65,8 +73,8 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
                return x;
             }
          }
-         for (java.lang.reflect.Type t : c.getGenericInterfaces()) {
-            if (t instanceof Class && Map.class.isAssignableFrom((Class<?>) t)
+         for (Type t : c.getGenericInterfaces()) {
+            if (t instanceof Class && Collection.class.isAssignableFrom((Class<?>) t)
                   || t instanceof ParameterizedType && Collection.class.isAssignableFrom((Class) ((ParameterizedType) t).getRawType())) {
                Class x = determineCollectionElementType(t);
                if (x != null) {
@@ -413,13 +421,38 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
 
       @Override
       public XClass determineRepeatedElementType() {
-         if (method.getReturnType().isArray()) {
-            return fromClass(method.getReturnType().getComponentType());
+         Class<?> returnType = unwrapOptionalReturnType();
+         if (returnType.isArray()) {
+            return fromClass(returnType.getComponentType());
          }
-         if (Collection.class.isAssignableFrom(method.getReturnType())) {
-            return fromClass(determineCollectionElementType(method.getGenericReturnType()));
+         if (Collection.class.isAssignableFrom(returnType)) {
+            Class<?> c = determineCollectionElementType(unwrapOptionalReturnTypeGeneric());
+            if (c == null) {
+               throw new IllegalStateException("Failed to determine element type of collection class " + c);
+            }
+            return fromClass(c);
          }
-         return null;
+         throw new IllegalStateException("Not a repeatable field");
+      }
+
+      @Override
+      public XClass determineOptionalReturnType() {
+         return fromClass(unwrapOptionalReturnType());
+      }
+
+      private Class<?> unwrapOptionalReturnType() {
+         Type t = unwrapOptionalReturnTypeGeneric();
+         if (t instanceof ParameterizedType) {
+            t = ((ParameterizedType) t).getRawType();
+         }
+         return (Class) t;
+      }
+
+      private Type unwrapOptionalReturnTypeGeneric() {
+         if (Optional.class == method.getReturnType()) {
+            return ((ParameterizedType) method.getGenericReturnType()).getActualTypeArguments()[0];
+         }
+         return method.getGenericReturnType();
       }
 
       @Override
@@ -578,11 +611,6 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public XClass determineRepeatedElementType() {
-         return null;
-      }
-
-      @Override
       public boolean equals(Object obj) {
          if (obj == this) {
             return true;
@@ -634,9 +662,13 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
             return fromClass(field.getType().getComponentType());
          }
          if (Collection.class.isAssignableFrom(field.getType())) {
-            return fromClass(determineCollectionElementType(field.getGenericType()));
+            Class<?> c = determineCollectionElementType(field.getGenericType());
+            if (c == null) {
+               throw new IllegalStateException("Failed to determine element type of collection class " + c);
+            }
+            return fromClass(c);
          }
-         return null;
+         throw new IllegalStateException("Not a repeatable field");
       }
 
       @Override
