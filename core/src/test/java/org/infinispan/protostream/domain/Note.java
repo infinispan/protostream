@@ -1,6 +1,5 @@
 package org.infinispan.protostream.domain;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +33,7 @@ public class Note {
    public Note note;
 
    @ProtoDoc("@Field")
-   @ProtoField(number = 4, collectionImplementation = ArrayList.class)
+   @ProtoField(number = 4)
    public List<Note> notes;
 
    @ProtoField(number = 1)

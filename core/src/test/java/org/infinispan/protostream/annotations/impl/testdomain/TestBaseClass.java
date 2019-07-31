@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl.testdomain;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.protostream.annotations.ProtoField;
@@ -14,7 +15,7 @@ public class TestBaseClass {
    @ProtoField(number = 314, name = "my_enum_field")
    public TestEnum myEnumField;
 
-   @ProtoField(number = 777, collectionImplementation = java.util.LinkedList.class)
+   @ProtoField(number = 777, collectionImplementation = LinkedList.class)
    public List<Integer> ints;
 
    @ProtoField(number = 888)

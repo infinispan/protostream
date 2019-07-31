@@ -1,6 +1,5 @@
 package org.infinispan.protostream.annotations.impl.testdomain;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import org.infinispan.protostream.annotations.ProtoField;
@@ -59,7 +58,7 @@ public class TestArraysAndCollectionsClass2 {
       this.ints2 = ints2;
    }
 
-   @ProtoField(number = 5, collectionImplementation = ArrayList.class)
+   @ProtoField(number = 5)
    public Collection<Integer> getInts3() {
       return ints3;
    }
@@ -68,7 +67,7 @@ public class TestArraysAndCollectionsClass2 {
       this.ints3 = ints3;
    }
 
-   @ProtoField(number = 6, collectionImplementation = ArrayList.class)
+   @ProtoField(number = 6)
    public Collection<String> getStrings() {
       return strings;
    }

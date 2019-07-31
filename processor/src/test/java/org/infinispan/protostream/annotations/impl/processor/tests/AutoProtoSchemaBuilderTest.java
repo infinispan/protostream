@@ -86,8 +86,7 @@ public class AutoProtoSchemaBuilderTest {
       @ProtoField(number = 3, name = "__someFloats")
       public float[] someFloats;
 
-      @ProtoField(number = 4, name = "__someInts", collectionImplementation = ArrayList.class)
-      //todo [anistor] provide some sensible defaults for collectionImplementation if not specified
+      @ProtoField(number = 4, name = "__someInts")
       public List<Integer> someInts;
 
       private ByteBufferImpl buffer;
@@ -792,7 +791,7 @@ public class AutoProtoSchemaBuilderTest {
       @ProtoField(number = 1002)
       Byte[] testField1002;
 
-      @ProtoField(number = 1003, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 1003)
       List<Byte> testField1003;
 
       @ProtoField(number = 1)
@@ -810,7 +809,7 @@ public class AutoProtoSchemaBuilderTest {
       @ProtoField(number = 4)
       Inner[] testField4;
 
-      @ProtoField(number = 5, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 5)
       List<Inner> testField5;
 
       int[] testField6;
@@ -841,7 +840,7 @@ public class AutoProtoSchemaBuilderTest {
          this.testField7 = testField7;
       }
 
-      @ProtoField(number = 8, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 8)
       public List<Integer> getTestField8() {
          return testField8;
       }
@@ -859,7 +858,7 @@ public class AutoProtoSchemaBuilderTest {
          this.testField9 = testField9;
       }
 
-      @ProtoField(number = 10, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 10)
       public List<Inner> getTestField10() {
          return testField10;
       }
@@ -957,7 +956,7 @@ public class AutoProtoSchemaBuilderTest {
 
       byte[] b;
 
-      @ProtoField(number = 12, defaultValue = "12", collectionImplementation = ArrayList.class)
+      @ProtoField(number = 12, defaultValue = "12")
       List<Integer> i;
 
       @ProtoField(number = 13, defaultValue = "13")
@@ -1147,7 +1146,7 @@ public class AutoProtoSchemaBuilderTest {
          return myMap;
       }
 
-      @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 1)
       public List<KVPair> getMapEntries() {
          if (myMap == null) {
             return Collections.emptyList();
@@ -1192,6 +1191,8 @@ public class AutoProtoSchemaBuilderTest {
 
       private OptionalInner[] field3;
 
+      private List<OptionalInner> field4;
+
       @ProtoField(number = 1)
       public Optional<String> getField1() {
          return Optional.ofNullable(field1);
@@ -1217,6 +1218,15 @@ public class AutoProtoSchemaBuilderTest {
 
       public void setField3(OptionalInner[] field3) {
          this.field3 = field3;
+      }
+
+      @ProtoField(number = 4)
+      public Optional<List<OptionalInner>> getField4() {
+         return Optional.ofNullable(field4);
+      }
+
+      public void setField4(List<OptionalInner> field4) {
+         this.field4 = field4;
       }
 
       static class OptionalInner {

@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -749,8 +750,14 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       XClass javaUtilCollectionClass = typeFactory.fromClass(Collection.class);
       if (isRepeated && !fieldType.isArray()) {
          collectionImplementation = configuredCollection;
-         if (collectionImplementation == javaUtilCollectionClass) {
-            collectionImplementation = fieldType;
+         if (collectionImplementation == javaUtilCollectionClass) {   // default
+            if (fieldType == typeFactory.fromClass(Set.class)) {
+               collectionImplementation = typeFactory.fromClass(HashSet.class);
+            } else if (fieldType == typeFactory.fromClass(List.class) || fieldType == typeFactory.fromClass(Collection.class)) {
+               collectionImplementation = typeFactory.fromClass(ArrayList.class);
+            } else {
+               collectionImplementation = fieldType;
+            }
          }
          if (!collectionImplementation.isAssignableTo(javaUtilCollectionClass)) {
             throw new ProtoSchemaBuilderException("The collection class of repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " must implement java.util.Collection.");
@@ -769,7 +776,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          }
       } else {
          if (configuredCollection != javaUtilCollectionClass) {
-            throw new ProtoSchemaBuilderException("Specifying the collection implementation class is only allowed for repeated/collection fields: '" + fieldName + "' of " + clazz.getCanonicalName());
+            throw new ProtoSchemaBuilderException("Specifying the collection implementation class is only allowed for collection (repeated) fields: '" + fieldName + "' of " + clazz.getCanonicalName());
          }
          collectionImplementation = null;
       }

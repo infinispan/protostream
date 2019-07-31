@@ -1234,7 +1234,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       @ProtoField(number = 1002)
       Byte[] testField1002;
 
-      @ProtoField(number = 1003, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 1003)
       List<Byte> testField1003;
 
       @ProtoField(number = 1)
@@ -1252,7 +1252,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       @ProtoField(number = 4)
       Inner[] testField4;
 
-      @ProtoField(number = 5, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 5)
       List<Inner> testField5;
 
       int[] testField6;
@@ -1283,7 +1283,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.testField7 = testField7;
       }
 
-      @ProtoField(number = 8, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 8)
       public List<Integer> getTestField8() {
          return testField8;
       }
@@ -1301,7 +1301,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.testField9 = testField9;
       }
 
-      @ProtoField(number = 10, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 10)
       public List<Inner> getTestField10() {
          return testField10;
       }
@@ -1453,7 +1453,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       @ProtoField(number = 12, defaultValue = "12")
       int[] i;
 
-      @ProtoField(number = 13, defaultValue = "13", collectionImplementation = ArrayList.class)
+      @ProtoField(number = 13, defaultValue = "13")
       public List<Integer> li;
 
       public List<Integer> getLi() {
@@ -1512,7 +1512,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static final class ListOfBytes {
 
-      @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 1)
       List<byte[]> theListOfBytes;
    }
 
@@ -1598,7 +1598,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          return myMap;
       }
 
-      @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 1)
       public List<KVPair> getMapEntries() {
          if (myMap == null) {
             return Collections.emptyList();
@@ -1673,7 +1673,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.field3 = field3;
       }
 
-      @ProtoField(number = 4, collectionImplementation = ArrayList.class)
+      @ProtoField(number = 4)
       public Optional<List<OptionalInner>> getField4() {
          return Optional.ofNullable(field4);
       }

@@ -45,7 +45,7 @@ public class User implements Externalizable {   // implement Externalizable just
       this.id = id;
    }
 
-   @ProtoField(number = 2, collectionImplementation = HashSet.class)
+   @ProtoField(number = 2)
    public Set<Integer> getAccountIds() {
       return accountIds;
    }
@@ -81,7 +81,7 @@ public class User implements Externalizable {   // implement Externalizable just
       this.salutation = salutation;
    }
 
-   @ProtoField(number = 6, collectionImplementation = ArrayList.class)
+   @ProtoField(number = 6)
    public List<Address> getAddresses() {
       return addresses;
    }
