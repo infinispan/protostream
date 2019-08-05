@@ -61,7 +61,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
 
    private String makeUniqueMarshallerClassName(ProtoTypeMetadata ptm) {
       String hash = hashStrings(ptm.getJavaClass().getName(), makeQualifiedTypeName(ptm.getFullName()));
-      return ptm.getJavaClass().getSimpleName() + "$___Marshaller" + hash;
+      return ptm.getJavaClass().getSimpleName() + "$___Marshaller_" + hash;
    }
 
    /**

@@ -43,7 +43,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
    /**
     * The prefix of class names of generated marshallers.
     */
-   private static final String MARSHALLER_CLASS_NAME_PREFIX = "___ProtostreamGeneratedMarshaller";
+   private static final String MARSHALLER_CLASS_NAME_PREFIX = "___ProtostreamGeneratedMarshaller_";
 
    /**
     * A numeric id that is appended to generated class names to avoid potential collisions.
