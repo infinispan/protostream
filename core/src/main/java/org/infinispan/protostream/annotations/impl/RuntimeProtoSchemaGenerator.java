@@ -4,7 +4,6 @@ import java.util.Set;
 
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
@@ -16,7 +15,8 @@ import javassist.LoaderClassPath;
 import javassist.NotFoundException;
 
 /**
- * This class is not to be directly invoked by users. See {@link ProtoSchemaBuilder} instead.
+ * This class is not to be directly invoked by users. See {@link org.infinispan.protostream.annotations.ProtoSchemaBuilder}
+ * instead.
  *
  * @author anistor@redhat.com
  * @since 3.0

@@ -35,7 +35,7 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
    }
 
    public String getDocumentation() {
-      return javaClass.getDocumentation();
+      return javaClass.getProtoDocs();
    }
 
    public XClass getJavaClass() {

@@ -68,7 +68,9 @@ public final class ProtoSchemaBuilder {
 
    /**
     * Set this flag to {@code true} to enable output of debug comments in the generated Protobuf schema.
+    * @deprecated
     */
+   @Deprecated
    public static boolean generateSchemaDebugComments = false;
 
    private String fileName;

@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * All generated classes will have this annotation indicating the FQNs of classes that are the origins of this generated
- * code, as an aid when rebuilding incrementally. This annotation is internal to the generator and should never be used
+ * code, as an aid when recompiling incrementally. This annotation is internal to the generator and should never be used
  * by users. Its retention policy makes it unavailable at runtime.
  *
  * @author anistor@redhat.com

@@ -237,6 +237,41 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       return modifiers;
    }
 
+   private TypeMirror getTypeMirror(String typeName) {
+      if ("void".equals(typeName)) {
+         return types.getNoType(TypeKind.VOID);
+      }
+      if ("boolean".equals(typeName)) {
+         return types.getPrimitiveType(TypeKind.BOOLEAN);
+      }
+      if ("char".equals(typeName)) {
+         return types.getPrimitiveType(TypeKind.CHAR);
+      }
+      if ("byte".equals(typeName)) {
+         return types.getPrimitiveType(TypeKind.BYTE);
+      }
+      if ("short".equals(typeName)) {
+         return types.getPrimitiveType(TypeKind.SHORT);
+      }
+      if ("int".equals(typeName)) {
+         return types.getPrimitiveType(TypeKind.INT);
+      }
+      if ("long".equals(typeName)) {
+         return types.getPrimitiveType(TypeKind.LONG);
+      }
+      if ("float".equals(typeName)) {
+         return types.getPrimitiveType(TypeKind.FLOAT);
+      }
+      if ("double".equals(typeName)) {
+         return types.getPrimitiveType(TypeKind.DOUBLE);
+      }
+      TypeElement typeElement = elements.getTypeElement(typeName);
+      if (typeElement == null) {
+         throw new IllegalStateException("Type not found : " + typeName);
+      }
+      return typeElement.asType();
+   }
+
    /**
     * A primitive type or void.
     */
@@ -258,7 +293,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
 
       @Override
       public Class<?> asClass() {
-         return clazz;
+         throw new UnsupportedOperationException();
       }
 
       @Override
@@ -327,11 +362,8 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
             return true;
          }
          String secondTypeName = other.getCanonicalName();
-         TypeElement secondType = elements.getTypeElement(secondTypeName);
-         if (secondType == null) {
-            throw new RuntimeException("Type not found : " + secondTypeName);
-         }
-         return types.isSameType(primitiveType, secondType.asType());
+         TypeMirror secondType = getTypeMirror(secondTypeName);
+         return types.isSameType(primitiveType, secondType);
       }
 
       @Override
@@ -345,7 +377,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return null;
       }
 
@@ -536,11 +568,12 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
          if (this == c) {
             return true;
          }
-         TypeElement secondType = elements.getTypeElement(c.getCanonicalName());
-         if (secondType == null) {
-            throw new RuntimeException("Type not found : " + c.getCanonicalName());
+         if (c.isPrimitive()) {
+            // a non-primitive cannot be assignable to a primitive
+            return false;
          }
-         return types.isAssignable(types.erasure(typeMirror), types.erasure(secondType.asType()));
+         TypeMirror secondType = getTypeMirror(c.getCanonicalName());
+         return types.isAssignable(types.erasure(typeMirror), types.erasure(secondType));
       }
 
       @Override
@@ -554,7 +587,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return DocumentationExtractor.getDocumentation(typeElement.getAnnotationsByType(ProtoDoc.class));
       }
 
@@ -729,7 +762,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return DocumentationExtractor.getDocumentation(e.getAnnotationsByType(ProtoDoc.class));
       }
 
@@ -840,7 +873,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return null;
       }
 
@@ -990,7 +1023,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return DocumentationExtractor.getDocumentation(executableElement.getAnnotationsByType(ProtoDoc.class));
       }
 
@@ -1090,7 +1123,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          // no @ProtoDoc allowed on constructors
          return null;
       }
@@ -1205,7 +1238,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return DocumentationExtractor.getDocumentation(field.getAnnotationsByType(ProtoDoc.class));
       }
 

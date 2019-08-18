@@ -221,8 +221,8 @@ final class AnnotatedClassScanner {
          OriginatingClasses originatingClasses = initializer.getAnnotation(OriginatingClasses.class);
          if (originatingClasses != null) {
             typeElements = new HashSet<>(originatingClasses.value().length);
-            for (String s : originatingClasses.value()) {
-               TypeElement typeElement = elements.getTypeElement(s);
+            for (String name : originatingClasses.value()) {
+               TypeElement typeElement = elements.getTypeElement(name);
                if (typeElement != null) {
                   typeElements.add(typeElement);
                }

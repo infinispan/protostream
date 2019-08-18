@@ -212,7 +212,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return DocumentationExtractor.getDocumentation(clazz.getAnnotationsByType(ProtoDoc.class));
       }
 
@@ -393,7 +393,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return DocumentationExtractor.getDocumentation(f.getAnnotationsByType(ProtoDoc.class));
       }
 
@@ -466,7 +466,8 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
          String[] parameterNames = new String[parameters.length];
          for (int i = 0; i < parameters.length; i++) {
             if (!parameters[i].isNamePresent()) {
-               throw new IllegalStateException("Method parameter names are not present in compiled class file!");
+               throw new IllegalStateException("Method parameter names are not present in compiled class file: "
+                     + method.getDeclaringClass().getName() + ". Please enable them at compile time.");
             }
             parameterNames[i] = parameters[i].getName();
          }
@@ -509,7 +510,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return DocumentationExtractor.getDocumentation(method.getAnnotationsByType(ProtoDoc.class));
       }
 
@@ -562,7 +563,8 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
          String[] parameterNames = new String[parameters.length];
          for (int i = 0; i < parameters.length; i++) {
             if (!parameters[i].isNamePresent()) {
-               throw new IllegalStateException("Method parameter names are not present in compiled class file!");
+               throw new IllegalStateException("Method parameter names are not present in compiled class file: "
+                     + constructor.getDeclaringClass().getName() + ". Please enable them at compile time.");
             }
             parameterNames[i] = parameters[i].getName();
          }
@@ -605,7 +607,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          // no @ProtoDoc allowed on constructors
          return null;
       }
@@ -710,7 +712,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public String getDocumentation() {
+      public String getProtoDocs() {
          return DocumentationExtractor.getDocumentation(field.getAnnotationsByType(ProtoDoc.class));
       }
 

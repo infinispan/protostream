@@ -54,7 +54,7 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
       this.field = field;
       this.getter = null;
       this.setter = null;
-      this.documentation = field.getDocumentation();
+      this.documentation = field.getProtoDocs();
       this.propertyName = field.getName();
    }
 
@@ -77,7 +77,7 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
       this.declaringMember = definingMethod;
       this.getter = getter;
       this.setter = setter;
-      this.documentation = definingMethod.getDocumentation();
+      this.documentation = definingMethod.getProtoDocs();
    }
 
    public int getNumber() {

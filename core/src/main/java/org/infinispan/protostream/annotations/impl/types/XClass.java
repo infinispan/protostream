@@ -11,11 +11,11 @@ public interface XClass extends XElement {
    UnifiedTypeFactory getFactory();
 
    /**
-    * This is the only place we can get back the java.lang.Class and should be used very sparingly. Abuse will void the
-    * warranty.
+    * This is the only place we can get back the java.lang.Class object and should be used very sparingly. Some
+    * implementations can throw {@link UnsupportedOperationException}.
     */
    @Deprecated
-   Class<?> asClass();
+   Class<?> asClass() throws UnsupportedOperationException;
 
    String getSimpleName();
 
