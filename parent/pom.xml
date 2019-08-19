@@ -419,6 +419,7 @@
                     <!-- See configuration details at http://books.sonatype.com/nexus-book/reference/staging-deployment.html -->
                     <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
                     <serverId>${jboss.releases.repo.id}</serverId>
+                    <stagingProfileId>2161b7b8da0080</stagingProfileId>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
