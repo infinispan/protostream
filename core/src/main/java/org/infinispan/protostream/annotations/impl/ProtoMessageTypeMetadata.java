@@ -180,7 +180,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", javaClass.getCanonicalName());
          }
 
-         // if we have a factory method or constructor, ensure its params match the declared fields
+         // If we have a factory method / constructor, we must ensure its parameters match the declared fields
          if (factory != null) {
             String[] parameterNames = factory.getParameterNames();
             if (parameterNames.length != fieldsByNumber.size()) {
@@ -196,22 +196,21 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                         + parameterName + "' does not match any field : " + factory.toGenericString());
                }
                XClass parameterType = parameterTypes[i];
+               boolean paramTypeMismatch = false;
                if (fieldMetadata.isArray()) {
-                  if (!parameterType.isArray()) {
-                     throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '" + parameterName + "' does not match the field definition: " + factory.toGenericString());
-                  }
-                  if (parameterType.getComponentType() != fieldMetadata.getJavaType()) {
-                     throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '" + parameterName + "' does not match the field definition: " + factory.toGenericString());
+                  if (!parameterType.isArray() || parameterType.getComponentType() != fieldMetadata.getJavaType()) {
+                     paramTypeMismatch = true;
                   }
                } else if (fieldMetadata.isRepeated()) {
-                  // todo [anistor] check collection type parameter also
                   if (!fieldMetadata.getCollectionImplementation().isAssignableTo(parameterType)) {
-                     throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '" + parameterName + "' does not match the field definition: " + factory.toGenericString());
+                     paramTypeMismatch = true;
                   }
-               } else {
-                  if (!fieldMetadata.getJavaType().isAssignableTo(parameterType)) {
-                     throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '" + parameterName + "' does not match the field definition: " + factory.toGenericString());
-                  }
+                  // todo [anistor] also check the collection's type parameter
+               } else if (fieldMetadata.getJavaType() != parameterType) {
+                  paramTypeMismatch = true;
+               }
+               if (paramTypeMismatch) {
+                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch: " + factory.toGenericString() + ". The parameter '" + parameterName + "' does not match the field definition.");
                }
             }
          }
