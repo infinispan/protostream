@@ -452,7 +452,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       iw.append("; }\n\n");
 
       iw.append("@Override\n");
-      iw.append("public void registerSchema(org.infinispan.protostream.SerializationContext serCtx) throws java.io.IOException {\n");
+      iw.append("public void registerSchema(org.infinispan.protostream.SerializationContext serCtx) {\n");
       iw.inc();
       for (int j = 0; j < serCtxInitDeps.size(); j++) {
          iw.append("dep").append(String.valueOf(j)).append(".registerSchema(serCtx);\n");

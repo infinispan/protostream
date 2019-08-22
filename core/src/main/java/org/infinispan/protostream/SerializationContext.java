@@ -1,7 +1,5 @@
 package org.infinispan.protostream;
 
-import java.io.IOException;
-
 import org.infinispan.protostream.config.Configuration;
 
 /**
@@ -22,7 +20,6 @@ public interface SerializationContext extends ImmutableSerializationContext {
     * Register some proto schema definition files from a {@link FileDescriptorSource}.
     *
     * @param source
-    * @throws IOException
     * @throws DescriptorParserException
     */
    void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException;

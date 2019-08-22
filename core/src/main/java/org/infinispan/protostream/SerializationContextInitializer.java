@@ -1,6 +1,6 @@
 package org.infinispan.protostream;
 
-import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * An interface to be used in conjunction with {@link org.infinispan.protostream.annotations.AutoProtoSchemaBuilder}
@@ -13,11 +13,19 @@ import java.io.IOException;
  */
 public interface SerializationContextInitializer {
 
+   /**
+    * Returns the name of the proto file (which is allowed to contain slashes, so it could look like a path).
+    */
    String getProtoFileName();
 
-   String getProtoFile(); //todo IOException
+   /**
+    * Returns the contents of the proto file.
+    *
+    * @throws UncheckedIOException if the file contents cannot be retrieved
+    */
+   String getProtoFile() throws UncheckedIOException;
 
-   void registerSchema(SerializationContext serCtx) throws IOException;
+   void registerSchema(SerializationContext serCtx);
 
    void registerMarshallers(SerializationContext serCtx);
 }

@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -207,7 +206,7 @@ public class AutoProtoSchemaBuilderTest {
       }
 
       @Override
-      public void registerSchema(SerializationContext serCtx) throws IOException {
+      public void registerSchema(SerializationContext serCtx) {
       }
 
       @Override

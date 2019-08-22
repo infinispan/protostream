@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -197,7 +198,7 @@ public final class FileDescriptorSource {
       return is;
    }
 
-   public static String getResourceAsString(Class<?> c, String name) {
+   public static String getResourceAsString(Class<?> c, String name) throws UncheckedIOException {
       try (InputStream is = c.getResourceAsStream(name)) {
          try (Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
             StringWriter writer = new StringWriter();
@@ -209,7 +210,7 @@ public final class FileDescriptorSource {
             return writer.toString();
          }
       } catch (IOException e) {
-         return null;
+         throw new UncheckedIOException(e);
       }
    }
 }
