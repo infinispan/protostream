@@ -15,8 +15,9 @@
 
     <name>ProtoStream - annotation processor</name>
     <description>
-        Annotation processor for ProtoStream.
+        Annotation processor for ProtoStream annotations.
     </description>
+    <url>https://github.com/infinispan/protostream</url>
 
     <dependencies>
         <dependency>
