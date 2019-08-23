@@ -49,13 +49,6 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>protostream</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>sample-domain-definition</artifactId>
             <scope>test</scope>
         </dependency>

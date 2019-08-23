@@ -25,8 +25,8 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoReserved.Range;
-import org.infinispan.protostream.annotations.impl.testdomain.Simple;
-import org.infinispan.protostream.annotations.impl.testdomain.TestEnum;
+import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleClass;
+import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleEnum;
 import org.junit.Test;
 
 public class AutoProtoSchemaBuilderTest {
@@ -125,12 +125,12 @@ public class AutoProtoSchemaBuilderTest {
          service = true,
          includeClasses = {
                Note.class,
-               Simple.class,
-               Simple.class, // duplicates are handled nicely
+               SimpleClass.class,
+               SimpleClass.class, // duplicates are handled nicely
                ByteBufferImpl.class,
 //               EmbeddedMetadata.class,
                EmbeddedMetadata.EmbeddedLifespanExpirableMetadata.class,
-               TestEnum.class,
+               SimpleEnum.class,
 //               String.class,
                X.class
          }
@@ -150,7 +150,7 @@ public class AutoProtoSchemaBuilderTest {
       assertTrue(ctx.canMarshall("firstTestPackage.NoteMsg"));
       ProtobufUtil.toWrappedByteArray(ctx, new Note());
 
-      assertTrue(ctx.canMarshall(Simple.class));
+      assertTrue(ctx.canMarshall(SimpleClass.class));
    }
 
    @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer", autoImportClasses = true,
