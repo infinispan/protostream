@@ -17,6 +17,7 @@
     <description>
         ProtoStream is a serialization library based on Protocol buffers format for serializing structured data.
     </description>
+    <url>https://github.com/infinispan/protostream</url>
 
     <properties>
         <intermediary_jar_name>intermediary-${project.build.finalName}</intermediary_jar_name>

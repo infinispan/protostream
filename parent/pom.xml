@@ -8,7 +8,7 @@
     <version>4.2.3.Final</version>
     <packaging>pom</packaging>
 
-    <name>Parent for all ProtoStream modules</name>
+    <name>ProtoStream - parent</name>
     <description>Parent for all ProtoStream modules</description>
     <url>http://infinispan.org</url>
 
@@ -96,9 +96,10 @@
         <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
 
         <version.java>1.8</version.java>
-        <version.maven.compiler>3.8.0</version.maven.compiler>
-        <version.maven.javadoc>3.0.1</version.maven.javadoc>
-        <version.maven.source>3.0.1</version.maven.source>
+        <version.maven.compiler>3.8.1</version.maven.compiler>
+        <version.maven.jar>3.1.2</version.maven.jar>
+        <version.maven.javadoc>3.1.0</version.maven.javadoc>
+        <version.maven.source>3.1.0</version.maven.source>
         <version.maven.resources>3.1.0</version.maven.resources>
         <version.maven.antrun>1.8</version.maven.antrun>
         <version.maven.nexus-staging>1.6.8</version.maven.nexus-staging>
@@ -285,6 +286,12 @@
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${version.maven.jar}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>${version.maven.javadoc}</version>
                 </plugin>
@@ -371,6 +378,7 @@
                     <!-- See configuration details at http://books.sonatype.com/nexus-book/reference/staging-deployment.html -->
                     <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
                     <serverId>${jboss.releases.repo.id}</serverId>
+                    <stagingProfileId>2161b7b8da0080</stagingProfileId>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
