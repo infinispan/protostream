@@ -21,7 +21,7 @@ import org.junit.Test;
 public class AnnotationOnPackageIntegrationTest {
 
    @Test
-   public void testAnnotationOnPackage() throws Exception {
+   public void testAnnotationOnPackage() {
       SerializationContextInitializer initializer = null;
       for (SerializationContextInitializer sci : ServiceLoader.load(SerializationContextInitializer.class)) {
          if (sci.getClass().getSimpleName().equals("AnnotationOnPackageTestInitializer")) {
@@ -50,7 +50,7 @@ public class AnnotationOnPackageIntegrationTest {
    }
 
    @Test
-   public void testDependsOn() throws Exception {
+   public void testDependsOn() {
       DependentInitializer dependentInitializer = null;
       for (SerializationContextInitializer sci : ServiceLoader.load(SerializationContextInitializer.class)) {
          if (sci instanceof DependentInitializer) {

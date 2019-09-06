@@ -6,14 +6,14 @@
     <parent>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>parent</artifactId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.3.0.Alpha11</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
     <artifactId>sample-domain-definition</artifactId>
     <packaging>bundle</packaging>
 
-    <name>ProtoStream - sample domain model definition in proto file</name>
+    <name>ProtoStream - sample proto domain model definition</name>
     <description>
         Defines some message and enum types in a *.proto schema file, for demo purposes and testing.
     </description>
