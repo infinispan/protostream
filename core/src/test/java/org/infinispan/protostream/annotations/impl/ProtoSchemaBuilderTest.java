@@ -546,7 +546,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       EnumDescriptor testEnum = enums.get("test_package1.TestEnumABC");
       assertNotNull(testEnum);
 
-      assertEquals("bla bla bla\nand some more bla", testEnum.getDocumentation());
+      assertEquals("bla bla bla\nand some more bla\n@TypeId(777)", testEnum.getDocumentation());
       assertEquals("This should never be read.", testEnum.getValues().get(0).getDocumentation());
 
       Descriptor testClass = messages.get("test_package1.TestClass");

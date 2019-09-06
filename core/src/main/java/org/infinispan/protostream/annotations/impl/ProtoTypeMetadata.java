@@ -1,6 +1,8 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.config.Configuration;
 
 /**
  * @author anistor@redhat.com
@@ -35,7 +37,20 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
    }
 
    public String getDocumentation() {
-      return javaClass.getProtoDocs();
+      String protoDocs = javaClass.getProtoDocs();
+
+      // Add @TypeId(..) if any
+      ProtoTypeId protoTypeId = javaClass.getAnnotation(ProtoTypeId.class);
+      if (protoTypeId != null) {
+         String typeIdAnnotation = '@' + Configuration.TYPE_ID_ANNOTATION + '(' + protoTypeId.value() + ")\n";
+         if (protoDocs == null) {
+            protoDocs = typeIdAnnotation;
+         } else {
+            protoDocs += "\n" + typeIdAnnotation;
+         }
+      }
+
+      return protoDocs;
    }
 
    public XClass getJavaClass() {

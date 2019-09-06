@@ -29,6 +29,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.annotations.impl.OriginatingClasses;
 
 /**
@@ -101,28 +102,32 @@ final class AnnotatedClassScanner {
          // path and filter them based on the specified packages and also exclude the explicitly excluded classes.
 
          // Scan the elements in RoundEnv first.
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoField.class)) {
-            visitProtoField(annotatedElement);
+         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoField.class)) {
+            visitProtoField(e);
          }
 
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoFactory.class)) {
-            visitProtoFactory(annotatedElement);
+         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoFactory.class)) {
+            visitProtoFactory(e);
          }
 
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnumValue.class)) {
-            visitProtoEnumValue(annotatedElement);
+         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoEnumValue.class)) {
+            visitProtoEnumValue(e);
          }
 
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoEnum.class)) {
-            visitProtoEnum(annotatedElement);
+         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoEnum.class)) {
+            visitProtoEnum(e);
          }
 
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoMessage.class)) {
-            visitProtoMessage(annotatedElement);
+         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoMessage.class)) {
+            visitProtoMessage(e);
          }
 
-         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ProtoName.class)) {
-            visitProtoName(annotatedElement);
+         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoName.class)) {
+            visitProtoName(e);
+         }
+
+         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoTypeId.class)) {
+            visitProtoTypeId(e);
          }
 
          // Scan the elements from a previous compilation/generation (if any). This helps incremental compilation.
@@ -139,6 +144,9 @@ final class AnnotatedClassScanner {
    }
 
    private void visitTypeElement(TypeElement e) {
+      if (e.getAnnotation(ProtoTypeId.class) != null) {
+         visitProtoTypeId(e);
+      }
       if (e.getAnnotation(ProtoName.class) != null) {
          visitProtoName(e);
       }
@@ -187,6 +195,13 @@ final class AnnotatedClassScanner {
          throw new AnnotationProcessingException(e, "@ProtoEnumValue can only be applied to enum constants.");
       }
       collectClasses((TypeElement) enclosingElement);
+   }
+
+   private void visitProtoTypeId(Element e) {
+      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE && e.getKind() != ElementKind.ENUM) {
+         throw new AnnotationProcessingException(e, "@ProtoTypeId can only be applied to classes, interfaces and enums.");
+      }
+      collectClasses((TypeElement) e);
    }
 
    private void visitProtoName(Element e) {

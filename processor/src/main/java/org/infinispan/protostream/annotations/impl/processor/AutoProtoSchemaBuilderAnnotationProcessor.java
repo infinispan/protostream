@@ -154,6 +154,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
    }
 
+   //todo [anistor] check RoundEnvironment.errorRaised()
    @Override
    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
       if (isDebugEnabled) {

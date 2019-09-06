@@ -18,6 +18,8 @@ public interface Configuration {
     * enum type. This can be used alternatively instead of the fully qualified type name during marshalling to save some
     * bandwidth. Values starting at 1000000 are reserved for internal use by Protostream and other projects from the
     * Infinispan organisation.
+    * <p>
+    * This annotation is pre-defined in all configurations.
     */
    String TYPE_ID_ANNOTATION = "TypeId";
 

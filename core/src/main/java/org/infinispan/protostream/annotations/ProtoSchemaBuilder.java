@@ -37,9 +37,9 @@ import org.infinispan.protostream.impl.Log;
  * SerializationContext} given during creation. The needed types, on which the currently generated types depend on, are
  * also looked up in the same {@link SerializationContext}.
  * <p>
- * See annotations {@link ProtoName}, {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link
- * ProtoEnumValue}, {@link ProtoDoc}, {@link ProtoDocs}, {@link ProtoUnknownFieldSet}, {@link ProtoFactory}, {@link
- * ProtoReserved} and {@link ProtoReservedStatements}.
+ * See annotations {@link ProtoName}, {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link ProtoTypeId},
+ * {@link ProtoEnumValue}, {@link ProtoDoc}, {@link ProtoDocs}, {@link ProtoUnknownFieldSet}, {@link ProtoFactory},
+ * {@link ProtoReserved} and {@link ProtoReservedStatements}.
  * <p>
  * <b>NOTE:</b> This builder contains state that cannot be reset making it impossible to reuse properly. Please create
  * separate instances for each schema generation.
