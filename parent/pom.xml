@@ -124,7 +124,7 @@
         <version.javassist>3.24.1-GA</version.javassist>
         <version.osgi>4.3.1</version.osgi>
         <version.commons-cli>1.2</version.commons-cli>
-        <version.gson>2.8.2</version.gson>
+        <version.gson>2.8.5</version.gson>
         <version.auto-service>1.0-rc6</version.auto-service>
     </properties>
 
