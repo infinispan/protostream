@@ -9,7 +9,7 @@ import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
  * @author anistor@redhat.com
  * @since 3.0
  */
-@ProtoDoc("@TypeId(10)")
+@ProtoDoc("@TypeId(100010)")
 public class Simple {
 
    @ProtoDoc("Simple is elegant")

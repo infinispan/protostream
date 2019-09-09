@@ -176,7 +176,13 @@ public final class WrappedMessage {
     * The (optional) numeric type id of the wrapped message or enum. This is an alternative to {@link
     * #WRAPPED_DESCRIPTOR_FULL_NAME}.
     */
-   public static final int WRAPPED_DESCRIPTOR_ID = 19;
+   public static final int WRAPPED_DESCRIPTOR_TYPE_ID = 19;
+
+   /**
+    * @deprecated Use {@link #WRAPPED_DESCRIPTOR_TYPE_ID} instead.
+    */
+   @Deprecated
+   public static final int WRAPPED_DESCRIPTOR_ID = WRAPPED_DESCRIPTOR_TYPE_ID;
 
    /**
     * The wrapped object or (boxed) primitive.
@@ -236,7 +242,7 @@ public final class WrappedMessage {
          if (typeId == null) {
             out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, typeName);
          } else {
-            out.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
+            out.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, typeId);
          }
 
          if (t.getClass().isEnum()) {
@@ -270,7 +276,7 @@ public final class WrappedMessage {
                descriptorFullName = in.readString();
                break;
             }
-            case WRAPPED_DESCRIPTOR_ID << 3 | WireFormat.WIRETYPE_VARINT: {
+            case WRAPPED_DESCRIPTOR_TYPE_ID << 3 | WireFormat.WIRETYPE_VARINT: {
                expectedFieldCount = 2;
                typeId = in.readInt32();
                break;

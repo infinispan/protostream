@@ -4,7 +4,7 @@ import static com.google.gson.stream.JsonToken.END_DOCUMENT;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_DESCRIPTOR_ID;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_DOUBLE;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_ENUM;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED32;
@@ -387,7 +387,7 @@ public final class ProtobufUtil {
                }
                int choice = valueByName.getNumber();
                Integer typeId = enumDescriptor.getTypeId();
-               writer.writeInt32(WRAPPED_DESCRIPTOR_ID, typeId);
+               writer.writeInt32(WRAPPED_DESCRIPTOR_TYPE_ID, typeId);
                writer.writeEnum(WRAPPED_ENUM, choice);
                break;
             case NULL:
@@ -464,7 +464,7 @@ public final class ProtobufUtil {
          if (tlt == null) {
             writer.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, type);
          } else {
-            writer.writeInt32(WRAPPED_DESCRIPTOR_ID, tlt);
+            writer.writeInt32(WRAPPED_DESCRIPTOR_TYPE_ID, tlt);
          }
          objectWriter.flush();
          writer.writeBytes(WRAPPED_MESSAGE, baos.toByteArray());
@@ -852,7 +852,7 @@ public final class ProtobufUtil {
                return;
             }
             switch (fieldNumber) {
-               case WRAPPED_DESCRIPTOR_ID:
+               case WRAPPED_DESCRIPTOR_TYPE_ID:
                   typeId = (Integer) tagValue;
                   break;
                case WRAPPED_DESCRIPTOR_FULL_NAME:

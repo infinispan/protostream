@@ -449,14 +449,14 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeIdInSameFile() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate type id 10 for type test1.M2. Already used by test1.M1");
+      exception.expectMessage("Duplicate type id 100010 for type test1.M2. Already used by test1.M1");
 
       String file1 = "package test1;\n" +
-            "/**@TypeId(10)*/\n" +
+            "/**@TypeId(100010)*/\n" +
             "message M1 {\n" +
             "   optional string a = 1;\n" +
             "}" +
-            "/**@TypeId(10)*/\n" +
+            "/**@TypeId(100010)*/\n" +
             "message M2 {\n" +
             "   optional string b = 1;\n" +
             "}";
@@ -470,17 +470,17 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeIdInImportedFile() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate type id 10 for type test2.M2. Already used by test1.M1");
+      exception.expectMessage("Duplicate type id 100010 for type test2.M2. Already used by test1.M1");
 
       String file1 = "package test1;\n" +
-            "/**@TypeId(10)*/\n" +
+            "/**@TypeId(100010)*/\n" +
             "message M1 {\n" +
             "   optional string a = 1;\n" +
             "}";
 
       String file2 = "package test2;\n" +
             "import \"file1.proto\";\n" +
-            "/**@TypeId(10)*/\n" +
+            "/**@TypeId(100010)*/\n" +
             "message M2 {\n" +
             "   optional string b = 1;\n" +
             "}";

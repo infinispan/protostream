@@ -3,7 +3,7 @@ package sample_bank_account;
 
 /**
  * @Indexed
- * @TypeId(42)
+ * @TypeId(100042)
  */
 message User {
 
@@ -69,7 +69,7 @@ message User {
     */
    optional int32 age = 7;   // persisting age instead of birth date is not ideal but is ok for our sample code
 
-   /* @TypeId(41) */
+   /* @TypeId(100041) */
    enum Gender {
       MALE = 0;    //NOTE: It seems negative values are accepted too!
       FEMALE = 1;
@@ -148,7 +148,7 @@ message Account {
     */
    repeated bytes blurb = 6;
 
-   /** @TypeId(43) */
+   /** @TypeId(100043) */
    enum Currency {
       EUR = 0;
       GBP = 1;

@@ -114,6 +114,9 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
          valueDescriptor.setFileDescriptor(fileDescriptor);
       }
       typeId = getProcessedAnnotation(Configuration.TYPE_ID_ANNOTATION);
+      if (typeId != null && typeId < 0) {
+         throw new DescriptorParserException("TypeId cannot be negative");
+      }
    }
 
    @Override

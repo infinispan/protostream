@@ -24,10 +24,10 @@ public @interface ProtoTypeId {
    /**
     * Defines the type id of the Protobuf message or enum type. This optional annotation defines a unique integer type
     * identifier for a protobuf definition. This can be used alternatively instead of the fully qualified type name
-    * during marshalling to save bandwidth.
+    * during marshalling to save bandwidth. The type id must not be negative.
     * <p>
-    * Values starting at 1000000 are reserved for internal use by Protostream and other projects from the Infinispan
-    * organisation.
+    * Values in the range 0..65535 (inclusive) are reserved for internal use by Protostream and other projects from the
+    * Infinispan organisation and should not be used by application developers.
     */
    int value();
 }

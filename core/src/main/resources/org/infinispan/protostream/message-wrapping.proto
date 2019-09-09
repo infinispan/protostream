@@ -5,17 +5,18 @@ package org.infinispan.protostream;
 /**
  * Protobuf messages do not indicate their message type or structure. Readers of protobuf data streams are expected to
  * know in advance what message type to expect next in the stream. Also, the wire format is not self-delimiting so the
- * length of the next message must be computed based on the schema so that not too much nor too little is read.
- * This is particularly important if multiple messages are contained in a stream. A detailed explanation is oferred here:
- * https://developers.google.com/protocol-buffers/docs/techniques#streaming
+ * length of the next message must be computed based on the known schema so that not too much nor too little is read.
+ * This is particularly important if a sequence multiple messages are contained in a stream. A detailed explanation is
+ * offered here: https://developers.google.com/protocol-buffers/docs/techniques#streaming
  * <p>
  * WrappedMessage solves this problem of self-describing messages by allowing the stream reader to detect
- * the type of the message. Still, only the type name is provided but the actual schema is not provided as it would not
- * be efficient to carry so much information over the wire with each message. The application is expected to have
- * knowledge of the schema and use it once it learns the type name.
- * <p> This is similar to 'google.protobuf.Any' but is also able to handle scalars not just messages.
+ * the type of the message. Still, only the type name (or type id) is provided but the actual schema is not provided as
+ * it would not be efficient to carry so much information over the wire with each message. The application is expected
+ * to have knowledge of the schema and use it once it learns the type.
+ * <p>
+ * This is similar to 'google.protobuf.Any' but is also able to handle scalars not just messages.
  *
- * @TypeId(1000000)
+ * @TypeId(0)
  */
 message WrappedMessage {
 
@@ -67,7 +68,8 @@ message WrappedMessage {
    }
 
    /**
-    * Stores the fully qualified type name or numeric type id. This is not used for scalar types, only for message types.
+    * Stores the fully qualified type name or numeric type id. This is not used for primitve types, only for message or
+    * enum types.
     */
    oneof typeNameOrId {
 
@@ -78,10 +80,10 @@ message WrappedMessage {
 
       /**
        * This is used as an alternative to wrappedDescriptorFullName if a unique id was assigned to the type with the
-       * TypeId annotation. Values starting at 1000000 are reserved for internal use by Protostream and other projects
+       * TypeId annotation. Values in the range 0..65535 are reserved for internal use by Protostream and other projects
        * from the Infinispan organisation.
        */
-      int32 wrappedDescriptorId = 19;
+      uint32 wrappedDescriptorId = 19;
    }
 }
 

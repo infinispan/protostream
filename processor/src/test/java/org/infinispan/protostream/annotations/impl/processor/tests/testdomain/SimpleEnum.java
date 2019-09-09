@@ -9,7 +9,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @author anistor@redhat.com
  * @since 4.3
  */
-@ProtoTypeId(777)
+@ProtoTypeId(100777)
 @ProtoDoc("bla bla bla\nand some more bla")
 @ProtoName("SimpleEnumABC")
 public enum SimpleEnum {

@@ -122,6 +122,9 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
          nested.setFileDescriptor(fileDescriptor);
       }
       typeId = getProcessedAnnotation(Configuration.TYPE_ID_ANNOTATION);
+      if (typeId != null && typeId < 0) {
+         throw new DescriptorParserException("TypeId cannot be negative");
+      }
    }
 
    @Override
