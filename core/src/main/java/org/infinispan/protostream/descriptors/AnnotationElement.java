@@ -121,7 +121,7 @@ public abstract class AnnotationElement {
       public Value getAttributeValue(String attributeName) {
          Attribute attribute = attributes.get(attributeName);
          if (attribute == null) {
-            throw new IllegalStateException("Attribute " + attributeName + " of annotation " + name + " is missing");
+            throw new IllegalStateException("Attribute '" + attributeName + "' of annotation '" + name + "' is missing");
          }
          return attribute.value;
       }

@@ -276,7 +276,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInFile1() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file1.proto");
+      exception.expectMessage("Duplicate definition of 'test.M1' in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -295,7 +295,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInFile2() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file1.proto");
+      exception.expectMessage("Duplicate definition of 'test.M1' in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -314,7 +314,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInFile3() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.E1 in test_proto_path/file1.proto");
+      exception.expectMessage("Duplicate definition of 'test.E1' in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "enum E1 {\n" +
@@ -351,7 +351,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInMessage1() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.M1.M2 in test_proto_path/file1.proto");
+      exception.expectMessage("Duplicate definition of 'test.M1.M2' in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -369,7 +369,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInMessage2() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.M1.E1 in test_proto_path/file1.proto");
+      exception.expectMessage("Duplicate definition of 'test.M1.E1' in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +
@@ -387,7 +387,7 @@ public class DescriptorsTest {
    @Test
    public void testDuplicateTypeInMessage3() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.M1.E1 in test_proto_path/file1.proto");
+      exception.expectMessage("Duplicate definition of 'test.M1.E1' in test_proto_path/file1.proto");
 
       String file1 = "package test;\n" +
             "message M1 {\n" +

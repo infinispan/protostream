@@ -159,7 +159,7 @@ public final class FileDescriptor {
 
    public Namespace getExportedNamespace() {
       if (status != Status.RESOLVED) {
-         throw new IllegalStateException("File " + name + " is not resolved yet");
+         throw new IllegalStateException("File '" + name + "' is not resolved yet");
       }
       return fileNamespace.getExportedNamespace();
    }
@@ -399,7 +399,7 @@ public final class FileDescriptor {
     */
    public Map<String, GenericDescriptor> getTypes() {
       if (status != Status.RESOLVED) {
-         throw new IllegalStateException("File " + name + " is not resolved yet");
+         throw new IllegalStateException("File '" + name + "' is not resolved yet");
       }
       return fileNamespace.getLocalNamespace().getTypes();
    }

@@ -23,7 +23,7 @@ final class ExportedNamespace extends CompositeNamespace {
       if (fileDescriptor.isResolved()) {
          return super.get(name);
       }
-      throw new IllegalStateException("File " + fileDescriptor.getName() + " is not resolved yet");
+      throw new IllegalStateException("File '" + fileDescriptor.getName() + "' is not resolved yet");
    }
 
    @Override

@@ -49,10 +49,10 @@ public final class FileNamespace extends CompositeNamespace {
    private void foundDuplicateDefinition(String name, GenericDescriptor existing) {
       List<String> locations = Arrays.asList(fileDescriptor.getName(), existing.getFileDescriptor().getName());
       if (locations.get(0).equals(locations.get(1))) {
-         throw new DescriptorParserException("Duplicate definition of " + name + " in " + locations.get(0));
+         throw new DescriptorParserException("Duplicate definition of '" + name + "' in " + locations.get(0));
       }
       Collections.sort(locations); // sort names for more predictable error messages in unit tests
-      throw new DescriptorParserException("Duplicate definition of " + name + " in " + locations.get(0) + " and " + locations.get(1));
+      throw new DescriptorParserException("Duplicate definition of '" + name + "' in " + locations.get(0) + " and " + locations.get(1));
    }
 
    /**

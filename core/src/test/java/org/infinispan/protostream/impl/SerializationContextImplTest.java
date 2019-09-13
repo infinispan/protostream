@@ -95,7 +95,7 @@ public class SerializationContextImplTest {
          fd2.getTypes();
          fail("IllegalStateException expected");
       } catch (IllegalStateException e) {
-         assertEquals("File file2.proto is not resolved yet", e.getMessage());
+         assertEquals("File 'file2.proto' is not resolved yet", e.getMessage());
       }
    }
 
