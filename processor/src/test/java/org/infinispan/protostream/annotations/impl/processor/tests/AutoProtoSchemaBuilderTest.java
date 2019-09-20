@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl.processor.tests;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -18,6 +19,7 @@ import java.util.ServiceLoader;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -25,6 +27,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoReserved.Range;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleEnum;
 import org.junit.Test;
@@ -1256,6 +1259,60 @@ public class AutoProtoSchemaBuilderTest {
       assertEquals("abc", o.field1);
       assertNotNull(o.field2);
       assertEquals("xyz", o.field2.theString);
+   }
+
+   static final class GenericMessage {
+
+      @ProtoField(number = 1)
+      WrappedMessage field1;
+
+      @ProtoField(number = 2)
+      WrappedMessage field2;
+
+      @ProtoField(number = 3)
+      WrappedMessage field3;
+
+      @ProtoField(number = 4)
+      WrappedMessage field4;
+
+      static final class OtherMessage {
+
+         @ProtoField(number = 1)
+         String field1;
+
+         @ProtoFactory
+         public OtherMessage(String field1) {
+            this.field1 = field1;
+         }
+      }
+   }
+
+   @Test
+   public void testGenericMessage() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      String schema = new ProtoSchemaBuilder()
+            .fileName("generic_message.proto")
+            .addClass(GenericMessage.class)
+            .addClass(GenericMessage.OtherMessage.class)
+            .build(ctx);
+
+      assertTrue(schema.contains("message GenericMessage"));
+
+      GenericMessage genericMessage = new GenericMessage();
+      genericMessage.field1 = new WrappedMessage(3.1415d);
+      genericMessage.field2 = new WrappedMessage("qwerty".getBytes());
+      genericMessage.field3 = new WrappedMessage(new WrappedMessage("azerty"));
+      genericMessage.field4 = new WrappedMessage(new GenericMessage.OtherMessage("asdfg"));
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, genericMessage);
+      GenericMessage o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertNotNull(o);
+      assertEquals(Double.class, genericMessage.field1.getValue().getClass());
+      assertEquals(3.1415d, genericMessage.field1.getValue());
+      assertArrayEquals("qwerty".getBytes(), (byte[]) genericMessage.field2.getValue());
+      assertEquals("azerty", ((WrappedMessage) genericMessage.field3.getValue()).getValue());
+      assertEquals("asdfg", ((GenericMessage.OtherMessage) genericMessage.field4.getValue()).field1);
    }
 
    //todo warnings logged to log4j during generation do not end up in compiler's message log

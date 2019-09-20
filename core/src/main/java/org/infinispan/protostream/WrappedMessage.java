@@ -47,6 +47,16 @@ public final class WrappedMessage {
    public static final String PROTOBUF_TYPE_NAME = "org.infinispan.protostream.WrappedMessage";
 
    /**
+    * The id.
+    */
+   public static final int PROTOBUF_TYPE_ID = 0;
+
+   /**
+    * Full path of the message-wrapping.proto resource file.
+    */
+   public static final String PROTO_FILE = "org/infinispan/protostream/message-wrapping.proto";
+
+   /**
     * A wrapped double.
     */
    public static final int WRAPPED_DOUBLE = 1;

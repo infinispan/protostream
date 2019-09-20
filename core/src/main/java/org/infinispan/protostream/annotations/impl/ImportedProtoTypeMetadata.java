@@ -15,13 +15,13 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
  * @author anistor@redhat.com
  * @since 4.3
  */
-final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
+public final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
 
    private final GenericDescriptor descriptor;
 
    private final BaseMarshaller<?> marshaller;
 
-   ImportedProtoTypeMetadata(GenericDescriptor descriptor, BaseMarshaller<?> marshaller, XClass javaClass) {
+   public ImportedProtoTypeMetadata(GenericDescriptor descriptor, BaseMarshaller<?> marshaller, XClass javaClass) {
       super(descriptor.getFullName(), javaClass);
       this.descriptor = descriptor;
       this.marshaller = marshaller;

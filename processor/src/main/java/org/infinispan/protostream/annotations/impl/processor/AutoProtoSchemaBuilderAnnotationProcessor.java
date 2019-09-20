@@ -41,6 +41,7 @@ import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.IndentWriter;
@@ -342,6 +343,10 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
 
       ProcessorContext processorContext = new ProcessorContext();
+
+      // register internal known types
+      processorContext.marshalledClasses.put(typeFactory.fromClass(WrappedMessage.class), WrappedMessage.PROTO_FILE);
+
       for (TypeMirror dependencyType : dependencies) {
          TypeElement dependencyElement = (TypeElement) types.asElement(dependencyType);
          String dependencyFQN = dependencyElement.getQualifiedName().toString();

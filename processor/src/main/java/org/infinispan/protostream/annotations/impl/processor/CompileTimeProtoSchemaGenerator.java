@@ -3,13 +3,17 @@ package org.infinispan.protostream.annotations.impl.processor;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerator;
 import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
+import org.infinispan.protostream.annotations.impl.ImportedProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 
 /**
  * @author anistor@redhat.com
@@ -40,6 +44,12 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
 
    @Override
    protected ProtoTypeMetadata importProtoTypeMetadata(XClass javaType) {
+      if (javaType == typeFactory.fromClass(WrappedMessage.class)) {
+         GenericDescriptor descriptor = serializationContext.getDescriptorByName(WrappedMessage.PROTOBUF_TYPE_NAME);
+         BaseMarshaller<WrappedMessage> marshaller = serializationContext.getMarshaller(WrappedMessage.PROTOBUF_TYPE_NAME);
+         return new ImportedProtoTypeMetadata(descriptor, marshaller, javaType);
+      }
+
       String fileName = dependencies.get(javaType);
       if (fileName != null) {
          String packageName = serializationContext.getFileDescriptors().get(fileName).getPackage();

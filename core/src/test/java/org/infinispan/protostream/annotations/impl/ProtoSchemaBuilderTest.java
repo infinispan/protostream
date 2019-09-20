@@ -27,6 +27,7 @@ import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -1508,6 +1509,60 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertEquals(55, o.r);
       assertEquals(66, o.g);
       assertEquals(77, o.b);
+   }
+
+   static final class GenericMessage {
+
+      @ProtoField(number = 1)
+      WrappedMessage field1;
+
+      @ProtoField(number = 2)
+      WrappedMessage field2;
+
+      @ProtoField(number = 3)
+      WrappedMessage field3;
+
+      @ProtoField(number = 4)
+      WrappedMessage field4;
+
+      static final class OtherMessage {
+
+         @ProtoField(number = 1)
+         String field1;
+
+         @ProtoFactory
+         public OtherMessage(String field1) {
+            this.field1 = field1;
+         }
+      }
+   }
+
+   @Test
+   public void testGenericMessage() throws Exception {
+      SerializationContext ctx = createContext();
+      String schema = new ProtoSchemaBuilder()
+            .fileName("generic_message.proto")
+            .addClass(GenericMessage.class)
+            .addClass(GenericMessage.OtherMessage.class)
+            .build(ctx);
+
+      assertTrue(schema.contains("message GenericMessage"));
+
+      GenericMessage genericMessage = new GenericMessage();
+      genericMessage.field1 = new WrappedMessage(3.1415d);
+      genericMessage.field2 = new WrappedMessage("qwerty".getBytes());
+      genericMessage.field3 = new WrappedMessage(new WrappedMessage("azerty"));
+      genericMessage.field4 = new WrappedMessage(new GenericMessage.OtherMessage("asdfg"));
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, genericMessage);
+      GenericMessage o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertNotNull(o);
+      assertEquals(Double.class, genericMessage.field1.getValue().getClass());
+      assertEquals(3.1415d, genericMessage.field1.getValue());
+      assertArrayEquals("qwerty".getBytes(), (byte[]) genericMessage.field2.getValue());
+      assertEquals("azerty", ((WrappedMessage) genericMessage.field3.getValue()).getValue());
+      assertEquals("asdfg", ((GenericMessage.OtherMessage) genericMessage.field4.getValue()).field1);
    }
 
    static final class ListOfBytes {
