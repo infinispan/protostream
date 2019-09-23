@@ -58,7 +58,7 @@ public final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
       }
       Enum<?> enumConstant = ((EnumMarshaller) marshaller).decode(evd.getNumber());
       return new ProtoEnumValueMetadata(evd.getNumber(), name,
-            enumConstant.ordinal(), enumConstant.getDeclaringClass().getName() + '.' + enumConstant.name(), null);
+            enumConstant.ordinal(), enumConstant.getDeclaringClass().getCanonicalName() + '.' + enumConstant.name(), null);
    }
 
    @Override

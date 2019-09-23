@@ -65,7 +65,7 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
                throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum constant " + name + " on enum constant: " + getJavaClassName() + '.' + ec.getName());
             }
             ProtoEnumValueMetadata pevm = new ProtoEnumValueMetadata(annotation.number(), name,
-                  ec.getOrdinal(), ec.getDeclaringClass().getName() + '.' + ec.getName(), ec.getProtoDocs());
+                  ec.getOrdinal(), ec.getDeclaringClass().getCanonicalName() + '.' + ec.getName(), ec.getProtoDocs());
             membersByNumber.put(annotation.number(), pevm);
             membersByName.put(pevm.getProtoName(), pevm);
          }

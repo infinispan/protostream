@@ -1511,6 +1511,25 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertEquals(77, o.b);
    }
 
+   static final class OuterClass {
+      enum InnerEnum {
+         @ProtoEnumValue(number = 1) OPTION_A,
+         @ProtoEnumValue(number = 2) OPTION_B
+      }
+   }
+
+   @Test
+   public void testNestedEnum() throws Exception {
+      SerializationContext ctx = createContext();
+      String schema = new ProtoSchemaBuilder()
+            .fileName("generic_message.proto")
+            .addClass(OuterClass.InnerEnum.class)
+            .build(ctx);
+
+      assertTrue(schema.contains("enum InnerEnum"));
+      assertTrue(ctx.canMarshall(OuterClass.InnerEnum.class));
+   }
+
    static final class GenericMessage {
 
       @ProtoField(number = 1)

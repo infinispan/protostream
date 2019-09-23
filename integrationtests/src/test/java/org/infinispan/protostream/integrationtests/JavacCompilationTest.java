@@ -16,7 +16,7 @@ import com.google.testing.compile.JavaFileObjects;
  * @author anistor@redhat.com
  * @since 4.3
  */
-public class JavacTest {
+public class JavacCompilationTest {
 
    private static final String src1 = "package test;\n" +
          "import org.infinispan.protostream.annotations.ProtoField;\n" +
@@ -77,6 +77,18 @@ public class JavacTest {
          "   InnerMessage inner;\n" +
          "}\n";
 
+   private static final String src7 = "package test;\n" +
+         "@org.infinispan.protostream.annotations.AutoProtoSchemaBuilder\n" +
+         "public interface TestEnumInitializer extends org.infinispan.protostream.SerializationContextInitializer {\n" +
+         "}\n\n" +
+         "class OuterClass {\n" +
+         "\n" +
+         "   enum InnerEnum {\n" +
+         "      @org.infinispan.protostream.annotations.ProtoEnumValue(number = 1) OPTION_A,\n" +
+         "      @org.infinispan.protostream.annotations.ProtoEnumValue(number = 2) OPTION_B\n" +
+         "   }\n" +
+         "}\n";
+
    @Test
    public void testAnnotationProcessing() {
       Compilation compilation =
@@ -121,5 +133,15 @@ public class JavacTest {
 
       assertThat(compilation).succeeded();
       assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test/SimplestInitializerImpl.java").isPresent());
+   }
+
+   @Test
+   public void testNestedEnum() {
+      Compilation compilation =
+            javac().withProcessors(new AutoProtoSchemaBuilderAnnotationProcessor())
+                  .compile(JavaFileObjects.forSourceString("TestEnumInitializer", src7));
+
+      assertThat(compilation).succeeded();
+      assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test/TestEnumInitializerImpl.java").isPresent());
    }
 }

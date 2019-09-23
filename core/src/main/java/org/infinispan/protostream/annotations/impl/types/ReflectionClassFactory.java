@@ -107,6 +107,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
                if (f.isEnumConstant()) {
                   Enum<?> e;
                   try {
+                     f.setAccessible(true);
                      e = (Enum<?>) f.get(clazz);
                   } catch (IllegalAccessException iae) {
                      // this is never going to happen, enum constants are always accessible
