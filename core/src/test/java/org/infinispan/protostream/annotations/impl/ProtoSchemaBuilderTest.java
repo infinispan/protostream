@@ -1522,7 +1522,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    public void testNestedEnum() throws Exception {
       SerializationContext ctx = createContext();
       String schema = new ProtoSchemaBuilder()
-            .fileName("generic_message.proto")
+            .fileName("inner_enum.proto")
             .addClass(OuterClass.InnerEnum.class)
             .build(ctx);
 
