@@ -52,7 +52,7 @@ public final class WrappedMessage {
    public static final int PROTOBUF_TYPE_ID = 0;
 
    /**
-    * Full path of the message-wrapping.proto resource file.
+    * Full path of the message-wrapping.proto resource file in classpath.
     */
    public static final String PROTO_FILE = "org/infinispan/protostream/message-wrapping.proto";
 

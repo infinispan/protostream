@@ -74,11 +74,6 @@ public final class ProtobufUtil {
 
    private static final Gson GSON = new Gson();
 
-   /**
-    * Classpath location of the message-wrapping.proto resource file.
-    */
-   private static final String MESSAGE_WRAPPING_RES = "/" + WrappedMessage.PROTO_FILE;
-
    private static final String JSON_TYPE_FIELD = "_type";
    private static final String JSON_VALUE_FIELD = "_value";
 
@@ -93,7 +88,7 @@ public final class ProtobufUtil {
       SerializationContextImpl serializationContext = new SerializationContextImpl(configuration);
 
       try {
-         serializationContext.registerProtoFiles(FileDescriptorSource.fromResources(MESSAGE_WRAPPING_RES));
+         serializationContext.registerProtoFiles(FileDescriptorSource.fromResources(WrappedMessage.PROTO_FILE));
       } catch (IOException | DescriptorParserException e) {
          throw new RuntimeException("Failed to initialize serialization context", e);
       }
