@@ -11,7 +11,7 @@ import org.infinispan.protostream.SerializationContext;
  */
 public class MarshallerRegistration {
 
-   public static final String PROTOBUF_RES = "/sample_bank_account/bank.proto";
+   public static final String PROTOBUF_RES = "sample_bank_account/bank.proto";
 
    public static void registerMarshallers(SerializationContext ctx) throws IOException, DescriptorParserException {
       ctx.registerProtoFiles(FileDescriptorSource.fromResources(PROTOBUF_RES));

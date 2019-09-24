@@ -747,7 +747,7 @@ public class DescriptorsTest {
             .metadataCreator((descriptor, annotation) -> annotation.getDefaultAttributeValue().getValue())
             .build();
 
-      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromResources("/sample_bank_account/bank.proto");
+      FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromResources("sample_bank_account/bank.proto");
       Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
 
       FileDescriptor fileDescriptor = descriptors.get("sample_bank_account/bank.proto");

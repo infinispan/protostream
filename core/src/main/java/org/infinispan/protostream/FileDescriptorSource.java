@@ -68,10 +68,10 @@ public final class FileDescriptorSource {
             throw new IllegalArgumentException("classpathResource cannot be null");
          }
          // enforce absolute resource path
-         String absPath = classpathResource.startsWith("/") ? classpathResource : "/" + classpathResource;
-         InputStream resourceAsStream = getResourceAsStream(userClassLoader, absPath);
+         String absResPath = classpathResource.startsWith("/") ? classpathResource : "/" + classpathResource;
+         InputStream resourceAsStream = getResourceAsStream(userClassLoader, absResPath);
          if (resourceAsStream == null) {
-            throw new IOException("Resource not found in class path : " + classpathResource);
+            throw new IOException("Resource not found in class path : " + absResPath);
          }
          // discard the leading slash
          String path = classpathResource.startsWith("/") ? classpathResource.substring(1) : classpathResource;
