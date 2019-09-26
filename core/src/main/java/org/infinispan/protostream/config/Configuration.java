@@ -2,6 +2,7 @@ package org.infinispan.protostream.config;
 
 import java.util.Map;
 
+import org.infinispan.protostream.WrappedMessageTypeMapper;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
@@ -32,6 +33,20 @@ public interface Configuration {
     * Flag that indicates in out of sequence writes should be logged as warnings. This is {@code true} by default.
     */
    boolean logOutOfSequenceWrites();
+
+   WrappingConfig wrappingConfig();
+
+   interface WrappingConfig {
+
+      WrappedMessageTypeMapper wrappedMessageTypeMapper();
+
+      interface Builder {
+
+         Builder wrappedMessageTypeMapper(WrappedMessageTypeMapper wrappedMessageTypeMapper);
+
+         Configuration build();
+      }
+   }
 
    AnnotationsConfig annotationsConfig();
 
@@ -67,6 +82,8 @@ public interface Configuration {
        * default.
        */
       Builder setLogUndefinedAnnotations(boolean logUndefinedAnnotations);
+
+      WrappingConfig.Builder wrappingConfig();
 
       AnnotationsConfig.Builder annotationsConfig();
 

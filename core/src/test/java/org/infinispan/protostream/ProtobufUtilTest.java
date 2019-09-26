@@ -18,6 +18,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.domain.Account;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
@@ -93,6 +96,56 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
       // assert that toWrappedByteArray works correctly as a shorthand for toByteArray on a WrappedMessage
       assertArrayEquals(userBytes1, userBytes2);
+   }
+
+   @Test
+   public void testWrappedMessageTypeMapper() throws Exception {
+      WrappedMessageTypeMapper mapper = new WrappedMessageTypeMapper() {
+         @Override
+         public int mapTypeId(int typeId, boolean isReading, ImmutableSerializationContext ctx) {
+            if (typeId == 100042) { // change typeId ouf User
+               return 100021;
+            }
+            return typeId;
+         }
+
+         @Override
+         public String mapTypeName(String typeName, boolean isReading, ImmutableSerializationContext ctx) {
+            return typeName;
+         }
+      };
+
+      Configuration cfg = Configuration.builder()
+            .wrappingConfig()
+            .wrappedMessageTypeMapper(mapper)
+            .build();
+
+      ImmutableSerializationContext ctx = createContext(cfg);
+
+      // this has TypeId 100042
+      User user = new User();
+      user.setId(1);
+      user.setName("John");
+      user.setSurname("Batman");
+      user.setGender(User.Gender.MALE);
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, user);
+
+      int[] seenTypeId = new int[] { -1 };
+
+      TagHandler tagHandler = new TagHandler() {
+         @Override
+         public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
+            if (fieldNumber == WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID) {
+               seenTypeId[0] = (Integer) tagValue;
+            }
+         }
+      };
+
+      Descriptor wrappedMessageDescriptor = ctx.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
+      ProtobufParser.INSTANCE.parse(tagHandler, wrappedMessageDescriptor, bytes);
+
+      assertEquals(100021, seenTypeId[0]);
    }
 
    @Test

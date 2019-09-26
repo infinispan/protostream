@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.protostream.WrappedMessageTypeMapper;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
@@ -16,12 +17,16 @@ final class ConfigurationImpl implements Configuration {
 
    private final boolean logOutOfSequenceWrites;
 
+   private final WrappingConfigImpl wrappingConfig;
+
    private final AnnotationsConfigImpl annotationsConfig;
 
    private ConfigurationImpl(boolean logOutOfSequenceReads, boolean logOutOfSequenceWrites,
+                             WrappedMessageTypeMapper wrappedMessageTypeMapper,
                              Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
       this.logOutOfSequenceReads = logOutOfSequenceReads;
       this.logOutOfSequenceWrites = logOutOfSequenceWrites;
+      this.wrappingConfig = new WrappingConfigImpl(wrappedMessageTypeMapper);
       this.annotationsConfig = new AnnotationsConfigImpl(annotations, logUndefinedAnnotations);
    }
 
@@ -36,6 +41,11 @@ final class ConfigurationImpl implements Configuration {
    }
 
    @Override
+   public WrappingConfig wrappingConfig() {
+      return wrappingConfig;
+   }
+
+   @Override
    public AnnotationsConfig annotationsConfig() {
       return annotationsConfig;
    }
@@ -45,8 +55,28 @@ final class ConfigurationImpl implements Configuration {
       return "Configuration{" +
             "logOutOfSequenceReads=" + logOutOfSequenceReads +
             ", logOutOfSequenceWrites=" + logOutOfSequenceWrites +
+            ", wrappingConfig=" + wrappingConfig +
             ", annotationsConfig=" + annotationsConfig +
             '}';
+   }
+
+   private static final class WrappingConfigImpl implements WrappingConfig {
+
+      private final WrappedMessageTypeMapper wrappedMessageTypeMapper;
+
+      private WrappingConfigImpl(WrappedMessageTypeMapper wrappedMessageTypeMapper) {
+         this.wrappedMessageTypeMapper = wrappedMessageTypeMapper;
+      }
+
+      @Override
+      public WrappedMessageTypeMapper wrappedMessageTypeMapper() {
+         return wrappedMessageTypeMapper;
+      }
+
+      @Override
+      public String toString() {
+         return "WrappingConfigImpl{wrappedMessageTypeMapper=" + wrappedMessageTypeMapper + '}';
+      }
    }
 
    private static final class AnnotationsConfigImpl implements AnnotationsConfig {
@@ -84,7 +114,25 @@ final class ConfigurationImpl implements Configuration {
 
       private Boolean logUndefinedAnnotations = null;
 
-      private AnnotationsConfig.Builder annotationsConfigBuilder = null;
+      private WrappingConfigBuilderImpl wrappingConfigBuilder = null;
+
+      private AnnotationsConfigBuilderImpl annotationsConfigBuilder = null;
+
+      final class WrappingConfigBuilderImpl implements WrappingConfig.Builder {
+
+         private WrappedMessageTypeMapper wrappedMessageTypeMapper;
+
+         @Override
+         public WrappingConfig.Builder wrappedMessageTypeMapper(WrappedMessageTypeMapper wrappedMessageTypeMapper) {
+            this.wrappedMessageTypeMapper = wrappedMessageTypeMapper;
+            return this;
+         }
+
+         @Override
+         public Configuration build() {
+            return BuilderImpl.this.build();
+         }
+      }
 
       final class AnnotationsConfigBuilderImpl implements AnnotationsConfig.Builder {
 
@@ -131,7 +179,15 @@ final class ConfigurationImpl implements Configuration {
       }
 
       @Override
-      public AnnotationsConfig.Builder annotationsConfig() {
+      public WrappingConfigBuilderImpl wrappingConfig() {
+         if (wrappingConfigBuilder == null) {
+            wrappingConfigBuilder = new WrappingConfigBuilderImpl();
+         }
+         return wrappingConfigBuilder;
+      }
+
+      @Override
+      public AnnotationsConfigBuilderImpl annotationsConfig() {
          if (annotationsConfigBuilder == null) {
             annotationsConfigBuilder = new AnnotationsConfigBuilderImpl();
          }
@@ -147,7 +203,7 @@ final class ConfigurationImpl implements Configuration {
                .type(AnnotationElement.AttributeType.INT)
                .metadataCreator((annotatedDescriptor, annotation) -> annotation.getDefaultAttributeValue().getValue());
 
-         AnnotationsConfigBuilderImpl annotationsConfig = (AnnotationsConfigBuilderImpl) annotationsConfig();
+         AnnotationsConfigBuilderImpl annotationsConfig = annotationsConfig();
          Map<String, AnnotationConfigurationImpl> annotations = new HashMap<>(annotationsConfig.annotationBuilders.size());
          for (AnnotationConfiguration.Builder annotationBuilder : annotationsConfig.annotationBuilders.values()) {
             AnnotationConfigurationImpl annotationConfig = ((AnnotationConfigurationImpl.BuilderImpl) annotationBuilder).buildAnnotationConfiguration();
@@ -169,6 +225,7 @@ final class ConfigurationImpl implements Configuration {
          }
 
          return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites,
+               wrappingConfig().wrappedMessageTypeMapper,
                annotations, logUndefinedAnnotations == null ? annotations.size() > 1 : logUndefinedAnnotations);
       }
    }

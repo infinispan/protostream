@@ -17,9 +17,13 @@ public abstract class AbstractProtoStreamTest {
       return createContext(Configuration.builder());
    }
 
-   protected SerializationContext createContext(Configuration.Builder cfgBuilder) throws IOException, DescriptorParserException {
-      SerializationContext ctx = ProtobufUtil.newSerializationContext(cfgBuilder.build());
+   protected SerializationContext createContext(Configuration cfg) throws IOException, DescriptorParserException {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext(cfg);
       MarshallerRegistration.registerMarshallers(ctx);
       return ctx;
+   }
+
+   protected SerializationContext createContext(Configuration.Builder cfgBuilder) throws IOException, DescriptorParserException {
+      return createContext(cfgBuilder.build());
    }
 }
