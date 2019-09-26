@@ -13,20 +13,36 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
 public interface AnnotationAttributeConfiguration {
 
    /**
-    * The name of the attribute.
+    * The name of the annotation element (required).
     */
    String name();
 
+   /**
+    * The type. Defaults to String if not explicitly set.
+    */
    AnnotationElement.AttributeType type();
 
+   /**
+    * Is it a single value or an array of values?
+    */
    boolean multiple();
 
+   /**
+    * The default value (optional)
+    */
    Object defaultValue();
 
+   /**
+    * The set of allowed values. This is only used with STRING, IDENTIFIER, or ANNOTATION type.
+    * ANNOTATION type must have a single allowed value.
+    */
    Set<String> allowedValues();
 
    interface Builder {
 
+      /**
+       * The type. Defaults to String if not explicitly set.
+       */
       Builder type(AnnotationElement.AttributeType type);
 
       Builder multiple(boolean isMultiple);

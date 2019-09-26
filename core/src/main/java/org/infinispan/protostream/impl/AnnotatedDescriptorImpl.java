@@ -96,7 +96,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                   normalizeValues(annotation, annotationConfig);
 
                   if (_annotations.containsKey(annotation.getName()) || _containers.containsKey(annotation.getName())) {
-                     // did we just find a repeated annotation?
+                     // did we just find a repeatable annotation?
                      if (annotationConfig.repeatable() != null) {
                         AnnotationElement.Annotation container = _containers.get(annotation.getName());
                         if (container == null) {

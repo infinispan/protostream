@@ -17,12 +17,18 @@ public interface AnnotationConfiguration {
     */
    String name();
 
+   /**
+    * Applicable targets.
+    */
    AnnotationElement.AnnotationTarget[] target();
 
    Map<String, AnnotationAttributeConfiguration> attributes();
 
    AnnotationMetadataCreator<?, ? extends AnnotatedDescriptor> metadataCreator();
 
+   /**
+    * The name of the containing annotation if this annotation is repeatable or null otherwise.
+    */
    String repeatable();
 
    interface Builder {

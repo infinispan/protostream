@@ -4,8 +4,8 @@ import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
- * Creates an application specific alternative representation of an {@link org.infinispan.protostream.descriptors.AnnotationElement.Annotation}
- * value.
+ * Creates an application specific alternative metadata representation of an {@link
+ * org.infinispan.protostream.descriptors.AnnotationElement.Annotation} value.
  *
  * @author anistor@redhat.com
  * @since 2.0

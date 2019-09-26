@@ -935,13 +935,13 @@ public class DescriptorsTest {
    public void testMultipleAnnotationAttribute() {
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
-            .attribute("attr")
+            .attribute("elem1")
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .multiple(true)
             .build();
 
-      String testProto = "/** @Xyz(attr = {true, false, true}) */\n" +
+      String testProto = "/** @Xyz(elem1 = {true, false, true}) */\n" +
             "message M {\n" +
             "  optional int32 field1 = 1; \n" +
             "}\n";
@@ -956,7 +956,7 @@ public class DescriptorsTest {
       assertEquals("M", messageType.getFullName());
       AnnotationElement.Annotation annotation = messageType.getAnnotations().get("Xyz");
       assertNotNull(annotation);
-      AnnotationElement.Value attr = annotation.getAttributeValue("attr");
+      AnnotationElement.Value attr = annotation.getAttributeValue("elem1");
       assertTrue(attr instanceof AnnotationElement.Array);
       assertTrue(attr.getValue() instanceof List);
       List values = (List) attr.getValue();
@@ -970,13 +970,13 @@ public class DescriptorsTest {
    public void testArrayAnnotationAttributeNormalizing() {
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
-            .attribute("attr")
+            .attribute("elem1")
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .multiple(true)
             .build();
 
-      String testProto = "/** @Xyz(attr = true) */\n" +
+      String testProto = "/** @Xyz(elem1 = true) */\n" +
             "message M {\n" +
             "  optional int32 field1 = 1; \n" +
             "}\n";
@@ -991,7 +991,7 @@ public class DescriptorsTest {
       assertEquals("M", messageType.getFullName());
       AnnotationElement.Annotation annotation = messageType.getAnnotations().get("Xyz");
       assertNotNull(annotation);
-      AnnotationElement.Value attr = annotation.getAttributeValue("attr");
+      AnnotationElement.Value attr = annotation.getAttributeValue("elem1");
       assertTrue(attr instanceof AnnotationElement.Array);
       assertTrue(attr.getValue() instanceof List);
       List values = (List) attr.getValue();

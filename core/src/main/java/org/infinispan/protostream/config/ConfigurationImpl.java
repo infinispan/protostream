@@ -86,9 +86,9 @@ final class ConfigurationImpl implements Configuration {
 
       private AnnotationsConfig.Builder annotationsConfigBuilder = null;
 
-      private final class AnnotationsConfigBuilderImpl implements AnnotationsConfig.Builder {
+      final class AnnotationsConfigBuilderImpl implements AnnotationsConfig.Builder {
 
-         private final Map<String, AnnotationConfiguration.Builder> annotationBuilders = new HashMap<>();
+         final Map<String, AnnotationConfigurationImpl.BuilderImpl> annotationBuilders = new HashMap<>();
 
          @Override
          public AnnotationConfiguration.Builder annotation(String annotationName, AnnotationElement.AnnotationTarget... target) {
@@ -98,7 +98,7 @@ final class ConfigurationImpl implements Configuration {
             if (target == null || target.length == 0) {
                throw new IllegalArgumentException("At least one target must be specified for annotation: " + annotationName);
             }
-            AnnotationConfiguration.Builder builder = new AnnotationConfigurationImpl.BuilderImpl(this, annotationName, target);
+            AnnotationConfigurationImpl.BuilderImpl builder = new AnnotationConfigurationImpl.BuilderImpl(this, annotationName, target);
             annotationBuilders.put(annotationName, builder);
             return builder;
          }
@@ -158,7 +158,13 @@ final class ConfigurationImpl implements Configuration {
          for (AnnotationConfigurationImpl a : annotations.values()) {
             String repeatable = a.repeatable();
             if (repeatable != null) {
-               a.container = annotations.get(repeatable);
+               AnnotationConfigurationImpl container = annotations.get(repeatable);
+               if (container == null) {
+                  // unlikely, because we auto-create it
+                  throw new IllegalStateException("Containing annotation '" + repeatable +
+                        "' of repeatable annotation '" + a.name() + "' was not found in configuration.");
+               }
+               a.container = container;
             }
          }
 

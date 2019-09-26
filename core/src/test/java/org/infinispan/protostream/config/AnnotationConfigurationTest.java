@@ -25,20 +25,20 @@ public class AnnotationConfigurationTest {
       Configuration.builder()
             .annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
-            .attribute("attr")
+            .attribute("elem1")
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(null);  // exception expected here
    }
 
    @Test
    public void testWrongDefaultValueType() {
-      exception.expect(IllegalArgumentException.class);
-      exception.expectMessage("Illegal default value type for attribute 'attr'. Boolean expected.");
+     exception.expect(IllegalArgumentException.class);
+     exception.expectMessage("Illegal default value type for annotation element 'elem1'. Boolean expected.");
 
       AnnotationAttributeConfiguration.Builder builder = Configuration.builder()
             .annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
-            .attribute("attr")
+            .attribute("elem1")
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(13);  // this is not valid
 
@@ -50,23 +50,23 @@ public class AnnotationConfigurationTest {
       Configuration cfg = Configuration.builder()
             .annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
-            .attribute("attr")
+            .attribute("elem1")
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .build();
-      assertEquals(Boolean.TRUE, cfg.annotationsConfig().annotations().get("Xyz").attributes().get("attr").defaultValue());
+      assertEquals(Boolean.TRUE, cfg.annotationsConfig().annotations().get("Xyz").attributes().get("elem1").defaultValue());
    }
 
    @Test
    public void testAttributeNameMustNotBeEmpty() {
       exception.expect(IllegalArgumentException.class);
-      exception.expectMessage("attribute name must not be null or empty");
+      exception.expectMessage("'' is not a valid annotation element name");
 
       Configuration.builder()
             .annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
             .metadataCreator(null)
-            .attribute("attr")
+            .attribute("elem1")
             .type(AnnotationElement.AttributeType.STRING)
             .attribute("");
    }
@@ -77,12 +77,12 @@ public class AnnotationConfigurationTest {
             .annotationsConfig()
             .annotation("Inner", AnnotationElement.AnnotationTarget.MESSAGE)
             .repeatable("Outer")
-            .attribute("attr1")
+            .attribute("elem1")
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .build();
 
-      assertEquals(Boolean.TRUE, cfg.annotationsConfig().annotations().get("Inner").attributes().get("attr1").defaultValue());
+      assertEquals(Boolean.TRUE, cfg.annotationsConfig().annotations().get("Inner").attributes().get("elem1").defaultValue());
       AnnotationConfiguration outer = cfg.annotationsConfig().annotations().get("Outer");
       assertEquals(AnnotationElement.AttributeType.ANNOTATION, outer.attributes().get("value").type());
       assertTrue(outer.attributes().get("value").multiple());
@@ -105,6 +105,7 @@ public class AnnotationConfigurationTest {
                      .type(AnnotationElement.AttributeType.STRING)
                      .defaultValue("")
                .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
+                  .repeatable("Fields")
                   .attribute("name")
                      .type(AnnotationElement.AttributeType.STRING)
                      .defaultValue("")
@@ -130,6 +131,8 @@ public class AnnotationConfigurationTest {
                   .attribute("indexNullAs")
                      .type(AnnotationElement.AttributeType.STRING)
                      .defaultValue("__DO_NOT_INDEX_NULL__")
+                  .annotation("SortableField", AnnotationElement.AnnotationTarget.FIELD)
+                     .repeatable("SortableFields")
             .build();
    }
 }

@@ -1,5 +1,6 @@
 package org.infinispan.protostream.config;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,7 +69,7 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
 
    static final class BuilderImpl implements Builder {
 
-      private final Configuration.AnnotationsConfig.Builder parentBuilder;
+      private final ConfigurationImpl.BuilderImpl.AnnotationsConfigBuilderImpl parentBuilder;
 
       /**
        * The annotation name.
@@ -77,7 +78,7 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
 
       private final AnnotationElement.AnnotationTarget[] target;
 
-      private final Map<String, AnnotationAttributeConfiguration.Builder> attributeBuilders = new HashMap<>();
+      private final Map<String, AnnotationAttributeConfigurationImpl.BuilderImpl> attributeBuilders = new HashMap<>();
 
       private AnnotationMetadataCreator<?, ? extends AnnotatedDescriptor> annotationMetadataCreator;
 
@@ -86,24 +87,34 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
        */
       private String repeatable;
 
-      BuilderImpl(Configuration.AnnotationsConfig.Builder parentBuilder, String name, AnnotationElement.AnnotationTarget[] target) {
-         if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("annotation name must not be null or empty");
-         }
+      BuilderImpl(ConfigurationImpl.BuilderImpl.AnnotationsConfigBuilderImpl parentBuilder, String name, AnnotationElement.AnnotationTarget[] target) {
+         checkValidIdentifier(name, "annotation name");
          this.name = name;
          this.target = target;
          this.parentBuilder = parentBuilder;
       }
 
+      private static void checkValidIdentifier(String str, String what) {
+         if (str == null) {
+            throw new IllegalArgumentException(what + " must not be null");
+         }
+         if (str.isEmpty() || !Character.isJavaIdentifierStart(str.charAt(0))) {
+            throw new IllegalArgumentException("'" + str + "' is not a valid " + what);
+         }
+         for (int i = 1; i < str.length(); i++) {
+            if (!Character.isJavaIdentifierPart(str.charAt(i))) {
+               throw new IllegalArgumentException(str + " is not a valid " + what);
+            }
+         }
+      }
+
       @Override
       public AnnotationAttributeConfiguration.Builder attribute(String name) {
-         if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("attribute name must not be null or empty");
-         }
+         checkValidIdentifier(name, "annotation element name");
          if (attributeBuilders.containsKey(name)) {
-            throw new IllegalArgumentException("Duplicate attribute name definition: " + name);
+            throw new IllegalArgumentException("Duplicate annotation element name definition: " + name);
          }
-         AnnotationAttributeConfiguration.Builder builder = new AnnotationAttributeConfigurationImpl.BuilderImpl(this, name);
+         AnnotationAttributeConfigurationImpl.BuilderImpl builder = new AnnotationAttributeConfigurationImpl.BuilderImpl(this, name);
          attributeBuilders.put(name, builder);
          return builder;
       }
@@ -115,23 +126,52 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
       }
 
       @Override
-      public Builder repeatable(String containerAnnotationName) {
-         if (containerAnnotationName == null) {
-            throw new IllegalArgumentException("containerAnnotationName cannot be null");
+      public Builder repeatable(String containingAnnotationName) {
+         if (containingAnnotationName == null) {
+            throw new IllegalArgumentException("containingAnnotationName cannot be null");
          }
-         if (name.equals(containerAnnotationName)) {
-            throw new IllegalArgumentException("The name of the container annotation ('"
-                  + containerAnnotationName + "') cannot be identical to the name of this annotation: '" + name + "'");
+         if (name.equals(containingAnnotationName)) {
+            throw new IllegalArgumentException("The name of the containing annotation ('"
+                  + containingAnnotationName + "') cannot be identical to the name of the repeatable annotation");
          }
-         this.repeatable = containerAnnotationName;
+         this.repeatable = containingAnnotationName;
 
-         // auto-define the container annotation
-         parentBuilder.annotation(containerAnnotationName, target)
-               .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
-               .type(AnnotationElement.AttributeType.ANNOTATION)
-               .allowedValues(name)
-               .multiple(true);
+         AnnotationConfigurationImpl.BuilderImpl containingAnnotationBuilder = parentBuilder.annotationBuilders.get(containingAnnotationName);
+         if (containingAnnotationBuilder != null) {
+            if (!Arrays.asList(containingAnnotationBuilder.target).containsAll(Arrays.asList(target))) {
+               throw new IllegalArgumentException("The containing annotation '" + containingAnnotationName
+                     + "' has a target that does not include the target of the repeatable annotation '" + name + "'");
+            }
+            AnnotationAttributeConfigurationImpl.BuilderImpl valueAttrBuilder = containingAnnotationBuilder.attributeBuilders.get(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE);
+            if (valueAttrBuilder == null
+                  || !valueAttrBuilder.isMultiple
+                  || valueAttrBuilder.type != AnnotationElement.AttributeType.ANNOTATION
+                  || valueAttrBuilder.allowedValues == null
+                  || !Arrays.asList(valueAttrBuilder.allowedValues).contains(name)) {
+               throw new IllegalArgumentException("The containing annotation '" + containingAnnotationName
+                     + "' of the repeatable annotation '" + name + "' does not have a '"
+                     + AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE + "' element of suitable type");
+            }
+            for (Map.Entry<String, AnnotationAttributeConfigurationImpl.BuilderImpl> entry : containingAnnotationBuilder.attributeBuilders.entrySet()) {
+               String attrName = entry.getKey();
+               if (!attrName.equals(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)) {
+                  AnnotationAttributeConfigurationImpl.BuilderImpl attrBuilder = entry.getValue();
+                  if (attrBuilder.defaultValue == null) {
+                     throw new IllegalArgumentException("The containing annotation '" + containingAnnotationName
+                           + "' of the repeatable annotation '" + name
+                           + "' does not have a default value for element '" + attrName + "'");
+                  }
+               }
+            }
 
+         } else {
+            // The containing annotation does not exist so we auto-define it.
+            parentBuilder.annotation(containingAnnotationName, target)
+                  .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.ANNOTATION)
+                  .allowedValues(name)
+                  .multiple(true);
+         }
          return this;
       }
 

@@ -1,5 +1,6 @@
 package org.infinispan.protostream.config;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,7 +18,7 @@ import org.infinispan.protostream.impl.parser.AnnotationParser;
 final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeConfiguration {
 
    /**
-    * The name of the attribute.
+    * The name of the annotation element.
     */
    private final String name;
 
@@ -71,16 +72,19 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
        */
       private final String name;
 
-      private AnnotationElement.AttributeType type = AnnotationElement.AttributeType.STRING;
+      /**
+       * The type. Defaults to String if not explicitly set.
+       */
+      AnnotationElement.AttributeType type = AnnotationElement.AttributeType.STRING;
 
-      private boolean isMultiple;
+      boolean isMultiple;
 
-      private Object defaultValue;
+      Object defaultValue;
 
       /**
        * The set of allowed values. This is only used with STRING, IDENTIFIER, or ANNOTATION type.
        */
-      private String[] allowedValues;
+      String[] allowedValues;
 
       BuilderImpl(AnnotationConfiguration.Builder parentBuilder, String name) {
          this.parentBuilder = parentBuilder;
@@ -90,7 +94,7 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
       @Override
       public Builder type(AnnotationElement.AttributeType type) {
          if (type == null) {
-            throw new IllegalArgumentException("attribute type must not be null");
+            throw new IllegalArgumentException("Annotation element type must not be null");
          }
          this.type = type;
          return this;
@@ -142,31 +146,32 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
                case ANNOTATION:
                case IDENTIFIER:
                case STRING:
-                  allowedValuesSet = new HashSet<>(allowedValues.length);
-                  for (String v : allowedValues) {
-                     allowedValuesSet.add(v);
-                  }
+                  allowedValuesSet = new HashSet<>(Arrays.asList(allowedValues));
                   break;
 
                default:
-                  throw new IllegalArgumentException("The type of attribute '" + name + "' does not support a set of allowed values");
+                  throw new IllegalArgumentException("The type ('" + type + "') of annotation element '" + name + "' does not support a set of allowed values");
             }
+         }
+
+         if (type == AnnotationElement.AttributeType.ANNOTATION && (allowedValuesSet == null || allowedValuesSet.size() != 1)) {
+            throw new IllegalArgumentException("The type ('" + type + "') of annotation element '" + name + "' requires exactly one allowed value");
          }
 
          if (defaultValue != null) {
             switch (type) {
                case ANNOTATION:
                   if (!(defaultValue instanceof String)) {
-                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Annotation expected.");
+                     throw new IllegalArgumentException("Illegal default value type for annotation element '" + name + "'. Annotation expected.");
                   }
                   AnnotationParser parser = new AnnotationParser((String) defaultValue, false);
                   List<AnnotationElement.Annotation> _annotations = parser.parse();
                   if (_annotations.size() != 1) {
-                     throw new IllegalArgumentException("Default value for attribute '" + name + "' must contain a single annotation value");
+                     throw new IllegalArgumentException("Default value for annotation element '" + name + "' must contain a single annotation value");
                   }
                   AnnotationElement.Annotation annotationValue = _annotations.iterator().next();
-                  if (allowedValuesSet != null && !allowedValuesSet.contains(annotationValue.getName())) {
-                     throw new IllegalArgumentException("Default value for attribute '" + name + "' must be an annotation of type: " + allowedValuesSet);
+                  if (!allowedValuesSet.contains(annotationValue.getName())) {
+                     throw new IllegalArgumentException("Default value for annotation element '" + name + "' must be an annotation of type " + allowedValuesSet.iterator().next());
                   }
                   defaultValue = annotationValue;
                   break;
@@ -174,37 +179,37 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
                case STRING:
                case IDENTIFIER:
                   if (!(defaultValue instanceof String)) {
-                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. String expected.");
+                     throw new IllegalArgumentException("Illegal default value type for annotation element '" + name + "'. String expected.");
                   }
                   break;
                case CHARACTER:
                   if (!(defaultValue instanceof Character)) {
-                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Character expected.");
+                     throw new IllegalArgumentException("Illegal default value type for annotation element '" + name + "'. Character expected.");
                   }
                   break;
                case BOOLEAN:
                   if (!(defaultValue instanceof Boolean)) {
-                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Boolean expected.");
+                     throw new IllegalArgumentException("Illegal default value type for annotation element '" + name + "'. Boolean expected.");
                   }
                   break;
                case INT:
                   if (!(defaultValue instanceof Integer)) {
-                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Integer expected.");
+                     throw new IllegalArgumentException("Illegal default value type for annotation element '" + name + "'. Integer expected.");
                   }
                   break;
                case LONG:
                   if (!(defaultValue instanceof Long)) {
-                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Long expected.");
+                     throw new IllegalArgumentException("Illegal default value type for annotation element '" + name + "'. Long expected.");
                   }
                   break;
                case FLOAT:
                   if (!(defaultValue instanceof Float)) {
-                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Float expected.");
+                     throw new IllegalArgumentException("Illegal default value type for annotation element '" + name + "'. Float expected.");
                   }
                   break;
                case DOUBLE:
                   if (!(defaultValue instanceof Double)) {
-                     throw new IllegalArgumentException("Illegal default value type for attribute '" + name + "'. Double expected.");
+                     throw new IllegalArgumentException("Illegal default value type for annotation element '" + name + "'. Double expected.");
                   }
                   break;
             }
