@@ -2,6 +2,7 @@ package org.infinispan.protostream;
 
 import java.util.Map;
 
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
@@ -16,6 +17,11 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
  * @since 4.0
  */
 public interface ImmutableSerializationContext {
+
+   /**
+    * Get the (immutable) configuration object that was used when creating this context.
+    */
+   Configuration getConfiguration();
 
    /**
     * Obtain the currently registered file descriptors.

@@ -1,7 +1,5 @@
 package org.infinispan.protostream;
 
-import org.infinispan.protostream.config.Configuration;
-
 /**
  * A repository for Protobuf type definitions and their marshallers. All ProtoStream marshalling operations happen in
  * the context of a {@code SerializationContext}.
@@ -10,11 +8,6 @@ import org.infinispan.protostream.config.Configuration;
  * @since 1.0
  */
 public interface SerializationContext extends ImmutableSerializationContext {
-
-   /**
-    * Get the (immutable) configuration object that was used when creating this context.
-    */
-   Configuration getConfiguration();
 
    /**
     * Register some proto schema definition files from a {@link FileDescriptorSource}.
