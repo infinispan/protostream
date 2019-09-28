@@ -47,7 +47,7 @@ public final class WrappedMessage {
    public static final String PROTOBUF_TYPE_NAME = "org.infinispan.protostream.WrappedMessage";
 
    /**
-    * The id.
+    * The type id of WrappedMessage.
     */
    public static final int PROTOBUF_TYPE_ID = 0;
 
@@ -170,12 +170,6 @@ public final class WrappedMessage {
     * A byte array containing the encoded message.
     */
    public static final int WRAPPED_MESSAGE = 17;
-
-   /**
-    * @deprecated Use {@link #WRAPPED_MESSAGE} instead. To be removed in 4.1.
-    */
-   @Deprecated
-   public static final int WRAPPED_MESSAGE_BYTES = WRAPPED_MESSAGE;
 
    /**
     * The enum value.
