@@ -66,7 +66,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    /**
     * The FQN of the one and only annotation we claim.
     */
-   public static final String AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME = "org.infinispan.protostream.annotations.AutoProtoSchemaBuilder";
+   static final String AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME = "org.infinispan.protostream.annotations.AutoProtoSchemaBuilder";
 
    private static boolean checkForMinimumRequiredJava = true;
 
@@ -92,7 +92,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    private Messager messager;
 
    @Override
-   public void init(ProcessingEnvironment processingEnv) {
+   public synchronized void init(ProcessingEnvironment processingEnv) {
       super.init(processingEnv);
 
       isDebugEnabled = processingEnv.getOptions().containsKey(DEBUG_OPTION);
