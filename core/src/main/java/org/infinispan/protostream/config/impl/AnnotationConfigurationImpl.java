@@ -1,4 +1,4 @@
-package org.infinispan.protostream.config;
+package org.infinispan.protostream.config.impl;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.protostream.AnnotationMetadataCreator;
+import org.infinispan.protostream.config.AnnotationAttributeConfiguration;
+import org.infinispan.protostream.config.AnnotationConfiguration;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 

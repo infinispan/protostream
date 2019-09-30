@@ -3,6 +3,7 @@ package org.infinispan.protostream.config;
 import java.util.Map;
 
 import org.infinispan.protostream.WrappedMessageTypeMapper;
+import org.infinispan.protostream.config.impl.ConfigurationImpl;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**

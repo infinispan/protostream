@@ -1,17 +1,19 @@
-package org.infinispan.protostream.config;
+package org.infinispan.protostream.config.impl;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.protostream.WrappedMessageTypeMapper;
+import org.infinispan.protostream.config.AnnotationConfiguration;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
  * @author anistor@redhat.com
  * @since 2.0
  */
-final class ConfigurationImpl implements Configuration {
+public final class ConfigurationImpl implements Configuration {
 
    private final boolean logOutOfSequenceReads;
 
@@ -106,7 +108,7 @@ final class ConfigurationImpl implements Configuration {
       }
    }
 
-   static final class BuilderImpl implements Builder {
+   public static final class BuilderImpl implements Builder {
 
       private boolean logOutOfSequenceReads = true;
 
@@ -157,7 +159,7 @@ final class ConfigurationImpl implements Configuration {
          }
       }
 
-      BuilderImpl() {
+      public BuilderImpl() {
       }
 
       @Override
