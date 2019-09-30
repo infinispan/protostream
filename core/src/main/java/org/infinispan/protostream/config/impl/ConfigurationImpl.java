@@ -114,8 +114,6 @@ public final class ConfigurationImpl implements Configuration {
 
       private boolean logOutOfSequenceWrites = true;
 
-      private Boolean logUndefinedAnnotations = null;
-
       private WrappingConfigBuilderImpl wrappingConfigBuilder = null;
 
       private AnnotationsConfigBuilderImpl annotationsConfigBuilder = null;
@@ -138,7 +136,15 @@ public final class ConfigurationImpl implements Configuration {
 
       final class AnnotationsConfigBuilderImpl implements AnnotationsConfig.Builder {
 
+         private Boolean logUndefinedAnnotations = null;
+
          final Map<String, AnnotationConfigurationImpl.BuilderImpl> annotationBuilders = new HashMap<>();
+
+         @Override
+         public AnnotationsConfig.Builder setLogUndefinedAnnotations(boolean logUndefinedAnnotations) {
+            this.logUndefinedAnnotations = logUndefinedAnnotations;
+            return this;
+         }
 
          @Override
          public AnnotationConfiguration.Builder annotation(String annotationName, AnnotationElement.AnnotationTarget... target) {
@@ -171,12 +177,6 @@ public final class ConfigurationImpl implements Configuration {
       @Override
       public Builder setLogOutOfSequenceWrites(boolean logOutOfSequenceWrites) {
          this.logOutOfSequenceWrites = logOutOfSequenceWrites;
-         return this;
-      }
-
-      @Override
-      public Builder setLogUndefinedAnnotations(boolean logUndefinedAnnotations) {
-         this.logUndefinedAnnotations = logUndefinedAnnotations;
          return this;
       }
 
@@ -226,9 +226,10 @@ public final class ConfigurationImpl implements Configuration {
             }
          }
 
+         boolean logUndefinedAnnotations = annotationsConfig().logUndefinedAnnotations == null ? annotations.size() > 1 : annotationsConfig().logUndefinedAnnotations;
          return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites,
                wrappingConfig().wrappedMessageTypeMapper,
-               annotations, logUndefinedAnnotations == null ? annotations.size() > 1 : logUndefinedAnnotations);
+               annotations, logUndefinedAnnotations);
       }
    }
 }

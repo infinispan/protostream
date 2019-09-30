@@ -18,8 +18,8 @@ public interface Configuration {
    /**
     * The name of the TypeId annotation. This optional annotation defines a unique integer type identifier for each
     * message or enum type. This can be used alternatively instead of the fully qualified type name during marshalling
-    * to save some bandwidth. Values in range [0..65535] are reserved for internal use by Protostream and related projects
-    * from the Infinispan organisation.
+    * to save some bandwidth. Values in range [0..65535] are reserved for internal use by Protostream and related
+    * projects from the Infinispan organisation.
     * <p>
     * This annotation is pre-defined in all configurations.
     */
@@ -64,6 +64,12 @@ public interface Configuration {
       interface Builder {
 
          /**
+          * Should we log a warning every time we encounter an undefined documentation annotation? This is {@code true}
+          * by default.
+          */
+         AnnotationsConfig.Builder setLogUndefinedAnnotations(boolean logUndefinedAnnotations);
+
+         /**
           * Create a new annotation with the given name and return its builder to continue define it.
           */
          AnnotationConfiguration.Builder annotation(String annotationName, AnnotationElement.AnnotationTarget... target);
@@ -81,8 +87,14 @@ public interface Configuration {
       /**
        * Should we log a warning every time we encounter an undefined documentation annotation? This is {@code true} by
        * default.
+       *
+       * @deprecated use {@link AnnotationsConfig.Builder#setLogUndefinedAnnotations}
        */
-      Builder setLogUndefinedAnnotations(boolean logUndefinedAnnotations);
+      @Deprecated
+      default Builder setLogUndefinedAnnotations(boolean logUndefinedAnnotations) {
+         annotationsConfig().setLogUndefinedAnnotations(logUndefinedAnnotations);
+         return this;
+      }
 
       WrappingConfig.Builder wrappingConfig();
 
