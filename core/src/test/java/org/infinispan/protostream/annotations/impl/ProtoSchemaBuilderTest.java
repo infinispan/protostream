@@ -402,13 +402,13 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    public enum TestOverride1 {
 
-      @ProtoEnumValue(number = 1) A
+      @ProtoEnumValue(number = 0) A
    }
 
    @ProtoName("TestOverride1")
    public enum TestOverride2 {
 
-      @ProtoEnumValue(number = 1) A
+      @ProtoEnumValue(number = 0) A
    }
 
    @Test
@@ -593,10 +593,10 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       public enum E {
 
-         @ProtoEnumValue(number = 1)
+         @ProtoEnumValue(number = 0)
          A,
 
-         @ProtoEnumValue(number = 2, name = "A")
+         @ProtoEnumValue(number = 1, name = "A")
          B
       }
    }
@@ -1513,8 +1513,8 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static final class OuterClass {
       enum InnerEnum {
-         @ProtoEnumValue(number = 1) OPTION_A,
-         @ProtoEnumValue(number = 2) OPTION_B
+         @ProtoEnumValue(number = 0) OPTION_A,
+         @ProtoEnumValue(number = 1) OPTION_B
       }
    }
 
