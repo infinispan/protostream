@@ -102,16 +102,11 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    public void testWrappedMessageTypeMapper() throws Exception {
       WrappedMessageTypeMapper mapper = new WrappedMessageTypeMapper() {
          @Override
-         public int mapTypeId(int typeId, boolean isReading, ImmutableSerializationContext ctx) {
+         public int mapTypeIdOut(int typeId, ImmutableSerializationContext ctx) {
             if (typeId == 100042) { // change typeId ouf User
                return 100021;
             }
             return typeId;
-         }
-
-         @Override
-         public String mapTypeName(String typeName, boolean isReading, ImmutableSerializationContext ctx) {
-            return typeName;
          }
       };
 

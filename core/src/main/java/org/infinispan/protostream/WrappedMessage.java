@@ -242,11 +242,11 @@ public final class WrappedMessage {
 
          // Write the type discriminator, either the fully qualified name or a numeric type id.
          String typeName = marshaller.getTypeName();
-         Integer typeId = ctx.getDescriptorByName(typeName).getTypeId();
-         if (typeId == null) {
-            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, mapTypeName(typeName, false, ctx));
+         int typeId = mapTypeIdOut(typeName, ctx);
+         if (typeId < 0) {
+            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, typeName);
          } else {
-            out.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, mapTypeId(typeId, false, ctx));
+            out.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, typeId);
          }
 
          if (t.getClass().isEnum()) {
@@ -277,12 +277,12 @@ public final class WrappedMessage {
          switch (tag) {
             case WRAPPED_DESCRIPTOR_FULL_NAME << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED: {
                expectedFieldCount = 2;
-               descriptorFullName = mapTypeName(in.readString(), true, ctx);
+               descriptorFullName = in.readString();
                break;
             }
             case WRAPPED_DESCRIPTOR_TYPE_ID << 3 | WireFormat.WIRETYPE_VARINT: {
                expectedFieldCount = 2;
-               typeId = mapTypeId(in.readInt32(), true, ctx);
+               typeId = mapTypeIdIn(in.readInt32(), ctx);
                break;
             }
             case WRAPPED_ENUM << 3 | WireFormat.WIRETYPE_VARINT:
@@ -401,19 +401,23 @@ public final class WrappedMessage {
    }
 
    /**
-    * Map type id to new/old value, to support schema evolution.
+    * Map type id to new value during reading, to support schema evolution.
     */
-   private static String mapTypeName(String typeName, boolean isReading, ImmutableSerializationContext ctx) {
+   private static int mapTypeIdIn(int typeId, ImmutableSerializationContext ctx) {
       WrappedMessageTypeMapper mapper = ctx.getConfiguration().wrappingConfig().wrappedMessageTypeMapper();
-      return mapper == null ? typeName : mapper.mapTypeName(typeName, isReading, ctx);
+      return mapper == null ? typeId : mapper.mapTypeIdIn(typeId, ctx);
    }
 
    /**
-    * Map type name to new/old value, to support schema evolution.
+    * Map type id to old value, during writing, to support schema evolution.
     */
-   private static int mapTypeId(int typeId, boolean isReading, ImmutableSerializationContext ctx) {
+   private static int mapTypeIdOut(String typeName, ImmutableSerializationContext ctx) {
+      Integer typeId = ctx.getDescriptorByName(typeName).getTypeId();
+      if (typeId == null) {
+         return -1;
+      }
       WrappedMessageTypeMapper mapper = ctx.getConfiguration().wrappingConfig().wrappedMessageTypeMapper();
-      return mapper == null ? typeId : mapper.mapTypeId(typeId, isReading, ctx);
+      return mapper == null ? typeId : mapper.mapTypeIdOut(typeId, ctx);
    }
 
    @Override
