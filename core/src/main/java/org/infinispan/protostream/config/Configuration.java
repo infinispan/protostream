@@ -2,7 +2,7 @@ package org.infinispan.protostream.config;
 
 import java.util.Map;
 
-import org.infinispan.protostream.WrappedMessageTypeMapper;
+import org.infinispan.protostream.WrappedMessageTypeIdMapper;
 import org.infinispan.protostream.config.impl.ConfigurationImpl;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
@@ -16,12 +16,12 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
 public interface Configuration {
 
    /**
-    * The name of the TypeId annotation. This optional annotation defines a unique integer type identifier for each
-    * message or enum type. This can be used alternatively instead of the fully qualified type name during marshalling
-    * to save some bandwidth. Values in range [0..65535] are reserved for internal use by Protostream and related
-    * projects from the Infinispan organisation.
+    * The name of the TypeId annotation. This optional annotation defines a unique positive integer type identifier for
+    * each message or enum type. This can be used alternatively instead of the fully qualified type name during
+    * marshalling of a WrappedMessage to save bandwidth. Values in range [0..65535] are reserved for internal use by
+    * Protostream and related projects from the Infinispan organisation.
     * <p>
-    * This annotation is pre-defined in all configurations.
+    * This annotation is pre-defined in all configurations. You do not have to define it manually.
     */
    String TYPE_ID_ANNOTATION = "TypeId";
 
@@ -39,11 +39,11 @@ public interface Configuration {
 
    interface WrappingConfig {
 
-      WrappedMessageTypeMapper wrappedMessageTypeMapper();
+      WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper();
 
       interface Builder {
 
-         Builder wrappedMessageTypeMapper(WrappedMessageTypeMapper wrappedMessageTypeMapper);
+         Builder wrappedMessageTypeIdMapper(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper);
 
          Configuration build();
       }

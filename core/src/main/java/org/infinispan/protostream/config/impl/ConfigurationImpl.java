@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.protostream.WrappedMessageTypeMapper;
+import org.infinispan.protostream.WrappedMessageTypeIdMapper;
 import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
@@ -24,11 +24,11 @@ public final class ConfigurationImpl implements Configuration {
    private final AnnotationsConfigImpl annotationsConfig;
 
    private ConfigurationImpl(boolean logOutOfSequenceReads, boolean logOutOfSequenceWrites,
-                             WrappedMessageTypeMapper wrappedMessageTypeMapper,
+                             WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper,
                              Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
       this.logOutOfSequenceReads = logOutOfSequenceReads;
       this.logOutOfSequenceWrites = logOutOfSequenceWrites;
-      this.wrappingConfig = new WrappingConfigImpl(wrappedMessageTypeMapper);
+      this.wrappingConfig = new WrappingConfigImpl(wrappedMessageTypeIdMapper);
       this.annotationsConfig = new AnnotationsConfigImpl(annotations, logUndefinedAnnotations);
    }
 
@@ -64,20 +64,20 @@ public final class ConfigurationImpl implements Configuration {
 
    private static final class WrappingConfigImpl implements WrappingConfig {
 
-      private final WrappedMessageTypeMapper wrappedMessageTypeMapper;
+      private final WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper;
 
-      private WrappingConfigImpl(WrappedMessageTypeMapper wrappedMessageTypeMapper) {
-         this.wrappedMessageTypeMapper = wrappedMessageTypeMapper;
+      private WrappingConfigImpl(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper) {
+         this.wrappedMessageTypeIdMapper = wrappedMessageTypeIdMapper;
       }
 
       @Override
-      public WrappedMessageTypeMapper wrappedMessageTypeMapper() {
-         return wrappedMessageTypeMapper;
+      public WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper() {
+         return wrappedMessageTypeIdMapper;
       }
 
       @Override
       public String toString() {
-         return "WrappingConfigImpl{wrappedMessageTypeMapper=" + wrappedMessageTypeMapper + '}';
+         return "WrappingConfigImpl{wrappedMessageTypeIdMapper=" + wrappedMessageTypeIdMapper + '}';
       }
    }
 
@@ -120,11 +120,11 @@ public final class ConfigurationImpl implements Configuration {
 
       final class WrappingConfigBuilderImpl implements WrappingConfig.Builder {
 
-         private WrappedMessageTypeMapper wrappedMessageTypeMapper;
+         private WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper;
 
          @Override
-         public WrappingConfig.Builder wrappedMessageTypeMapper(WrappedMessageTypeMapper wrappedMessageTypeMapper) {
-            this.wrappedMessageTypeMapper = wrappedMessageTypeMapper;
+         public WrappingConfig.Builder wrappedMessageTypeIdMapper(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper) {
+            this.wrappedMessageTypeIdMapper = wrappedMessageTypeIdMapper;
             return this;
          }
 
@@ -226,9 +226,10 @@ public final class ConfigurationImpl implements Configuration {
             }
          }
 
+         // TypeId is the only predefined annotation. If there are more than one then we know we have at least one user defined.
          boolean logUndefinedAnnotations = annotationsConfig().logUndefinedAnnotations == null ? annotations.size() > 1 : annotationsConfig().logUndefinedAnnotations;
          return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites,
-               wrappingConfig().wrappedMessageTypeMapper,
+               wrappingConfig().wrappedMessageTypeIdMapper,
                annotations, logUndefinedAnnotations);
       }
    }

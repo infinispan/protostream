@@ -99,8 +99,8 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    @Test
-   public void testWrappedMessageTypeMapper() throws Exception {
-      WrappedMessageTypeMapper mapper = new WrappedMessageTypeMapper() {
+   public void testWrappedMessageTypeIdMapper() throws Exception {
+      WrappedMessageTypeIdMapper mapper = new WrappedMessageTypeIdMapper() {
          @Override
          public int mapTypeIdOut(int typeId, ImmutableSerializationContext ctx) {
             if (typeId == 100042) { // change typeId ouf User
@@ -112,7 +112,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
       Configuration cfg = Configuration.builder()
             .wrappingConfig()
-            .wrappedMessageTypeMapper(mapper)
+            .wrappedMessageTypeIdMapper(mapper)
             .build();
 
       ImmutableSerializationContext ctx = createContext(cfg);

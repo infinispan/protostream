@@ -404,7 +404,7 @@ public final class WrappedMessage {
     * Map type id to new value during reading, to support schema evolution.
     */
    private static int mapTypeIdIn(int typeId, ImmutableSerializationContext ctx) {
-      WrappedMessageTypeMapper mapper = ctx.getConfiguration().wrappingConfig().wrappedMessageTypeMapper();
+      WrappedMessageTypeIdMapper mapper = ctx.getConfiguration().wrappingConfig().wrappedMessageTypeIdMapper();
       return mapper == null ? typeId : mapper.mapTypeIdIn(typeId, ctx);
    }
 
@@ -416,7 +416,7 @@ public final class WrappedMessage {
       if (typeId == null) {
          return -1;
       }
-      WrappedMessageTypeMapper mapper = ctx.getConfiguration().wrappingConfig().wrappedMessageTypeMapper();
+      WrappedMessageTypeIdMapper mapper = ctx.getConfiguration().wrappingConfig().wrappedMessageTypeIdMapper();
       return mapper == null ? typeId : mapper.mapTypeIdOut(typeId, ctx);
    }
 
