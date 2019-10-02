@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
-import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.impl.Log;
 
 /**
@@ -40,7 +40,7 @@ public abstract class BaseProtoSchemaGenerator {
     */
    public static boolean generateMarshallerDebugComments = false;
 
-   protected final UnifiedTypeFactory typeFactory;
+   protected final XTypeFactory typeFactory;
 
    protected final SerializationContext serializationContext;
 
@@ -81,7 +81,7 @@ public abstract class BaseProtoSchemaGenerator {
 
    private final Map<String, ProtoTypeMetadata> metadataByTypeName = new HashMap<>();
 
-   protected BaseProtoSchemaGenerator(UnifiedTypeFactory typeFactory, SerializationContext serializationContext,
+   protected BaseProtoSchemaGenerator(XTypeFactory typeFactory, SerializationContext serializationContext,
                                       String generator, String fileName, String packageName, Set<XClass> classes, boolean autoImportClasses) {
       if (fileName == null) {
          throw new ProtoSchemaBuilderException("fileName cannot be null");

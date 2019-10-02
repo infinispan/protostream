@@ -11,8 +11,8 @@ import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerat
 import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
 import org.infinispan.protostream.annotations.impl.ImportedProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
-import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 
 /**
@@ -27,7 +27,7 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
 
    private final AnnotatedClassScanner classScanner;
 
-   CompileTimeProtoSchemaGenerator(UnifiedTypeFactory typeFactory, GeneratedFilesWriter generatedFilesWriter,
+   CompileTimeProtoSchemaGenerator(XTypeFactory typeFactory, GeneratedFilesWriter generatedFilesWriter,
                                    SerializationContext serializationContext, String generator,
                                    String fileName, String packageName, Map<XClass, String> dependencies,
                                    Set<XClass> classes, boolean autoImportClasses, AnnotatedClassScanner classScanner) {

@@ -3,12 +3,12 @@ package org.infinispan.protostream.annotations.impl;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XExecutable;
 import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMember;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
+import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 
@@ -253,7 +253,7 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    }
 
    public boolean isBoxedPrimitive() {
-      UnifiedTypeFactory factory = javaType.getFactory();
+      XTypeFactory factory = javaType.getFactory();
       return javaType == factory.fromClass(Float.class) || javaType == factory.fromClass(Double.class) ||
             javaType == factory.fromClass(Long.class) || javaType == factory.fromClass(Integer.class) ||
             javaType == factory.fromClass(Short.class) || javaType == factory.fromClass(Byte.class) ||

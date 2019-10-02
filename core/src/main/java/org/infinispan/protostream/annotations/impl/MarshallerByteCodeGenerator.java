@@ -12,7 +12,7 @@ import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
+import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.Log;
@@ -62,7 +62,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
    private final CtMethod decodeMethod;
    private final CtMethod encodeMethod;
 
-   MarshallerByteCodeGenerator(UnifiedTypeFactory typeFactory, String protobufSchemaPackage, ClassPool cp) throws NotFoundException {
+   MarshallerByteCodeGenerator(XTypeFactory typeFactory, String protobufSchemaPackage, ClassPool cp) throws NotFoundException {
       super(typeFactory, protobufSchemaPackage);
       this.cp = cp;
       ioExceptionClass = cp.getCtClass(IOException.class.getName());

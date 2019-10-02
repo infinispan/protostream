@@ -4,14 +4,15 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * Factory for XClass implementations based on a given java.lang.Class or a javax.lang.model.type.TypeMirror. The
- * factory must ensure it returns the exact same XClass instance for multiple calls with the exact same parameter, or a
- * parameter that represents the same type, either in the form of a java.lang.Class or a
- * javax.lang.model.type.TypeMirror. This ensures that XClasses can be safely compared by reference equality.
+ * factory must ensure it returns the exact same XClass instance for multiple calls with the same argument, or an
+ * argument that represents the same type, either in the form of a java.lang.Class or a
+ * javax.lang.model.type.TypeMirror. This ensures that produced XClass instances can be safely compared by reference
+ * equality.
  *
  * @author anistor@redhat.com
  * @since 4.3
  */
-public interface UnifiedTypeFactory {
+public interface XTypeFactory {
 
    /**
     * Wraps the given Class in an XClass.

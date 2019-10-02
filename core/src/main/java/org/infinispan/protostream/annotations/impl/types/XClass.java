@@ -8,7 +8,7 @@ import java.lang.reflect.Modifier;
  */
 public interface XClass extends XElement {
 
-   UnifiedTypeFactory getFactory();
+   XTypeFactory getFactory();
 
    /**
     * This is the only place we can get back the java.lang.Class object and should be used very sparingly. Some

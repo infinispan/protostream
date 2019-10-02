@@ -26,7 +26,7 @@ import org.infinispan.protostream.annotations.ProtoDoc;
  * @author anistor@redhat.com
  * @since 4.3
  */
-public final class ReflectionClassFactory implements UnifiedTypeFactory {
+public final class ReflectionClassFactory implements XTypeFactory {
 
    private final Map<Class<?>, XClass> classCache = new HashMap<>();
 
@@ -122,7 +122,7 @@ public final class ReflectionClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public UnifiedTypeFactory getFactory() {
+      public XTypeFactory getFactory() {
          return ReflectionClassFactory.this;
       }
 

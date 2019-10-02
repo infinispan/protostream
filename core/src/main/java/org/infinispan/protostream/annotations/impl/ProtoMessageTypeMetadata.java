@@ -23,12 +23,12 @@ import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
-import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XConstructor;
 import org.infinispan.protostream.annotations.impl.types.XExecutable;
 import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
+import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.Log;
@@ -46,7 +46,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final BaseProtoSchemaGenerator protoSchemaGenerator;
 
-   private final UnifiedTypeFactory typeFactory;
+   private final XTypeFactory typeFactory;
 
    private SortedMap<Integer, ProtoFieldMetadata> fieldsByNumber = null;
 

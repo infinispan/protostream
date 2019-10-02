@@ -29,12 +29,12 @@ import javax.lang.model.util.Types;
 
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.impl.types.DocumentationExtractor;
-import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XConstructor;
 import org.infinispan.protostream.annotations.impl.types.XEnumConstant;
 import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
+import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 
 /**
  * Implementation relying primarily on javax.lang.model.type.TypeMirror, but also capable to use reflection.
@@ -42,7 +42,7 @@ import org.infinispan.protostream.annotations.impl.types.XMethod;
  * @author anistor@redhat.com
  * @since 4.3
  */
-public final class MirrorClassFactory implements UnifiedTypeFactory {
+public final class MirrorClassFactory implements XTypeFactory {
 
    private final Elements elements;
 
@@ -287,7 +287,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public UnifiedTypeFactory getFactory() {
+      public XTypeFactory getFactory() {
          return MirrorClassFactory.this;
       }
 
@@ -483,7 +483,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public UnifiedTypeFactory getFactory() {
+      public XTypeFactory getFactory() {
          return MirrorClassFactory.this;
       }
 
@@ -781,7 +781,7 @@ public final class MirrorClassFactory implements UnifiedTypeFactory {
       }
 
       @Override
-      public UnifiedTypeFactory getFactory() {
+      public XTypeFactory getFactory() {
          return MirrorClassFactory.this;
       }
 

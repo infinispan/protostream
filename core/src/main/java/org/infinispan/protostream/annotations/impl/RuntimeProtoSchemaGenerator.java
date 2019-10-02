@@ -5,8 +5,8 @@ import java.util.Set;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
-import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 
 import javassist.ClassClassPath;
@@ -38,7 +38,7 @@ public final class RuntimeProtoSchemaGenerator extends BaseProtoSchemaGenerator 
       IS_OSGI_CONTEXT = isOSGi;
    }
 
-   public RuntimeProtoSchemaGenerator(UnifiedTypeFactory typeFactory, SerializationContext serializationContext, String generator,
+   public RuntimeProtoSchemaGenerator(XTypeFactory typeFactory, SerializationContext serializationContext, String generator,
                                       String fileName, String packageName, Set<XClass> classes, boolean autoImportClasses) {
       super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses);
       if (classes.isEmpty()) {

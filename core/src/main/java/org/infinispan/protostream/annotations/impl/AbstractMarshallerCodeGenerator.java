@@ -13,10 +13,10 @@ import java.util.stream.Collectors;
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
-import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XConstructor;
 import org.infinispan.protostream.annotations.impl.types.XExecutable;
+import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 
@@ -28,7 +28,7 @@ public abstract class AbstractMarshallerCodeGenerator {
 
    private static final String PROTOSTREAM_PACKAGE = SerializationContext.class.getPackage().getName();
 
-   private final UnifiedTypeFactory typeFactory;
+   private final XTypeFactory typeFactory;
 
    /**
     * Do nullable fields that do not have a user defined default value get a default type specific value if missing
@@ -40,7 +40,7 @@ public abstract class AbstractMarshallerCodeGenerator {
 
    private final String protobufSchemaPackage;
 
-   protected AbstractMarshallerCodeGenerator(UnifiedTypeFactory typeFactory, String protobufSchemaPackage) {
+   protected AbstractMarshallerCodeGenerator(XTypeFactory typeFactory, String protobufSchemaPackage) {
       this.typeFactory = typeFactory;
       this.protobufSchemaPackage = protobufSchemaPackage;
    }

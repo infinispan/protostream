@@ -23,7 +23,7 @@ import org.infinispan.protostream.annotations.impl.ProtoFieldMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoMessageTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.processor.types.HasModelElement;
-import org.infinispan.protostream.annotations.impl.types.UnifiedTypeFactory;
+import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.Log;
@@ -45,7 +45,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
 
    private final Set<String> generatedClasses = new LinkedHashSet<>();
 
-   MarshallerSourceCodeGenerator(GeneratedFilesWriter generatedFilesWriter, UnifiedTypeFactory typeFactory, String protobufSchemaPackage) {
+   MarshallerSourceCodeGenerator(GeneratedFilesWriter generatedFilesWriter, XTypeFactory typeFactory, String protobufSchemaPackage) {
       super(typeFactory, protobufSchemaPackage);
       this.generatedFilesWriter = generatedFilesWriter;
    }
