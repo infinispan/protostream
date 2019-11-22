@@ -68,7 +68,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
     */
    static final String AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME = "org.infinispan.protostream.annotations.AutoProtoSchemaBuilder";
 
-   private static boolean checkForMinimumRequiredJava = true;
+   private static boolean checkForMinRequiredJava = true;
 
    private final ServiceLoaderFileGenerator serviceLoaderFileGenerator = new ServiceLoaderFileGenerator(SerializationContextInitializer.class);
 
@@ -162,12 +162,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          logDebug("AutoProtoSchemaBuilderAnnotationProcessor annotations=%s, rootElements=%s", annotations, roundEnv.getRootElements());
       }
 
-      if (checkForMinimumRequiredJava && getJavaMajorVersion() < 9) {
-         checkForMinimumRequiredJava = false;
-         reportWarning(null, "Please ensure you use at least Java version 9 for compilation in order to avoid various " +
-               "compiler related bugs from older Java versions that impact the AutoProtoSchemaBuilder annotation " +
-               "processor (but you can set the output target to a lower version if needed).");
-      }
+      ensureMinRequiredJava();
 
       Optional<? extends TypeElement> claimedAnnotation = annotations.stream()
             .filter(a -> a.getQualifiedName().contentEquals(AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME))
@@ -203,11 +198,25 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return claimedAnnotation.isPresent();
    }
 
+   private void ensureMinRequiredJava() {
+      if (checkForMinRequiredJava && getJavaMajorVersion() < 9) {
+
+         // check and complain only once
+         checkForMinRequiredJava = false;
+
+         reportWarning(null, "Please ensure you use at least Java ver. 9 for compilation in order to avoid various " +
+               "compiler related bugs from older Java versions that impact the AutoProtoSchemaBuilder annotation " +
+               "processor (you can set the output target to 8 or above).");
+      }
+   }
+
    private static int getJavaMajorVersion() {
       String[] version = System.getProperty("java.version").split("[.]");
       int major = Integer.parseInt(version[0]);
-      int minor = Integer.parseInt(version[1]);
-      return major == 1 ? minor : major;
+      if (major == 1) {
+         return Integer.parseInt(version[1]);
+      }
+      return major;
    }
 
    private static String getStackTraceAsString(Throwable throwable) {
