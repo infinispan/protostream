@@ -323,6 +323,8 @@
                         <source>${version.java}</source>
                         <target>${version.java}</target>
                         <encoding>UTF-8</encoding>
+                        <!-- both maven and javac are buggy regarding handling of APs with incremental compilation -->
+                        <useIncrementalCompilation>false</useIncrementalCompilation>
                         <!-- Include method parameter debug info -->
                         <parameters>true</parameters>
                     </configuration>
