@@ -1,19 +1,11 @@
 language: java
 
 jdk:
-  - oraclejdk8
-  - oraclejdk9
   - oraclejdk11
+  - oraclejdk13
   - openjdk8
-  - openjdk9
-  - openjdk10
   - openjdk11
-
-addons:
-  apt:
-    packages:
-    - oracle-java8-installer # Updates JDK 8 to the latest available.
-    - oracle-java9-installer # Updates JDK 9 to the latest available.
+  - openjdk13
 
 cache:
   directories:
