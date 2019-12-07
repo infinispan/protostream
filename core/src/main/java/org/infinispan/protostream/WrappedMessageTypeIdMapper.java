@@ -7,7 +7,9 @@ package org.infinispan.protostream;
  *
  * @author anistor@redhat.com
  * @since 4.3
+ * @deprecated since 4.3.1 because it does not suit the intended purpose. Will be removed in 4.4.x with no replacement.
  */
+@Deprecated
 public interface WrappedMessageTypeIdMapper {
 
    /**

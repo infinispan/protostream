@@ -6,7 +6,9 @@ package org.infinispan.protostream;
  *
  * @author anistor@redhat.com
  * @since 3.0
+ * @deprecated since 4.3.1. This will be removed together with {@link MessageMarshaller}
  */
+@Deprecated
 public interface UnknownFieldSetHandler<T> {
 
    /**

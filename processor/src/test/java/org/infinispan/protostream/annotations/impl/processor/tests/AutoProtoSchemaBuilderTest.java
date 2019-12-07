@@ -241,7 +241,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    @Test
-   public void testDependsOn() throws Exception {
+   public void testDependsOn() {
       DependentInitializer dependentInitializer = null;
       for (SerializationContextInitializer sci : ServiceLoader.load(SerializationContextInitializer.class)) {
          if (sci instanceof DependentInitializer) {
@@ -921,8 +921,12 @@ public class AutoProtoSchemaBuilderTest {
 
       private final int b;
 
+      /**
+       * The order of parameters is not matching the order of fields and that's fine because they are matched by name
+       * not by order.
+       */
       @ProtoFactory
-      public RGBColor(int r, int g, int b) {
+      public RGBColor(int r, int b, int g) {
          this.r = r;
          this.g = g;
          this.b = b;
@@ -988,8 +992,12 @@ public class AutoProtoSchemaBuilderTest {
          this.j = j;
       }
 
+      /**
+       * The order of parameters is not matching the order of fields and that's fine because they are matched by name
+       * not by order.
+       */
       @ProtoFactory
-      static ImmutableColor make(byte r, byte g, byte[] b, List<Integer> i, int[] j) {
+      static ImmutableColor make(byte r, byte[] b, byte g, List<Integer> i, int[] j) {
          return new ImmutableColor(r, g, b, i, j);
       }
 
@@ -1018,7 +1026,7 @@ public class AutoProtoSchemaBuilderTest {
       assertTrue(serCtxInitializer.getProtoFile().contains("message RGBColor"));
       assertTrue(serCtxInitializer.getProtoFile().contains("message ImmutableColor"));
 
-      RGBColor color = new RGBColor(55, 66, 77);
+      RGBColor color = new RGBColor(55, 77, 66);
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, color);
       RGBColor o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
@@ -1089,7 +1097,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    /**
-    * Demonstrates an entity that has a field of type Map<CustomKey, String>.
+    * Demonstrates an entity that has a field of type Map&lt;CustomKey, String&gt;.
     */
    static class CustomMap {
 

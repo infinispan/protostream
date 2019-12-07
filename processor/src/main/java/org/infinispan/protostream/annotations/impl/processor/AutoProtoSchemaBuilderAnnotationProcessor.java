@@ -54,7 +54,7 @@ import org.infinispan.protostream.annotations.impl.types.XMethod;
 import com.google.auto.service.AutoService;
 
 @SupportedOptions(AutoProtoSchemaBuilderAnnotationProcessor.DEBUG_OPTION)
-@SupportedAnnotationTypes(AutoProtoSchemaBuilderAnnotationProcessor.AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME)
+@SupportedAnnotationTypes(AutoProtoSchemaBuilderAnnotationProcessor.ANNOTATION_NAME)
 @AutoService(Processor.class)
 public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractProcessor {
 
@@ -66,7 +66,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    /**
     * The FQN of the one and only annotation we claim.
     */
-   static final String AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME = "org.infinispan.protostream.annotations.AutoProtoSchemaBuilder";
+   static final String ANNOTATION_NAME = "org.infinispan.protostream.annotations.AutoProtoSchemaBuilder";
 
    private static boolean checkForMinRequiredJava = true;
 
@@ -107,7 +107,6 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
    @Override
    public SourceVersion getSupportedSourceVersion() {
-      //TODO [anistor] maybe return processingEnv.getSourceVersion() or @SupportedSourceVersion(SourceVersion.RELEASE_8) ?
       return SourceVersion.latestSupported();
    }
 
@@ -155,7 +154,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
    }
 
-   //todo [anistor] check RoundEnvironment.errorRaised()
+   //todo [anistor] check RoundEnvironment.errorRaised() and do not write any output
    @Override
    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
       if (isDebugEnabled) {
@@ -165,7 +164,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       ensureMinRequiredJava();
 
       Optional<? extends TypeElement> claimedAnnotation = annotations.stream()
-            .filter(a -> a.getQualifiedName().contentEquals(AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME))
+            .filter(a -> a.getQualifiedName().contentEquals(ANNOTATION_NAME))
             .findAny();
 
       try {
@@ -206,7 +205,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
          reportWarning(null, "Please ensure you use at least Java ver. 9 for compilation in order to avoid various " +
                "compiler related bugs from older Java versions that impact the AutoProtoSchemaBuilder annotation " +
-               "processor (you can set the output target to 8 or above).");
+               "processor (you can still set the output target to 8 or above).");
       }
    }
 
@@ -324,7 +323,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    private static final class ProcessorContext {
 
       /**
-       * Names of SerializationContextInitializer generated so far.
+       * Names of SerializationContextInitializer generated so far in this context.
        */
       final Set<String> initializerClassNames = new LinkedHashSet<>();
 
@@ -369,12 +368,10 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
             throw new AnnotationProcessingException(annotatedElement, "Illegal recursive dependency on %s", dependencyFQN);
          }
 
-         boolean wasEnabled = generatedFilesWriter.isEnabled();
+         boolean wasGenerationEnabled = generatedFilesWriter.isEnabled();
          generatedFilesWriter.setEnabled(false);
-
          processElement(roundEnv, serCtx, dependencyElement, dependencyAnnotation, processorContext);
-
-         generatedFilesWriter.setEnabled(wasEnabled);
+         generatedFilesWriter.setEnabled(wasGenerationEnabled);
 
          processedElementsFQN.remove(dependencyFQN);
       }
@@ -540,7 +537,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    private static void addSchemaBuilderAnnotation(IndentWriter iw, String className, String schemaFileName,
                                                   String schemaFilePath, String schemaPackageName,
                                                   Collection<? extends TypeMirror> classes, Set<String> dependsOn, boolean service) {
-      iw.append("/*@").append(AUTOPROTOSCHEMABUILDER_ANNOTATION_NAME).append("(\n");
+      iw.append("/*@").append(ANNOTATION_NAME).append("(\n");
       iw.inc();
       iw.append("className = \"").append(className).append("\",\n");
       iw.append("schemaFileName = \"").append(schemaFileName).append("\",\n");

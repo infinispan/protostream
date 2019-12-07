@@ -7,8 +7,8 @@ import org.infinispan.protostream.config.impl.ConfigurationImpl;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 /**
- * Configuration interface for the ProtoStream library. This object is not mutable. Use the {@link Builder} in order to
- * create and mutate a new instance.
+ * Configuration interface for the ProtoStream library. This object is not mutable once built. Use the {@link Builder}
+ * in order to create a new instance.
  *
  * @author anistor@redhat.com
  * @since 2.0

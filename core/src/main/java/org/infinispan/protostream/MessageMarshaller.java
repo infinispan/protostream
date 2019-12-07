@@ -7,12 +7,15 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
- * Contract to be implemented by marshallers for Protobuf message (entity) types. The marshaller implementation must be
- * stateless (or behave as if stateless) and must be thread-safe.
+ * Contract to be implemented by manually written marshallers for Protobuf message (entity) types. The marshaller
+ * implementation must be stateless and thread-safe.
  *
  * @author anistor@redhat.com
  * @since 1.0
+ * @deprecated since 4.3.1.Final. Will be removed in next major version. Please use annotation based marshallers
+ * instead.
  */
+@Deprecated
 public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
    /**
@@ -41,9 +44,9 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       ImmutableSerializationContext getSerializationContext();
 
       /**
-       * Reads an integer field given a field name. The field name and type are checked against the schema first.
-       * Can't return an {@code int} here because the field might be declared optional and actually missing so we have to
-       * be able to signal that by returning {@code null}.
+       * Reads an integer field given a field name. The field name and type are checked against the schema first. Can't
+       * return an {@code int} here because the field might be declared optional and actually missing so we have to be
+       * able to signal that by returning {@code null}.
        */
       Integer readInt(String fieldName) throws IOException;
 

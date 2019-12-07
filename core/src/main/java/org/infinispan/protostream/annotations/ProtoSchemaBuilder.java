@@ -136,9 +136,9 @@ public final class ProtoSchemaBuilder {
    }
 
    private static CommandLine parseCommandLine(String[] args) throws ParseException {
-      Option f = new Option(FILE_OPT, FILE_LONG_OPT, true, "Output schema file name (optional)");
-      Option p = new Option(PACKAGE_OPT, PACKAGE_LONG_OPT, true, "The Protobuf package name of the generated schema (optional)");
       Option h = new Option(HELP_OPT, HELP_LONG_OPT, false, "Print usage information and exit immediately");
+      Option f = new Option(FILE_OPT, FILE_LONG_OPT, true, "Output *.proto schema file name (required)");
+      Option p = new Option(PACKAGE_OPT, PACKAGE_LONG_OPT, true, "The Protobuf package name of the generated schema (optional)");
       Option m = new Option(MARSHALLER_OPT, MARSHALLER_LONG_OPT, true, "Register an existing marshaller class to be available for 'includes' (optional, multiple)");
       Option s = new Option(SCHEMA_OPT, SCHEMA_LONG_OPT, true, "Register an existing Protobuf schema to be available for 'includes' (optional, multiple)");
       s.setArgs(2);

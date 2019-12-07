@@ -17,10 +17,10 @@ public interface BaseMarshaller<T> {
    Class<? extends T> getJavaClass();
 
    /**
-    * Returns the full name of the message or enum type as declared in the Protobuf file. This must not change over
-    * multiple invocations.
+    * Returns the full name of the message or enum type, defined in a proto file. This must not change over multiple
+    * invocations.
     *
-    * @return the full name of the message or enum type declared in the Protobuf file.
+    * @return the full name of the message or enum type, defined in a proto file.
     */
    String getTypeName();
 }
