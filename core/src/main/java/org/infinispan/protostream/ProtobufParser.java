@@ -160,7 +160,7 @@ public final class ProtobufParser {
                         value = in.readEnum();
                         break;
                      default:
-                        throw new IOException("Unexpected field type : " + fd.getType());
+                        throw new IOException("Unexpected field type " + fd.getType() + " for field " + fieldNumber);
                   }
                   tagHandler.onTag(fieldNumber, fd, value);
                }
@@ -168,7 +168,7 @@ public final class ProtobufParser {
             }
 
             default:
-               throw new IOException("Found tag with invalid wire type : " + tag);
+               throw new IOException("Found tag with invalid wire type : tag=" + tag + ", wireType=" + wireType);
          }
       }
    }
