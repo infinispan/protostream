@@ -523,6 +523,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return iw.toString();
    }
 
+   //todo [anistor] switch to javax.annotation.processing.Generated after moving away from JDK 8
    static void addGeneratedClassHeader(IndentWriter iw, boolean addPrivateJavadocTag, String... classes) {
       iw.append("/**\n * WARNING: Generated code! Do not edit!\n").append(addPrivateJavadocTag ? " *\n * @private\n" : "").append(" */\n");
       iw.append('@').append(Generated.class.getName()).append("(\n   value = \"").append(AutoProtoSchemaBuilderAnnotationProcessor.class.getName())

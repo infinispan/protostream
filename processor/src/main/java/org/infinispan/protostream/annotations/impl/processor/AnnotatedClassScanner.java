@@ -34,7 +34,7 @@ import org.infinispan.protostream.annotations.impl.OriginatingClasses;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 
 /**
- * Discovers the classes to process based on the package and class filter specified in the AutoProtoSchemaBuilder
+ * Discovers the classes to process based on the package and class filter specified in the {@link AutoProtoSchemaBuilder}
  * annotation.
  *
  * @author anistor@redhat.com
@@ -61,7 +61,8 @@ final class AnnotatedClassScanner {
    private final String initializerClassName;
    private final String initializerFQClassName;
 
-   AnnotatedClassScanner(Messager messager, Elements elements, Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
+   AnnotatedClassScanner(Messager messager, Elements elements,
+                         Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
       this.messager = messager;
       this.elements = elements;
       this.builderElement = builderElement;
@@ -157,7 +158,7 @@ final class AnnotatedClassScanner {
          }
 
          // Scan the elements from a previous compilation/generation (if any). This helps incremental compilation.
-         for (TypeElement e : getPreviouslyProcessedElements()) {
+         for (TypeElement e : getOriginatingClasses()) {
             visitTypeElement(e);
          }
       } else {
@@ -254,7 +255,7 @@ final class AnnotatedClassScanner {
    /**
     * Extracts the old root elements from the previously generated initializer code.
     */
-   private Set<TypeElement> getPreviouslyProcessedElements() {
+   private Set<TypeElement> getOriginatingClasses() {
       Set<TypeElement> typeElements = Collections.emptySet();
 
       TypeElement initializer = elements.getTypeElement(initializerFQClassName);
