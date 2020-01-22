@@ -36,7 +36,7 @@ public final class ProtoSchemaGenerator {
    static {
       boolean isOSGi = false;
       try {
-         isOSGi = MarshallerCodeGenerator.class.getClassLoader() instanceof org.osgi.framework.BundleReference;
+         isOSGi = ProtoSchemaGenerator.class.getClassLoader() instanceof org.osgi.framework.BundleReference;
       } catch (NoClassDefFoundError ex) {
          // Ignore
       }
@@ -44,6 +44,8 @@ public final class ProtoSchemaGenerator {
    }
 
    private final SerializationContext serializationContext;
+
+   private final ClassPool classPool;
 
    private final String fileName;
 
@@ -58,7 +60,7 @@ public final class ProtoSchemaGenerator {
 
    private final Map<String, ProtoTypeMetadata> metadataByTypeName = new HashMap<>();
 
-   public ProtoSchemaGenerator(SerializationContext serializationContext, String fileName, String packageName, Set<Class<?>> classes) {
+   public ProtoSchemaGenerator(SerializationContext serializationContext, String fileName, String packageName, Set<Class<?>> classes, ClassLoader classLoader) {
       if (fileName == null) {
          throw new ProtoSchemaBuilderException("fileName cannot be null");
       }
@@ -70,6 +72,7 @@ public final class ProtoSchemaGenerator {
       this.fileName = fileName;
       this.packageName = packageName;
       this.classes = classes;
+      this.classPool = getClassPool(classes, classLoader);
    }
 
    public String generateAndRegister() throws ProtoSchemaBuilderException, IOException {
@@ -164,7 +167,7 @@ public final class ProtoSchemaGenerator {
    }
 
    private void generateMarshallers() throws Exception {
-      MarshallerCodeGenerator marshallerCodeGenerator = new MarshallerCodeGenerator(packageName, getClassPool());
+      MarshallerCodeGenerator marshallerCodeGenerator = new MarshallerCodeGenerator(packageName, classPool);
       for (Class<?> c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
          Class<? extends BaseMarshaller> marshallerClass = null;
@@ -180,18 +183,21 @@ public final class ProtoSchemaGenerator {
       }
    }
 
-   private ClassPool getClassPool() {
-      ClassLoader classLoader = getClass().getClassLoader();
+   private static ClassPool getClassPool(Set<Class<?>> classes, ClassLoader classLoader) {
+      ClassLoader myCL = ProtoSchemaGenerator.class.getClassLoader();
       ClassPool cp = new ClassPool(ClassPool.getDefault()) {
          @Override
          public ClassLoader getClassLoader() {
-            return IS_OSGI_CONTEXT ? classLoader : super.getClassLoader();
+            return classLoader != null ? classLoader : (IS_OSGI_CONTEXT ? myCL : super.getClassLoader());
          }
       };
       for (Class<?> c : classes) {
          cp.appendClassPath(new ClassClassPath(c));
       }
-      cp.appendClassPath(new LoaderClassPath(classLoader));
+      cp.appendClassPath(new LoaderClassPath(myCL));
+      if (classLoader != myCL) {
+         cp.appendClassPath(new LoaderClassPath(classLoader));
+      }
       return cp;
    }
 

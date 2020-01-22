@@ -231,7 +231,11 @@ public final class ProtoSchemaBuilder {
     * @throws IOException
     */
    public String build(SerializationContext serializationContext) throws ProtoSchemaBuilderException, IOException {
-      return new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes)
+      return build(serializationContext, null);
+   }
+
+   public String build(SerializationContext serializationContext, ClassLoader classLoader) throws ProtoSchemaBuilderException, IOException {
+      return new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes, classLoader)
             .generateAndRegister();
    }
 }
