@@ -53,7 +53,9 @@ public final class ProtoSchemaBuilder {
 
    /**
     * Set this flag to {@code true} to enable output of debug comments in the generated Protobuf schema.
+    * @deprecated
     */
+   @Deprecated
    public static boolean generateSchemaDebugComments = false;
 
    private String fileName;
@@ -223,7 +225,8 @@ public final class ProtoSchemaBuilder {
 
    /**
     * Builds the Protocol Buffers schema file defining the types and generates marshaller implementations for these
-    * types and registers everything with the given {@link SerializationContext}.
+    * types and registers everything with the given {@link SerializationContext}. The generated classes are defined in
+    * the thread context ClassLoader.
     *
     * @param serializationContext
     * @return the generated Protocol Buffers schema file text
@@ -234,6 +237,17 @@ public final class ProtoSchemaBuilder {
       return build(serializationContext, null);
    }
 
+   /**
+    * Builds the Protocol Buffers schema file defining the types and generates marshaller implementations for these
+    * types and registers everything with the given {@link SerializationContext}.
+    *
+    * @param serializationContext
+    * @param classLoader          the ClassLoader in which the generated classes will be defined. If {@code null}, this
+    *                             behaves as {@link #build(SerializationContext)}
+    * @return the generated Protocol Buffers schema file text
+    * @throws ProtoSchemaBuilderException
+    * @throws IOException
+    */
    public String build(SerializationContext serializationContext, ClassLoader classLoader) throws ProtoSchemaBuilderException, IOException {
       return new ProtoSchemaGenerator(serializationContext, fileName, packageName, classes, classLoader)
             .generateAndRegister();
