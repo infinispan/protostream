@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Generated;
@@ -211,11 +213,16 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
    private static int getJavaMajorVersion() {
       String[] version = System.getProperty("java.version").split("[.]");
-      int major = Integer.parseInt(version[0]);
+      int major = parseVersionPart(version[0]);
       if (major == 1) {
-         return Integer.parseInt(version[1]);
+         major = parseVersionPart(version[1]);
       }
       return major;
+   }
+
+   private static int parseVersionPart(String s) {
+      Matcher m = Pattern.compile("(\\d+)\\D*").matcher(s);
+      return m.find() ? Integer.parseInt(m.group(1)) : 0;
    }
 
    private static String getStackTraceAsString(Throwable throwable) {
