@@ -269,7 +269,8 @@ public final class ProtoSchemaBuilder {
 
    /**
     * Builds the Protocol Buffers schema file defining the types and generates marshaller implementations for these
-    * types and registers everything with the given {@link SerializationContext}.
+    * types and registers everything with the given {@link SerializationContext}. The generated classes are defined in
+    * the thread context ClassLoader.
     *
     * @param serializationContext
     * @return the generated Protocol Buffers schema file text
@@ -277,10 +278,26 @@ public final class ProtoSchemaBuilder {
     * @throws IOException
     */
    public String build(SerializationContext serializationContext) throws ProtoSchemaBuilderException, IOException {
+      return build(serializationContext, null);
+   }
+
+   /**
+    * Builds the Protocol Buffers schema file defining the types and generates marshaller implementations for these
+    * types and registers everything with the given {@link SerializationContext}.The generated classes are defined in
+    * the given ClassLoader.
+    *
+    * @param serializationContext
+    * @param classLoader          the ClassLoader in which the generated classes will be defined. If {@code null}, this
+    *                             behaves as {@link #build(SerializationContext)}
+    * @return the generated Protocol Buffers schema file text
+    * @throws ProtoSchemaBuilderException
+    * @throws IOException
+    */
+   public String build(SerializationContext serializationContext, ClassLoader classLoader) throws ProtoSchemaBuilderException, IOException {
       ReflectionClassFactory typeFactory = new ReflectionClassFactory();
       Set<XClass> xclasses = classes.stream().map(typeFactory::fromClass).collect(Collectors.toCollection(LinkedHashSet::new));
       BaseProtoSchemaGenerator.generateSchemaDebugComments = generateSchemaDebugComments;
-      return new RuntimeProtoSchemaGenerator(typeFactory, serializationContext, generator, fileName, packageName, xclasses, autoImportClasses)
+      return new RuntimeProtoSchemaGenerator(typeFactory, serializationContext, generator, fileName, packageName, xclasses, autoImportClasses, classLoader)
             .generateAndRegister();
    }
 }

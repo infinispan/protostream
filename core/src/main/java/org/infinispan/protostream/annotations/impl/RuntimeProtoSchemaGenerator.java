@@ -38,12 +38,16 @@ public final class RuntimeProtoSchemaGenerator extends BaseProtoSchemaGenerator 
       IS_OSGI_CONTEXT = isOSGi;
    }
 
-   public RuntimeProtoSchemaGenerator(XTypeFactory typeFactory, SerializationContext serializationContext, String generator,
-                                      String fileName, String packageName, Set<XClass> classes, boolean autoImportClasses) {
+   private final ClassPool classPool;
+
+   public RuntimeProtoSchemaGenerator(XTypeFactory typeFactory, SerializationContext serializationContext,
+                                      String generator, String fileName, String packageName,
+                                      Set<XClass> classes, boolean autoImportClasses, ClassLoader classLoader) {
       super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses);
       if (classes.isEmpty()) {
          throw new ProtoSchemaBuilderException("At least one class must be specified");
       }
+      classPool = getClassPool(classes, classLoader);
    }
 
    /**
@@ -68,24 +72,27 @@ public final class RuntimeProtoSchemaGenerator extends BaseProtoSchemaGenerator 
    @Override
    protected AbstractMarshallerCodeGenerator makeCodeGenerator() {
       try {
-         return new MarshallerByteCodeGenerator(typeFactory, packageName, getClassPool());
+         return new MarshallerByteCodeGenerator(typeFactory, packageName, classPool);
       } catch (NotFoundException e) {
          throw new ProtoSchemaBuilderException(e);
       }
    }
 
-   private ClassPool getClassPool() {
-      ClassLoader classLoader = getClass().getClassLoader();
+   private static ClassPool getClassPool(Set<XClass> classes, ClassLoader classLoader) {
+      ClassLoader myCL = RuntimeProtoSchemaGenerator.class.getClassLoader();
       ClassPool cp = new ClassPool(ClassPool.getDefault()) {
          @Override
          public ClassLoader getClassLoader() {
-            return IS_OSGI_CONTEXT ? classLoader : super.getClassLoader();
+            return classLoader != null ? classLoader : (IS_OSGI_CONTEXT ? myCL : super.getClassLoader());
          }
       };
       for (XClass c : classes) {
          cp.appendClassPath(new ClassClassPath(c.asClass()));
       }
-      cp.appendClassPath(new LoaderClassPath(classLoader));
+      cp.appendClassPath(new LoaderClassPath(myCL));
+      if (classLoader != myCL) {
+         cp.appendClassPath(new LoaderClassPath(classLoader));
+      }
       return cp;
    }
 }
