@@ -21,7 +21,6 @@ import static org.infinispan.protostream.WrappedMessage.WRAPPED_STRING;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT32;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT64;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -161,8 +160,7 @@ public final class ProtobufUtil {
    }
 
    public static <A> A fromWrappedByteArray(ImmutableSerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
-      ByteArrayInputStream bais = new ByteArrayInputStream(bytes, offset, length);
-      return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(bais));
+      return WrappedMessage.readMessage(ctx, RawProtoStreamReaderImpl.newInstance(bytes, offset, length));
    }
 
    public static <A> A fromWrappedByteBuffer(ImmutableSerializationContext ctx, ByteBuffer byteBuffer) throws IOException {
@@ -262,7 +260,7 @@ public final class ProtobufUtil {
             writer.writeDouble(fieldId, reader.nextDouble());
             break;
          case FLOAT:
-            writer.writeFloat(fieldId, Float.valueOf(reader.nextString()));
+            writer.writeFloat(fieldId, Float.parseFloat(reader.nextString()));
             break;
          case INT64:
             writer.writeInt64(fieldId, reader.nextLong());
