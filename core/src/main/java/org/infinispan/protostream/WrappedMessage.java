@@ -256,9 +256,9 @@ public final class WrappedMessage {
          String typeName = marshaller.getTypeName();
          int typeId = mapTypeIdOut(typeName, ctx);
          if (typeId < 0) {
-            out.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, typeName);
+            out.writeString(WRAPPED_TYPE_NAME, typeName);
          } else {
-            out.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, typeId);
+            out.writeUInt32(WRAPPED_TYPE_ID, typeId);
          }
 
          if (t.getClass().isEnum()) {
@@ -275,7 +275,7 @@ public final class WrappedMessage {
    }
 
    static <T> T readMessage(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
-      String descriptorFullName = null;
+      String typeName = null;
       Integer typeId = null;
       int enumValue = -1;
       byte[] messageBytes = null;
@@ -287,12 +287,12 @@ public final class WrappedMessage {
       while ((tag = in.readTag()) != 0) {
          fieldCount++;
          switch (tag) {
-            case WRAPPED_DESCRIPTOR_FULL_NAME << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED: {
+            case WRAPPED_TYPE_NAME << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED: {
                expectedFieldCount = 2;
-               descriptorFullName = in.readString();
+               typeName = in.readString();
                break;
             }
-            case WRAPPED_DESCRIPTOR_TYPE_ID << 3 | WireFormat.WIRETYPE_VARINT: {
+            case WRAPPED_TYPE_ID << 3 | WireFormat.WIRETYPE_VARINT: {
                expectedFieldCount = 2;
                typeId = mapTypeIdIn(in.readInt32(), ctx);
                break;
@@ -377,25 +377,25 @@ public final class WrappedMessage {
          }
       }
 
-      if (value == null && descriptorFullName == null && typeId == null && messageBytes == null) {
+      if (value == null && typeName == null && typeId == null && messageBytes == null) {
          return null;
       }
 
       if (value != null) {
          if (fieldCount != expectedFieldCount) {
-            throw new IOException("Invalid message encoding.");
+            throw new IOException("Invalid WrappedMessage encoding.");
          }
          return (T) value;
       }
 
-      if (descriptorFullName == null && typeId == null || descriptorFullName != null && typeId != null || fieldCount != 2) {
-         throw new IOException("Invalid message encoding.");
+      if (typeName == null && typeId == null || typeName != null && typeId != null || fieldCount != 2) {
+         throw new IOException("Invalid WrappedMessage encoding.");
       }
 
       if (typeId != null) {
-         descriptorFullName = ctx.getDescriptorByTypeId(typeId).getFullName();
+         typeName = ctx.getDescriptorByTypeId(typeId).getFullName();
       }
-      BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(descriptorFullName);
+      BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(typeName);
       if (messageBytes != null) {
          // it's a Message type
          RawProtoStreamReader nestedInput = RawProtoStreamReaderImpl.newInstance(messageBytes);
@@ -406,7 +406,7 @@ public final class WrappedMessage {
          T e = (T) marshaller.decode(enumValue);
          if (e == null) {
             // Unknown enum value cause by schema evolution. We cannot handle data loss here so we throw!
-            throw new IOException("Unknown enum value " + enumValue + " for Protobuf enum type " + descriptorFullName);
+            throw new IOException("Unknown enum value " + enumValue + " for Protobuf enum type " + typeName);
          }
          return e;
       }
