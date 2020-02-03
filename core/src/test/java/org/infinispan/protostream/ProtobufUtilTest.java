@@ -131,7 +131,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       TagHandler tagHandler = new TagHandler() {
          @Override
          public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
-            if (fieldNumber == WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID) {
+            if (fieldNumber == WrappedMessage.WRAPPED_TYPE_ID) {
                seenTypeId[0] = (Integer) tagValue;
             }
          }

@@ -89,10 +89,10 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
                return;
             }
             switch (fieldNumber) {
-               case WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID:
+               case WrappedMessage.WRAPPED_TYPE_ID:
                   typeId = (Integer) tagValue;
                   break;
-               case WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME:
+               case WrappedMessage.WRAPPED_TYPE_NAME:
                   typeName = (String) tagValue;
                   break;
                case WrappedMessage.WRAPPED_MESSAGE:
