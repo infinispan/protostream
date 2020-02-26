@@ -64,7 +64,7 @@ final class CompileTimeImportedProtoTypeMetadata extends ProtoTypeMetadata {
 
    @Override
    public String toString() {
-      return "AnnotationBasedImportedProtoTypeMetadata{" +
+      return "CompileTimeImportedProtoTypeMetadata{" +
             "name='" + name + '\'' +
             ", javaClass=" + javaClass +
             ", annotatedClass =" + protoTypeMetadata.getAnnotatedClass() +
