@@ -25,6 +25,14 @@ public class Simple {
    @ProtoField(number = 314, name = "my_enum_field", defaultValue = "AX")
    public TestEnum myEnumField;
 
+   @ProtoField(number = 315)
+   public TestEnum getEnumMethod() {
+      return TestEnum.A;
+   }
+
+   public void setEnumMethod(TestEnum ignore) {
+   }
+
    //TODO here we have several cases not covered by tests...
 /*
    private Integer x;

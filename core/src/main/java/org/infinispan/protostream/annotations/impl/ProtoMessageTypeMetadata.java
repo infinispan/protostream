@@ -339,7 +339,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   // MESSAGE is the default and stands for 'undefined', we can override it with a better default
                   protobufType = Type.BYTES;
                }
-               if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract()) {
+               if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract() && !javaType.isEnum()) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 
@@ -490,7 +490,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   // MESSAGE is the default and stands for 'undefined', we can override it with a better default
                   protobufType = Type.BYTES;
                }
-               if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract()) {
+               if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract() && !javaType.isEnum()) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 
