@@ -12,9 +12,9 @@ import java.lang.annotation.Target;
  * number of parameters as the protobuf fields. Each parameter must correspond to a protobuf field, named identically to
  * the name of the Java field/property used for declaring the protobuf field and the type of each parameter must also be
  * identical to the type of the corresponding field/property. The ordering of parameters versus fields is not relevant
- * because they are matched by name. A single constructor or static method is allowed to have this annotation in a
- * ProtoStream marshallable class. This annotation is not inherited, occurrences in superclass/superinterfaces are
- * ignored for this class.
+ * because they are matched by name (not by position). A single constructor or static method is allowed to have this
+ * annotation in a ProtoStream marshallable class. This annotation is not inherited, occurrences in
+ * superclass/superinterfaces are ignored for this class.
  *
  * <p>This annotation is meant to support creation of immutable messages. When used in a class, all protobuf fields
  * must be declared with annotations on instance fields or getter methods. Setter are not allowed to be annotated.
