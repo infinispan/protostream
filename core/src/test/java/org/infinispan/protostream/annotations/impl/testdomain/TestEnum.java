@@ -13,12 +13,29 @@ import org.infinispan.protostream.annotations.ProtoEnumValue;
 public enum TestEnum {
 
    @ProtoEnumValue(number = 4, name = "AX")
-   A,
+   A() {
+      @Override
+      public boolean matches() {
+         return false;
+      }
+   },
 
    @ProtoEnumValue(number = 2, name = "BX")
-   B,
+   B() {
+      @Override
+      public boolean matches() {
+         return false;
+      }
+   },
 
    @ProtoDoc("This should never be read.")
    @ProtoEnumValue(number = 1, name = "CX")
-   C
+   C() {
+      @Override
+      public boolean matches() {
+         return false;
+      }
+   };
+
+   public abstract boolean matches();
 }

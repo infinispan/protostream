@@ -213,7 +213,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                      javaType = field.getType();
                   }
                }
-               if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
+               if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers()) && !javaType.isEnum()) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 
@@ -340,7 +340,7 @@ final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                      javaType = getter.getReturnType();
                   }
                }
-               if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers())) {
+               if (!javaType.isArray() && !javaType.isPrimitive() && Modifier.isAbstract(javaType.getModifiers()) && !javaType.isEnum()) {
                   throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
                }
 

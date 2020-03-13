@@ -25,6 +25,14 @@ public class Simple {
    @ProtoField(number = 314, name = "my_enum_field", defaultValue = "AX")
    public TestEnum myEnumField;
 
+   @ProtoField(number = 315)
+   public TestEnum getEnumMethod() {
+      return TestEnum.A;
+   }
+
+   public void setEnumMethod(TestEnum ignore) {
+   }
+
    private Float width = 0.71f;
 
    public Float getWidth() {
