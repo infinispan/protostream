@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.infinispan.protostream.AnnotationMetadataCreator;
@@ -113,7 +114,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                         }
                      } else {
                         // it's just a duplicate, not a proper 'repeated' annotation
-                        throw new AnnotationParserException(String.format("Error: %s: duplicate annotation definition \"%s\" on %s",
+                        throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: duplicate annotation definition \"%s\" on %s",
                               AnnotationElement.positionToString(annotation.position), annotation.getName(), fullName));
                      }
                   } else {

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -331,7 +332,7 @@ final class AnnotatedClassScanner {
          // classes from default/unnamed package cannot be imported so are ignored unless the initializer is itself located in the default package
          // classes with non-public visibility are ignored unless the initializer is in the same package
          if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed() || !packageOfElement.equals(packageOfInitializer) && !isPublicElement(typeElement)) {
-            messager.printMessage(Diagnostic.Kind.WARNING, String.format("Type %s is not visible to %s so it is ignored!",
+            messager.printMessage(Diagnostic.Kind.WARNING, String.format(Locale.ENGLISH, "Type %s is not visible to %s so it is ignored!",
                   typeElement.getQualifiedName(), packageOfInitializer.getQualifiedName()), builderElement);
             return;
          }

@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Properties;
@@ -126,7 +127,7 @@ public final class ProtoSchemaBuilder {
       String schemaFile = protoSchemaBuilder.build(ctx);
 
       if (file != null) {
-         try (PrintStream out = new PrintStream(new FileOutputStream(file))) {
+         try (PrintStream out = new PrintStream(new FileOutputStream(file), false, StandardCharsets.UTF_8.name())) {
             out.print(schemaFile);
             out.flush();
          }

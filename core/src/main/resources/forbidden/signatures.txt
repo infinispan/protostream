@@ -1,0 +1,1 @@
+#javassist.CtClass#toClass() @ use javassist.CtClass#toClass(Lookup) or javassist.CtClass#toClass(Class)

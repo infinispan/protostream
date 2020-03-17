@@ -4,6 +4,7 @@ import static java.util.Collections.unmodifiableList;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.infinispan.protostream.DescriptorParserException;
@@ -235,7 +236,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       public FieldDescriptor build() {
          FieldDescriptor fieldDescriptor = new FieldDescriptor(this);
          try {
-            Type fieldType = Type.valueOf(typeName.toUpperCase());
+            Type fieldType = Type.valueOf(typeName.toUpperCase(Locale.ENGLISH));
             fieldDescriptor.setType(fieldType);
          } catch (IllegalArgumentException ignored) {
             // TODO [anistor] This (harmless exception) happens because typeName is not a primitive but a user defined type. A nicer validation would be better.

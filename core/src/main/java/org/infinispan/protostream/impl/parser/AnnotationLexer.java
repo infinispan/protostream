@@ -3,6 +3,8 @@ package org.infinispan.protostream.impl.parser;
 import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
+import java.util.Locale;
+
 /**
  * Splits an input array of characters into tokens. See {@link AnnotationTokens}.
  *
@@ -96,7 +98,7 @@ final class AnnotationLexer {
                continue;
             case '@':
                if (!leadingWhitespace) {
-                  throw new AnnotationParserException(String.format("Error: %d,%d: Annotations must start on an empty line", line, col));
+                  throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %d,%d: Annotations must start on an empty line", line, col));
                }
                // intentional fall-through
             case '\0':
@@ -106,7 +108,7 @@ final class AnnotationLexer {
                if (expectDocNoise) {
                   scanNextChar();
                } else {
-                  throw new AnnotationParserException(String.format("Error: %d,%d: Unexpected character: %c", line, col, ch));
+                  throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %d,%d: Unexpected character: %c", line, col, ch));
                }
          }
       } while (inputPos != input.length);
@@ -164,7 +166,7 @@ final class AnnotationLexer {
                scanNextChar();
                break;
             default:
-               throw new AnnotationParserException(String.format("Error: %d,%d: illegal escape character: %c", line, col, ch));
+               throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %d,%d: illegal escape character: %c", line, col, ch));
          }
       } else if (inputPos != input.length) {
          sb.append(ch);
@@ -190,7 +192,7 @@ final class AnnotationLexer {
                scanNextChar();
             } while ('0' <= ch && ch <= '9');
          } else {
-            throw new AnnotationParserException(String.format("Error: %s: malformed floating point literal", AnnotationElement.positionToString(pos)));
+            throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: malformed floating point literal", AnnotationElement.positionToString(pos)));
          }
       }
       if (ch == 'f' || ch == 'F') {
@@ -368,17 +370,17 @@ final class AnnotationLexer {
             case '\'':
                scanNextChar();
                if (ch == '\'') {
-                  throw new AnnotationParserException(String.format("Error: %s: empty character literal", AnnotationElement.positionToString(pos)));
+                  throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: empty character literal", AnnotationElement.positionToString(pos)));
                } else {
                   if (ch == '\r' || ch == '\n') {
-                     throw new AnnotationParserException(String.format("Error: %s: illegal line end in character literal", AnnotationElement.positionToString(pos)));
+                     throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: illegal line end in character literal", AnnotationElement.positionToString(pos)));
                   }
                   scanLiteralChar();
                   if (ch == '\'') {
                      scanNextChar();
                      token = AnnotationTokens.CHARACTER_LITERAL;
                   } else {
-                     throw new AnnotationParserException(String.format("Error: %s: unclosed character literal", AnnotationElement.positionToString(pos)));
+                     throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: unclosed character literal", AnnotationElement.positionToString(pos)));
                   }
                }
                return;
@@ -391,7 +393,7 @@ final class AnnotationLexer {
                   token = AnnotationTokens.STRING_LITERAL;
                   scanNextChar();
                } else {
-                  throw new AnnotationParserException(String.format("Error: %s: unclosed string literal", AnnotationElement.positionToString(pos)));
+                  throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: unclosed string literal", AnnotationElement.positionToString(pos)));
                }
                return;
             case ' ':
@@ -426,7 +428,7 @@ final class AnnotationLexer {
                } else if (Character.isJavaIdentifierStart(ch)) {
                   scanIdentifier();
                } else {
-                  throw new AnnotationParserException(String.format("Error: %s: illegal character: %c", AnnotationElement.positionToString(pos), ch));
+                  throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: illegal character: %c", AnnotationElement.positionToString(pos), ch));
                }
                return;
          }

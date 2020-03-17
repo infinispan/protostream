@@ -19,6 +19,7 @@ import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 
 import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.util.internal.SuppressForbidden;
 
 /**
  * Implementation relying on reflection.
@@ -86,6 +87,7 @@ public final class ReflectionClassFactory implements XTypeFactory {
       return null;
    }
 
+   @SuppressForbidden(reason = "java.lang.reflect.AccessibleObject#setAccessible(boolean)")
    private final class ReflectionClass implements XClass {
 
       private final Class<?> clazz;

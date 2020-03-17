@@ -10,6 +10,7 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
@@ -1569,7 +1570,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       GenericMessage genericMessage = new GenericMessage();
       genericMessage.field1 = new WrappedMessage(3.1415d);
-      genericMessage.field2 = new WrappedMessage("qwerty".getBytes());
+      genericMessage.field2 = new WrappedMessage("qwerty".getBytes(StandardCharsets.UTF_8));
       genericMessage.field3 = new WrappedMessage(new WrappedMessage("azerty"));
       genericMessage.field4 = new WrappedMessage(new GenericMessage.OtherMessage("asdfg"));
 
@@ -1579,7 +1580,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertNotNull(o);
       assertEquals(Double.class, genericMessage.field1.getValue().getClass());
       assertEquals(3.1415d, genericMessage.field1.getValue());
-      assertArrayEquals("qwerty".getBytes(), (byte[]) genericMessage.field2.getValue());
+      assertArrayEquals("qwerty".getBytes(StandardCharsets.UTF_8), (byte[]) genericMessage.field2.getValue());
       assertEquals("azerty", ((WrappedMessage) genericMessage.field3.getValue()).getValue());
       assertEquals("asdfg", ((GenericMessage.OtherMessage) genericMessage.field4.getValue()).field1);
    }

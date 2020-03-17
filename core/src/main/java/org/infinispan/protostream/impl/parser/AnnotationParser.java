@@ -3,6 +3,7 @@ package org.infinispan.protostream.impl.parser;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.infinispan.protostream.AnnotationParserException;
@@ -55,7 +56,7 @@ public final class AnnotationParser {
          lexer.nextToken();
       } else {
          long pos = AnnotationElement.line(lexer.pos) > AnnotationElement.line(lexer.lastPos) ? lexer.lastPos : lexer.pos;
-         throw new AnnotationParserException(String.format("Error: %s: %s expected", AnnotationElement.positionToString(pos), token.text));
+         throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: %s expected", AnnotationElement.positionToString(pos), token.text));
       }
    }
 
@@ -81,7 +82,7 @@ public final class AnnotationParser {
 
    private AnnotationElement.Annotation parseAnnotation() {
       if (lexer.token != AnnotationTokens.AT) {
-         throw new AnnotationParserException(String.format("Error: %s: annotation expected", AnnotationElement.positionToString(lexer.pos)));
+         throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: annotation expected", AnnotationElement.positionToString(lexer.pos)));
       }
       long pos = lexer.pos;
       expect(AnnotationTokens.AT);
@@ -143,7 +144,7 @@ public final class AnnotationParser {
             while (lexer.token != AnnotationTokens.RPAREN && lexer.token != AnnotationTokens.EOF) {
                AnnotationElement.Attribute attribute = parseAttribute();
                if (members.containsKey(attribute.getName())) {
-                  throw new AnnotationParserException(String.format("Error: %s: duplicate annotation member definition \"%s\"", AnnotationElement.positionToString(attribute.position), attribute.getName()));
+                  throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: duplicate annotation member definition \"%s\"", AnnotationElement.positionToString(attribute.position), attribute.getName()));
                }
                members.put(attribute.getName(), attribute);
                if (lexer.token != AnnotationTokens.RPAREN && lexer.token != AnnotationTokens.EOF) {
@@ -218,13 +219,13 @@ public final class AnnotationParser {
                      break;
                }
             } catch (NumberFormatException e) {
-               throw new AnnotationParserException(String.format("Error: %s: invalid numeric value: %s", AnnotationElement.positionToString(lexer.pos), e.getMessage()));
+               throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: invalid numeric value: %s", AnnotationElement.positionToString(lexer.pos), e.getMessage()));
             }
             AnnotationElement.Literal literal = new AnnotationElement.Literal(pos, value);
             lexer.nextToken();
             return literal;
       }
-      throw new AnnotationParserException(String.format("Error: %s: literal expected", AnnotationElement.positionToString(lexer.pos)));
+      throw new AnnotationParserException(String.format(Locale.ENGLISH, "Error: %s: literal expected", AnnotationElement.positionToString(lexer.pos)));
    }
 
    private AnnotationElement.Identifier parseIdentifier() {

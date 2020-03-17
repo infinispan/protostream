@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -908,8 +909,8 @@ public final class ProtobufUtil {
 
    private static final ThreadLocal<DateFormat> timestampFormat = ThreadLocal.withInitial(() -> {
       // Z-normalized RFC 3339 format
-      SimpleDateFormat sdf = new SimpleDateFormat(RFC_3339_DATE_FORMAT);
-      GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+      SimpleDateFormat sdf = new SimpleDateFormat(RFC_3339_DATE_FORMAT, Locale.ENGLISH);
+      GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"), Locale.ENGLISH);
       calendar.setGregorianChange(new Date(Long.MIN_VALUE));
       sdf.setCalendar(calendar);
       return sdf;
