@@ -27,7 +27,7 @@ Add this dependency to your pom.xml file:
 Requirements
 ------------
 
-Target platform is Java 8.
+Target runtime platform is Java 8.
 
 Requires Java 11 or newer to build.
 
