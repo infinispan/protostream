@@ -1,5 +1,7 @@
 package org.infinispan.protostream;
 
+import java.util.Set;
+
 /**
  * A repository for Protobuf type definitions and their marshallers. All ProtoStream marshalling operations happen in
  * the context of a {@code SerializationContext}.
@@ -18,9 +20,16 @@ public interface SerializationContext extends ImmutableSerializationContext {
    void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException;
 
    /**
-    * Unregisters a file. Types from all dependant files are removed too and their status is set to 'unresolved'.
+    * Unregisters a file. All types defined in it are removed and also the types from all dependant files. The status of
+    * dependant files is set to 'unresolved'.
     */
    void unregisterProtoFile(String fileName);
+
+   /**
+    * Unregisters a set of files. All types defined in them are removed and also the types from all dependant files. The
+    * status of dependant files is set to 'unresolved'.
+    */
+   void unregisterProtoFiles(Set<String> fileNames);
 
    /**
     * Register a type marshaller.

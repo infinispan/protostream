@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -130,6 +131,24 @@ public final class SerializationContextImpl implements SerializationContext {
             unregisterFileDescriptorTypes(fileDescriptor);
          } else {
             throw new IllegalArgumentException("File " + fileName + " does not exist");
+         }
+      } finally {
+         writeLock.unlock();
+      }
+   }
+
+   @Override
+   public void unregisterProtoFiles(Set<String> fileNames) {
+      log.debugf("Unregistering proto files : %s", fileNames);
+      writeLock.lock();
+      try {
+         for (String fileName : fileNames) {
+            FileDescriptor fileDescriptor = fileDescriptors.remove(fileName);
+            if (fileDescriptor != null) {
+               unregisterFileDescriptorTypes(fileDescriptor);
+            } else {
+               throw new IllegalArgumentException("File " + fileName + " does not exist");
+            }
          }
       } finally {
          writeLock.unlock();
