@@ -21,7 +21,7 @@ public interface AnnotatedDescriptor {
    String getName();
 
    /**
-    * Return the fulla name of the descriptor.
+    * Return the full name of the descriptor.
     *
     * @return the name of the descriptor (never {@code null})
     */

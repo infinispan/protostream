@@ -62,7 +62,7 @@ message WrappedMessage {
       int32 wrappedEnum = 18;
 
       /**
-       * Stores the message bytes if the wrapped value is a message type.
+       * Stores the message's protobuf encoded bytes if the wrapped value is a message type.
        */
       bytes wrappedMessage = 17;
    }
