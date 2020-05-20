@@ -161,6 +161,10 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
             .append(" {\n\n");
       iw.inc();
 
+      if (pmtm.isBridge()) {
+         addBridgeField(iw, pmtm);
+      }
+
       addMarshallerDelegateFields(iw, pmtm);
 
       iw.append("@Override\npublic Class<").append(pmtm.getJavaClassName()).append("> getJavaClass() { return ").append(pmtm.getJavaClassName()).append(".class; }\n\n");
@@ -190,6 +194,12 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.append("}\n");
 
       emitSource(fqn, iw.toString(), pmtm);
+   }
+
+   private void addBridgeField(IndentWriter iw, ProtoMessageTypeMetadata messageTypeMetadata) {
+      iw.append("private final ").append(messageTypeMetadata.getAnnotatedClassName()).append(' ')
+            .append(BRIDGE_FIELD_NAME).append(" = new ")
+            .append(messageTypeMetadata.getAnnotatedClassName()).append("();\n\n");
    }
 
    /**

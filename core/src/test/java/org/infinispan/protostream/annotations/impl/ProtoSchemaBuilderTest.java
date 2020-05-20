@@ -48,7 +48,9 @@ import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestCla
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
+import org.infinispan.protostream.annotations.impl.testdomain.AddressBridge;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.infinispan.protostream.test.ExpectedLogMessage;
@@ -1506,6 +1508,27 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertEquals(55, o.r);
       assertEquals(66, o.g);
       assertEquals(77, o.b);
+   }
+
+   @Test
+   public void testBridge() throws Exception {
+      SerializationContext ctx = createContext();
+      String schema = new ProtoSchemaBuilder()
+            .fileName("address.proto")
+            .addClass(AddressBridge.class)
+            .addClass(AddressBridge.AddressBridge2.class)
+            .build(ctx);
+
+      assertTrue(schema.contains("message Address"));
+
+      Address address = new Address("str", "po", 77, true);
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, address);
+      Address o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertNotNull(o);
+      assertEquals("str", o.getStreet());
+      assertEquals("po", o.getPostCode());
+      assertEquals(77, o.getNumber());
    }
 
    static final class OuterClass {

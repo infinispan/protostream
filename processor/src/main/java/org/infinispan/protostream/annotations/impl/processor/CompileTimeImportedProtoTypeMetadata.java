@@ -58,6 +58,11 @@ final class CompileTimeImportedProtoTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
+   public boolean isBridge() {
+      return protoTypeMetadata.isBridge();
+   }
+
+   @Override
    public String toString() {
       return "AnnotationBasedImportedProtoTypeMetadata{" +
             "name='" + name + '\'' +

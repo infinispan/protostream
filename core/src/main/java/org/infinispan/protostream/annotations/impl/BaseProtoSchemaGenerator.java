@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.ProtoBridgeFor;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
@@ -253,7 +254,19 @@ public abstract class BaseProtoSchemaGenerator {
    }
 
    protected ProtoTypeMetadata makeMessageTypeMetadata(XClass javaType) {
-      return new ProtoMessageTypeMetadata(this, javaType);
+      return new ProtoMessageTypeMetadata(this, javaType, getMessageClass(javaType));
+   }
+
+   /**
+    * Get the marshalled class. The marshalled class and the annotated class are not always the same, depending on the
+    * presence of ProtoBridgeFor annotation.
+    */
+   private XClass getMessageClass(XClass annotatedClass) {
+      ProtoBridgeFor bridgeFor = annotatedClass.getAnnotation(ProtoBridgeFor.class);
+      if (bridgeFor == null) {
+         return annotatedClass;
+      }
+      return typeFactory.fromClass(bridgeFor.value());
    }
 
    private void collectMetadata(ProtoTypeMetadata protoTypeMetadata) {
@@ -270,7 +283,7 @@ public abstract class BaseProtoSchemaGenerator {
       ProtoTypeMetadata existing = metadataByTypeName.get(fullName);
       if (existing != null) {
          throw new ProtoSchemaBuilderException("Found a duplicate type definition. Type '" + fullName + "' is defined by "
-               + protoTypeMetadata.getJavaClassName() + " and also by " + existing.getJavaClassName());
+               + protoTypeMetadata.getAnnotatedClassName() + " and also by " + existing.getAnnotatedClassName());
       }
       metadataByTypeName.put(fullName, protoTypeMetadata);
       metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);
@@ -292,6 +305,13 @@ public abstract class BaseProtoSchemaGenerator {
     * Collect all superclasses and superinterfaces.
     */
    private void collectKnownClasses(XClass c) {
+      XClass b = getBridgeFor(c);
+      if (b != null) {
+         knownClasses.add(b);
+         // supers are not collected for bridges
+         return;
+      }
+
       knownClasses.add(c);
       if (c.getSuperclass() != null) {
          collectKnownClasses(c.getSuperclass());
@@ -299,5 +319,14 @@ public abstract class BaseProtoSchemaGenerator {
       for (XClass i : c.getInterfaces()) {
          collectKnownClasses(i);
       }
+   }
+
+   protected XClass getBridgeFor(XClass c) {
+      ProtoBridgeFor bridgeFor = c.getAnnotation(ProtoBridgeFor.class);
+      if (bridgeFor != null) {
+         // TODO [anistor] also ensure that bridgeFor.value() is not part of current builder and is not scanned for @ProtoXyz annotations even if present
+         return typeFactory.fromClass(bridgeFor.value());
+      }
+      return null;
    }
 }

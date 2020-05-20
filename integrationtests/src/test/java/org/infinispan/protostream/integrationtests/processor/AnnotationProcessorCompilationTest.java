@@ -136,6 +136,17 @@ public class AnnotationProcessorCompilationTest {
       assertFileContains(schemaFile, "message InnerMessage4");
    }
 
+   @Test
+   public void testBridge() {
+      Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/MarshallExternals.java");
+      assertThat(compilation).succeededWithoutWarnings();
+      assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test_marshall_externals/TestInitializerImpl.java").isPresent());
+
+      Optional<JavaFileObject> schemaFile = compilation.generatedFile(CLASS_OUTPUT, "TestInitializer.proto");
+      assertTrue(schemaFile.isPresent());
+      assertFileContains(schemaFile, "message Address");
+   }
+
    /**
     * Asserts that the file contains a given expected string.
     */
