@@ -88,6 +88,10 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
       return canonicalName != null ? canonicalName : getAnnotatedClass().getName();
    }
 
+   public boolean isBridge() {
+      return false;
+   }
+
    /**
     * Indicates if this type comes from the currently processed/generated schema of from an external schema.
     */

@@ -30,6 +30,7 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoBridgeFor;
 import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -164,6 +165,10 @@ final class AnnotatedClassScanner {
             visitProtoName(e);
          }
 
+         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoBridgeFor.class)) {
+            visitProtoBridgeFor(e);
+         }
+
          for (Element e : roundEnv.getElementsAnnotatedWith(ProtoTypeId.class)) {
             visitProtoTypeId(e);
          }
@@ -233,6 +238,13 @@ final class AnnotatedClassScanner {
          throw new AnnotationProcessingException(e, "@ProtoEnumValue can only be applied to enum constants.");
       }
       collectClasses((TypeElement) enclosingElement);
+   }
+
+   private void visitProtoBridgeFor(Element e) {
+      if (e.getKind() != ElementKind.CLASS ) {
+         throw new AnnotationProcessingException(e, "@ProtoBridgeFor can only be applied to classes.");
+      }
+      collectClasses((TypeElement) e);
    }
 
    private void visitProtoTypeId(Element e) {

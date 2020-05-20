@@ -22,6 +22,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
+import javassist.CtNewConstructor;
 import javassist.CtNewMethod;
 import javassist.NotFoundException;
 
@@ -163,6 +164,10 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       marshallerImpl.setSuperclass(generatedMarshallerBaseClass);
       marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
+      if (pmtm.isBridge()) {
+         addBridgeField(marshallerImpl, pmtm);
+      }
+
       addMarshallerDelegateFields(marshallerImpl, pmtm);
 
       marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + pmtm.getJavaClass().getName() + ".class; }", marshallerImpl));
@@ -192,6 +197,17 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       marshallerImpl.detach();
 
       return generatedMarshallerClass;
+   }
+
+   private void addBridgeField(CtClass marshallerImpl, ProtoMessageTypeMetadata messageTypeMetadata) throws CannotCompileException, NotFoundException {
+      CtClass bridgeClass = cp.getCtClass(messageTypeMetadata.getAnnotatedClass().getName());
+      CtField bridgeField = new CtField(bridgeClass, BRIDGE_FIELD_NAME, marshallerImpl);
+      bridgeField.setModifiers(Modifier.PRIVATE);
+      bridgeField.setModifiers(Modifier.FINAL);
+      marshallerImpl.addField(bridgeField);
+
+      marshallerImpl.addConstructor(CtNewConstructor.make("public " + marshallerImpl.getSimpleName() + "() { "
+            + BRIDGE_FIELD_NAME + " = new " + bridgeClass.getName() + "(); }", marshallerImpl));
    }
 
    /**

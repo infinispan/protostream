@@ -51,6 +51,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private Map<String, ProtoFieldMetadata> fieldsByName = null;
 
+   private final XClass annotatedClass;
+
+   private final boolean isBridge;
+
    private XExecutable factory;
 
    private XField unknownFieldSetField;
@@ -61,10 +65,12 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final Map<XClass, ProtoTypeMetadata> innerTypes = new HashMap<>();
 
-   protected ProtoMessageTypeMetadata(BaseProtoSchemaGenerator protoSchemaGenerator, XClass annotatedClass) {
-      super(getProtoName(annotatedClass), annotatedClass);
+   protected ProtoMessageTypeMetadata(BaseProtoSchemaGenerator protoSchemaGenerator, XClass annotatedClass, XClass javaClass) {
+      super(getProtoName(annotatedClass), javaClass);
       this.protoSchemaGenerator = protoSchemaGenerator;
+      this.annotatedClass = annotatedClass;
       this.typeFactory = annotatedClass.getFactory();
+      this.isBridge = javaClass != annotatedClass;
 
       checkInstantiability();
    }
@@ -79,6 +85,16 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          return annotation.value().isEmpty() ? annotatedClass.getSimpleName() : annotation.value();
       }
       return protoMessageAnnotation == null || protoMessageAnnotation.name().isEmpty() ? annotatedClass.getSimpleName() : protoMessageAnnotation.name();
+   }
+
+   @Override
+   public XClass getAnnotatedClass() {
+      return annotatedClass;
+   }
+
+   @Override
+   public boolean isBridge() {
+      return isBridge;
    }
 
    public XExecutable getFactory() {
@@ -124,7 +140,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       iw.inc();
 
       ReservedProcessor reserved = new ReservedProcessor();
-      reserved.scan(javaClass);
+      reserved.scan(annotatedClass);
 
       for (int memberNumber : fieldsByNumber.keySet()) {
          ProtoFieldMetadata field = fieldsByNumber.get(memberNumber);
@@ -174,10 +190,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          // all the fields discovered in this class hierarchy, by name
          fieldsByName = new HashMap<>();
 
-         discoverFields(javaClass, new HashSet<>());
+         discoverFields(annotatedClass, new HashSet<>());
          if (fieldsByNumber.isEmpty()) {
             // TODO [anistor] remove the "The class should be either annotated or it should have a custom marshaller" part after MessageMarshaller is removed in 5
-            log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", javaClass.getCanonicalName());
+            log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", getAnnotatedClassName());
          }
 
          // If we have a factory method / constructor, we must ensure its parameters match the declared fields
@@ -236,19 +252,19 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
     */
    private void checkInstantiability() {
       // ensure the class is not abstract
-      if (javaClass.isAbstract() || javaClass.isInterface()) {
-         throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + getJavaClassName());
+      if (annotatedClass.isAbstract() || annotatedClass.isInterface()) {
+         throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + getAnnotatedClassName());
       }
       // ensure it is not a local or anonymous class
-      if (javaClass.isLocal()) {
-         throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
+      if (annotatedClass.isLocal()) {
+         throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + getAnnotatedClassName() + " must be instantiable using an accessible no-argument constructor.");
       }
       // ensure the class is not a non-static inner class
-      if (javaClass.getEnclosingClass() != null && !javaClass.isStatic()) {
-         throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
+      if (annotatedClass.getEnclosingClass() != null && !annotatedClass.isStatic()) {
+         throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getAnnotatedClassName() + " must be instantiable using an accessible no-argument constructor.");
       }
 
-      for (XConstructor c : javaClass.getDeclaredConstructors()) {
+      for (XConstructor c : annotatedClass.getDeclaredConstructors()) {
          if (c.getAnnotation(ProtoFactory.class) != null) {
             if (factory != null) {
                throw new ProtoSchemaBuilderException("Found more than one @ProtoFactory annotated method / constructor : " + c);
@@ -260,12 +276,12 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          }
       }
 
-      for (XMethod m : javaClass.getDeclaredMethods()) {
+      for (XMethod m : annotatedClass.getDeclaredMethods()) {
          if (m.getAnnotation(ProtoFactory.class) != null) {
             if (factory != null) {
                throw new ProtoSchemaBuilderException("Found more than one @ProtoFactory annotated method / constructor : " + m);
             }
-            if (!m.isStatic()) {
+            if (!isBridge && !m.isStatic()) {
                throw new ProtoSchemaBuilderException("@ProtoFactory annotated method must be static: " + m);
             }
             if (m.isPrivate()) {
@@ -279,6 +295,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
 
       if (factory == null) {
+         if (isBridge) {
+            throw new ProtoSchemaBuilderException("The class " + getJavaClassName() +
+                  " must be instantiable using an accessible @ProtoFactory annotated method defined by " + getAnnotatedClassName());
+         }
          // If no factory method/constructor was found we need to ensure the class has an accessible no-argument constructor
          XConstructor ctor = javaClass.getDeclaredConstructor();
          if (ctor == null || ctor.isPrivate()) {
@@ -302,6 +322,9 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
       for (XField field : clazz.getDeclaredFields()) {
          if (field.getAnnotation(ProtoUnknownFieldSet.class) != null) {
+            if (isBridge) {
+               throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoBridgeFor is present on a class : " + field);
+            }
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
                throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + field);
             }
@@ -309,6 +332,9 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          } else {
             ProtoField annotation = field.getAnnotation(ProtoField.class);
             if (annotation != null) {
+               if (isBridge) {
+                  throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoBridgeFor is present on a class : " + field);
+               }
                if (field.isStatic()) {
                   throw new ProtoSchemaBuilderException("Static fields cannot be @ProtoField annotated: " + field);
                }
@@ -398,7 +424,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                } else {
                   throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                }
-               if (method.getParameterTypes().length != 1) {
+               if (isBridge && method.getParameterTypes().length != 2 || !isBridge && method.getParameterTypes().length != 1) {
                   throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                }
                //TODO [anistor] also check setter args
@@ -413,7 +439,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                } else {
                   throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
                }
-               if (method.getParameterTypes().length != 0) {
+               if (isBridge && method.getParameterTypes().length != 1 || !isBridge && method.getParameterTypes().length != 0) {
                   throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
                }
                //TODO [anistor] also check getter args
@@ -426,7 +452,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (method.isPrivate()) {
                   throw new ProtoSchemaBuilderException("Private methods cannot be @ProtoField annotated: " + method);
                }
-               if (method.isStatic()) {
+               if (!isBridge && method.isStatic()) {
                   throw new ProtoSchemaBuilderException("Static methods cannot be @ProtoField annotated: " + method);
                }
                String propertyName;
@@ -442,7 +468,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                      // not a standard java-beans setter, use the whole name as property name
                      propertyName = method.getName();
                   }
-                  if (method.getParameterTypes().length != 1) {
+                  if (isBridge && method.getParameterTypes().length != 2 || !isBridge && method.getParameterTypes().length != 1) {
                      throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                   }
                   //TODO [anistor] also check setter args
@@ -462,7 +488,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                      // not a standard java-beans getter
                      propertyName = method.getName();
                   }
-                  if (method.getParameterTypes().length != 0) {
+                  if (isBridge && method.getParameterTypes().length != 1 || !isBridge && method.getParameterTypes().length != 0) {
                      throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                   }
                   //TODO [anistor] also check getter args
@@ -907,51 +933,99 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    private XMethod findGetter(String propertyName, XClass propertyType) {
       boolean isBoolean = propertyType == typeFactory.fromClass(boolean.class) || propertyType == typeFactory.fromClass(Boolean.class);
       String methodName = (isBoolean ? "is" : "get") + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-      // lookup a java-bean style method first
-      XMethod getter = javaClass.getMethod(methodName);
-      if (getter == null && isBoolean) {
-         // retry with 'get' instead of 'is'
-         methodName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-         getter = javaClass.getMethod(methodName);
+
+      if (isBridge) {
+         // lookup a java-bean style method first
+         XMethod getter = annotatedClass.getMethod(methodName);
+         if (getter == null && isBoolean) {
+            // retry with 'get' instead of 'is'
+            methodName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+            getter = annotatedClass.getMethod(methodName, javaClass);
+         }
+         if (getter == null) {
+            // try the property name directly
+            getter = annotatedClass.getMethod(propertyName, javaClass);
+         }
+         if (getter == null) {
+            throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
+                  + "' of type " + propertyType.getCanonicalName() + " in class " + getAnnotatedClassName());
+         }
+         XClass returnType = getter.getReturnType();
+         if (returnType == typeFactory.fromClass(Optional.class)) {
+            returnType = getter.determineOptionalReturnType();
+         }
+         if (returnType != propertyType) {
+            throw new ProtoSchemaBuilderException("No suitable getter method found for property '" + propertyName
+                  + "' of type " + propertyType.getCanonicalName() + " in class " + getAnnotatedClassName()
+                  + ". The candidate method does not have a suitable return type: " + getter);
+         }
+         return getter;
+      } else {
+         // lookup a java-bean style method first
+         XMethod getter = javaClass.getMethod(methodName);
+         if (getter == null && isBoolean) {
+            // retry with 'get' instead of 'is'
+            methodName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+            getter = javaClass.getMethod(methodName);
+         }
+         if (getter == null) {
+            // try the property name directly
+            getter = javaClass.getMethod(propertyName);
+         }
+         if (getter == null) {
+            throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
+                  + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
+         }
+         XClass returnType = getter.getReturnType();
+         if (returnType == typeFactory.fromClass(Optional.class)) {
+            returnType = getter.determineOptionalReturnType();
+         }
+         if (returnType != propertyType) {
+            throw new ProtoSchemaBuilderException("No suitable getter method found for property '" + propertyName
+                  + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
+                  + ". The candidate method does not have a suitable return type: " + getter);
+         }
+         return getter;
       }
-      if (getter == null) {
-         // try the property name directly
-         getter = javaClass.getMethod(propertyName);
-      }
-      if (getter == null) {
-         throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
-               + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName());
-      }
-      XClass returnType = getter.getReturnType();
-      if (returnType == typeFactory.fromClass(Optional.class)) {
-         returnType = getter.determineOptionalReturnType();
-      }
-      if (returnType != propertyType) {
-         throw new ProtoSchemaBuilderException("No suitable getter method found for property '" + propertyName
-               + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName()
-               + ". The candidate method does not have a suitable return type: " + getter);
-      }
-      return getter;
    }
 
    private XMethod findSetter(String propertyName, XClass propertyType) {
       String methodName = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-      // lookup a java-bean style method first
-      XMethod setter = javaClass.getMethod(methodName, propertyType);
-      if (setter == null) {
-         // try the property name directly
-         setter = javaClass.getMethod(propertyName, propertyType);
+      if (isBridge) {
+         // lookup a java-bean style method first
+         XMethod setter = annotatedClass.getMethod(methodName, javaClass, propertyType);
+         if (setter == null) {
+            // try the property name directly
+            setter = annotatedClass.getMethod(propertyName, javaClass, propertyType);
+         }
+         if (setter == null) {
+            throw new ProtoSchemaBuilderException("No setter method found for property '" + propertyName
+                  + "' of type " + propertyType.getCanonicalName() + " in class " + getAnnotatedClassName());
+         }
+         if (setter.getReturnType() != typeFactory.fromClass(void.class)) {
+            throw new ProtoSchemaBuilderException("No suitable setter method found for property '" + propertyName
+                  + "' of type " + propertyType.getCanonicalName() + " in class " + getAnnotatedClassName()
+                  + ". The candidate method does not have a suitable return type: " + setter);
+         }
+         return setter;
+      } else {
+         // lookup a java-bean style method first
+         XMethod setter = javaClass.getMethod(methodName, propertyType);
+         if (setter == null) {
+            // try the property name directly
+            setter = javaClass.getMethod(propertyName, propertyType);
+         }
+         if (setter == null) {
+            throw new ProtoSchemaBuilderException("No setter method found for property '" + propertyName
+                  + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName());
+         }
+         if (setter.getReturnType() != typeFactory.fromClass(void.class)) {
+            throw new ProtoSchemaBuilderException("No suitable setter method found for property '" + propertyName
+                  + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName()
+                  + ". The candidate method does not have a suitable return type: " + setter);
+         }
+         return setter;
       }
-      if (setter == null) {
-         throw new ProtoSchemaBuilderException("No setter method found for property '" + propertyName
-               + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName());
-      }
-      if (setter.getReturnType() != typeFactory.fromClass(void.class)) {
-         throw new ProtoSchemaBuilderException("No suitable setter method found for property '" + propertyName
-               + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName()
-               + ". The candidate method does not have a suitable return type: " + setter);
-      }
-      return setter;
    }
 
    @Override
@@ -959,6 +1033,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return "ProtoMessageTypeMetadata{" +
             "name='" + name + '\'' +
             ", javaClass=" + javaClass +
+            ", annotatedClass=" + annotatedClass +
+            ", isBridge=" + isBridge +
             ", fieldsByNumber=" + fieldsByNumber +
             ", factory=" + factory +
             ", unknownFieldSetField=" + unknownFieldSetField +

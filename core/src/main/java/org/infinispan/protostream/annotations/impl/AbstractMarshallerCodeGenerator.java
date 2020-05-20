@@ -28,6 +28,8 @@ public abstract class AbstractMarshallerCodeGenerator {
 
    private static final String PROTOSTREAM_PACKAGE = SerializationContext.class.getPackage().getName();
 
+   protected static final String BRIDGE_FIELD_NAME = "__b$";
+
    private final XTypeFactory typeFactory;
 
    /**
@@ -161,6 +163,7 @@ public abstract class AbstractMarshallerCodeGenerator {
     * </code>
     */
    protected String generateReadFromMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
+      //todo [anistor] handle unknown fields for bridges also
       String getUnknownFieldSetFieldStatement = null;
       String setUnknownFieldSetFieldStatement = null;
       if (messageTypeMetadata.getUnknownFieldSetField() != null) {
@@ -461,7 +464,11 @@ public abstract class AbstractMarshallerCodeGenerator {
          if (factory instanceof XConstructor) {
             iw.append("new ").append(messageTypeMetadata.getJavaClassName());
          } else {
-            iw.append(messageTypeMetadata.getJavaClassName()).append('.').append(factory.getName());
+            if (factory.isStatic()) {
+               iw.append(messageTypeMetadata.getAnnotatedClassName()).append('.').append(factory.getName());
+            } else {
+               iw.append("new ").append(messageTypeMetadata.getAnnotatedClassName()).append("()").append('.').append(factory.getName());
+            }
          }
          iw.append('(');
          boolean first = true;
@@ -564,6 +571,7 @@ public abstract class AbstractMarshallerCodeGenerator {
     * </code>
     */
    protected String generateWriteToMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
+      //todo [anistor] handle unknown fields for bridges also
       String getUnknownFieldSetFieldStatement = null;
       if (messageTypeMetadata.getUnknownFieldSetField() != null) {
          getUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetField().getName();
@@ -870,6 +878,16 @@ public abstract class AbstractMarshallerCodeGenerator {
    }
 
    private String createGetPropExpr(ProtoMessageTypeMetadata messageTypeMetadata, ProtoFieldMetadata fieldMetadata, String obj) {
+      String thisTarget;
+      String thisArg;
+      if (messageTypeMetadata.isBridge()) {
+         thisTarget = BRIDGE_FIELD_NAME;
+         thisArg = obj;
+      } else {
+         thisTarget = obj;
+         thisArg = "";
+      }
+
       StringBuilder readPropExpr = new StringBuilder();
 
       boolean isJUOptional = fieldMetadata.getGetter() != null && fieldMetadata.getGetter().getReturnType() == typeFactory.fromClass(Optional.class);
@@ -882,15 +900,16 @@ public abstract class AbstractMarshallerCodeGenerator {
          readPropExpr.append(") ");
       }
       if (fieldMetadata.getField() != null) {
-         readPropExpr.append(obj).append('.').append(fieldMetadata.getField().getName());
+         // TODO [anistor] complain if fieldMetadata.getProtoTypeMetadata().isBridge() !
+         readPropExpr.append(thisTarget).append('.').append(fieldMetadata.getField().getName());
       } else {
          if (isJUOptional) {
             readPropExpr.append('(');
          }
-         readPropExpr.append(obj).append('.').append(fieldMetadata.getGetter().getName()).append("()");
+         readPropExpr.append(thisTarget).append('.').append(fieldMetadata.getGetter().getName()).append('(').append(thisArg).append(')');
          if (isJUOptional) {
             // TODO [anistor] simplify, use .orElse(null) instead of .isPresent() + .get()
-            readPropExpr.append(".isPresent() ? ").append(obj).append('.').append(fieldMetadata.getGetter().getName()).append("().get() : null)");
+            readPropExpr.append(".isPresent() ? ").append(thisTarget).append('.').append(fieldMetadata.getGetter().getName()).append('(').append(thisArg).append(").get() : null)");
          }
       }
 
@@ -899,13 +918,17 @@ public abstract class AbstractMarshallerCodeGenerator {
 
    private String createSetPropExpr(ProtoMessageTypeMetadata messageTypeMetadata, ProtoFieldMetadata fieldMetadata, String obj, String value) {
       StringBuilder setPropExpr = new StringBuilder();
-      setPropExpr.append(obj).append('.');
+      setPropExpr.append(messageTypeMetadata.isBridge() ? BRIDGE_FIELD_NAME : obj).append('.');
 
       if (fieldMetadata.getField() != null) {
          // TODO [anistor] complain if fieldMetadata.getProtoTypeMetadata().isBridge() !
          setPropExpr.append(fieldMetadata.getField().getName()).append(" = ").append(value);
       } else {
-         setPropExpr.append(fieldMetadata.getSetter().getName()).append('(').append(value).append(')');
+         setPropExpr.append(fieldMetadata.getSetter().getName()).append('(');
+         if (messageTypeMetadata.isBridge()) {
+            setPropExpr.append(obj).append(", ");
+         }
+         setPropExpr.append(value).append(')');
       }
       return setPropExpr.toString();
    }
