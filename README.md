@@ -20,7 +20,7 @@ Add this dependency to your pom.xml file:
 <dependency>
    <groupId>org.infinispan.protostream</groupId>
    <artifactId>protostream</artifactId>
-   <version>4.3.3.Final</version>
+   <version>4.3.4-SNAPSHOT</version>
 </dependency>
 ```
 
