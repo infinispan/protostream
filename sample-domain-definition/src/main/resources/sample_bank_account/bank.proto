@@ -84,6 +84,7 @@ message User {
 
    /**
     * @Field(store = Store.YES, indexNullAs = "-1")
+    * @SortableField
     */
    optional fixed64 creationDate = 10;
 
@@ -109,6 +110,7 @@ message Account {
 
    /**
     * @Field(store = Store.YES)
+    * @SortableField
     */
    required fixed64 creationDate = 3;
 
@@ -201,6 +203,7 @@ message Transaction {
 
    /**
     * @Field(store = Store.YES)
+    * @SortableField
     */
    required double amount = 7; // how do I store a BigDecimal? maybe as a byte array ..
 
