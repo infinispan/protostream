@@ -3,15 +3,17 @@ package org.infinispan.protostream.test;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -33,7 +35,7 @@ public final class ExpectedLogMessage implements TestRule {
 
       final Level expectedLogLevel;            // can be null -> any
 
-      final List<LoggingEvent> matchingEvents = new ArrayList<>();
+      final List<LogEvent> matchingEvents = Collections.synchronizedList(new ArrayList<>());
 
       ExpectedLoggingEvent(int expectedOccurrences, Level expectedLogLevel, String expectedLogMessageRegexp) {
          if (expectedOccurrences < 0) {
@@ -48,11 +50,11 @@ public final class ExpectedLogMessage implements TestRule {
          this.expectedLogMessagePattern = Pattern.compile(expectedLogMessageRegexp);
       }
 
-      void match(LoggingEvent e) {
+      void match(LogEvent e) {
          if (expectedLogLevel != null && !expectedLogLevel.equals(e.getLevel())) {
             return;
          }
-         Matcher matcher = expectedLogMessagePattern.matcher(e.getRenderedMessage());
+         Matcher matcher = expectedLogMessagePattern.matcher(e.getMessage().getFormattedMessage());
          if (matcher.matches()) {
             matchingEvents.add(e);
          }
@@ -66,16 +68,21 @@ public final class ExpectedLogMessage implements TestRule {
                sb.append(" and log level ").append(expectedLogLevel);
             }
             sb.append(" but found ").append(matchingEvents.size()).append(" occurrences");
-            for (LoggingEvent e : matchingEvents) {
-               sb.append("\n\t").append(e.getLevel()).append(' ').append(e.getRenderedMessage());
+            for (LogEvent e : matchingEvents) {
+               sb.append("\n\t").append(e.getLevel()).append(' ').append(e.getMessage().getFormattedMessage());
             }
             return sb.toString();
          }
          return null;
       }
+
+      @Override
+      public String toString() {
+         return "ExpectedLoggingEvent{occur=" + expectedOccurrences + ", level='" + expectedLogLevel + '\'' + ", regexp=" + expectedLogMessageRegexp + '}';
+      }
    }
 
-   private List<ExpectedLoggingEvent> expectations = new ArrayList<>();
+   private final List<ExpectedLoggingEvent> expectations = new ArrayList<>();
 
    private ExpectedLogMessage() {
    }
@@ -106,30 +113,28 @@ public final class ExpectedLogMessage implements TestRule {
       return new Statement() {
          @Override
          public void evaluate() throws Throwable {
-            final Logger logger = Logger.getRootLogger();
-            final Appender appender = new AppenderSkeleton() {
-
+            String appenderName = "ExpectedLogMessageAppender";
+            AbstractAppender appender = new AbstractAppender(appenderName, null, null, true, Property.EMPTY_ARRAY) {
                @Override
-               protected void append(LoggingEvent event) {
+               public void append(LogEvent event) {
                   for (ExpectedLoggingEvent expect : expectations) {
                      expect.match(event);
                   }
                }
-
-               @Override
-               public void close() {
-               }
-
-               @Override
-               public boolean requiresLayout() {
-                  return false;
-               }
             };
-            logger.addAppender(appender);
+            appender.start();
+
+            LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
+            loggerContext.getConfiguration().addAppender(appender);
+            loggerContext.getRootLogger().addAppender(appender);
+            loggerContext.updateLoggers();
+
             try {
                base.evaluate();
             } finally {
-               logger.removeAppender(appender);
+               loggerContext.getRootLogger().removeAppender(appender);
+               loggerContext.updateLoggers();
+               appender.stop();
             }
 
             StringBuilder failures = null;
@@ -149,5 +154,10 @@ public final class ExpectedLogMessage implements TestRule {
             }
          }
       };
+   }
+
+   @Override
+   public String toString() {
+      return expectations.toString();
    }
 }
