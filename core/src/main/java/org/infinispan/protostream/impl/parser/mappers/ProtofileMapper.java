@@ -15,7 +15,7 @@ import com.squareup.protoparser.MessageElement;
 import com.squareup.protoparser.ProtoFile;
 
 /**
- * Mapper for high level protofile to FileDescriptor.
+ * Mapper for high level ProtoFile to FileDescriptor.
  *
  * @author gustavonalle
  * @author anistor@redhat.com
@@ -28,6 +28,7 @@ public final class ProtofileMapper implements Mapper<ProtoFile, FileDescriptor> 
       List<MessageElement> messageTypes = filter(protoFile.typeElements(), MessageElement.class);
       List<EnumElement> enumTypes = filter(protoFile.typeElements(), EnumElement.class);
       return new FileDescriptor.Builder()
+            .withSyntax(map(protoFile.syntax()))
             .withName(protoFile.filePath())
             .withPackageName(protoFile.packageName())
             .withMessageTypes(MESSAGE_LIST_MAPPER.map(messageTypes))
@@ -37,5 +38,18 @@ public final class ProtofileMapper implements Mapper<ProtoFile, FileDescriptor> 
             .withDependencies(protoFile.dependencies())
             .withPublicDependencies(protoFile.publicDependencies())
             .build();
+   }
+
+   private FileDescriptor.Syntax map(ProtoFile.Syntax syntax) {
+      if (syntax == null) {
+         return null;
+      }
+      if (syntax == ProtoFile.Syntax.PROTO_2) {
+         return FileDescriptor.Syntax.PROTO2;
+      }
+      if (syntax == ProtoFile.Syntax.PROTO_3) {
+         return FileDescriptor.Syntax.PROTO3;
+      }
+      throw new IllegalArgumentException("Unexpected syntax : " + syntax);
    }
 }

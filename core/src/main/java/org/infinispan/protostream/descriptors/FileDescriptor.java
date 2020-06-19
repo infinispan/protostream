@@ -23,7 +23,38 @@ import org.infinispan.protostream.impl.Log;
  */
 public final class FileDescriptor {
 
+   public enum Syntax {
+      PROTO2("proto2"),
+      PROTO3("proto3");
+
+      private final String syntax;
+
+      Syntax(String syntax) {
+         this.syntax = syntax;
+      }
+
+      public static Syntax fromString(String syntax) {
+         if (syntax == null) {
+            throw new IllegalArgumentException("argument cannot be null");
+         }
+         for (Syntax s : values()) {
+            if (s.syntax.equals(syntax)) {
+               return s;
+            }
+         }
+         throw new IllegalArgumentException("Illegal syntax : '" + syntax + "'");
+      }
+
+
+      @Override
+      public String toString() {
+         return syntax;
+      }
+   }
+
    private static final Log log = Log.LogFactory.getLog(FileDescriptor.class);
+
+   private final Syntax syntax;
 
    protected Configuration configuration;
 
@@ -94,9 +125,14 @@ public final class FileDescriptor {
 
    private Status status;
 
+   /**
+    * When {@link #status} is equal to {@link Status#PARSING_ERROR}, this exception provides the cause.
+    */
    private DescriptorParserException parsingException;
 
    private FileDescriptor(Builder builder) {
+      // Default to proto2 if no syntax was specified
+      syntax = builder.syntax == null ? Syntax.PROTO2 : builder.syntax;
       name = builder.name;
       packageName = builder.packageName;
       dependencies = Collections.unmodifiableList(builder.dependencies);
@@ -105,6 +141,7 @@ public final class FileDescriptor {
       enumTypes = Collections.unmodifiableList(builder.enumTypes);
       messageTypes = Collections.unmodifiableList(builder.messageTypes);
       extendTypes = Collections.unmodifiableList(builder.extendDescriptors);
+
       parsingException = builder.parsingException;
       status = parsingException != null ? Status.PARSING_ERROR : Status.UNRESOLVED;
    }
@@ -133,7 +170,7 @@ public final class FileDescriptor {
    }
 
    void markError() {
-      // parsing errors are fatal and final, so should not be overwritten
+      // parsing errors are already considered fatal and final so should not be overwritten by a 'regular' error
       if (status != Status.PARSING_ERROR) {
          status = Status.ERROR;
       }
@@ -358,6 +395,10 @@ public final class FileDescriptor {
       return null;
    }
 
+   public Syntax getSyntax() {
+      return syntax;
+   }
+
    public String getName() {
       return name;
    }
@@ -415,6 +456,7 @@ public final class FileDescriptor {
 
    public static final class Builder {
 
+      private Syntax syntax = Syntax.PROTO2;
       private String name;
       private String packageName;
       private List<String> dependencies = Collections.emptyList();
@@ -424,6 +466,15 @@ public final class FileDescriptor {
       private List<Descriptor> messageTypes = Collections.emptyList();
       private List<ExtendDescriptor> extendDescriptors = Collections.emptyList();
       private DescriptorParserException parsingException;
+
+      public Builder withSyntax(String syntax) {
+         return withSyntax(Syntax.fromString(syntax));
+      }
+
+      public Builder withSyntax(Syntax syntax) {
+         this.syntax = syntax;
+         return this;
+      }
 
       public Builder withName(String name) {
          this.name = name;
