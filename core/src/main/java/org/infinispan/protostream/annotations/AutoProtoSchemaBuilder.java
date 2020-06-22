@@ -88,10 +88,10 @@ public @interface AutoProtoSchemaBuilder {
 
    /**
     * Enable generation of a {@code META-INF/services} file for the generated class of the {@link
-    * SerializationContextInitializer} implementation to be loadable by the {@link java.util.ServiceLoader}. This is
-    * optional and provided for convenience.
+    * SerializationContextInitializer} implementation to be loadable by the {@link java.util.ServiceLoader}.
+    * This defaults to {@code true}.
     */
-   boolean service() default false;
+   boolean service() default true;
 
    /**
     * The initializers to execute before this one. List here classes or interfaces annotated with {@code
