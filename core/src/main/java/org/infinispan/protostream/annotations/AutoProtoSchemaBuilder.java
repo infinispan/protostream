@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
@@ -32,16 +34,17 @@ public @interface AutoProtoSchemaBuilder {
 
    /**
     * The generated Protobuf schema file name (optional). It can contain {@code '/'} characters, so it might appear like
-    * a relative name. Must end with ".proto" suffix. The schema will be registered under this name in the {@link
-    * org.infinispan.protostream.SerializationContext}. If missing, the simple name of the annotated class will be used
-    * plus the ".proto" suffix.
+    * a relative or absolute file name. Must end with ".proto" suffix. The schema will be registered under this name in
+    * the {@link SerializationContext} by {@link SerializationContextInitializer#registerSchema(SerializationContext)}.
+    * If missing, the simple name of the annotated class plus the ".proto" suffix will be used by default.
     */
    String schemaFileName() default "";
 
    /**
     * Generated Protobuf schema resource file path (optional). If this is present then a resource file is generated in
     * the designated path, with the given file name, and will be available to the ClassLoader at runtime, otherwise the
-    * generated schema file is directly baked as a String constant into the generated class.
+    * generated schema file is directly baked as a String constant into the generated class and no resource file is
+    * generated.
     */
    String schemaFilePath() default "";
 
@@ -96,10 +99,26 @@ public @interface AutoProtoSchemaBuilder {
    boolean service() default true;
 
    /**
+    * Generate only the marshallers and skip the schema file.
+    * <p>
+    * The schema is actually always generated at compile time, in memory, so that various validations can be performed
+    * at compile time, but with this flag you effectively ensure it finally gets excluded from both the generated source
+    * code and the generated resource files and it does not get registered at runtime by this
+    * {@link SerializationContextInitializer} implementation. This flag is useful in cases where you want to register
+    * the schema manually for whatever reason or the schema is already provided/registered by other parts of your
+    * application.
+    * <p>
+    * This option conflicts with {@link #schemaFilePath()} and they cannot be used together. Also, this option cannot be
+    * set to {@code true} if the annotated element is a subtype of {@link GeneratedSchema},
+    * which is expected to always provide a generated schema, as the name implies.
+    */
+   boolean marshallersOnly() default false;
+
+   /**
     * The {@link SerializationContextInitializer}s that must be executed before this one. Classes or interfaces listed
     * here must implement {@link SerializationContextInitializer} and must also be annotated with
-    * {@code AutoProtoSchemaBuilder}. Classes that are not annotated with {@link AutoProtoSchemaBuilder} are not
-    * acceptable and will result in a compilation error.
+    * {@code AutoProtoSchemaBuilder}. Classes not annotated with {@link AutoProtoSchemaBuilder} will result in a
+    * compilation error.
     */
    Class<? extends SerializationContextInitializer>[] dependsOn() default {};
 }
