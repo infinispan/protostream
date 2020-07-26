@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -138,7 +139,7 @@ public class AutoProtoSchemaBuilderTest {
                X.class
          }
    )
-   interface TestSerializationContextInitializer extends SerializationContextInitializer {
+   interface TestSerializationContextInitializer extends GeneratedSchema {
    }
 
    @Test
@@ -158,7 +159,7 @@ public class AutoProtoSchemaBuilderTest {
 
    @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer", autoImportClasses = true,
          basePackages = "org.infinispan.protostream.annotations.impl.processor", service = true)
-   abstract static class SecondInitializer implements SerializationContextInitializer {
+   abstract static class SecondInitializer implements GeneratedSchema {
       SecondInitializer() {
       }
    }
@@ -196,7 +197,7 @@ public class AutoProtoSchemaBuilderTest {
    // Using a fully implemented initializer as a base is not the usual use case but some users might need this and we do support it.
    @AutoProtoSchemaBuilder(className = "NonAbstractInitializerImpl", autoImportClasses = true,
          basePackages = "org.infinispan.protostream.annotations.impl.processor", service = true)
-   static class NonAbstractInitializer implements SerializationContextInitializer {
+   static class NonAbstractInitializer implements GeneratedSchema {
 
       @Override
       public String getProtoFileName() {
@@ -219,14 +220,16 @@ public class AutoProtoSchemaBuilderTest {
 
    @Test
    public void testNonAbstractInitializer() {
-      boolean found = false;
+      GeneratedSchema found = null;
       for (SerializationContextInitializer sci : ServiceLoader.load(SerializationContextInitializer.class)) {
          if (sci.getClass().getSimpleName().equals("NonAbstractInitializerImpl")) {
-            found = true;
+            found = (GeneratedSchema) sci;
             break;
          }
       }
-      assertTrue("Non-abstract initializers must be supported", found);
+      assertNotNull("Non-abstract initializers must be supported", found);
+      assertNotNull(found.getProtoFileName());
+      assertNotNull(found.getProtoFile());
    }
 
    @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, service = true)
@@ -1013,7 +1016,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    @AutoProtoSchemaBuilder(includeClasses = {RGBColor.class, ImmutableColor.class})
-   interface ImmutableMessageTestInitializer extends SerializationContextInitializer {
+   interface ImmutableMessageTestInitializer extends GeneratedSchema {
    }
 
    @Test
