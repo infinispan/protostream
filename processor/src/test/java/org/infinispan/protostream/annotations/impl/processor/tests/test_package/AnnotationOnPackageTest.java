@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.ServiceLoader;
 
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.junit.Test;
 
@@ -16,15 +17,15 @@ public class AnnotationOnPackageTest {
 
    @Test
    public void testAnnotationOnPackage() {
-      SerializationContextInitializer initializer = null;
+      GeneratedSchema generatedSchema = null;
       for (SerializationContextInitializer sci : ServiceLoader.load(SerializationContextInitializer.class)) {
          if (sci.getClass().getSimpleName().equals("AnnotationOnPackageTestInitializer")) {
-            initializer = sci;
+            generatedSchema = (GeneratedSchema) sci;
             break;
          }
       }
 
-      assertNotNull(initializer);
-      assertEquals("test_schema.proto", initializer.getProtoFileName());
+      assertNotNull(generatedSchema);
+      assertEquals("test_schema.proto", generatedSchema.getProtoFileName());
    }
 }

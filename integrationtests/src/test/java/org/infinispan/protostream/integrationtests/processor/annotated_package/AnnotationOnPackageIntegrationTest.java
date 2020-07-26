@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ServiceLoader;
 
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -22,21 +23,21 @@ public class AnnotationOnPackageIntegrationTest {
 
    @Test
    public void testAnnotationOnPackage() {
-      SerializationContextInitializer initializer = null;
+      GeneratedSchema generatedSchema = null;
       for (SerializationContextInitializer sci : ServiceLoader.load(SerializationContextInitializer.class)) {
          if (sci.getClass().getSimpleName().equals("AnnotationOnPackageTestInitializer")) {
-            initializer = sci;
+            generatedSchema = (GeneratedSchema) sci;
             break;
          }
       }
 
-      assertNotNull(initializer);
-      assertEquals("annotated_package.proto", initializer.getProtoFileName());
+      assertNotNull(generatedSchema);
+      assertEquals("annotated_package.proto", generatedSchema.getProtoFileName());
 
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
 
-      initializer.registerSchema(serCtx);
-      initializer.registerMarshallers(serCtx);
+      generatedSchema.registerSchema(serCtx);
+      generatedSchema.registerMarshallers(serCtx);
 
       assertTrue(serCtx.canMarshall(TestMessage.class));
    }
