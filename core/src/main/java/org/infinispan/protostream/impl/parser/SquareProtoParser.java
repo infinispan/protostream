@@ -1,7 +1,7 @@
 package org.infinispan.protostream.impl.parser;
 
-import java.io.CharArrayReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,12 +37,12 @@ public final class SquareProtoParser implements DescriptorParser {
 
    @Override
    public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws DescriptorParserException {
-      Map<String, char[]> input = fileDescriptorSource.getFileDescriptors();
+      Map<String, String> input = fileDescriptorSource.getFiles();
       Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<>(input.size());
-      for (Map.Entry<String, char[]> entry : input.entrySet()) {
+      for (Map.Entry<String, String> entry : input.entrySet()) {
          String fileName = entry.getKey();
          try {
-            ProtoFile protoFile = ProtoParser.parse(fileName, new CharArrayReader(entry.getValue()));
+            ProtoFile protoFile = ProtoParser.parse(fileName, new StringReader(entry.getValue()));
             checkUniqueFileOptions(protoFile);
             FileDescriptor fileDescriptor = PROTOFILE_MAPPER.map(protoFile);
             fileDescriptor.setConfiguration(configuration);
