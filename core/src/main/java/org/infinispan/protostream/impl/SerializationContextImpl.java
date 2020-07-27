@@ -99,7 +99,7 @@ public final class SerializationContextImpl implements SerializationContext {
    @Override
    public void registerProtoFiles(FileDescriptorSource source) throws DescriptorParserException {
       if (log.isDebugEnabled()) {
-         log.debugf("Registering proto files : %s", source.getFileDescriptors().keySet());
+         log.debugf("Registering proto files : %s", source.getFiles().keySet());
       }
       Map<String, FileDescriptor> fileDescriptorMap = parser.parse(source);
       writeLock.lock();

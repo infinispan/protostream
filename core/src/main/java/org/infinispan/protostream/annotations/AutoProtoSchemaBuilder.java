@@ -52,7 +52,8 @@ public @interface AutoProtoSchemaBuilder {
    String schemaPackageName() default "";
 
    /**
-    * Alias for {@link #basePackages}. {@code value} and {@link #basePackages} are mutually exclusive.
+    * A handy alias for {@link #basePackages}. {@code value} and {@link #basePackages} are mutually exclusive.
+    * See {@link #basePackages} for usage.
     */
    String[] value() default {};
 
@@ -60,17 +61,17 @@ public @interface AutoProtoSchemaBuilder {
     * The list of packages to scan (optional). The packages are scanned for annotated classes recursively. If {@code
     * basePackages} is empty then all packages are considered. The packages are filtered based on the {@link
     * #includeClasses}/{@link #excludeClasses} filter. If neither {@link #includeClasses} nor {@code basePackages} was
-    * specified then the entire source path will be scanned. This last option should only be used in very simple demo
-    * projects.
+    * specified then the entire source path will be scanned. Be wary of using this last option in anything but very
+    * simple demo projects.
     */
    String[] basePackages() default {};
 
    /**
-    * Annotated classes to process (optional). These classes must be located in the packages (or the subpackages) listed
-    * under {@link #basePackages} (if specified) or they will be skipped. If {@code includeClasses} is empty, all {@code
+    * Annotated classes to process (optional). These classes must be located in the packages listed
+    * in {@link #basePackages} if specified) or they will be skipped. If {@code includeClasses} is empty, all {@code
     * ProtoXyz} annotated classes that belong to the packages listed in {@link #basePackages} will be scanned. If
     * neither {@code includeClasses} nor {@link #basePackages} was specified then the entire source path will be
-    * scanned. This last option should only be used in very simple demo projects.
+    * scanned. Be wary of using this last option in anything but very simple demo projects.
     */
    Class<?>[] includeClasses() default {};
 
@@ -80,23 +81,26 @@ public @interface AutoProtoSchemaBuilder {
    Class<?>[] excludeClasses() default {};
 
    /**
-    * Indicates if we accept classes not explicitly included by {@link #includeClasses} and {@link #basePackages} to be
-    * auto-detected by reference from the already included classes and to be added automatically. If this is set to
-    * {@code false} it fails if such a case is encountered.
+    * Indicates if we accept classes not explicitly included by the {@link #includeClasses}, {@link #excludeClasses}
+    * and {@link #basePackages} combination to be auto-detected by reference from the already included classes and to be
+    * added automatically. If this is set to {@code false} (the default) it results in a compilation failure if such a
+    * case is encountered.
     */
    boolean autoImportClasses() default false;
 
    /**
-    * Enable generation of a {@code META-INF/services} file for the generated class of the {@link
-    * SerializationContextInitializer} implementation to be loadable by the {@link java.util.ServiceLoader}. This is
-    * optional and provided for convenience.
+    * Enable generation of a {@code META-INF/services} file for the generated implementation class of the {@link
+    * SerializationContextInitializer} to become loadable by the {@link java.util.ServiceLoader}. This is optional and
+    * provided for convenience only. The ProtoStream library does not make any use of the
+    * {@link java.util.ServiceLoader} to benefit from this mechanism but the user's application is free to use it.
     */
    boolean service() default false;
 
    /**
-    * The initializers to execute before this one. List here classes or interfaces annotated with {@code
-    * AutoProtoSchemaBuilder} from which a {@link SerializationContextInitializer} is being generated at compile-time
-    * annotation processing.
+    * The {@link SerializationContextInitializer}s that must be executed before this one. Classes or interfaces listed
+    * here must implement {@link SerializationContextInitializer} and must also be annotated with
+    * {@code AutoProtoSchemaBuilder}. Classes that are not annotated with {@link AutoProtoSchemaBuilder} are not
+    * acceptable and will result in a compilation error.
     */
    Class<? extends SerializationContextInitializer>[] dependsOn() default {};
 }
