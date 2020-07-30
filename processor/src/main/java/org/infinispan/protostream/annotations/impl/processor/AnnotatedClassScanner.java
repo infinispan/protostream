@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -53,25 +52,35 @@ final class AnnotatedClassScanner {
    private final AutoProtoSchemaBuilder builderAnnotation;
 
    private final Set<String> basePackages;
-   private final Set<TypeMirror> includedClasses;
-   private final Set<TypeMirror> excludedClasses;
+   private final Set<TypeMirror> includedClasses = new LinkedHashSet<>();
+   private final Set<TypeMirror> excludedClasses = new LinkedHashSet<>();
    private final PackageElement packageOfInitializer;
 
    private final String initializerClassName;
    private final String initializerFQClassName;
 
    AnnotatedClassScanner(Messager messager, Elements elements, Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
-      if (builderElement.getKind() == ElementKind.PACKAGE && builderAnnotation.className().isEmpty()) {
-         throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.className is required when annotating a package.");
-      }
-
       this.messager = messager;
       this.elements = elements;
       this.builderElement = builderElement;
       this.builderAnnotation = builderAnnotation;
 
-      includedClasses = getClasses(true);
-      excludedClasses = getClasses(false);
+      try {
+         builderAnnotation.includeClasses();
+      } catch (MirroredTypesException mte) {
+         includedClasses.addAll(mte.getTypeMirrors());
+      }
+      try {
+         builderAnnotation.excludeClasses();
+      } catch (MirroredTypesException mte) {
+         excludedClasses.addAll(mte.getTypeMirrors());
+      }
+      Set<TypeMirror> overlap = new HashSet<>(includedClasses);
+      overlap.retainAll(excludedClasses);
+      if (!overlap.isEmpty()) {
+         throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.includedClasses/excludedClasses are conflicting: " + overlap);
+      }
+
       basePackages = getBasePackages();
       packageOfInitializer = elements.getPackageOf(builderElement);
 
@@ -289,21 +298,6 @@ final class AnnotatedClassScanner {
          packages.add(p);
       }
       return packages;
-   }
-
-   private Set<TypeMirror> getClasses(boolean included) {
-      List<? extends TypeMirror> classes = Collections.emptyList();
-      try {
-         if (included) {
-            builderAnnotation.includeClasses();
-         } else {
-            builderAnnotation.excludeClasses();
-         }
-      } catch (MirroredTypesException mte) {
-         // this is guaranteed to happen, see MirroredTypesException javadoc
-         classes = mte.getTypeMirrors();
-      }
-      return new LinkedHashSet<>(classes);
    }
 
    /**

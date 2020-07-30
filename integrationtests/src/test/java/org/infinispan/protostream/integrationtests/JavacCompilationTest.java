@@ -89,6 +89,19 @@ public class JavacCompilationTest {
          "   }\n" +
          "}\n";
 
+   private static final String src8 = "package test_include_exclude_overlap;\n\n" +
+         "import org.infinispan.protostream.*;\n" +
+         "import org.infinispan.protostream.annotations.*;\n\n" +
+         "@AutoProtoSchemaBuilder(includeClasses = IncludeExcludeOverlap.Msg.class,\n" +
+         "      excludeClasses = IncludeExcludeOverlap.Msg.class)\n" +
+         "interface IncludeExcludeOverlap extends SerializationContextInitializer {\n" +
+         "\n" +
+         "   class Msg {\n" +
+         "      @ProtoField(number = 1)\n" +
+         "      public String txt;\n" +
+         "   }\n" +
+         "}\n";
+
    @Test
    public void testAnnotationProcessing() {
       Compilation compilation =
@@ -143,5 +156,15 @@ public class JavacCompilationTest {
 
       assertThat(compilation).succeeded();
       assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test/TestEnumInitializerImpl.java").isPresent());
+   }
+
+   @Test
+   public void testIncludeExcludeOverlap() {
+      Compilation compilation =
+            javac().withProcessors(new AutoProtoSchemaBuilderAnnotationProcessor())
+                  .compile(JavaFileObjects.forSourceString("IncludeExcludeOverlap", src8));
+
+      assertThat(compilation).failed();
+      assertThat(compilation).hadErrorContaining("@AutoProtoSchemaBuilder.includedClasses/excludedClasses are conflicting: [test_include_exclude_overlap.IncludeExcludeOverlap.Msg");
    }
 }
