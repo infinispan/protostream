@@ -37,7 +37,7 @@ public final class SerializationContextImpl implements SerializationContext {
    private static final Log log = Log.LogFactory.getLog(SerializationContextImpl.class);
 
    /**
-    * All state is protected by this RW lock.
+    * All mutable internal state is protected by this RW lock.
     */
    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
@@ -65,7 +65,7 @@ public final class SerializationContextImpl implements SerializationContext {
 
    public SerializationContextImpl(Configuration configuration) {
       if (configuration == null) {
-         throw new IllegalArgumentException("configuration cannot be null");
+         throw new IllegalArgumentException("configuration argument cannot be null");
       }
       this.configuration = configuration;
       parser = new SquareProtoParser(configuration);
@@ -326,11 +326,13 @@ public final class SerializationContextImpl implements SerializationContext {
       return null;
    }
 
+   @Deprecated
    @Override
    public String getTypeNameById(Integer typeId) {
       return getDescriptorByTypeId(typeId).getFullName();
    }
 
+   @Deprecated
    @Override
    public Integer getTypeIdByName(String fullTypeName) {
       return getDescriptorByName(fullTypeName).getTypeId();
@@ -339,7 +341,7 @@ public final class SerializationContextImpl implements SerializationContext {
    @Override
    public GenericDescriptor getDescriptorByName(String fullTypeName) {
       if (fullTypeName == null) {
-         throw new IllegalArgumentException("Type name cannot be null");
+         throw new IllegalArgumentException("Type name argument cannot be null");
       }
       readLock.lock();
       try {
@@ -356,7 +358,7 @@ public final class SerializationContextImpl implements SerializationContext {
    @Override
    public GenericDescriptor getDescriptorByTypeId(Integer typeId) {
       if (typeId == null) {
-         throw new IllegalArgumentException("Type id cannot be null");
+         throw new IllegalArgumentException("Type id argument cannot be null");
       }
       readLock.lock();
       try {

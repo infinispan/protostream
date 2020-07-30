@@ -12,6 +12,9 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
  * A repository of Protobuf type definitions and their marshallers. All marshalling operations happen in the context of
  * a {@link SerializationContext}. The {@link ImmutableSerializationContext} is a super-interface that contains strictly
  * read-only methods while its descendant {@link SerializationContext} provides methods to mutate the context.
+ * <p>
+ * <em>NOTE:</em> While this interface does not provide mutator methods that does not actually mean its state is really
+ * immutable. It may be mutated through {@link SerializationContext} interface.
  *
  * @author anistor@redhat.com
  * @since 4.0
@@ -89,7 +92,7 @@ public interface ImmutableSerializationContext {
     * @param typeId the numeric type id
     * @return the fully qualified type name
     * @throws IllegalArgumentException if the given type id is not known to this context
-    * @deprecated replaced by {@code getDescriptorByTypeId(typeId).getFullName()}
+    * @deprecated since 4.2.2, to be removed in 5, replaced by {@code getDescriptorByTypeId(typeId).getFullName()}
     */
    @Deprecated
    String getTypeNameById(Integer typeId);
@@ -100,7 +103,7 @@ public interface ImmutableSerializationContext {
     * @param fullTypeName the fully qualified type name
     * @return the type id or {@code null} if no type id is associated with the type
     * @throws IllegalArgumentException if the given type name is not known to this context
-    * @deprecated replaced by {@code getDescriptorByName(fullTypeName).getTypeId()}
+    * @deprecated since 4.2.2, to be removed in 5, replaced by {@code getDescriptorByName(fullTypeName).getTypeId()}
     */
    @Deprecated
    Integer getTypeIdByName(String fullTypeName);

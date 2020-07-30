@@ -2,6 +2,8 @@ package org.infinispan.protostream;
 
 import java.util.Set;
 
+import net.jcip.annotations.ThreadSafe;
+
 /**
  * A repository for Protobuf type definitions and their marshallers. All ProtoStream marshalling operations happen in
  * the context of a {@code SerializationContext}.
@@ -9,6 +11,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 1.0
  */
+@ThreadSafe
 public interface SerializationContext extends ImmutableSerializationContext {
 
    /**
