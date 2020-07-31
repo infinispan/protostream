@@ -1,4 +1,4 @@
-package org.infinispan.protostream.integrationtests.annotated_package;
+package org.infinispan.protostream.integrationtests.processor.annotated_package;
 
 import org.infinispan.protostream.annotations.ProtoField;
 
