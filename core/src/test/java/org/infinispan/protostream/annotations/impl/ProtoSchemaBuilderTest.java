@@ -1786,4 +1786,93 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertNotNull(o.field2);
       assertEquals("xyz", o.field2.theString);
    }
+
+   static abstract class AbstractMessage {
+
+      @ProtoField(number = 1)
+      String baseField1;
+   }
+
+   static class InnerMessage1 extends AbstractMessage {
+   }
+
+   static class OuterMessage1 {
+
+      @ProtoField(number = 1)
+      InnerMessage1 inner;
+   }
+
+   static class OuterMessage2 {
+
+      static class InnerMessage2 extends AbstractMessage {
+         @ProtoField(number = 2)
+         String field2;
+      }
+
+      @ProtoField(number = 1)
+      InnerMessage2 inner;
+   }
+
+   static class OuterMessage3 {
+
+      // this class is nested but not referenced from the outer class or the builder, so it does not get included
+      static class InnerMessage3 extends AbstractMessage {
+         @ProtoField(number = 2)
+         String field2;
+      }
+
+      @ProtoField(number = 1)
+      String field1;
+   }
+
+   @Test
+   public void testDiscoveryWithoutAutoImport() throws Exception {
+      SerializationContext ctx = createContext();
+
+      try {
+         new ProtoSchemaBuilder()
+               .fileName("DiscoveryWithoutAutoImport.proto")
+               .addClass(OuterMessage1.class)
+               .autoImportClasses(false)
+               .build(ctx);
+         fail("ProtoSchemaBuilderException was expected");
+      } catch (ProtoSchemaBuilderException e) {
+         assertEquals("Found a reference to class org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.InnerMessage1"
+               + " which was not explicitly added to the builder and 'autoImportClasses' is disabled.", e.getMessage());
+      }
+
+      // ensure that it starts working once we turn autoImportClasses on
+      String schema = new ProtoSchemaBuilder()
+            .fileName("DiscoveryWithAutoImport.proto")
+            .addClass(OuterMessage1.class)
+            .autoImportClasses(true)
+            .build(ctx);
+
+      assertTrue(schema.contains("message OuterMessage1"));
+      assertTrue(schema.contains("message InnerMessage1"));
+      assertTrue(schema.contains("baseField1"));
+   }
+
+   @Test
+   public void testNestedDiscoveryWithoutAutoImport() throws Exception {
+      SerializationContext ctx = createContext();
+      String schema = new ProtoSchemaBuilder()
+            .fileName("DiscoveryWithoutAutoImport.proto")
+            .addClass(OuterMessage2.class)
+            .autoImportClasses(false)  // even with autoImportClasses disabled, InnerMessage2 is still discovered because it's a nested class
+            .build(ctx);
+
+      assertTrue(schema.contains("message OuterMessage2"));
+      assertTrue(schema.contains("message InnerMessage2"));
+      assertTrue(schema.contains("baseField1"));
+
+      schema = new ProtoSchemaBuilder()
+            .fileName("DiscoveryWithoutAutoImport.proto")
+            .addClass(OuterMessage3.class)
+            .autoImportClasses(false)
+            .build(ctx);
+
+      assertTrue(schema.contains("message OuterMessage3"));
+      assertFalse(schema.contains("message InnerMessage3"));  // InnerMessage3 is a nested class but still not included
+   }
 }

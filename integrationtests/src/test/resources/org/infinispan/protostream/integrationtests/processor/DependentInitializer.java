@@ -1,0 +1,21 @@
+package test_basic_stuff_dependent;
+
+import org.infinispan.protostream.*;
+import org.infinispan.protostream.annotations.*;
+
+import test_basic_stuff.TestMessage;
+
+@AutoProtoSchemaBuilder(schemaFilePath = "/", dependsOn = test_basic_stuff.AbstractFirstInitializer.class,
+         includeClasses = DependentInitializer.A.class, autoImportClasses = false, service = true)
+interface DependentInitializer extends SerializationContextInitializer {
+
+   class A {
+      @ProtoField(number = 1)
+      public TestMessage testMessage;
+   }
+
+   // This method will be overridden by generated code and a warning will be issued so the user is aware of this
+   default String getProtoFileName() {
+      return null;
+   }
+}
