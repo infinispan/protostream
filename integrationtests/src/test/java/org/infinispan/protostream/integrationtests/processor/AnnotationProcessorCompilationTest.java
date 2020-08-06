@@ -51,6 +51,13 @@ public class AnnotationProcessorCompilationTest {
    }
 
    @Test
+   public void testBadSchemaFileName() {
+      Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/BadSchemaFileName.java");
+      assertThat(compilation).succeeded();
+      assertThat(compilation).hadWarningContaining("@AutoProtoSchemaBuilder.schemaFileName should end with '.proto'");
+   }
+
+   @Test
    public void testBadBasePackages() {
       Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/BadBasePackages.java");
       assertThat(compilation).failed();

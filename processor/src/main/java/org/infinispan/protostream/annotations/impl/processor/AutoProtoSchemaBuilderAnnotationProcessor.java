@@ -265,7 +265,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       String initializerPackageName = packageElement.isUnnamed() ? null : packageElement.getQualifiedName().toString();
       String initializerFQN = initializerPackageName != null ? initializerPackageName + '.' + initializerClassName : initializerClassName;
       String protobufPackageName = builderAnnotation.schemaPackageName().isEmpty() ? null : builderAnnotation.schemaPackageName();
-      String protobufFileName = builderAnnotation.schemaFileName().isEmpty() ? packageElement.getSimpleName() + ".proto" : builderAnnotation.schemaFileName();
+      String protobufFileName = getProtobufFileName(packageElement, builderAnnotation);
 
       ProcessorContext dependencies = processDependencies(roundEnv, serCtx, packageElement, builderAnnotation);
 
@@ -307,7 +307,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       String initializerClassName = classScanner.getInitializerClassName();
       String initializerFQN = classScanner.getInitializerFQClassName();
       String protobufPackageName = builderAnnotation.schemaPackageName().isEmpty() ? null : builderAnnotation.schemaPackageName();
-      String protobufFileName = builderAnnotation.schemaFileName().isEmpty() ? typeElement.getSimpleName() + ".proto" : builderAnnotation.schemaFileName();
+      String protobufFileName = getProtobufFileName(typeElement, builderAnnotation);
 
       ProcessorContext dependencies = processDependencies(roundEnv, serCtx, typeElement, builderAnnotation);
 
@@ -325,6 +325,16 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
             protobufFileName, protobufPackageName, schemaSrc);
 
       processorContext.add(classScanner.getInitializerFQClassName(), protobufFileName, protoSchemaGenerator.getMarshalledClasses());
+   }
+
+   private String getProtobufFileName(Element element, AutoProtoSchemaBuilder annotation) {
+      if (annotation.schemaFileName().isEmpty()) {
+         return element.getSimpleName() + ".proto";
+      }
+      if (!annotation.schemaFileName().endsWith(".proto")) {
+         reportWarning(element, "@AutoProtoSchemaBuilder.schemaFileName should end with '.proto' : %s", annotation.schemaFileName());
+      }
+      return annotation.schemaFileName();
    }
 
    private static final class ProcessorContext {
