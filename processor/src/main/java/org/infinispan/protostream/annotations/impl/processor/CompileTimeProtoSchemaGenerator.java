@@ -60,18 +60,15 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
 
    @Override
    protected boolean isUnknownClass(XClass c) {
-      boolean isUnknownClass = !dependencies.containsKey(c) && super.isUnknownClass(c);
-
-      if (isUnknownClass) {
-         if (!classScanner.isClassIncluded(c.getCanonicalName())) {
-            throw new ProtoSchemaBuilderException("Found a reference to class " + c.getName() +
-                  " which was not explicitly included by the @AutoProtoSchemaBuilder and the annotation attributes do not allow it to be included.");
-         }
-         // it's unknown up to this point but annotation attributes allow us to auto-import this newly found type
-         isUnknownClass = false;
+      if (super.isUnknownClass(c) && !dependencies.containsKey(c) && !classScanner.isClassAcceptable(c)) {
+         throw new ProtoSchemaBuilderException("Found a reference to class " + c.getCanonicalName() +
+               " which was not explicitly included by @AutoProtoSchemaBuilder and the combination of" +
+               " relevant attributes (basePackages, includeClasses, excludeClasses, autoImportClasses)" +
+               " do not allow it to be included.");
       }
 
-      return isUnknownClass;
+      // it may have been unknown up to this point but annotation attributes allow us to auto-import this newly found type, so go ahead
+      return false;
    }
 
    public Set<String> getGeneratedMarshallerClasses() {

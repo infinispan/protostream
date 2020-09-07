@@ -253,10 +253,11 @@ public abstract class BaseProtoSchemaGenerator {
    private void defineMetadata(ProtoTypeMetadata protoTypeMetadata) {
       boolean isUnknownClass = isUnknownClass(protoTypeMetadata.getJavaClass());
 
-      if (!autoImportClasses && !protoTypeMetadata.isImported() && isUnknownClass) {
-         // autoImportClasses is off and we are attempting expanding the class set
+      if (isUnknownClass && !autoImportClasses && !protoTypeMetadata.isImported()) {
+         // autoImportClasses is off and we are attempting expanding the class set -> NOPE!
          throw new ProtoSchemaBuilderException("Found a reference to class "
-               + protoTypeMetadata.getJavaClassName() + " which was not explicitly added to the builder and 'autoImportClasses' is disabled.");
+               + protoTypeMetadata.getJavaClassName()
+               + " which was not explicitly added to the builder and 'autoImportClasses' is disabled.");
       }
 
       String fullName = protoTypeMetadata.getFullName();
@@ -272,7 +273,7 @@ public abstract class BaseProtoSchemaGenerator {
    protected boolean isUnknownClass(XClass c) {
       boolean isKnown;
       while (!(isKnown = knownClasses.contains(c))) {
-         // try the outer class because inner classes are considered recursively added too
+         // try the outer class because inner classes are considered to be implicitly recursively added also
          c = c.getEnclosingClass();
          if (c == null) {
             break;

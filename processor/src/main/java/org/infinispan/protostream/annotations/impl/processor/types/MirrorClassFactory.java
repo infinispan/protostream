@@ -543,8 +543,8 @@ public final class MirrorClassFactory implements XTypeFactory {
 
       @Override
       public XClass getEnclosingClass() {
-         TypeMirror enclosingType = typeMirror.getEnclosingType();
-         return enclosingType.getKind() == TypeKind.DECLARED ? fromTypeMirror(enclosingType) : null;
+         Element enclosingElement = typeElement.getEnclosingElement();
+         return enclosingElement.getKind() == ElementKind.CLASS ? fromTypeMirror(enclosingElement.asType()) : null;
       }
 
       @Override
