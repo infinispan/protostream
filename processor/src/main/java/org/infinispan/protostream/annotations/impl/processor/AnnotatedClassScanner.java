@@ -14,6 +14,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.QualifiedNameable;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypesException;
@@ -30,6 +31,7 @@ import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.annotations.impl.OriginatingClasses;
+import org.infinispan.protostream.annotations.impl.types.XClass;
 
 /**
  * Discovers the classes to process based on the package and class filter specified in the AutoProtoSchemaBuilder
@@ -257,12 +259,25 @@ final class AnnotatedClassScanner {
       return typeElements;
    }
 
-   boolean isClassIncluded(String classFQN) {
-      TypeElement typeElement = elements.getTypeElement(classFQN);
+   /**
+    * Tests if a given class (which may have not been specifically included) is acceptable for inclusion.
+    */
+   boolean isClassAcceptable(XClass c) {
+      String canonicalName = c.getCanonicalName();
+
+      if (classes.containsKey(canonicalName)) {
+         return true;
+      }
+
+      TypeElement typeElement = elements.getTypeElement(canonicalName);
       TypeMirror type = typeElement.asType();
 
       if (excludedClasses.contains(type)) {
          return false;
+      }
+
+      if (includedClasses.contains(type)) {
+         return true;
       }
 
       PackageElement packageOfElement = elements.getPackageOf(typeElement);
@@ -270,11 +285,8 @@ final class AnnotatedClassScanner {
          return false;
       }
 
-      if (!includedClasses.isEmpty() && includedClasses.contains(type)) {
-         return true;
-      }
-
-      return builderAnnotation.autoImportClasses() || includedClasses.isEmpty();
+      // we're including based on packages only, or we have autoImportClasses enabled
+      return includedClasses.isEmpty() || builderAnnotation.autoImportClasses();
    }
 
    private Set<String> getBasePackages() {
@@ -324,9 +336,10 @@ final class AnnotatedClassScanner {
 
          // classes from default/unnamed package cannot be imported so are ignored unless the initializer is itself located in the default package
          // classes with non-public visibility are ignored unless the initializer is in the same package
-         if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed() || !packageOfElement.equals(packageOfInitializer) && !isPublicElement(typeElement)) {
+         if (packageOfElement.isUnnamed() && !packageOfInitializer.isUnnamed()
+               || !packageOfElement.equals(packageOfInitializer) && !isPublicElement(typeElement)) {
             messager.printMessage(Diagnostic.Kind.WARNING, String.format("Type %s is not visible to %s so it is ignored!",
-                  typeElement.getQualifiedName(), packageOfInitializer.getQualifiedName()), builderElement);
+                  typeElement.getQualifiedName(), ((QualifiedNameable) builderElement).getQualifiedName()), builderElement);
             return;
          }
       }
@@ -335,8 +348,8 @@ final class AnnotatedClassScanner {
    }
 
    /**
-    * Checks if the type and all its outer types up to top level have the PUBLIC modifier which ensures their visibility
-    * to a different package.
+    * Checks if the given type and all its outer types up to top level type have the PUBLIC modifier which ensures their
+    * visibility to a different package.
     */
    private boolean isPublicElement(TypeElement typeElement) {
       Element e = typeElement;

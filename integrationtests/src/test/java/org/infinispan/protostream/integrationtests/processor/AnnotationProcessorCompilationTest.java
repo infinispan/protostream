@@ -13,6 +13,7 @@ import javax.tools.JavaFileObject;
 import org.infinispan.protostream.annotations.impl.processor.AutoProtoSchemaBuilderAnnotationProcessor;
 import org.junit.Test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.io.Resources;
@@ -85,22 +86,67 @@ public class AnnotationProcessorCompilationTest {
       assertThat(compilation).hadErrorContaining("@AutoProtoSchemaBuilder.includedClasses/excludedClasses are conflicting: [test_include_exclude_overlap.IncludeExcludeOverlap.Msg");
    }
 
-   /**
-    * Asserts that the file contains a given expected string.
-    */
-   static void assertFileContains(Optional<? extends FileObject> file, String expected) {
-      assertFileContains(file.orElse(null), expected);
+   @Test
+   public void testDiscoveryWithoutAutoImport() {
+      Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/DiscoveryWithoutAutoImport.java");
+      assertThat(compilation).hadErrorContaining("Found a reference to class"
+            + " test_discovery_without_auto_import.InnerMessage1 which was not explicitly included by"
+            + " @AutoProtoSchemaBuilder and the combination of relevant attributes"
+            + " (basePackages, includeClasses, excludeClasses, autoImportClasses) do not allow it to be included.");
+   }
+
+   @Test
+   public void testNestedDiscoveryWithoutAutoImport() {
+      Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/NestedDiscoveryWithoutAutoImport.java");
+      assertThat(compilation).succeededWithoutWarnings();
+      assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test_nested_discovery_without_auto_import/NestedDiscoveryWithoutAutoImportImpl.java").isPresent());
+
+      Optional<JavaFileObject> schemaFile = compilation.generatedFile(CLASS_OUTPUT, "NestedDiscoveryWithoutAutoImport.proto");
+      assertTrue(schemaFile.isPresent());
+      assertFileContains(schemaFile, "message OuterMessage2");
+      assertFileContains(schemaFile, "message InnerMessage2");
+      assertFileContains(schemaFile, "baseField1");
+
+      assertFileContains(schemaFile, "message OuterMessage3");
+      assertFileDoesNotContain(schemaFile, "message InnerMessage3");
    }
 
    /**
     * Asserts that the file contains a given expected string.
     */
-   static void assertFileContains(FileObject file, String expected) {
+   static void assertFileContains(Optional<? extends FileObject> file, String string) {
+      assertFileContains(file.orElse(null), string);
+   }
+
+   /**
+    * Asserts that the file does not contain a given string.
+    */
+   static void assertFileDoesNotContain(Optional<? extends FileObject> file, String string) {
+      assertFileDoesNotContain(file.orElse(null), string);
+   }
+
+   /**
+    * Asserts that the file contains a given expected string.
+    */
+   static void assertFileContains(FileObject file, String string) {
+      assertTrue("File " + file.getName() + " is expected to contain '"
+            + string + "' but it doesn't.", checkFileContainsString(file, string));
+   }
+
+   /**
+    * Asserts that the file does not contain a given string.
+    */
+   static void assertFileDoesNotContain(FileObject file, String string) {
+      assertFalse("File " + file.getName() + " is not expected to contain '"
+            + string + "' but it does.", checkFileContainsString(file, string));
+   }
+
+   private static boolean checkFileContainsString(FileObject file, String string) {
       if (file == null) {
          throw new IllegalArgumentException("The file argument must not be null");
       }
-      if (expected == null || expected.length() == 0) {
-         throw new IllegalArgumentException("The expected string must not be null or empty");
+      if (string == null || string.length() == 0) {
+         throw new IllegalArgumentException("The string argument must not be null or empty");
       }
 
       String src;
@@ -110,12 +156,11 @@ public class AnnotationProcessorCompilationTest {
          throw new UncheckedIOException(ioe);
       }
 
-      assertTrue("File " + file.getName() + " is expected to contain '"
-            + expected + "' but it doesn't.", src.contains(expected));
+      return src.contains(string);
    }
 
    /**
-    * Compiles several source files that are represented by resource files form classpath.
+    * Compiles several Java source files that are represented by resource files form classpath.
     */
    private static Compilation compile(String... resourceNames) {
       if (resourceNames == null || resourceNames.length == 0) {

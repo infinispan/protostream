@@ -1874,5 +1874,6 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       assertTrue(schema.contains("message OuterMessage3"));
       assertFalse(schema.contains("message InnerMessage3"));  // InnerMessage3 is a nested class but still not included
+      assertFalse(schema.contains("baseField1"));
    }
 }
