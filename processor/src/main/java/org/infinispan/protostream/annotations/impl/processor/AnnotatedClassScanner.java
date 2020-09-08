@@ -77,13 +77,28 @@ final class AnnotatedClassScanner {
       } catch (MirroredTypesException mte) {
          excludedClasses.addAll(mte.getTypeMirrors());
       }
-      Set<TypeMirror> overlap = new HashSet<>(includedClasses);
-      overlap.retainAll(excludedClasses);
-      if (!overlap.isEmpty()) {
-         throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.includedClasses/excludedClasses are conflicting: " + overlap);
-      }
 
       basePackages = getBasePackages();
+
+      if (!includedClasses.isEmpty()) {
+         if (!excludedClasses.isEmpty()) {
+            throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.includeClasses and @AutoProtoSchemaBuilder.excludeClasses are mutually exclusive");
+         }
+         if (!basePackages.isEmpty()) {
+            throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.includeClasses and @AutoProtoSchemaBuilder.value/basePackages are mutually exclusive");
+         }
+      }
+
+      for (TypeMirror c : excludedClasses) {
+         TypeElement typeElement = (TypeElement) ((DeclaredType) c).asElement();
+         PackageElement packageOfClass = elements.getPackageOf(typeElement);
+         if (!isPackageIncluded(packageOfClass)) {
+            String errMsg = String.format("@AutoProtoSchemaBuilder.excludeClasses and @AutoProtoSchemaBuilder.value/basePackages are conflicting. Class '%s' must belong to a base package.",
+                  typeElement.getQualifiedName());
+            throw new AnnotationProcessingException(builderElement, errMsg);
+         }
+      }
+
       packageOfInitializer = elements.getPackageOf(builderElement);
 
       initializerClassName = builderAnnotation.className().isEmpty() ? builderElement.getSimpleName() + "Impl" : builderAnnotation.className();
@@ -296,16 +311,16 @@ final class AnnotatedClassScanner {
       if (builderAnnotation.value().length != 0 && builderAnnotation.basePackages().length != 0) {
          throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.value and @AutoProtoSchemaBuilder.basePackages are mutually exclusive");
       }
-      boolean usingAlias = true;
       String[] basePackages = builderAnnotation.value();
+      String annotationMember = "value";
       if (basePackages.length == 0) {
-         usingAlias = false;
+         annotationMember = "basePackages";
          basePackages = builderAnnotation.basePackages();
       }
       Set<String> packages = new HashSet<>(basePackages.length);
       for (String p : basePackages) {
          if (!SourceVersion.isName(p)) {
-            throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.%s contains an invalid package name : \"%s\"", usingAlias ? "value" : "basePackages", p);
+            throw new AnnotationProcessingException(builderElement, "@AutoProtoSchemaBuilder.%s contains an invalid package name : \"%s\"", annotationMember, p);
          }
          packages.add(p);
       }
