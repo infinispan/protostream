@@ -83,7 +83,21 @@ public class AnnotationProcessorCompilationTest {
    public void testIncludeExcludeOverlap() {
       Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/IncludeExcludeOverlap.java");
       assertThat(compilation).failed();
-      assertThat(compilation).hadErrorContaining("@AutoProtoSchemaBuilder.includedClasses/excludedClasses are conflicting: [test_include_exclude_overlap.IncludeExcludeOverlap.Msg");
+      assertThat(compilation).hadErrorContaining("@AutoProtoSchemaBuilder.includeClasses and @AutoProtoSchemaBuilder.excludeClasses are mutually exclusive");
+   }
+
+   @Test
+   public void testIncludeClassesVsBasePackagesConflict() {
+      Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/IncludeClassesVsBasePackagesConflict.java");
+      assertThat(compilation).failed();
+      assertThat(compilation).hadErrorContaining("@AutoProtoSchemaBuilder.includeClasses and @AutoProtoSchemaBuilder.value/basePackages are mutually exclusive");
+   }
+
+   @Test
+   public void testExcludeClassesVsBasePackagesConflict() {
+      Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/ExcludeClassesVsBasePackagesConflict.java");
+      assertThat(compilation).failed();
+      assertThat(compilation).hadErrorContaining("@AutoProtoSchemaBuilder.excludeClasses and @AutoProtoSchemaBuilder.value/basePackages are conflicting. Class 'test_exclude_classes_vs_base_packages_conflict.ExcludeClassesVsBasePackagesConflict.Msg' must belong to a base package.");
    }
 
    @Test
