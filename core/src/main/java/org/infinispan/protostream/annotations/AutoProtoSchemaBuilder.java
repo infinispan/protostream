@@ -58,33 +58,32 @@ public @interface AutoProtoSchemaBuilder {
    String[] value() default {};
 
    /**
-    * The list of packages to scan (optional). The packages are scanned for annotated classes recursively. If {@code
-    * basePackages} is empty then all packages are considered. The packages are filtered based on the {@link
-    * #includeClasses}/{@link #excludeClasses} filter. If neither {@link #includeClasses} nor {@code basePackages} was
-    * specified then the entire source path will be scanned. Be wary of using this last option in anything but very
-    * simple demo projects.
+    * The list of packages to scan (optional). {@code basePackages} and {@link #includeClasses} are mutually exclusive.
+    * The packages are scanned for annotated classes recursively. If {@code basePackages} is empty then all packages are
+    * considered, starting from root and including the default (unnamed) package. The packages are filtered based on the
+    * {@link #excludeClasses} filter. If neither {@link #includeClasses} nor {@code basePackages} is specified then the
+    * entire source path is scanned. Be wary of using this last option in anything but very simple demo projects.
     */
    String[] basePackages() default {};
 
    /**
-    * Annotated classes to process (optional). These classes must be located in the packages listed
-    * in {@link #basePackages} if specified) or they will be skipped. If {@code includeClasses} is empty, all {@code
-    * ProtoXyz} annotated classes that belong to the packages listed in {@link #basePackages} will be scanned. If
-    * neither {@code includeClasses} nor {@link #basePackages} was specified then the entire source path will be
+    * Annotated classes to process (optional). If {@code includeClasses} is empty, all {@code ProtoXyz} annotated
+    * classes that belong to the packages listed in {@link #basePackages} will be scanned. If neither
+    * {@code includeClasses} nor {@link #basePackages} was specified then the entire source path will be
     * scanned. Be wary of using this last option in anything but very simple demo projects.
     */
    Class<?>[] includeClasses() default {};
 
    /**
-    * Classes to be explicitly excluded.
+    * Classes to be explicitly excluded. {@code excludeClasses} and {@link #includeClasses} are mutually exclusive. This
+    * can be used together with {@link #basePackages}.
     */
    Class<?>[] excludeClasses() default {};
 
    /**
-    * Indicates if we accept classes not explicitly included by the {@link #includeClasses}, {@link #excludeClasses}
-    * and {@link #basePackages} combination to be auto-detected by reference from the already included classes and to be
-    * added automatically. If this is set to {@code false} (the default) it results in a compilation failure if such a
-    * case is encountered.
+    * Indicates if we accept classes not explicitly included by the {@link #includeClasses} or {@link #basePackages} to
+    * be auto-detected by reference from the already included classes and to be added automatically. If this is set to
+    * {@code false} (which is the default) it results in a compilation error when such a case is encountered.
     */
    boolean autoImportClasses() default false;
 
