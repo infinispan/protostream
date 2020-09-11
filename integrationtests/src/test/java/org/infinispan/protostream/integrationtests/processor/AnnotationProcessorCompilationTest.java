@@ -100,15 +100,26 @@ public class AnnotationProcessorCompilationTest {
       Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/NestedDiscoveryWithoutAutoImport.java");
       assertThat(compilation).succeededWithoutWarnings();
       assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test_nested_discovery_without_auto_import/NestedDiscoveryWithoutAutoImportImpl.java").isPresent());
+      assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test_nested_discovery_without_auto_import/NestedDiscoveryWithoutAutoImport2Impl.java").isPresent());
+      assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test_nested_discovery_without_auto_import/NestedDiscoveryWithoutAutoImport3Impl.java").isPresent());
 
       Optional<JavaFileObject> schemaFile = compilation.generatedFile(CLASS_OUTPUT, "NestedDiscoveryWithoutAutoImport.proto");
       assertTrue(schemaFile.isPresent());
       assertFileContains(schemaFile, "message OuterMessage2");
       assertFileContains(schemaFile, "message InnerMessage2");
       assertFileContains(schemaFile, "baseField1");
-
       assertFileContains(schemaFile, "message OuterMessage3");
       assertFileDoesNotContain(schemaFile, "message InnerMessage3");
+
+      schemaFile = compilation.generatedFile(CLASS_OUTPUT, "NestedDiscoveryWithoutAutoImport2.proto");
+      assertTrue(schemaFile.isPresent());
+      assertFileContains(schemaFile, "message OuterMessage4");
+      assertFileContains(schemaFile, "message InnerMessage4");
+
+      schemaFile = compilation.generatedFile(CLASS_OUTPUT, "NestedDiscoveryWithoutAutoImport3.proto");
+      assertTrue(schemaFile.isPresent());
+      assertFileContains(schemaFile, "message OuterMessage4");
+      assertFileContains(schemaFile, "message InnerMessage4");
    }
 
    /**
