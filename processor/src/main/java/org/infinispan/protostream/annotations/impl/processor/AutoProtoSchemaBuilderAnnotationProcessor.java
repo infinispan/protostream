@@ -516,9 +516,14 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          if (schemaResource == null) {
             iw.append("PROTO_SCHEMA");
          } else {
-            iw.append("org.infinispan.protostream.FileDescriptorSource.getResourceAsString(getClass(), \"").append(schemaResource).append("\")");
+            iw.append("org.infinispan.protostream.impl.ResourceUtils.getResourceAsString(getClass(), \"").append(schemaResource).append("\")");
          }
          iw.append("; }\n\n");
+         if (schemaResource != null) {
+            iw.append("@Override\npublic java.io.Reader getProtoFileReader() { return ");
+            iw.append("org.infinispan.protostream.impl.ResourceUtils.getResourceAsReader(getClass(), \"").append(schemaResource).append("\")");
+            iw.append("; }\n\n");
+         }
       } else {
          // TODO [anistor] See IPROTO-154. This 'else' branch must removed in ver. 5, once methods getProtoFileName()/getProtoFile() are removed from SerializationContextInitializer
          iw.append("@Override\npublic String getProtoFileName() { /* DUMMY! */ return \"").append(fileName).append("\"; }\n\n");
