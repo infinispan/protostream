@@ -12,8 +12,8 @@ import java.util.Date;
  *
  * @author anistor@redhat.com
  * @since 1.0
- * @deprecated since 4.3.1.Final. Will be removed in next major version. Please use annotation based marshallers
- * instead.
+ * @deprecated since 4.3.1.Final. Will be removed in version 5. Please use annotation based marshallers instead. See
+ * {@link org.infinispan.protostream.annotations.AutoProtoSchemaBuilder}
  */
 @Deprecated
 public interface MessageMarshaller<T> extends BaseMarshaller<T> {

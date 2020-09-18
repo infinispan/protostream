@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  *
  * @author anistor@redhat.com
  * @since 3.0
- * @deprecated replaced by {@link ProtoName}
+ * @deprecated replaced by {@link ProtoName}. To be removed in version 5.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

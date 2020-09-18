@@ -78,8 +78,8 @@ public @interface ProtoReserved {
       int from();
 
       /**
-       * The end of the range (inclusive). Must be strictly greater than {@link #from}. The actual maximum is 536870911
-       * (2^29-1) for field numbers, but it can be any 32-bit value for enums.
+       * The end of the range (inclusive). Must be strictly greater than {@link #from}. The actual maximum is {@link #MAX_FIELD}
+       * (2<sup>29</sup>-1 = 536870911) for field numbers, but it can be any 32-bit value for enums.
        */
       int to() default Integer.MAX_VALUE;
    }
