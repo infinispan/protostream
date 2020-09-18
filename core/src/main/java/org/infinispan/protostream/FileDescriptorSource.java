@@ -1,30 +1,25 @@
 package org.infinispan.protostream;
 
-import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.infinispan.protostream.impl.ResourceUtils;
+
 /**
  * Aggregator for source proto files to be passed to {@link SerializationContext#registerProtoFiles(FileDescriptorSource)}.
- * The files are guaranted to be processed in the order specified.
+ * The files are guaranteed to be processed in the order they were added (for better predictability or error reporting).
  *
  * @author gustavonalle
  * @author anistor@redhat.com
  * @since 2.0
  */
 public final class FileDescriptorSource {
-
-   private static final int READ_BUFFER_SIZE = 1024;
 
    /**
     * The unparsed files. Using a LinkedHashMap to ensure parsing happens in the order specified by the user so the
@@ -88,15 +83,14 @@ public final class FileDescriptorSource {
          if (classpathResource == null) {
             throw new IllegalArgumentException("classpathResource argument cannot be null");
          }
-         // enforce absolute resource path
-         String absResPath = classpathResource.startsWith("/") ? classpathResource : "/" + classpathResource;
-         InputStream resource = getResourceAsStream(userClassLoader, absResPath);
-         if (resource == null) {
-            throw new IOException("Resource not found in class path : " + absResPath);
+         if (classpathResource.startsWith("/")) {
+            classpathResource = classpathResource.substring(1);
          }
-         // discard the leading slash
-         String path = classpathResource.startsWith("/") ? classpathResource.substring(1) : classpathResource;
-         addProtoFile(path, resource);
+         InputStream resource = ResourceUtils.getResourceAsStream(userClassLoader, classpathResource);
+         if (resource == null) {
+            throw new IOException("Resource not found in class path : " + classpathResource);
+         }
+         addProtoFile(classpathResource, resource);
       }
       return this;
    }
@@ -129,7 +123,7 @@ public final class FileDescriptorSource {
       }
       // discard the leading slash
       String path = name.startsWith("/") ? name.substring(1) : name;
-      files.put(path, getContentsAsString(fileContents));
+      files.put(path, ResourceUtils.getContentsAsString(fileContents));
       return this;
    }
 
@@ -145,7 +139,7 @@ public final class FileDescriptorSource {
       }
       // discard the leading slash
       String path = name.startsWith("/") ? name.substring(1) : name;
-      files.put(path, getContentsAsString(fileContents));
+      files.put(path, ResourceUtils.getContentsAsString(fileContents));
       return this;
    }
 
@@ -161,7 +155,7 @@ public final class FileDescriptorSource {
       }
       // discard the leading slash
       String path = name.startsWith("/") ? name.substring(1) : name;
-      files.put(path, getContentsAsString(protoFile));
+      files.put(path, ResourceUtils.getContentsAsString(protoFile));
       return this;
    }
 
@@ -198,76 +192,15 @@ public final class FileDescriptorSource {
       return progressCallback;
    }
 
-   private static String getContentsAsString(File file) throws IOException {
-      try (FileInputStream is = new FileInputStream(file)) {
-         return getContentsAsString(is);
-      }
-   }
-
-   private static String getContentsAsString(InputStream is) throws IOException {
-      try (Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
-         return getContentsAsString(reader);
-      }
-   }
-
-   private static String getContentsAsString(Reader reader) throws IOException {
-      try {
-         CharArrayWriter writer = new CharArrayWriter();
-         char[] buffer = new char[READ_BUFFER_SIZE];
-         int count;
-         while ((count = reader.read(buffer)) != -1) {
-            writer.write(buffer, 0, count);
-         }
-         return writer.toString();
-      } finally {
-         reader.close();
-      }
-   }
-
-   private static InputStream getResourceAsStream(ClassLoader userClassLoader, String resourcePath) {
-      if (resourcePath.startsWith("/")) {
-         resourcePath = resourcePath.substring(1);
-      }
-      ClassLoader[] classLoaders = {userClassLoader,
-            FileDescriptorSource.class.getClassLoader(),
-            ClassLoader.getSystemClassLoader(),
-            Thread.currentThread().getContextClassLoader()};
-      InputStream is = null;
-      for (ClassLoader cl : classLoaders) {
-         if (cl != null) {
-            is = cl.getResourceAsStream(resourcePath);
-            if (is != null) {
-               break;
-            }
-         }
-      }
-      return is;
-   }
-
    /**
-    * Finds a resource with a given name, relative to a given Class and returns it as a String.
+    * Finds a resource with a given path relative to a given {@link Class} and returns it as a {@link String}.
     *
     * @throws UncheckedIOException if the resource is not found or an I/O error occurs
-    * @deprecated This method is internal and has been deprecated in 4.3.4 to prevent use from external projects as it
-    * is subject for removal in 5.
+    * @deprecated This method is strictly for internal use and has been deprecated in 4.3.4 to prevent use from external
+    * projects as it is subject for removal in 5.
     */
    @Deprecated
-   public static String getResourceAsString(Class<?> c, String name) throws UncheckedIOException {
-      try (InputStream is = c.getResourceAsStream(name)) {
-         if (is == null) {
-            throw new IOException("Resource not found in class path : " + name);
-         }
-         try (Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
-            StringWriter writer = new StringWriter();
-            char[] buffer = new char[READ_BUFFER_SIZE];
-            int count;
-            while ((count = reader.read(buffer)) != -1) {
-               writer.write(buffer, 0, count);
-            }
-            return writer.toString();
-         }
-      } catch (IOException e) {
-         throw new UncheckedIOException(e);
-      }
+   public static String getResourceAsString(Class<?> c, String resourcePath) throws UncheckedIOException {
+      return ResourceUtils.getResourceAsString(c, resourcePath);
    }
 }
