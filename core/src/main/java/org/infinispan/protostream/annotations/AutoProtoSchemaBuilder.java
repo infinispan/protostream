@@ -18,6 +18,9 @@ import org.infinispan.protostream.SerializationContextInitializer;
  * <p>
  * This annotation is used at compile time annotation processing only and should not be relied upon at runtime, so its
  * retention is set to {@link RetentionPolicy#CLASS}.
+ * <p>
+ * <em>NOTE:</em> This annotation can also be used on packages but this kind of usage has been deprecated in 4.3.4 and
+ * will be removed in version 5. See <a href="https://issues.redhat.com/browse/IPROTO-157">IPROTO-157</a>.
  *
  * @author anistor@redhat.com
  * @since 4.3
@@ -87,7 +90,10 @@ public @interface AutoProtoSchemaBuilder {
     * Indicates if we accept classes not explicitly included by the {@link #includeClasses} or {@link #basePackages} to
     * be auto-detected by reference from the already included classes and to be added automatically. If this is set to
     * {@code false} (which is the default) it results in a compilation error when such a case is encountered.
+    *
+    * @deprecated since 4.3.4. This will be removed in version 5. See <a href="https://issues.redhat.com/browse/IPROTO-158">IPROTO-158</a>.
     */
+   @Deprecated
    boolean autoImportClasses() default false;
 
    /**
