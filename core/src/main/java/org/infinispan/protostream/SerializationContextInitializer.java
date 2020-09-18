@@ -30,7 +30,7 @@ public interface SerializationContextInitializer {
     * Returns the name of the proto file (which is allowed to contain slashes, so it could look like a path).
     *
     * @deprecated in 4.3.4, to be removed in 5. The method was moved and will continue to exist starting with ver. 5
-    * as {@link GeneratedSchema#getProtoFileName()} (see IPROTO-154).
+    * as {@link GeneratedSchema#getProtoFileName()}. See <a href="https://issues.redhat.com/browse/IPROTO-154">IPROTO-154</a>.
     */
    @Deprecated
    String getProtoFileName();
@@ -43,7 +43,7 @@ public interface SerializationContextInitializer {
     *
     * @throws UncheckedIOException if the file contents cannot be retrieved
     * @deprecated in 4.3.4, to be removed in 5. The method was moved and will continue to exist starting with ver. 5
-    * as {@link GeneratedSchema#getProtoFile()} (see IPROTO-154).
+    * as {@link GeneratedSchema#getProtoFile()}. See <a href="https://issues.redhat.com/browse/IPROTO-154">IPROTO-154</a>.
     */
    @Deprecated
    String getProtoFile() throws UncheckedIOException;

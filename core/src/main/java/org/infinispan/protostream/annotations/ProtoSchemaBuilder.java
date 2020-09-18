@@ -49,7 +49,10 @@ import org.infinispan.protostream.impl.Log;
  *
  * @author anistor@redhat.com
  * @since 3.0
+ * @deprecated since 4.3.4. To be removed in version 5. Please use {@link AutoProtoSchemaBuilder} instead. See
+ * <a href="https://issues.redhat.com/browse/IPROTO-159">IPROTO-159</a>.
  */
+@Deprecated
 public final class ProtoSchemaBuilder {
 
    private static final Log log = Log.LogFactory.getLog(ProtoSchemaBuilder.class);
