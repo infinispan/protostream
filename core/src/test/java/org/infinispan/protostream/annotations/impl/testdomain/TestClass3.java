@@ -14,7 +14,7 @@ public class TestClass3 {
 
    private UnknownFieldSet unknownFieldSet;
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public TestClass.InnerClass2 getInner2() {
       return inner2;
    }

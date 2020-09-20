@@ -29,14 +29,14 @@ public class Note {
 
    @ProtoDoc("First line of documentation.")
    @ProtoDoc("some foo bar\nand some more\n @Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO)")
-   @ProtoField(number = 3)
+   @ProtoField(3)
    public Note note;
 
    @ProtoDoc("@Field")
-   @ProtoField(number = 4)
+   @ProtoField(4)
    public List<Note> notes;
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getText() {
       return text;
    }
@@ -46,7 +46,7 @@ public class Note {
    }
 
    @ProtoDoc("@Field")
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public User getAuthor() {
       return author;
    }
@@ -66,7 +66,7 @@ public class Note {
    }
 
    @ProtoDoc("@Field")
-   @ProtoField(number = 6)
+   @ProtoField(6)
    public byte[] getDigest() {
       return digest;
    }

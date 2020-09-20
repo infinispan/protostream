@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.*;
 interface ExcludeClassesVsBasePackagesConflict extends SerializationContextInitializer {
 
    class Msg {
-      @ProtoField(number = 1)
+      @ProtoField(1)
       public String txt;
    }
 }

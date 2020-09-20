@@ -17,7 +17,7 @@ public class Note {
    private User author;
 
    @ProtoDoc("@Field")
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getText() {
       return text;
    }
@@ -27,7 +27,7 @@ public class Note {
    }
 
    @ProtoDoc("@Field")
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public User getAuthor() {
       return author;
    }

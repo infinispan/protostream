@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines a Protobuf enum value. This annotation can only be applied to members of an enum.
+ * Defines a Protobuf enum value. This annotation can only be applied to members of a Java enum.
  *
  * @author anistor@redhat.com
  * @since 3.0
@@ -18,9 +18,14 @@ import java.lang.annotation.Target;
 public @interface ProtoEnumValue {
 
    /**
+    * Alias for {@link #number}.
+    */
+   int value() default 0;
+
+   /**
     * The Protocol Buffers tag number.
     */
-   int number();
+   int number() default 0;
 
    /**
     * The name of the Protobuf enum value. If missing, the Java name will be used for Protobuf too.

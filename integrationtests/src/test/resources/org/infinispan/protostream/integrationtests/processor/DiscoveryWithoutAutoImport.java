@@ -9,7 +9,7 @@ public interface DiscoveryWithoutAutoImport extends SerializationContextInitiali
 
 abstract class AbstractMessage {
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    String baseField1;
 }
 
@@ -18,6 +18,6 @@ class InnerMessage1 extends AbstractMessage {
 
 class OuterMessage1 {
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    InnerMessage1 inner;
 }

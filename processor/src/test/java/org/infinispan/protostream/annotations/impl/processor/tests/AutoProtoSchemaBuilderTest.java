@@ -44,7 +44,7 @@ public class AutoProtoSchemaBuilderTest {
 
       private String text;
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       public String getText() {
          return text;
       }
@@ -109,7 +109,7 @@ public class AutoProtoSchemaBuilderTest {
 
       private String version;
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       public String getVersion() {
          return version;
       }
@@ -790,19 +790,19 @@ public class AutoProtoSchemaBuilderTest {
 
    static class MessageWithRepeatedFields {
 
-      @ProtoField(number = 1001)
+      @ProtoField(1001)
       byte[] testField1001;
 
-      @ProtoField(number = 1002)
+      @ProtoField(1002)
       Byte[] testField1002;
 
-      @ProtoField(number = 1003)
+      @ProtoField(1003)
       List<Byte> testField1003;
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       int[] testField1;
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       Integer[] testField2;
 
       static class MyArrayList extends ArrayList {
@@ -811,10 +811,10 @@ public class AutoProtoSchemaBuilderTest {
       @ProtoField(number = 3, collectionImplementation = MyArrayList.class)
       List<Integer> testField3;
 
-      @ProtoField(number = 4)
+      @ProtoField(4)
       Inner[] testField4;
 
-      @ProtoField(number = 5)
+      @ProtoField(5)
       List<Inner> testField5;
 
       int[] testField6;
@@ -827,7 +827,7 @@ public class AutoProtoSchemaBuilderTest {
 
       List<Inner> testField10;
 
-      @ProtoField(number = 6)
+      @ProtoField(6)
       public int[] getTestField6() {
          return testField6;
       }
@@ -836,7 +836,7 @@ public class AutoProtoSchemaBuilderTest {
          this.testField6 = testField6;
       }
 
-      @ProtoField(number = 7)
+      @ProtoField(7)
       public Integer[] getTestField7() {
          return testField7;
       }
@@ -845,7 +845,7 @@ public class AutoProtoSchemaBuilderTest {
          this.testField7 = testField7;
       }
 
-      @ProtoField(number = 8)
+      @ProtoField(8)
       public List<Integer> getTestField8() {
          return testField8;
       }
@@ -854,7 +854,7 @@ public class AutoProtoSchemaBuilderTest {
          this.testField8 = testField8;
       }
 
-      @ProtoField(number = 9)
+      @ProtoField(9)
       public Inner[] getTestField9() {
          return testField9;
       }
@@ -863,7 +863,7 @@ public class AutoProtoSchemaBuilderTest {
          this.testField9 = testField9;
       }
 
-      @ProtoField(number = 10)
+      @ProtoField(10)
       public List<Inner> getTestField10() {
          return testField10;
       }
@@ -1105,7 +1105,7 @@ public class AutoProtoSchemaBuilderTest {
    static class CustomMap {
 
       static class CustomKey {
-         @ProtoField(number = 1)
+         @ProtoField(1)
          String key;
 
          CustomKey() {
@@ -1131,10 +1131,10 @@ public class AutoProtoSchemaBuilderTest {
 
       static class KVPair {
 
-         @ProtoField(number = 1)
+         @ProtoField(1)
          CustomKey key;
 
-         @ProtoField(number = 2)
+         @ProtoField(2)
          String value;
 
          KVPair() {
@@ -1159,7 +1159,7 @@ public class AutoProtoSchemaBuilderTest {
          return myMap;
       }
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       public List<KVPair> getMapEntries() {
          if (myMap == null) {
             return Collections.emptyList();
@@ -1206,7 +1206,7 @@ public class AutoProtoSchemaBuilderTest {
 
       private List<OptionalInner> field4;
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       public Optional<String> getField1() {
          return Optional.ofNullable(field1);
       }
@@ -1215,7 +1215,7 @@ public class AutoProtoSchemaBuilderTest {
          this.field1 = field1;
       }
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       public Optional<OptionalInner> getField2() {
          return Optional.ofNullable(field2);
       }
@@ -1224,7 +1224,7 @@ public class AutoProtoSchemaBuilderTest {
          this.field2 = field2;
       }
 
-      @ProtoField(number = 3)
+      @ProtoField(3)
       public Optional<OptionalInner[]> getField3() {
          return Optional.ofNullable(field3);
       }
@@ -1233,7 +1233,7 @@ public class AutoProtoSchemaBuilderTest {
          this.field3 = field3;
       }
 
-      @ProtoField(number = 4)
+      @ProtoField(4)
       public Optional<List<OptionalInner>> getField4() {
          return Optional.ofNullable(field4);
       }
@@ -1244,7 +1244,7 @@ public class AutoProtoSchemaBuilderTest {
 
       static class OptionalInner {
 
-         @ProtoField(number = 1)
+         @ProtoField(1)
          String theString;
       }
    }

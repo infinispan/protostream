@@ -14,13 +14,13 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoName("SimpleEnumABC")
 public enum SimpleEnum {
 
-   @ProtoEnumValue(number = 4, name = "AX")
+   @ProtoEnumValue(value = 4, name = "AX")
    A,
 
-   @ProtoEnumValue(number = 2, name = "BX")
+   @ProtoEnumValue(value = 2, name = "BX")
    B,
 
    @ProtoDoc("This should never be read.")
-   @ProtoEnumValue(number = 1, name = "CX")
+   @ProtoEnumValue(value = 1, name = "CX")
    C
 }

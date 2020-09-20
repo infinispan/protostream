@@ -10,7 +10,7 @@ public interface TestEnumInitializer extends SerializationContextInitializer {
 class OuterClass {
 
    enum InnerEnum {
-      @ProtoEnumValue(number = 1) OPTION_A,
-      @ProtoEnumValue(number = 2) OPTION_B
+      @ProtoEnumValue(1) OPTION_A,
+      @ProtoEnumValue(2) OPTION_B
    }
 }
