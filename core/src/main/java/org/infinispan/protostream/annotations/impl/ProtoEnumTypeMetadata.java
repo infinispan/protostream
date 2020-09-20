@@ -54,8 +54,9 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
             if (annotation == null) {
                throw new ProtoSchemaBuilderException("Enum constants must have the @ProtoEnumValue annotation: " + getJavaClassName() + '.' + ec.getName());
             }
-            if (membersByNumber.containsKey(annotation.number())) {
-               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + annotation.number() + " on enum constant: " + getJavaClassName() + '.' + ec.getName());
+            int number = getNumber(annotation, ec);
+            if (membersByNumber.containsKey(number)) {
+               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + number + " on enum constant: " + getJavaClassName() + '.' + ec.getName());
             }
             String name = annotation.name();
             if (name.isEmpty()) {
@@ -64,15 +65,25 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
             if (membersByName.containsKey(name)) {
                throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum constant " + name + " on enum constant: " + getJavaClassName() + '.' + ec.getName());
             }
-            ProtoEnumValueMetadata pevm = new ProtoEnumValueMetadata(annotation.number(), name,
+            ProtoEnumValueMetadata pevm = new ProtoEnumValueMetadata(number, name,
                   ec.getOrdinal(), ec.getDeclaringClass().getCanonicalName() + '.' + ec.getName(), ec.getProtoDocs());
-            membersByNumber.put(annotation.number(), pevm);
+            membersByNumber.put(number, pevm);
             membersByName.put(pevm.getProtoName(), pevm);
          }
          if (membersByNumber.isEmpty()) {
             throw new ProtoSchemaBuilderException("Enums without members are not allowed: " + getJavaClassName());
          }
       }
+   }
+
+   private int getNumber(ProtoEnumValue annotation, XEnumConstant ec) {
+      int number = annotation.number();
+      if (number == 0) {
+         number = annotation.value();
+      } else if (annotation.value() != 0) {
+         throw new ProtoSchemaBuilderException("@ProtoEnumValue.number() and value() are mutually exclusive: " + getJavaClassName() + '.' + ec.getName());
+      }
+      return number;
    }
 
    public SortedMap<Integer, ProtoEnumValueMetadata> getMembers() {

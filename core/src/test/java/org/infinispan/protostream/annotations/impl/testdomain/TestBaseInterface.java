@@ -9,8 +9,8 @@ import org.infinispan.protostream.annotations.ProtoField;
 public interface TestBaseInterface {
 
    @ProtoField(number = 7, defaultValue = "33")
-   int getAge();   // todo this should be required by default
+   int getAge();   // TODO when the type is a non-nullable primitive, maybe this should be considered required=true by default if no defaultValue is set?
 
-   @ProtoField(number = 8)
+   @ProtoField(8)
    Integer getHeight();
 }
