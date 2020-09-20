@@ -27,6 +27,7 @@ import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XConstructor;
 import org.infinispan.protostream.annotations.impl.types.XExecutable;
 import org.infinispan.protostream.annotations.impl.types.XField;
+import org.infinispan.protostream.annotations.impl.types.XMember;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.JavaType;
@@ -312,9 +313,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (field.isPrivate()) {
                   throw new ProtoSchemaBuilderException("Private fields cannot be @ProtoField annotated: " + field);
                }
-               if (annotation.number() < 1) {
-                  throw new ProtoSchemaBuilderException("Protobuf field numbers must be greater than 0: " + field);
-               }
+               int number = getNumber(annotation, field);
                String fieldName = annotation.name();
                if (fieldName.isEmpty()) {
                   fieldName = field.getName();
@@ -360,12 +359,12 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
                }
-               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(annotation.number(), fieldName, javaType, collectionImplementation,
+               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(number, fieldName, javaType, collectionImplementation,
                      protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue, field);
 
-               ProtoFieldMetadata existing = fieldsByNumber.get(annotation.number());
+               ProtoFieldMetadata existing = fieldsByNumber.get(number);
                if (existing != null) {
-                  throw new ProtoSchemaBuilderException("Duplicate field number definition. Found two field definitions with number " + annotation.number() + ": in "
+                  throw new ProtoSchemaBuilderException("Duplicate field number definition. Found two field definitions with number " + number + ": in "
                         + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
                existing = fieldsByName.get(fieldMetadata.getName());
@@ -462,9 +461,8 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   }
                   setter = factory == null ? findSetter(propertyName, getterReturnType) : null;
                }
-               if (annotation.number() < 1) {
-                  throw new ProtoSchemaBuilderException("Protobuf field numbers must be greater than 0: " + method);
-               }
+
+               int number = getNumber(annotation, method);
 
                String fieldName = annotation.name();
                if (fieldName.isEmpty()) {
@@ -512,13 +510,13 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
                }
 
-               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(annotation.number(), fieldName, javaType, collectionImplementation,
+               ProtoFieldMetadata fieldMetadata = new ProtoFieldMetadata(number, fieldName, javaType, collectionImplementation,
                      protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue,
                      propertyName, method, getter, setter);
 
-               ProtoFieldMetadata existing = fieldsByNumber.get(annotation.number());
+               ProtoFieldMetadata existing = fieldsByNumber.get(number);
                if (existing != null) {
-                  throw new ProtoSchemaBuilderException("Duplicate field definition. Found two field definitions with number " + annotation.number() + ": in "
+                  throw new ProtoSchemaBuilderException("Duplicate field definition. Found two field definitions with number " + number + ": in "
                         + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
                existing = fieldsByName.get(fieldMetadata.getName());
@@ -528,11 +526,24 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                }
 
                checkReserved(fieldMetadata);
-               fieldsByNumber.put(annotation.number(), fieldMetadata);
+               fieldsByNumber.put(number, fieldMetadata);
                fieldsByName.put(fieldName, fieldMetadata);
             }
          }
       }
+   }
+
+   private int getNumber(ProtoField annotation, XMember member) {
+      int number = annotation.number();
+      if (number == 0) {
+         number = annotation.value();
+      } else if (annotation.value() != 0) {
+         throw new ProtoSchemaBuilderException("@ProtoField.number() and value() are mutually exclusive: " + member);
+      }
+      if (number < 1) {
+         throw new ProtoSchemaBuilderException("Protobuf field numbers specified by @ProtoField.number() or value() must be greater than 0: " + member);
+      }
+      return number;
    }
 
    private void checkReserved(ProtoFieldMetadata fieldMetadata) {

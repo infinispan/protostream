@@ -173,7 +173,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          int field1;
       }
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       AbstractType testField1;
    }
 
@@ -205,7 +205,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       protoSchemaBuilder.fileName("test.proto");
 
       Object msgInstance = new Object() {
-         @ProtoField(number = 1)
+         @ProtoField(1)
          String field1;
       };
 
@@ -227,7 +227,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       class LocalClass {
 
-         @ProtoField(number = 1)
+         @ProtoField(1)
          String field1;
       }
 
@@ -1229,19 +1229,19 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static class MessageWithRepeatedFields {
 
-      @ProtoField(number = 1001)
+      @ProtoField(1001)
       byte[] testField1001;
 
-      @ProtoField(number = 1002)
+      @ProtoField(1002)
       Byte[] testField1002;
 
-      @ProtoField(number = 1003)
+      @ProtoField(1003)
       List<Byte> testField1003;
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       int[] testField1;
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       Integer[] testField2;
 
       static class MyArrayList extends ArrayList {
@@ -1250,10 +1250,10 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       @ProtoField(number = 3, collectionImplementation = MyArrayList.class)
       List<Integer> testField3;
 
-      @ProtoField(number = 4)
+      @ProtoField(4)
       Inner[] testField4;
 
-      @ProtoField(number = 5)
+      @ProtoField(5)
       List<Inner> testField5;
 
       int[] testField6;
@@ -1266,7 +1266,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       List<Inner> testField10;
 
-      @ProtoField(number = 6)
+      @ProtoField(6)
       public int[] getTestField6() {
          return testField6;
       }
@@ -1275,7 +1275,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.testField6 = testField6;
       }
 
-      @ProtoField(number = 7)
+      @ProtoField(7)
       public Integer[] getTestField7() {
          return testField7;
       }
@@ -1284,7 +1284,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.testField7 = testField7;
       }
 
-      @ProtoField(number = 8)
+      @ProtoField(8)
       public List<Integer> getTestField8() {
          return testField8;
       }
@@ -1293,7 +1293,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.testField8 = testField8;
       }
 
-      @ProtoField(number = 9)
+      @ProtoField(9)
       public Inner[] getTestField9() {
          return testField9;
       }
@@ -1302,7 +1302,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.testField9 = testField9;
       }
 
-      @ProtoField(number = 10)
+      @ProtoField(10)
       public List<Inner> getTestField10() {
          return testField10;
       }
@@ -1532,21 +1532,21 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static final class GenericMessage {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       WrappedMessage field1;
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       WrappedMessage field2;
 
-      @ProtoField(number = 3)
+      @ProtoField(3)
       WrappedMessage field3;
 
-      @ProtoField(number = 4)
+      @ProtoField(4)
       WrappedMessage field4;
 
       static final class OtherMessage {
 
-         @ProtoField(number = 1)
+         @ProtoField(1)
          String field1;
 
          @ProtoFactory
@@ -1586,7 +1586,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static final class ListOfBytes {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       List<byte[]> theListOfBytes;
    }
 
@@ -1618,7 +1618,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    static class CustomMap {
 
       static class CustomKey {
-         @ProtoField(number = 1)
+         @ProtoField(1)
          String key;
 
          CustomKey() {
@@ -1644,10 +1644,10 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       static class KVPair {
 
-         @ProtoField(number = 1)
+         @ProtoField(1)
          CustomKey key;
 
-         @ProtoField(number = 2)
+         @ProtoField(2)
          String value;
 
          KVPair() {
@@ -1672,7 +1672,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          return myMap;
       }
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       public List<KVPair> getMapEntries() {
          if (myMap == null) {
             return Collections.emptyList();
@@ -1720,7 +1720,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       private List<OptionalInner> field4;
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       public Optional<String> getField1() {
          return Optional.ofNullable(field1);
       }
@@ -1729,7 +1729,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.field1 = field1;
       }
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       public Optional<OptionalInner> getField2() {
          return Optional.ofNullable(field2);
       }
@@ -1738,7 +1738,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.field2 = field2;
       }
 
-      @ProtoField(number = 3)
+      @ProtoField(3)
       public Optional<OptionalInner[]> getField3() {
          return Optional.ofNullable(field3);
       }
@@ -1747,7 +1747,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.field3 = field3;
       }
 
-      @ProtoField(number = 4)
+      @ProtoField(4)
       public Optional<List<OptionalInner>> getField4() {
          return Optional.ofNullable(field4);
       }
@@ -1758,7 +1758,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       static class OptionalInner {
 
-         @ProtoField(number = 1)
+         @ProtoField(1)
          String theString;
       }
    }
@@ -1789,7 +1789,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static abstract class AbstractMessage {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       String baseField1;
    }
 
@@ -1798,18 +1798,18 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static class OuterMessage1 {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       InnerMessage1 inner;
    }
 
    static class OuterMessage2 {
 
       static class InnerMessage2 extends AbstractMessage {
-         @ProtoField(number = 2)
+         @ProtoField(2)
          String field2;
       }
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       InnerMessage2 inner;
    }
 
@@ -1817,11 +1817,11 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       // this class is nested but not referenced from the outer class or the builder, so it does not get included
       static class InnerMessage3 extends AbstractMessage {
-         @ProtoField(number = 2)
+         @ProtoField(2)
          String field2;
       }
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       String field1;
    }
 

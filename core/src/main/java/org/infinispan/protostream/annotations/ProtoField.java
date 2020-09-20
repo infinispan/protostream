@@ -22,9 +22,14 @@ import org.infinispan.protostream.descriptors.Type;
 public @interface ProtoField {
 
    /**
+    * Alias for {@link #number}.
+    */
+   int value() default 0;
+
+   /**
     * The Protocol Buffers tag number.
     */
-   int number();
+   int number() default 0;
 
    /**
     * The Protobuf type of the field. If not specified, then the field type will be inferred based on the Java property

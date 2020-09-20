@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
  */
 public class TestClass2 {
 
-   @ProtoField(number = 3)
+   @ProtoField(3)
    public String address;
 
    private UnknownFieldSet unknownFieldSet;

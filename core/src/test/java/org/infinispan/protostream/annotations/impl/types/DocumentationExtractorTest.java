@@ -23,7 +23,7 @@ public class DocumentationExtractorTest {
       }
 
       @ProtoDoc("1")
-      @ProtoField(number = 1)
+      @ProtoField(1)
       @ProtoDoc("2")
       public String field2;
 
