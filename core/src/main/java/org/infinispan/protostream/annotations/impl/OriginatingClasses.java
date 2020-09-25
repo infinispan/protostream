@@ -18,7 +18,8 @@ import java.lang.annotation.Target;
 public @interface OriginatingClasses {
 
    /**
-    * Origin class FQNs.
+    * Origin class FQNs. Using strings instead of class literals to avoid resolution of possibly no longer existent
+    * classes during incremental compilation.
     */
    String[] value();
 }
