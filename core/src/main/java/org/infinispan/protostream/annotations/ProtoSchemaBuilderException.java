@@ -8,9 +8,7 @@ import org.infinispan.protostream.annotations.impl.types.XElement;
  *
  * @author anistor@redhat.com
  * @since 3.0
- * @deprecated since 4.3.4. Will be removed in version 5 together with {@link ProtoSchemaBuilder}.
  */
-@Deprecated
 public final class ProtoSchemaBuilderException extends RuntimeException {
 
    private final XElement element;
