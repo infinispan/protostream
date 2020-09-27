@@ -96,7 +96,7 @@ public abstract class BaseProtoSchemaGenerator {
       this.autoImportClasses = autoImportClasses;
    }
 
-   public String generateAndRegister() throws ProtoSchemaBuilderException {
+   public String generateAndRegister() {
       if (!autoImportClasses) {
          // collect supers
          for (XClass c : classes) {
