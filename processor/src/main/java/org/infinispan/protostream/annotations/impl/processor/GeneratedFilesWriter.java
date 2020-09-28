@@ -67,8 +67,8 @@ final class GeneratedFilesWriter {
 
       @Override
       public void write(Filer filer) throws IOException {
-         // check disk contents
-         if (source.equals(getSourceFileContents(filer, className))) {
+         // check disk contents before writing the generated file again to avoid causing needless rebuilds
+         if (checkSourceFileUpToDate(filer, className, source)) {
             return;
          }
 
@@ -116,8 +116,8 @@ final class GeneratedFilesWriter {
 
       @Override
       public void write(Filer filer) throws IOException {
-         // check disk contents
-         if (source.equals(getResourceFileContents(filer, "", fileName))) {
+         // check disk contents before writing the generated file again to avoid causing needless rebuilds
+         if (checkResourceFileUpToDate(filer, fileName, source)) {
             return;
          }
 
@@ -183,50 +183,59 @@ final class GeneratedFilesWriter {
    }
 
    /**
-    * Reads the contents of a generated resource file if it exists.
+    * Checks that a generated resource file exists on disk and the contents matches the expected string.
     *
-    * @param filer        the Filer
-    * @param pkg          package relative to which the file should be searched, or the empty string if none
-    * @param relativeName final pathname components of the file
+    * @param filer    the Filer
+    * @param fileName the file name
     * @return {@code true} if the file exists and contents is as expected, {@code false} otherwise
-    * @throws IOException if there is an I/O error during reading of file contents
     */
-   private static String getResourceFileContents(Filer filer, String pkg, String relativeName) throws IOException {
-      InputStream is;
+   private static boolean checkResourceFileUpToDate(Filer filer, String fileName, String contents) {
       try {
-         is = filer.getResource(StandardLocation.CLASS_OUTPUT, pkg, relativeName).openInputStream();
+         FileObject resourceFile = filer.getResource(StandardLocation.CLASS_OUTPUT, "", fileName);
+         try (InputStream is = resourceFile.openInputStream()) {
+            String existing = readUtf8String(is);
+            return contents.equals(existing);
+         }
       } catch (IOException e) {
-         return null;
-      }
-
-      try {
-         return readUtf8String(is);
-      } finally {
-         is.close();
+         return false;
       }
    }
 
    /**
-    * Reads the contents of a generated source file if it exists.
+    * Checks that a generated source file is up to date: it exists on disk, the contents matches the expected string and
+    * the corresponding class also exists and its timestamp is newer.
     *
     * @param filer     the Filer
     * @param className fully qualified class name
+    * @param contents  the expected contents of the source file
     * @return {@code true} if the file exists and contents is as expected, {@code false} otherwise
-    * @throws IOException if there is an I/O error during reading of file contents
     */
-   private static String getSourceFileContents(Filer filer, String className) throws IOException {
-      InputStream is;
+   private static boolean checkSourceFileUpToDate(Filer filer, String className, String contents) {
+      String fileName = className.replace('.', '/');
+
+      long sourceTimestamp;
       try {
-         is = filer.getResource(StandardLocation.SOURCE_OUTPUT, "", className.replace('.', '/') + ".java").openInputStream();
+         FileObject javaFile = filer.getResource(StandardLocation.SOURCE_OUTPUT, "", fileName + ".java");
+         try (InputStream is = javaFile.openInputStream()) {
+            String existing = readUtf8String(is);
+            if (!contents.equals(existing)) {
+               return false;
+            }
+         }
+         sourceTimestamp = javaFile.getLastModified();
       } catch (IOException e) {
-         return null;
+         return false;
       }
 
+      long classTimestamp;
       try {
-         return readUtf8String(is);
-      } finally {
-         is.close();
+         FileObject classFile = filer.getResource(StandardLocation.CLASS_OUTPUT, "", fileName + ".class");
+         classTimestamp = classFile.getLastModified();
+      } catch (IOException e) {
+         return false;
       }
+
+      return sourceTimestamp <= classTimestamp;
    }
 
    //todo [anistor] we assume that our source/resource files are all UTF-8
