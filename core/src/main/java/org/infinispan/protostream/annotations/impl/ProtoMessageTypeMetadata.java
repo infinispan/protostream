@@ -185,16 +185,17 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          if (factory != null) {
             String[] parameterNames = factory.getParameterNames();
             if (parameterNames.length != fieldsByNumber.size()) {
-               throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. Expected "
-                     + fieldsByNumber.size() + " parameters but found " + parameterNames.length + " : " + factory.toGenericString());
+               throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + (factory instanceof XConstructor ? "constructor" : "static method")
+                     + " signature mismatch. Expected " + fieldsByNumber.size() + " parameters but found "
+                     + parameterNames.length + " : " + factory.toGenericString());
             }
             XClass[] parameterTypes = factory.getParameterTypes();
             for (int i = 0; i < parameterNames.length; i++) {
                String parameterName = parameterNames[i];
                ProtoFieldMetadata fieldMetadata = getFieldByPropertyName(parameterName);
                if (fieldMetadata == null) {
-                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch. The parameter '"
-                        + parameterName + "' does not match any field : " + factory.toGenericString());
+                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + (factory instanceof XConstructor ? "constructor" : "static method")
+                        + " signature mismatch. The parameter '" + parameterName + "' does not match any field : " + factory.toGenericString());
                }
                XClass parameterType = parameterTypes[i];
                boolean paramTypeMismatch = false;
@@ -211,7 +212,8 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   paramTypeMismatch = true;
                }
                if (paramTypeMismatch) {
-                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated static method or constructor signature mismatch: " + factory.toGenericString() + ". The parameter '" + parameterName + "' does not match the field definition.");
+                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + (factory instanceof XConstructor ? "constructor" : "static method")
+                        + " signature mismatch: " + factory.toGenericString() + ". The parameter '" + parameterName + "' does not match the field definition.");
                }
             }
          }
@@ -429,7 +431,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   if (method.getName().startsWith("set") && method.getName().length() >= 4) {
                      propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
                   } else {
-                     // not a standard java-beans setter
+                     // not a standard java-beans setter, use the whole name as property name
                      propertyName = method.getName();
                   }
                   if (method.getParameterTypes().length != 1) {

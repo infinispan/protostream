@@ -957,7 +957,7 @@ public class AutoProtoSchemaBuilderTest {
       byte r;
 
       //@ProtoField(number = 1, defaultValue = "1")
-      public void setR(byte r) {
+      void setR(byte r) {
          this.r = r;
       }
 
@@ -966,25 +966,18 @@ public class AutoProtoSchemaBuilderTest {
       byte[] b;
 
       @ProtoField(number = 12, defaultValue = "12")
-      List<Integer> i;
+      final List<Integer> i;
 
       @ProtoField(number = 13, defaultValue = "13")
-      int[] j;
+      final int[] j;
 
-      public void setG(byte g) {
+      @ProtoField(number = 2, defaultValue = "2")
+      void setG(byte g) {
          this.g = g;
       }
 
-      public void setB(byte[] b) {
+      void setB(byte[] b) {
          this.b = b;
-      }
-
-      public void setI(List<Integer> i) {
-         this.i = i;
-      }
-
-      public void setJ(int[] j) {
-         this.j = j;
       }
 
       private ImmutableColor(byte r, byte g, byte[] b, List<Integer> i, int[] j) {
@@ -1004,7 +997,6 @@ public class AutoProtoSchemaBuilderTest {
          return new ImmutableColor(r, g, b, i, j);
       }
 
-      @ProtoField(number = 2, defaultValue = "2")
       byte getG() {
          return g;
       }
