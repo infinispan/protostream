@@ -1443,7 +1443,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       byte r;
 
       //@ProtoField(number = 1, defaultValue = "1")
-      public void setR(byte r) {
+      void setR(byte r) {
          this.r = r;
       }
 
@@ -1452,18 +1452,10 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       byte[] b;
 
       @ProtoField(number = 12, defaultValue = "12")
-      int[] i;
+      final int[] i;
 
       @ProtoField(number = 13, defaultValue = "13")
-      public List<Integer> li;
-
-      public List<Integer> getLi() {
-         return li;
-      }
-
-      public void setLi(List<Integer> li) {
-         this.li = li;
-      }
+      final List<Integer> li;
 
       //@ProtoFactory
       ImmutableColor(byte r, byte g, byte[] b, int[] i, ArrayList<Integer> li) {
@@ -1471,6 +1463,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          this.g = g;
          this.b = b;
          this.i = i;
+         this.li = li;
       }
 
       @ProtoFactory
@@ -1478,9 +1471,13 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          return new ImmutableColor(r, g, b, i, (ArrayList<Integer>) li);
       }
 
-      @ProtoField(number = 2, defaultValue = "2")
       byte getG() {
          return g;
+      }
+
+      @ProtoField(number = 2, defaultValue = "2")
+      void setG(byte g) {
+         this.g = g;
       }
 
       @ProtoField(number = 3, defaultValue = "3")

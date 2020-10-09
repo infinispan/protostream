@@ -290,14 +290,31 @@ public final class ReflectionClassFactory implements XTypeFactory {
 
       @Override
       public XMethod getMethod(String methodName, XClass... xArgTypes) {
-         Class<?>[] argTypes = argsAsClass(xArgTypes);
-         Method method;
+         Method method = findMethod(clazz , methodName, argsAsClass(xArgTypes));
+         return method == null ? null : cacheMethod(method);
+      }
+
+      /**
+       * Finds a method given its name and argument types in this class, superclass and all superinterfaces.
+       */
+      private Method findMethod(Class<?> clazz, String methodName, Class<?>[] argTypes) {
+         Method method = null;
          try {
-            method = clazz.getMethod(methodName, argTypes);
+            method = clazz.getDeclaredMethod(methodName, argTypes);
          } catch (NoSuchMethodException e) {
-            return null;
+            if (clazz.getSuperclass() != null) {
+               method = findMethod(clazz.getSuperclass(), methodName, argTypes);
+            }
+            if (method == null) {
+               for (Class<?> i : clazz.getInterfaces()) {
+                  method = findMethod(i, methodName, argTypes);
+                  if (method != null) {
+                     break;
+                  }
+               }
+            }
          }
-         return cacheMethod(method);
+         return method;
       }
 
       private Class<?>[] argsAsClass(XClass[] xArgTypes) {
