@@ -45,7 +45,7 @@ final class Mappers {
    public static final ListMapper<MessageElement, Descriptor> MESSAGE_LIST_MAPPER = ListMapper.forMapper(MESSAGE_TYPE_MAPPER);
    public static final ListMapper<OptionElement, Option> OPTION_LIST_MAPPER = ListMapper.forMapper(OPTION_MAPPER);
 
-   @SuppressWarnings(value = "unchecked")
+   @SuppressWarnings("unchecked")
    static <T> List<T> filter(List<? super T> input, Class<T> ofType) {
       List<T> ts = new LinkedList<>();
       for (Object elem : input) {

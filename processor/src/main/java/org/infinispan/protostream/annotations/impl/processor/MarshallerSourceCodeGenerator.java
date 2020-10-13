@@ -154,7 +154,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
          fqn = marshallerClassName;
       }
       AutoProtoSchemaBuilderAnnotationProcessor.addGeneratedClassHeader(iw, true, pmtm.getJavaClassName());
-      iw.append("@SuppressWarnings(\"unchecked\")\n");
+      iw.append("@SuppressWarnings(\"all\")\n");
       iw.append("public final class ").append(marshallerClassName)
             .append(" extends ").append(GeneratedMarshallerBase.class.getName())
             .append(" implements ").append(RawProtobufMarshaller.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>')
