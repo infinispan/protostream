@@ -435,9 +435,6 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   if (method.getParameterTypes().length != 1) {
                      throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                   }
-                  if (factory != null) {
-                     throw new ProtoSchemaBuilderException("Setter methods should not be annotated with @ProtoField when @ProtoFactory is used by a class: " + method);
-                  }
                   setter = method;
                   getter = findGetter(propertyName, method.getParameterTypes()[0]);
                   getterReturnType = getter.getReturnType();
