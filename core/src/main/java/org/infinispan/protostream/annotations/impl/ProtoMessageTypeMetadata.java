@@ -532,7 +532,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
    }
 
-   private int getNumber(ProtoField annotation, XMember member) {
+   private static int getNumber(ProtoField annotation, XMember member) {
       int number = annotation.number();
       if (number == 0) {
          number = annotation.value();
@@ -545,9 +545,9 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return number;
    }
 
-   private void checkReserved(ProtoFieldMetadata fieldMetadata) {
+   private static void checkReserved(ProtoFieldMetadata fieldMetadata) {
       if (fieldMetadata.getNumber() >= 19000 && fieldMetadata.getNumber() <= 19999) {
-         throw new ProtoSchemaBuilderException("Protobuf field numbers 19000 through 19999 are reserved for internal use: "
+         throw new ProtoSchemaBuilderException("Field numbers 19000 through 19999 are reserved for internal use by the protobuf specification: "
                + fieldMetadata.getLocation());
       }
       // TODO [anistor] IPROTO-98 also check reserved numbers and names
@@ -681,7 +681,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return baos.toByteArray();
    }
 
-   private long parseLong(String value) {
+   private static long parseLong(String value) {
       if (value == null) {
          throw new IllegalArgumentException("value argument cannot be null");
       }
@@ -717,7 +717,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
    }
 
-   private int parseInt(String value) {
+   private static int parseInt(String value) {
       if (value == null) {
          throw new IllegalArgumentException("value argument cannot be null");
       }
@@ -915,7 +915,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
       if (getter == null) {
          throw new ProtoSchemaBuilderException("No getter method found for property '" + propertyName
-               + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
+               + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName());
       }
       XClass returnType = getter.getReturnType();
       if (returnType == typeFactory.fromClass(Optional.class)) {
@@ -923,7 +923,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
       if (returnType != propertyType) {
          throw new ProtoSchemaBuilderException("No suitable getter method found for property '" + propertyName
-               + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
+               + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName()
                + ". The candidate method does not have a suitable return type: " + getter);
       }
       return getter;
@@ -939,11 +939,11 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
       if (setter == null) {
          throw new ProtoSchemaBuilderException("No setter method found for property '" + propertyName
-               + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName());
+               + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName());
       }
       if (setter.getReturnType() != typeFactory.fromClass(void.class)) {
          throw new ProtoSchemaBuilderException("No suitable setter method found for property '" + propertyName
-               + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
+               + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName()
                + ". The candidate method does not have a suitable return type: " + setter);
       }
       return setter;
