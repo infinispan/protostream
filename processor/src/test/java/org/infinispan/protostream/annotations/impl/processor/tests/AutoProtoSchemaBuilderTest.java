@@ -1007,6 +1007,7 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
+   // TODO [anistor] print a huge warning for not annotated classes and an indication that it can be turned off by at least adding @ProtoName
    @AutoProtoSchemaBuilder(includeClasses = {RGBColor.class, ImmutableColor.class})
    interface ImmutableMessageTestInitializer extends GeneratedSchema {
    }

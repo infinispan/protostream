@@ -97,16 +97,14 @@ public abstract class BaseProtoSchemaGenerator {
    }
 
    public String generateAndRegister() {
-      if (!autoImportClasses) {
-         // collect supers
-         for (XClass c : classes) {
-            collectKnownClasses(c);
-         }
+      // collect supers
+      for (XClass c : classes) {
+         collectKnownClasses(c);
       }
 
       // scan initial classes
       for (XClass c : classes) {
-         defineMetadata(makeProtoTypeMetadata(c));
+         collectMetadata(makeTypeMetadata(c));
       }
 
       // scan member annotations and possibly discover more classes being referenced
@@ -197,7 +195,7 @@ public abstract class BaseProtoSchemaGenerator {
    }
 
    private void generateMarshallers() throws Exception {
-      AbstractMarshallerCodeGenerator marshallerCodeGenerator = makeCodeGenerator();
+      AbstractMarshallerCodeGenerator marshallerCodeGenerator = makeMarshallerCodeGenerator();
       for (XClass c : metadataByClass.keySet()) {
          ProtoTypeMetadata ptm = metadataByClass.get(c);
          if (!ptm.isImported()) {
@@ -216,7 +214,7 @@ public abstract class BaseProtoSchemaGenerator {
    /**
     * Creates a code generator for marshallers.
     */
-   protected abstract AbstractMarshallerCodeGenerator makeCodeGenerator();
+   protected abstract AbstractMarshallerCodeGenerator makeMarshallerCodeGenerator();
 
    protected ProtoTypeMetadata scanAnnotations(XClass javaType) {
       ProtoTypeMetadata protoTypeMetadata = metadataByClass.get(javaType);
@@ -233,10 +231,10 @@ public abstract class BaseProtoSchemaGenerator {
          imports.add(protoTypeMetadata.getFileName());
       } else {
          // nope, we need to generate it
-         protoTypeMetadata = makeProtoTypeMetadata(javaType);
+         protoTypeMetadata = makeTypeMetadata(javaType);
       }
 
-      defineMetadata(protoTypeMetadata);
+      collectMetadata(protoTypeMetadata);
 
       return protoTypeMetadata;
    }
@@ -246,18 +244,26 @@ public abstract class BaseProtoSchemaGenerator {
     */
    protected abstract ProtoTypeMetadata importProtoTypeMetadata(XClass javaType);
 
-   protected ProtoTypeMetadata makeProtoTypeMetadata(XClass javaType) {
-      return javaType.isEnum() ? new ProtoEnumTypeMetadata(javaType) : new ProtoMessageTypeMetadata(this, javaType);
+   protected ProtoTypeMetadata makeTypeMetadata(XClass javaType) {
+      return javaType.isEnum() ? makeEnumTypeMetadata(javaType) : makeMessageTypeMetadata(javaType);
    }
 
-   private void defineMetadata(ProtoTypeMetadata protoTypeMetadata) {
+   protected ProtoTypeMetadata makeEnumTypeMetadata(XClass javaType) {
+      return new ProtoEnumTypeMetadata(javaType);
+   }
+
+   protected ProtoTypeMetadata makeMessageTypeMetadata(XClass javaType) {
+      return new ProtoMessageTypeMetadata(this, javaType);
+   }
+
+   private void collectMetadata(ProtoTypeMetadata protoTypeMetadata) {
       boolean isUnknownClass = isUnknownClass(protoTypeMetadata.getJavaClass());
 
       if (isUnknownClass && !autoImportClasses && !protoTypeMetadata.isImported()) {
          // autoImportClasses is off and we are attempting expanding the class set -> NOPE!
          throw new ProtoSchemaBuilderException("Found a reference to class "
                + protoTypeMetadata.getJavaClassName()
-               + " which was not explicitly added to the builder and 'autoImportClasses' is disabled.");
+               + " which was not added to the builder and 'autoImportClasses' is disabled.");
       }
 
       String fullName = protoTypeMetadata.getFullName();

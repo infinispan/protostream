@@ -15,8 +15,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import javax.lang.model.type.MirroredTypeException;
-
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
@@ -41,13 +39,13 @@ import org.infinispan.protostream.impl.Log;
  * @author anistor@redhat.com
  * @since 3.0
  */
-public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
+public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private static final Log log = Log.LogFactory.getLog(ProtoMessageTypeMetadata.class);
 
    private final BaseProtoSchemaGenerator protoSchemaGenerator;
 
-   private final XTypeFactory typeFactory;
+   protected final XTypeFactory typeFactory;
 
    private SortedMap<Integer, ProtoFieldMetadata> fieldsByNumber = null;
 
@@ -63,24 +61,24 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final Map<XClass, ProtoTypeMetadata> innerTypes = new HashMap<>();
 
-   ProtoMessageTypeMetadata(BaseProtoSchemaGenerator protoSchemaGenerator, XClass messageClass) {
-      super(getProtoName(messageClass), messageClass);
+   protected ProtoMessageTypeMetadata(BaseProtoSchemaGenerator protoSchemaGenerator, XClass annotatedClass) {
+      super(getProtoName(annotatedClass), annotatedClass);
       this.protoSchemaGenerator = protoSchemaGenerator;
-      this.typeFactory = messageClass.getFactory();
+      this.typeFactory = annotatedClass.getFactory();
 
       checkInstantiability();
    }
 
-   private static String getProtoName(XClass messageClass) {
-      ProtoName annotation = messageClass.getAnnotation(ProtoName.class);
-      ProtoMessage protoMessageAnnotation = messageClass.getAnnotation(ProtoMessage.class);
+   private static String getProtoName(XClass annotatedClass) {
+      ProtoName annotation = annotatedClass.getAnnotation(ProtoName.class);
+      ProtoMessage protoMessageAnnotation = annotatedClass.getAnnotation(ProtoMessage.class);
       if (annotation != null) {
          if (protoMessageAnnotation != null) {
-            throw new ProtoSchemaBuilderException("@ProtoMessage annotation cannot be used together with @ProtoName: " + messageClass.getName());
+            throw new ProtoSchemaBuilderException("@ProtoMessage annotation cannot be used together with @ProtoName: " + annotatedClass.getName());
          }
-         return annotation.value().isEmpty() ? messageClass.getSimpleName() : annotation.value();
+         return annotation.value().isEmpty() ? annotatedClass.getSimpleName() : annotation.value();
       }
-      return protoMessageAnnotation == null || protoMessageAnnotation.name().isEmpty() ? messageClass.getSimpleName() : protoMessageAnnotation.name();
+      return protoMessageAnnotation == null || protoMessageAnnotation.name().isEmpty() ? annotatedClass.getSimpleName() : protoMessageAnnotation.name();
    }
 
    public XExecutable getFactory() {
@@ -157,13 +155,13 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
-   public boolean isEnum() {
+   public final boolean isEnum() {
       return false;
    }
 
    @Override
-   public ProtoEnumValueMetadata getEnumMemberByName(String name) {
-      throw new IllegalStateException(javaClass.getCanonicalName() + " is not an enum");
+   public final ProtoEnumValueMetadata getEnumMemberByName(String name) {
+      throw new IllegalStateException(getJavaClassName() + " is not an enum");
    }
 
    @Override
@@ -178,14 +176,16 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
          discoverFields(javaClass, new HashSet<>());
          if (fieldsByNumber.isEmpty()) {
+            // TODO [anistor] remove the "The class should be either annotated or it should have a custom marshaller" part after MessageMarshaller is removed in 5
             log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", javaClass.getCanonicalName());
          }
 
          // If we have a factory method / constructor, we must ensure its parameters match the declared fields
          if (factory != null) {
             String[] parameterNames = factory.getParameterNames();
+            String factoryKind = factory instanceof XConstructor ? "constructor" : (factory.isStatic() ? "static method" : "method");
             if (parameterNames.length != fieldsByNumber.size()) {
-               throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + (factory instanceof XConstructor ? "constructor" : "static method")
+               throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
                      + " signature mismatch. Expected " + fieldsByNumber.size() + " parameters but found "
                      + parameterNames.length + " : " + factory.toGenericString());
             }
@@ -194,8 +194,9 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                String parameterName = parameterNames[i];
                ProtoFieldMetadata fieldMetadata = getFieldByPropertyName(parameterName);
                if (fieldMetadata == null) {
-                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + (factory instanceof XConstructor ? "constructor" : "static method")
-                        + " signature mismatch. The parameter '" + parameterName + "' does not match any field : " + factory.toGenericString());
+                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
+                        + " signature mismatch. The parameter '" + parameterName
+                        + "' does not match any field : " + factory.toGenericString());
                }
                XClass parameterType = parameterTypes[i];
                boolean paramTypeMismatch = false;
@@ -212,8 +213,9 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   paramTypeMismatch = true;
                }
                if (paramTypeMismatch) {
-                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + (factory instanceof XConstructor ? "constructor" : "static method")
-                        + " signature mismatch: " + factory.toGenericString() + ". The parameter '" + parameterName + "' does not match the field definition.");
+                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
+                        + " signature mismatch: " + factory.toGenericString() + ". The parameter '"
+                        + parameterName + "' does not match the field definition.");
                }
             }
          }
@@ -257,6 +259,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             factory = c;
          }
       }
+
       for (XMethod m : javaClass.getDeclaredMethods()) {
          if (m.getAnnotation(ProtoFactory.class) != null) {
             if (factory != null) {
@@ -390,7 +393,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             String propertyName;
             if (method.getReturnType() == typeFactory.fromClass(void.class)) {
                // this method is expected to be a setter
-               if (method.getName().startsWith("set") && method.getName().length() >= 4) {
+               if (method.getName().startsWith("set") && method.getName().length() > 3) {
                   propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
                } else {
                   throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
@@ -398,17 +401,22 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (method.getParameterTypes().length != 1) {
                   throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                }
+               //TODO [anistor] also check setter args
                unknownFieldSetSetter = method;
                unknownFieldSetGetter = findGetter(propertyName, method.getParameterTypes()[0]);
             } else {
                // this method is expected to be a getter
-               if (method.getName().startsWith("get") && method.getName().length() >= 4) {
+               if (method.getName().startsWith("get") && method.getName().length() > 3) {
                   propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
-               } else if (method.getName().startsWith("is") && method.getName().length() >= 3) {
+               } else if (method.getName().startsWith("is") && method.getName().length() > 2) {
                   propertyName = Character.toLowerCase(method.getName().charAt(2)) + method.getName().substring(3);
                } else {
                   throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
                }
+               if (method.getParameterTypes().length != 0) {
+                  throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
+               }
+               //TODO [anistor] also check getter args
                unknownFieldSetGetter = method;
                unknownFieldSetSetter = findSetter(propertyName, unknownFieldSetGetter.getReturnType());
             }
@@ -437,6 +445,7 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   if (method.getParameterTypes().length != 1) {
                      throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                   }
+                  //TODO [anistor] also check setter args
                   setter = method;
                   getter = findGetter(propertyName, method.getParameterTypes()[0]);
                   getterReturnType = getter.getReturnType();
@@ -453,6 +462,10 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                      // not a standard java-beans getter
                      propertyName = method.getName();
                   }
+                  if (method.getParameterTypes().length != 0) {
+                     throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
+                  }
+                  //TODO [anistor] also check getter args
                   getter = method;
                   getterReturnType = getter.getReturnType();
                   if (getterReturnType == typeFactory.fromClass(Optional.class)) {
@@ -553,20 +566,12 @@ public final class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       // TODO [anistor] IPROTO-98 also check reserved numbers and names
    }
 
-   private XClass getCollectionImplementationFromAnnotation(ProtoField annotation) {
-      try {
-         return typeFactory.fromClass(annotation.collectionImplementation());
-      } catch (MirroredTypeException e) {
-         return typeFactory.fromTypeMirror(e.getTypeMirror());
-      }
+   protected XClass getCollectionImplementationFromAnnotation(ProtoField annotation) {
+      return typeFactory.fromClass(annotation.collectionImplementation());
    }
 
-   private XClass getJavaTypeFromAnnotation(ProtoField annotation) {
-      try {
-         return typeFactory.fromClass(annotation.javaType());
-      } catch (MirroredTypeException e) {
-         return typeFactory.fromTypeMirror(e.getTypeMirror());
-      }
+   protected XClass getJavaTypeFromAnnotation(ProtoField annotation) {
+      return typeFactory.fromClass(annotation.javaType());
    }
 
    /**

@@ -1,4 +1,4 @@
-package org.infinispan.protostream.annotations.impl;
+package org.infinispan.protostream.annotations.impl.processor;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,18 +11,18 @@ import java.lang.annotation.Target;
  * by users. Its retention policy makes it unavailable at runtime.
  *
  * @author anistor@redhat.com
- * @since 4.3
- * @deprecated this was replaced by org.infinispan.protostream.annotations.impl.processor.OriginatingClasses
- * and it was not removed yet to prevent binary compat issues but will be removed in 4.4
+ * @since 4.3.5
  */
-@Deprecated
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.SOURCE)
 public @interface OriginatingClasses {
 
    /**
-    * Origin class FQNs. Using strings instead of class literals to avoid resolution of possibly no longer existent
-    * classes during incremental compilation.
+    * Origin classes. Do not use {@link javax.lang.model.element.Element#getAnnotation(Class)} to access this.
+    * Use {@link javax.lang.model.element.Element#getAnnotationMirrors()} instead, to avoid resolution of possibly
+    * no longer existent classes during incremental compilation and prevent issues with javac failing miserably with
+    * a completely unrelated ClassCastException in such cases.
     */
-   String[] value();
+   @SuppressWarnings("unused")
+   Class<?>[] value();
 }

@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.lang.model.type.TypeMirror;
-
 import org.infinispan.protostream.annotations.ProtoDoc;
 
 /**
@@ -47,36 +45,31 @@ public final class ReflectionClassFactory implements XTypeFactory {
       return xclass;
    }
 
-   @Override
-   public XClass fromTypeMirror(TypeMirror typeMirror) {
-      throw new UnsupportedOperationException("javax.lang.model.type.TypeMirror is only supported when processing annotations at compile time.");
-   }
-
    private static Class<?> determineCollectionElementType(Type genericType) {
       if (genericType instanceof ParameterizedType) {
          Type[] actualTypeArguments = ((ParameterizedType) genericType).getActualTypeArguments();
          if (actualTypeArguments.length == 1) {
             Type typeArg = actualTypeArguments[0];
             if (typeArg instanceof Class) {
-               return (Class) typeArg;
+               return (Class<?>) typeArg;
             }
             if (typeArg instanceof TypeVariable) {
-               return (Class<?>) ((TypeVariable) typeArg).getBounds()[0];
+               return (Class<?>) ((TypeVariable<?>) typeArg).getBounds()[0];
             }
-            return (Class) ((ParameterizedType) typeArg).getRawType();
+            return (Class<?>) ((ParameterizedType) typeArg).getRawType();
          }
       } else if (genericType instanceof Class) {
-         Class c = (Class) genericType;
+         Class<?> c = (Class<?>) genericType;
          if (c.getGenericSuperclass() != null && Collection.class.isAssignableFrom(c.getSuperclass())) {
-            Class x = determineCollectionElementType(c.getGenericSuperclass());
+            Class<?> x = determineCollectionElementType(c.getGenericSuperclass());
             if (x != null) {
                return x;
             }
          }
          for (Type t : c.getGenericInterfaces()) {
             if (t instanceof Class && Collection.class.isAssignableFrom((Class<?>) t)
-                  || t instanceof ParameterizedType && Collection.class.isAssignableFrom((Class) ((ParameterizedType) t).getRawType())) {
-               Class x = determineCollectionElementType(t);
+                  || t instanceof ParameterizedType && Collection.class.isAssignableFrom((Class<?>) ((ParameterizedType) t).getRawType())) {
+               Class<?> x = determineCollectionElementType(t);
                if (x != null) {
                   return x;
                }
@@ -92,7 +85,7 @@ public final class ReflectionClassFactory implements XTypeFactory {
 
       private final Map<Field, ReflectionEnumConstant> enumConstants;
 
-      private final Map<Constructor, ReflectionConstructor> constructorCache = new HashMap<>();
+      private final Map<Constructor<?>, ReflectionConstructor> constructorCache = new HashMap<>();
 
       private final Map<Method, ReflectionMethod> methodCache = new HashMap<>();
 
@@ -273,7 +266,7 @@ public final class ReflectionClassFactory implements XTypeFactory {
       @Override
       public Iterable<? extends XConstructor> getDeclaredConstructors() {
          List<XConstructor> constructors = new ArrayList<>();
-         for (Constructor c : clazz.getDeclaredConstructors()) {
+         for (Constructor<?> c : clazz.getDeclaredConstructors()) {
             constructors.add(cacheConstructor(c));
          }
          return constructors;
@@ -463,7 +456,7 @@ public final class ReflectionClassFactory implements XTypeFactory {
          if (t instanceof ParameterizedType) {
             t = ((ParameterizedType) t).getRawType();
          }
-         return (Class) t;
+         return (Class<?>) t;
       }
 
       private Type unwrapOptionalReturnTypeGeneric() {

@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
  * @author anistor@redhat.com
  * @since 4.3
  */
-final class AnnotationBasedImportedProtoTypeMetadata extends ProtoTypeMetadata {
+final class CompileTimeImportedProtoTypeMetadata extends ProtoTypeMetadata {
 
    private final ProtoTypeMetadata protoTypeMetadata;
 
@@ -25,7 +25,7 @@ final class AnnotationBasedImportedProtoTypeMetadata extends ProtoTypeMetadata {
     */
    private final String fullName;
 
-   AnnotationBasedImportedProtoTypeMetadata(ProtoTypeMetadata protoTypeMetadata, String packageName, String fileName) {
+   CompileTimeImportedProtoTypeMetadata(ProtoTypeMetadata protoTypeMetadata, String packageName, String fileName) {
       super(protoTypeMetadata.getName(), protoTypeMetadata.getJavaClass());
       this.protoTypeMetadata = protoTypeMetadata;
       this.fileName = fileName;

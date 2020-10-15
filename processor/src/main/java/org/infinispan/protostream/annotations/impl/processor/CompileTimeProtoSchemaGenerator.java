@@ -38,8 +38,13 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    }
 
    @Override
-   protected AbstractMarshallerCodeGenerator makeCodeGenerator() {
+   protected AbstractMarshallerCodeGenerator makeMarshallerCodeGenerator() {
       return marshallerSourceCodeGenerator;
+   }
+
+   @Override
+   protected ProtoTypeMetadata makeMessageTypeMetadata(XClass javaType) {
+      return new CompileTimeProtoMessageTypeMetadata(this, javaType);
    }
 
    @Override
@@ -53,7 +58,7 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
       String fileName = dependencies.get(javaType);
       if (fileName != null) {
          String packageName = serializationContext.getFileDescriptors().get(fileName).getPackage();
-         return new AnnotationBasedImportedProtoTypeMetadata(makeProtoTypeMetadata(javaType), packageName, fileName);
+         return new CompileTimeImportedProtoTypeMetadata(makeTypeMetadata(javaType), packageName, fileName);
       }
       return null;
    }
