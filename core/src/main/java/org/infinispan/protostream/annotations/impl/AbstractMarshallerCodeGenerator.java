@@ -175,9 +175,11 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.append("{\n");
       iw.inc();
 
-      final boolean isMutableMessage = messageTypeMetadata.getFactory() == null;
-      if (isMutableMessage) {
-         iw.append("final ").append(messageTypeMetadata.getJavaClassName()).append(" o = new ").append(messageTypeMetadata.getJavaClassName()).append("();\n");
+      // if there is no factory then the class must have setters or the fields should be directly accessible and not be final
+      final boolean hasWritableProperties = messageTypeMetadata.getFactory() == null;
+      if (hasWritableProperties) {
+         iw.append("final ").append(messageTypeMetadata.getJavaClassName())
+               .append(" o = new ").append(messageTypeMetadata.getJavaClassName()).append("();\n");
       }
 
       // number of fields that are required and do not have a default value
@@ -193,7 +195,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             mandatoryFields++;
          }
 
-         if (fieldMetadata.isRequired() || fieldMetadata.getDefaultValue() != null && (isMutableMessage || fieldMetadata.isRepeated() || fieldMetadata.getProtobufType() == Type.BYTES)) {
+         if (fieldMetadata.isRequired() || fieldMetadata.getDefaultValue() != null && (hasWritableProperties || fieldMetadata.isRepeated() || fieldMetadata.getProtobufType() == Type.BYTES)) {
             int trackedFieldsSize = trackedFields.size();
             if (trackedFieldsSize % 64 == 0) {
                // declare a long variable to emulate a bitset in a long
@@ -213,7 +215,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                iw.append("new ").append(fieldMetadata.getCollectionImplementation().getCanonicalName()).append("()");
             }
             iw.append(";\n");
-            if (!isMutableMessage && fieldMetadata.isArray()) {
+            if (!hasWritableProperties && fieldMetadata.isArray()) {
                // an array local variable
                iw.append(fieldMetadata.getJavaTypeName()).append("[] ").append(makeArrayLocalVar(fieldMetadata)).append(" = ");
                if (noDefaults) {
@@ -223,7 +225,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                }
                iw.append(";\n");
             }
-         } else if (!isMutableMessage) {
+         } else if (!hasWritableProperties) {
             // immutable messages need a per-field local variable initialized to default value if any
             iw.append(fieldMetadata.getJavaTypeName()).append(' ').append(makeFieldLocalVar(fieldMetadata));
             Object defaultValue = fieldMetadata.getDefaultValue();
@@ -278,7 +280,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             case SFIXED64:
             case SINT32:
             case SINT64:
-               if (isMutableMessage || fieldMetadata.isRepeated()) {
+               if (hasWritableProperties || fieldMetadata.isRepeated()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');
                }
                iw.append(v).append(" = ").append(box(convert("$2." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata), fieldMetadata.getJavaType())).append(";\n");
@@ -286,7 +288,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                break;
             case GROUP:
                initMarshallerDelegateField(iw, fieldMetadata);
-               if (isMutableMessage || fieldMetadata.isRepeated()) {
+               if (hasWritableProperties || fieldMetadata.isRepeated()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');
                }
                iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2);\n");
@@ -297,7 +299,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                initMarshallerDelegateField(iw, fieldMetadata);
                iw.append("int length = $2.readRawVarint32();\n");
                iw.append("int oldLimit = $2.pushLimit(length);\n");
-               if (isMutableMessage || fieldMetadata.isRepeated()) {
+               if (hasWritableProperties || fieldMetadata.isRepeated()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');
                }
                iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(makeMarshallerDelegateFieldName(fieldMetadata)).append(", $2);\n");
@@ -308,7 +310,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             case ENUM:
                initMarshallerDelegateField(iw, fieldMetadata);
                iw.append("int enumVal = $2.readEnum();\n");
-               if (isMutableMessage || fieldMetadata.isRepeated()) {
+               if (hasWritableProperties || fieldMetadata.isRepeated()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');
                }
                iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") ((").append(PROTOSTREAM_PACKAGE).append(".EnumMarshaller) $1.getMarshaller(").append(fieldMetadata.getJavaTypeName()).append(".class)).decode(enumVal);\n");
@@ -351,7 +353,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       }
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          Object defaultValue = fieldMetadata.getDefaultValue();
-         if (defaultValue != null && (isMutableMessage || fieldMetadata.isRepeated() || fieldMetadata.getProtobufType() == Type.BYTES)) {
+         if (defaultValue != null && (hasWritableProperties || fieldMetadata.isRepeated() || fieldMetadata.getProtobufType() == Type.BYTES)) {
             iw.append("if ").append(makeTestFieldWasNotSet(fieldMetadata, trackedFields)).append(" {\n");
             iw.inc();
             String val = toJavaLiteral(defaultValue, fieldMetadata.getJavaType());
@@ -362,7 +364,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                }
                iw.append(c).append(".add(").append(box(val, typeFactory.fromClass(defaultValue.getClass()))).append(");\n");
             } else {
-               if (isMutableMessage) {
+               if (hasWritableProperties) {
                   iw.append("o.").append(createSetPropExpr(fieldMetadata, box(val, fieldMetadata.getJavaType()))).append(";\n");
                } else {
                   iw.append(makeFieldLocalVar(fieldMetadata)).append(" = ").append(box(val, fieldMetadata.getJavaType())).append(";\n");
@@ -383,7 +385,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                iw.append("{\n").inc();
                String a = makeArrayLocalVar(fieldMetadata);
                if (fieldMetadata.getJavaType().isPrimitive()) {
-                  if (isMutableMessage) {
+                  if (hasWritableProperties) {
                      iw.append(fieldMetadata.getJavaTypeName()).append("[] ");
                   }
                   iw.append(a).append(" = new ").append(fieldMetadata.getJavaTypeName()).append("[").append(c).append(".size()];\n");
@@ -394,7 +396,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                   c = "(" + fieldMetadata.getJavaTypeName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaTypeName() + "[0])";
                }
             }
-            if (isMutableMessage) {
+            if (hasWritableProperties) {
                iw.append("o.").append(createSetPropExpr(fieldMetadata, c)).append(";\n");
             } else if (fieldMetadata.isArray() && !fieldMetadata.getJavaType().isPrimitive()) {
                iw.append(makeArrayLocalVar(fieldMetadata)).append(" = ").append(c).append(";\n");
@@ -404,7 +406,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                if (!noDefaults && fieldMetadata.getDefaultValue() == null) {
                   c = "new " + fieldMetadata.getJavaTypeName() + "[0]";
                   iw.append(" else {\n").inc();
-                  if (isMutableMessage) {
+                  if (hasWritableProperties) {
                      iw.append("o.").append(createSetPropExpr(fieldMetadata, c)).append(";\n");
                   } else {
                      iw.append(makeArrayLocalVar(fieldMetadata)).append(" = ").append(c).append(";\n");
@@ -446,7 +448,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          iw.append("}\n");
       }
 
-      if (isMutableMessage) {
+      if (hasWritableProperties) {
          // return the instance
          iw.append("return o;\n");
       } else {

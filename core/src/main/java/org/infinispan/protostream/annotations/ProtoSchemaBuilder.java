@@ -110,7 +110,7 @@ public final class ProtoSchemaBuilder {
       String[] marshallers = cmd.getOptionValues(MARSHALLER_LONG_OPT);
       if (marshallers != null) {
          for (String marshallerClass : marshallers) {
-            BaseMarshaller<?> bm = (BaseMarshaller) Class.forName(marshallerClass).newInstance();
+            BaseMarshaller<?> bm = (BaseMarshaller<?>) Class.forName(marshallerClass).newInstance();
             ctx.registerMarshaller(bm);
          }
       }

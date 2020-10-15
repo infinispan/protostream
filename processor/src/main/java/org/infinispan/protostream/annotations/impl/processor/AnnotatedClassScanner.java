@@ -4,22 +4,29 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.QualifiedNameable;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.MirroredTypesException;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
@@ -30,8 +37,9 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.protostream.annotations.impl.OriginatingClasses;
+import org.infinispan.protostream.annotations.impl.processor.types.MirrorClassFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.impl.Log;
 
 /**
  * Discovers the classes to process based on the package and class filter specified in the {@link AutoProtoSchemaBuilder}
@@ -42,6 +50,8 @@ import org.infinispan.protostream.annotations.impl.types.XClass;
  */
 final class AnnotatedClassScanner {
 
+   private static final Log log = Log.LogFactory.getLog(AnnotatedClassScanner.class);
+
    /**
     * Keep them sorted by FQN for predictable and repeatable order of processing.
     */
@@ -49,35 +59,32 @@ final class AnnotatedClassScanner {
 
    private final Messager messager;
    private final Elements elements;
+   private final Types types;
+   private final MirrorClassFactory typeFactory;
 
    private final Element builderElement;
    private final AutoProtoSchemaBuilder builderAnnotation;
 
    private final Set<String> basePackages;
-   private final Set<TypeMirror> includedClasses = new LinkedHashSet<>();
-   private final Set<TypeMirror> excludedClasses = new LinkedHashSet<>();
+   private final Set<TypeMirror> includedClasses;
+   private final Set<TypeMirror> excludedClasses;
    private final PackageElement packageOfInitializer;
 
    private final String initializerClassName;
    private final String initializerFQClassName;
 
-   AnnotatedClassScanner(Messager messager, Elements elements,
+   AnnotatedClassScanner(Messager messager, Elements elements, Types types, MirrorClassFactory typeFactory,
                          Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
       this.messager = messager;
       this.elements = elements;
+      this.types = types;
+      this.typeFactory = typeFactory;
       this.builderElement = builderElement;
       this.builderAnnotation = builderAnnotation;
 
-      try {
-         builderAnnotation.includeClasses();
-      } catch (MirroredTypesException mte) {
-         includedClasses.addAll(mte.getTypeMirrors());
-      }
-      try {
-         builderAnnotation.excludeClasses();
-      } catch (MirroredTypesException mte) {
-         excludedClasses.addAll(mte.getTypeMirrors());
-      }
+      includedClasses = new LinkedHashSet<>(DangerousActions.getTypeMirrors(builderAnnotation, AutoProtoSchemaBuilder::includeClasses));
+
+      excludedClasses = new LinkedHashSet<>(DangerousActions.getTypeMirrors(builderAnnotation, AutoProtoSchemaBuilder::excludeClasses));
 
       basePackages = getBasePackages();
 
@@ -116,6 +123,10 @@ final class AnnotatedClassScanner {
 
    Collection<? extends TypeMirror> getClasses() {
       return classes.values();
+   }
+
+   Set<XClass> getXClasses() {
+      return getClasses().stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
    }
 
    /**
@@ -253,17 +264,25 @@ final class AnnotatedClassScanner {
    }
 
    /**
-    * Extracts the old root elements from the previously generated initializer code.
+    * Extracts the old root elements from the previously generated initializer source code.
     */
    private Set<TypeElement> getOriginatingClasses() {
       Set<TypeElement> typeElements = Collections.emptySet();
 
       TypeElement initializer = elements.getTypeElement(initializerFQClassName);
       if (initializer != null) {
-         OriginatingClasses originatingClasses = initializer.getAnnotation(OriginatingClasses.class);
+         TypeMirror annotationType = elements.getTypeElement(OriginatingClasses.class.getName()).asType();
+         AnnotationMirror originatingClasses = initializer.getAnnotationMirrors().stream()
+               .filter(annotation -> types.isSameType(annotation.getAnnotationType(), annotationType))
+               .findAny().orElse(null);
+
          if (originatingClasses != null) {
-            typeElements = new HashSet<>(originatingClasses.value().length);
-            for (String name : originatingClasses.value()) {
+            List<String> classes = ((List<AnnotationValue>) getAnnotationValue(originatingClasses, "value").getValue()).stream()
+                  .map(av -> ((TypeElement) ((DeclaredType) av.getValue()).asElement()).getQualifiedName().toString())
+                  .collect(Collectors.toList());
+
+            typeElements = new HashSet<>(classes.size());
+            for (String name : classes) {
                TypeElement typeElement = elements.getTypeElement(name);
                if (typeElement != null) {
                   typeElements.add(typeElement);
@@ -272,7 +291,28 @@ final class AnnotatedClassScanner {
          }
       }
 
+      log.debugf("Originating classes %s", typeElements);
       return typeElements;
+   }
+
+   /**
+    * Gets the value of the {@code name} element of the annotation.
+    *
+    * @throws NoSuchElementException if the annotation has no element named {@code name}
+    */
+   private static AnnotationValue getAnnotationValue(AnnotationMirror annotation, String name) {
+      ExecutableElement valueMethod = null;
+      for (ExecutableElement method : ElementFilter.methodsIn(annotation.getAnnotationType().asElement().getEnclosedElements())) {
+         if (method.getSimpleName().toString().equals(name)) {
+            valueMethod = method;
+            break;
+         }
+      }
+      if (valueMethod == null) {
+         return null;
+      }
+      AnnotationValue value = annotation.getElementValues().get(valueMethod);
+      return value == null ? valueMethod.getDefaultValue() : value;
    }
 
    /**

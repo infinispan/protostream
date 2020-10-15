@@ -37,7 +37,8 @@ import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 
 /**
- * Implementation relying primarily on javax.lang.model.type.TypeMirror, but also capable to use reflection.
+ * Implementation relying primarily on javax.lang.model.type.TypeMirror, but also capable to use reflection similarly to
+ * {@link org.infinispan.protostream.annotations.impl.types.ReflectionClassFactory}.
  *
  * @author anistor@redhat.com
  * @since 4.3
@@ -137,7 +138,13 @@ public final class MirrorClassFactory implements XTypeFactory {
       return fromTypeMirror(typeElement.asType());
    }
 
-   @Override
+   /**
+    * Wraps the given TypeMirror in an XClass. Implementation must be idempotent. The returned value must be
+    * reference-identical.
+    *
+    * @param typeMirror can be null
+    * @return the wrapper XClass, or null iff the actual argument is null
+    */
    public XClass fromTypeMirror(TypeMirror typeMirror) {
       if (typeMirror == null) {
          return null;
