@@ -70,7 +70,7 @@ public final class RuntimeProtoSchemaGenerator extends BaseProtoSchemaGenerator 
    }
 
    @Override
-   protected AbstractMarshallerCodeGenerator makeCodeGenerator() {
+   protected AbstractMarshallerCodeGenerator makeMarshallerCodeGenerator() {
       try {
          return new MarshallerByteCodeGenerator(typeFactory, packageName, classPool);
       } catch (NotFoundException e) {

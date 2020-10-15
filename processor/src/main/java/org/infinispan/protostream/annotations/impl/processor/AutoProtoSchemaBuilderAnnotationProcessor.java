@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -14,7 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.Generated;
 import javax.annotation.processing.AbstractProcessor;
@@ -33,7 +31,6 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.MirroredTypesException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -48,7 +45,6 @@ import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.IndentWriter;
-import org.infinispan.protostream.annotations.impl.OriginatingClasses;
 import org.infinispan.protostream.annotations.impl.processor.types.HasModelElement;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorClassFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
@@ -157,6 +153,18 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
    }
 
+   private AutoProtoSchemaBuilder getBuilderAnnotation(Element annotatedElement) {
+      try {
+         return annotatedElement.getAnnotation(AutoProtoSchemaBuilder.class);
+      } catch (ClassCastException e) {
+         // javac soiling pants
+         reportError(annotatedElement, "Some of the classes referenced by the AutoProtoSchemaBuilder annotation " +
+               "do not exist, possibly due to compilation errors in your source code or due to " +
+               "incremental compilation issues caused by your build system. Please try a clean rebuild.");
+      }
+      return null;
+   }
+
    //todo [anistor] check RoundEnvironment.errorRaised() and do not write any more output files if errors are present
    @Override
    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -173,7 +181,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       try {
          if (claimedAnnotation.isPresent()) {
             for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(claimedAnnotation.get())) {
-               AutoProtoSchemaBuilder builderAnnotation = annotatedElement.getAnnotation(AutoProtoSchemaBuilder.class);
+               AutoProtoSchemaBuilder builderAnnotation = getBuilderAnnotation(annotatedElement);
                SerializationContext serCtx = ProtobufUtil.newSerializationContext();
                try {
                   processElement(roundEnv, serCtx, annotatedElement, builderAnnotation, new ProcessorContext());
@@ -238,7 +246,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          throw new AnnotationProcessingException(annotatedElement, "@AutoProtoSchemaBuilder annotation can only be applied to classes, interfaces and packages.");
       }
 
-      AnnotatedClassScanner classScanner = new AnnotatedClassScanner(messager, elements, annotatedElement, annotation);
+      AnnotatedClassScanner classScanner = new AnnotatedClassScanner(messager, elements, types, typeFactory, annotatedElement, annotation);
       classScanner.discoverClasses(roundEnv);
       logDebug("AnnotatedClassScanner.discoverClasses returned: %s", classScanner.getClasses());
 
@@ -270,7 +278,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       ProcessorContext dependencies = processDependencies(roundEnv, serCtx, packageElement, builderAnnotation);
 
-      Set<XClass> xclasses = classScanner.getClasses().stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
+      Set<XClass> xclasses = classScanner.getXClasses();
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
             initializerPackageName, protobufFileName, protobufPackageName, dependencies.marshalledClasses, xclasses, builderAnnotation.autoImportClasses(), classScanner);
@@ -314,10 +322,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       warnOverrideExistingMethods(typeElement);
 
-      Set<XClass> xclasses = classScanner.getClasses().stream().map(typeFactory::fromTypeMirror).collect(Collectors.toCollection(LinkedHashSet::new));
+      Set<XClass> xclasses = classScanner.getXClasses();
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
             typeElement.getQualifiedName().toString(), protobufFileName, protobufPackageName, dependencies.marshalledClasses, xclasses, builderAnnotation.autoImportClasses(), classScanner);
+
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializer(typeElement, typeElement.getQualifiedName().toString(), builderAnnotation,
@@ -361,12 +370,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    //todo [anistor] we do not support yet dependencies on packages, only on types
    private ProcessorContext processDependencies(RoundEnvironment roundEnv, SerializationContext serCtx,
                                                 Element annotatedElement, AutoProtoSchemaBuilder builderAnnotation) throws IOException {
-      List<? extends TypeMirror> dependencies = Collections.emptyList();
-      try {
-         builderAnnotation.dependsOn(); // this is guaranteed to fail, see MirroredTypesException javadoc
-      } catch (MirroredTypesException mte) {
-         dependencies = mte.getTypeMirrors();
-      }
+      List<? extends TypeMirror> dependencies = DangerousActions.getTypeMirrors(builderAnnotation, AutoProtoSchemaBuilder::dependsOn);
 
       ProcessorContext processorContext = new ProcessorContext();
 
@@ -376,19 +380,24 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       for (TypeMirror dependencyType : dependencies) {
          TypeElement dependencyElement = (TypeElement) types.asElement(dependencyType);
          String dependencyFQN = dependencyElement.getQualifiedName().toString();
-         AutoProtoSchemaBuilder dependencyAnnotation = dependencyElement.getAnnotation(AutoProtoSchemaBuilder.class);
+         AutoProtoSchemaBuilder dependencyAnnotation = getBuilderAnnotation(dependencyElement);
          if (dependencyAnnotation == null) {
             throw new AnnotationProcessingException(annotatedElement, "Dependency %s is not annotated with @AutoProtoSchemaBuilder annotation", dependencyFQN);
          }
 
-         // here we (re)process the dependency!
+         // now we (re)process the dependency in order to gather all metadata again and also to detect eventual cycles!
+
          if (!processedElementsFQN.add(dependencyFQN)) {
             throw new AnnotationProcessingException(annotatedElement, "Illegal recursive dependency on %s", dependencyFQN);
          }
 
+         // disable source file emission for dependencies because they are already compiled
          boolean wasGenerationEnabled = generatedFilesWriter.isEnabled();
          generatedFilesWriter.setEnabled(false);
+
          processElement(roundEnv, serCtx, dependencyElement, dependencyAnnotation, processorContext);
+
+         // restore previous state of source file emission
          generatedFilesWriter.setEnabled(wasGenerationEnabled);
 
          processedElementsFQN.remove(dependencyFQN);
@@ -565,17 +574,19 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       iw.append("/**\n * WARNING: Generated code! Do not edit!\n").append(addPrivateJavadocTag ? " *\n * @private\n" : "").append(" */\n");
       iw.append('@').append(Generated.class.getName()).append("(\n   value = \"").append(AutoProtoSchemaBuilderAnnotationProcessor.class.getName())
             .append("\",\n   comments = \"Please do not edit this file!\"\n)\n");
-      iw.append('@').append(OriginatingClasses.class.getName()).append("({\n");
-      iw.inc();
-      for (int i = 0; i < classes.length; i++) {
-         if (i != 0) {
-            iw.append(",\n");
+      if (classes.length > 0) {
+         iw.append('@').append(OriginatingClasses.class.getName()).append("({\n");
+         iw.inc();
+         for (int i = 0; i < classes.length; i++) {
+            if (i != 0) {
+               iw.append(",\n");
+            }
+            iw.append(classes[i]).append(".class");
          }
-         iw.append("\"").append(classes[i]).append("\"");
+         iw.append('\n');
+         iw.dec();
+         iw.append("})\n");
       }
-      iw.append('\n');
-      iw.dec();
-      iw.append("})\n");
    }
 
    private void addGeneratedClassHeader(IndentWriter iw, Collection<? extends TypeMirror> classes) {

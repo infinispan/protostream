@@ -12,6 +12,9 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
 
    protected final String name;
 
+   /**
+    * The marshalled Java class.
+    */
    protected final XClass javaClass;
 
    protected ProtoMessageTypeMetadata outerType;
@@ -37,12 +40,13 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
    }
 
    public String getDocumentation() {
-      String protoDocs = javaClass.getProtoDocs();
+      String protoDocs = getProtoDocs();
 
       // Add @TypeId(..) if any
-      ProtoTypeId protoTypeId = javaClass.getAnnotation(ProtoTypeId.class);
+      Integer protoTypeId = getProtoTypeId();
+
       if (protoTypeId != null) {
-         String typeIdAnnotation = '@' + Configuration.TYPE_ID_ANNOTATION + '(' + protoTypeId.value() + ")\n";
+         String typeIdAnnotation = '@' + Configuration.TYPE_ID_ANNOTATION + '(' + protoTypeId + ")\n";
          if (protoDocs == null) {
             protoDocs = typeIdAnnotation;
          } else {
@@ -53,6 +57,15 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
       return protoDocs;
    }
 
+   public String getProtoDocs() {
+      return getAnnotatedClass().getProtoDocs();
+   }
+
+   public Integer getProtoTypeId() {
+      ProtoTypeId protoTypeId = getAnnotatedClass().getAnnotation(ProtoTypeId.class);
+      return protoTypeId != null ? protoTypeId.value() : null;
+   }
+
    public XClass getJavaClass() {
       return javaClass;
    }
@@ -60,6 +73,19 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
    public String getJavaClassName() {
       String canonicalName = javaClass.getCanonicalName();
       return canonicalName != null ? canonicalName : javaClass.getName();
+   }
+
+   /**
+    * At this level we pretend the Java class and the annotated class are one and the same, but subclasses
+    * may decide otherwise.
+    */
+   public XClass getAnnotatedClass() {
+      return getJavaClass();
+   }
+
+   public String getAnnotatedClassName() {
+      String canonicalName = getAnnotatedClass().getCanonicalName();
+      return canonicalName != null ? canonicalName : getAnnotatedClass().getName();
    }
 
    /**
@@ -78,6 +104,9 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
 
    public abstract boolean isEnum();
 
+   /**
+    * This is only for enums.
+    */
    public abstract ProtoEnumValueMetadata getEnumMemberByName(String name);
 
    public final ProtoMessageTypeMetadata getOuterType() {
