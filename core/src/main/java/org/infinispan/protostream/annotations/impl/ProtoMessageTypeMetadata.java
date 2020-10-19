@@ -66,7 +66,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    private final Map<XClass, ProtoTypeMetadata> innerTypes = new HashMap<>();
 
    protected ProtoMessageTypeMetadata(BaseProtoSchemaGenerator protoSchemaGenerator, XClass annotatedClass, XClass javaClass) {
-      super(getProtoName(annotatedClass), javaClass);
+      super(getProtoName(annotatedClass, javaClass), javaClass);
       this.protoSchemaGenerator = protoSchemaGenerator;
       this.annotatedClass = annotatedClass;
       this.typeFactory = annotatedClass.getFactory();
@@ -75,16 +75,16 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       checkInstantiability();
    }
 
-   private static String getProtoName(XClass annotatedClass) {
+   private static String getProtoName(XClass annotatedClass, XClass javaClass) {
       ProtoName annotation = annotatedClass.getAnnotation(ProtoName.class);
       ProtoMessage protoMessageAnnotation = annotatedClass.getAnnotation(ProtoMessage.class);
       if (annotation != null) {
          if (protoMessageAnnotation != null) {
             throw new ProtoSchemaBuilderException("@ProtoMessage annotation cannot be used together with @ProtoName: " + annotatedClass.getName());
          }
-         return annotation.value().isEmpty() ? annotatedClass.getSimpleName() : annotation.value();
+         return annotation.value().isEmpty() ? javaClass.getSimpleName() : annotation.value();
       }
-      return protoMessageAnnotation == null || protoMessageAnnotation.name().isEmpty() ? annotatedClass.getSimpleName() : protoMessageAnnotation.name();
+      return protoMessageAnnotation == null || protoMessageAnnotation.name().isEmpty() ? javaClass.getSimpleName() : protoMessageAnnotation.name();
    }
 
    @Override

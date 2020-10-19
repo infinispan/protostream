@@ -113,8 +113,8 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
     */
    private Class<EnumMarshaller> generateEnumMarshaller(ProtoEnumTypeMetadata petm) throws NotFoundException, CannotCompileException {
       String marshallerClassName = makeUniqueMarshallerClassName();
-      CtClass enumClass = cp.get(petm.getJavaClass().getName());
-      CtClass marshallerImpl = enumClass.makeNestedClass(marshallerClassName, true);
+      CtClass annotatedClass = cp.get(petm.getAnnotatedClass().getName());
+      CtClass marshallerImpl = annotatedClass.makeNestedClass(marshallerClassName, true);
       if (log.isTraceEnabled()) {
          log.tracef("Generating enum marshaller %s for %s", marshallerImpl.getName(), petm.getJavaClass().getName());
       }
@@ -155,8 +155,8 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
     */
    private Class<RawProtobufMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) throws NotFoundException, CannotCompileException {
       String marshallerClassName = makeUniqueMarshallerClassName();
-      CtClass entityClass = cp.get(pmtm.getJavaClass().getName());
-      CtClass marshallerImpl = entityClass.makeNestedClass(marshallerClassName, true);
+      CtClass annotatedClass = cp.get(pmtm.getAnnotatedClass().getName());
+      CtClass marshallerImpl = annotatedClass.makeNestedClass(marshallerClassName, true);
       if (log.isTraceEnabled()) {
          log.tracef("Generating message marshaller %s for %s", marshallerImpl.getName(), pmtm.getJavaClass().getName());
       }

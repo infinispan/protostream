@@ -96,12 +96,17 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       addFileHeader(iw, petm.getAnnotatedClassName());
 
       String fqn;
-      if (petm.getJavaClass().getPackageName() != null) {
-         fqn = petm.getJavaClass().getPackageName() + '.' + marshallerClassName;
-         iw.append("package ").append(petm.getJavaClass().getPackageName()).append(";\n\n");
+      if (petm.getAnnotatedClass().getPackageName() != null) {
+         fqn = petm.getAnnotatedClass().getPackageName() + '.' + marshallerClassName;
+         iw.append("package ").append(petm.getAnnotatedClass().getPackageName()).append(";\n\n");
       } else {
          fqn = marshallerClassName;
       }
+
+      if (petm.getJavaClass().getPackageName() != null) {
+         iw.append("import ").append(petm.getJavaClassName()).append(";\n\n");
+      }
+
       iw.append("public final class ").append(marshallerClassName)
             .append(" implements ").append(EnumMarshaller.class.getName()).append('<').append(petm.getJavaClassName()).append("> {\n\n");
       iw.inc();
@@ -147,12 +152,17 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       addFileHeader(iw, pmtm.getAnnotatedClassName());
 
       String fqn;
-      if (pmtm.getJavaClass().getPackageName() != null) {
-         fqn = pmtm.getJavaClass().getPackageName() + '.' + marshallerClassName;
-         iw.append("package ").append(pmtm.getJavaClass().getPackageName()).append(";\n\n");
+      if (pmtm.getAnnotatedClass().getPackageName() != null) {
+         fqn = pmtm.getAnnotatedClass().getPackageName() + '.' + marshallerClassName;
+         iw.append("package ").append(pmtm.getAnnotatedClass().getPackageName()).append(";\n\n");
       } else {
          fqn = marshallerClassName;
       }
+
+      if (pmtm.getJavaClass().getPackageName() != null) {
+         iw.append("import ").append(pmtm.getJavaClassName()).append(";\n\n");
+      }
+
       AutoProtoSchemaBuilderAnnotationProcessor.addGeneratedClassHeader(iw, true);
       iw.append("@SuppressWarnings(\"all\")\n");
       iw.append("public final class ").append(marshallerClassName)

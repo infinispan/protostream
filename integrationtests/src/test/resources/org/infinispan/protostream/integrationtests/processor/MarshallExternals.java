@@ -46,7 +46,6 @@ class Address {
    }
 }
 
-@ProtoName("Address")
 @ProtoBridgeFor(Address.class)
 class AddressBridge {
 
