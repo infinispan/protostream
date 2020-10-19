@@ -12,7 +12,6 @@ import org.infinispan.protostream.domain.Address;
  * @author anistor@redhat.com
  * @since 4.4
  */
-@ProtoName("Address")
 @ProtoBridgeFor(Address.class)
 public class AddressBridge {
 
