@@ -1,10 +1,35 @@
 package test_marshall_externals;
 
-import org.infinispan.protostream.*;
-import org.infinispan.protostream.annotations.*;
+import java.util.UUID;
 
-@AutoProtoSchemaBuilder(includeClasses = AddressBridge.class, schemaFilePath = "/")
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoBridgeFor;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.descriptors.Type;
+
+@AutoProtoSchemaBuilder(includeClasses = {AddressBridge.class, UUIDBridge.class}, schemaFilePath = "/")
 interface TestInitializer extends SerializationContextInitializer {
+}
+
+@ProtoBridgeFor(UUID.class)
+class UUIDBridge {
+
+   @ProtoFactory
+   UUID create(long mostSigBits, long leastSigBits) {
+      return new UUID(mostSigBits, leastSigBits);
+   }
+
+   @ProtoField(number = 1, type = Type.UINT64, defaultValue = "0")
+   long getMostSigBits(UUID uuid) {
+      return uuid.getMostSignificantBits();
+   }
+
+   @ProtoField(number = 2, type = Type.UINT64, defaultValue = "0")
+   long getLeastSigBits(UUID uuid) {
+      return uuid.getLeastSignificantBits();
+   }
 }
 
 class Address {

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.logging.log4j.Level;
 import org.infinispan.protostream.EnumMarshaller;
@@ -44,6 +45,7 @@ import org.infinispan.protostream.annotations.impl.testdomain.TestArraysAndColle
 import org.infinispan.protostream.annotations.impl.testdomain.TestClass;
 import org.infinispan.protostream.annotations.impl.testdomain.TestClass3;
 import org.infinispan.protostream.annotations.impl.testdomain.TestEnum;
+import org.infinispan.protostream.annotations.impl.testdomain.UUIDBridge;
 import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
@@ -1515,20 +1517,30 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       SerializationContext ctx = createContext();
       String schema = new ProtoSchemaBuilder()
             .fileName("address.proto")
+            .addClass(UUIDBridge.class)
             .addClass(AddressBridge.class)
             .addClass(AddressBridge.AddressBridge2.class)
             .build(ctx);
 
       assertTrue(schema.contains("message Address"));
+      assertTrue(schema.contains("message UUID"));
 
       Address address = new Address("str", "po", 77, true);
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, address);
-      Address o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      byte[] addressBytes = ProtobufUtil.toWrappedByteArray(ctx, address);
+      Address addressOut = ProtobufUtil.fromWrappedByteArray(ctx, addressBytes);
 
-      assertNotNull(o);
-      assertEquals("str", o.getStreet());
-      assertEquals("po", o.getPostCode());
-      assertEquals(77, o.getNumber());
+      assertNotNull(addressOut);
+      assertEquals("str", addressOut.getStreet());
+      assertEquals("po", addressOut.getPostCode());
+      assertEquals(77, addressOut.getNumber());
+
+      UUID uuid = new UUID(33, 55);
+      byte[] uuidBytes = ProtobufUtil.toWrappedByteArray(ctx, uuid);
+      UUID uuidOut = ProtobufUtil.fromWrappedByteArray(ctx, uuidBytes);
+
+      assertNotNull(uuidOut);
+      assertEquals(33, uuidOut.getMostSignificantBits());
+      assertEquals(55, uuidOut.getLeastSignificantBits());
    }
 
    static final class OuterClass {

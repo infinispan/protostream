@@ -145,6 +145,7 @@ public class AnnotationProcessorCompilationTest {
       Optional<JavaFileObject> schemaFile = compilation.generatedFile(CLASS_OUTPUT, "TestInitializer.proto");
       assertTrue(schemaFile.isPresent());
       assertFileContains(schemaFile, "message Address");
+      assertFileContains(schemaFile, "message UUID");
    }
 
    /**
