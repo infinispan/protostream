@@ -24,7 +24,7 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    private final XClass collectionImplementation;
    private final Type protobufType;
    private final String documentation;
-   private final ProtoTypeMetadata protoTypeMetadata;
+   private final ProtoTypeMetadata protoTypeMetadata; // todo [anistor] it's unclear what this type actually is...
    private final boolean isRequired;
    private final boolean isRepeated;
    private final boolean isArray;

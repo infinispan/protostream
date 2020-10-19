@@ -7,6 +7,9 @@ import org.infinispan.protostream.annotations.impl.ProtoMessageTypeMetadata;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorClassFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 
+/**
+ * A ProtoMessageTypeMetadata for compile time, using javax.lang.model instead of reflection.
+ */
 class CompileTimeProtoMessageTypeMetadata extends ProtoMessageTypeMetadata {
 
    CompileTimeProtoMessageTypeMetadata(CompileTimeProtoSchemaGenerator protoSchemaGenerator, XClass annotatedClass) {

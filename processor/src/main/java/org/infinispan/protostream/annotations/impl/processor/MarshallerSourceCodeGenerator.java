@@ -60,8 +60,8 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
    }
 
    private String makeUniqueMarshallerClassName(ProtoTypeMetadata ptm) {
-      String hash = hashStrings(ptm.getJavaClass().getName(), makeQualifiedTypeName(ptm.getFullName()));
-      return ptm.getJavaClass().getSimpleName() + "$___Marshaller_" + hash;
+      String hash = hashStrings(ptm.getAnnotatedClass().getName(), makeQualifiedTypeName(ptm.getFullName()));
+      return ptm.getAnnotatedClass().getSimpleName() + "$___Marshaller_" + hash;
    }
 
    /**
@@ -93,7 +93,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       }
 
       IndentWriter iw = new IndentWriter();
-      addFileHeader(iw, petm.getJavaClass().getName());
+      addFileHeader(iw, petm.getAnnotatedClassName());
 
       String fqn;
       if (petm.getJavaClass().getPackageName() != null) {
@@ -144,7 +144,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       }
 
       IndentWriter iw = new IndentWriter();
-      addFileHeader(iw, pmtm.getJavaClass().getName());
+      addFileHeader(iw, pmtm.getAnnotatedClassName());
 
       String fqn;
       if (pmtm.getJavaClass().getPackageName() != null) {

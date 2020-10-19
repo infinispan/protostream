@@ -22,6 +22,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
+import javassist.CtNewMethod;
 import javassist.NotFoundException;
 
 // TODO [anistor] detect situations when we generate an identical marshaller class to a previously generated one (and in the same classloader) and reuse it
@@ -119,8 +120,8 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       marshallerImpl.addInterface(enumMarshallerInterface);
       marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
-      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + petm.getJavaClass().getName() + ".class; }", marshallerImpl));
-      marshallerImpl.addMethod(CtMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(petm.getFullName()) + "\"; }", marshallerImpl));
+      marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + petm.getJavaClass().getName() + ".class; }", marshallerImpl));
+      marshallerImpl.addMethod(CtNewMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(petm.getFullName()) + "\"; }", marshallerImpl));
 
       CtMethod ctDecodeMethod = new CtMethod(decodeMethod, marshallerImpl, null);
       ctDecodeMethod.setModifiers(ctDecodeMethod.getModifiers() | Modifier.FINAL);
@@ -164,8 +165,8 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
 
       addMarshallerDelegateFields(marshallerImpl, pmtm);
 
-      marshallerImpl.addMethod(CtMethod.make("public final Class getJavaClass() { return " + pmtm.getJavaClass().getName() + ".class; }", marshallerImpl));
-      marshallerImpl.addMethod(CtMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(pmtm.getFullName()) + "\"; }", marshallerImpl));
+      marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + pmtm.getJavaClass().getName() + ".class; }", marshallerImpl));
+      marshallerImpl.addMethod(CtNewMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(pmtm.getFullName()) + "\"; }", marshallerImpl));
 
       CtMethod ctReadFromMethod = new CtMethod(readFromMethod, marshallerImpl, null);
       ctReadFromMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
