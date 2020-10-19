@@ -79,6 +79,9 @@ public abstract class AbstractMarshallerCodeGenerator {
       return iw.toString();
    }
 
+   /**
+    * Returns the protobuf qualified type name, including the package name.
+    */
    protected String makeQualifiedTypeName(String fullName) {
       if (protobufSchemaPackage != null) {
          return protobufSchemaPackage + '.' + fullName;
@@ -365,7 +368,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                iw.append(c).append(".add(").append(box(val, typeFactory.fromClass(defaultValue.getClass()))).append(");\n");
             } else {
                if (noFactory) {
-                  iw.append("o.").append(createSetPropExpr(fieldMetadata, box(val, fieldMetadata.getJavaType()))).append(";\n");
+                  iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", box(val, fieldMetadata.getJavaType()))).append(";\n");
                } else {
                   iw.append(makeFieldLocalVar(fieldMetadata)).append(" = ").append(box(val, fieldMetadata.getJavaType())).append(";\n");
                }
@@ -397,7 +400,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                }
             }
             if (noFactory) {
-               iw.append("o.").append(createSetPropExpr(fieldMetadata, c)).append(";\n");
+               iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", c)).append(";\n");
             } else if (fieldMetadata.isArray() && !fieldMetadata.getJavaType().isPrimitive()) {
                iw.append(makeArrayLocalVar(fieldMetadata)).append(" = ").append(c).append(";\n");
             }
@@ -407,7 +410,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                   c = "new " + fieldMetadata.getJavaTypeName() + "[0]";
                   iw.append(" else {\n").inc();
                   if (noFactory) {
-                     iw.append("o.").append(createSetPropExpr(fieldMetadata, c)).append(";\n");
+                     iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", c)).append(";\n");
                   } else {
                      iw.append(makeArrayLocalVar(fieldMetadata)).append(" = ").append(c).append(";\n");
                   }
@@ -545,7 +548,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          iw.append(c).append(".add(").append(box(v, box(fieldMetadata.getJavaType()))).append(");\n");
       } else {
          if (messageTypeMetadata.getFactory() == null) {
-            iw.append("o.").append(createSetPropExpr(fieldMetadata, v)).append(";\n");
+            iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", v)).append(";\n");
          }
       }
       if (trackedFields.containsKey(fieldMetadata.getName())) {
@@ -592,7 +595,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          } else {
             iw.append(fieldMetadata.getJavaTypeName());
          }
-         iw.append(' ').append(f).append(" = ").append(createGetPropExpr(fieldMetadata, "o")).append(";\n");
+         iw.append(' ').append(f).append(" = ").append(createGetPropExpr(messageTypeMetadata, fieldMetadata, "o")).append(";\n");
          if (fieldMetadata.isRequired()) {
             boolean couldBeNull = fieldMetadata.isRepeated()
                   || fieldMetadata.isBoxedPrimitive()
@@ -866,7 +869,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       return v;
    }
 
-   private String createGetPropExpr(ProtoFieldMetadata fieldMetadata, String obj) {
+   private String createGetPropExpr(ProtoMessageTypeMetadata messageTypeMetadata, ProtoFieldMetadata fieldMetadata, String obj) {
       StringBuilder readPropExpr = new StringBuilder();
 
       boolean isJUOptional = fieldMetadata.getGetter() != null && fieldMetadata.getGetter().getReturnType() == typeFactory.fromClass(Optional.class);
@@ -886,6 +889,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          }
          readPropExpr.append(obj).append('.').append(fieldMetadata.getGetter().getName()).append("()");
          if (isJUOptional) {
+            // TODO [anistor] simplify, use .orElse(null) instead of .isPresent() + .get()
             readPropExpr.append(".isPresent() ? ").append(obj).append('.').append(fieldMetadata.getGetter().getName()).append("().get() : null)");
          }
       }
@@ -893,11 +897,17 @@ public abstract class AbstractMarshallerCodeGenerator {
       return readPropExpr.toString();
    }
 
-   private String createSetPropExpr(ProtoFieldMetadata fieldMetadata, String value) {
+   private String createSetPropExpr(ProtoMessageTypeMetadata messageTypeMetadata, ProtoFieldMetadata fieldMetadata, String obj, String value) {
+      StringBuilder setPropExpr = new StringBuilder();
+      setPropExpr.append(obj).append('.');
+
       if (fieldMetadata.getField() != null) {
-         return fieldMetadata.getField().getName() + " = " + value;
+         // TODO [anistor] complain if fieldMetadata.getProtoTypeMetadata().isBridge() !
+         setPropExpr.append(fieldMetadata.getField().getName()).append(" = ").append(value);
+      } else {
+         setPropExpr.append(fieldMetadata.getSetter().getName()).append('(').append(value).append(')');
       }
-      return fieldMetadata.getSetter().getName() + '(' + value + ')';
+      return setPropExpr.toString();
    }
 
    public abstract void generateMarshaller(SerializationContext serCtx, ProtoTypeMetadata ptm) throws Exception;

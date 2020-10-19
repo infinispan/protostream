@@ -62,6 +62,7 @@ final class CompileTimeImportedProtoTypeMetadata extends ProtoTypeMetadata {
       return "AnnotationBasedImportedProtoTypeMetadata{" +
             "name='" + name + '\'' +
             ", javaClass=" + javaClass +
+            ", annotatedClass =" + protoTypeMetadata.getAnnotatedClass() +
             ", protoTypeMetadata=" + protoTypeMetadata.getName() +
             ", fileName='" + fileName + '\'' +
             ", fullName='" + fullName + '\'' +
