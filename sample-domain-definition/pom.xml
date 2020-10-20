@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>sample-domain-definition</artifactId>
-    <packaging>bundle</packaging>
+    <packaging>jar</packaging>
 
     <name>ProtoStream - sample proto domain model definition</name>
     <description>
@@ -27,20 +27,5 @@
                 </includes>
             </resource>
         </resources>
-
-        <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Export-Package>
-                            sample_bank_account.*;version=${project.version};-split-package:=error
-                        </Export-Package>
-                    </instructions>
-                </configuration>
-            </plugin>
-        </plugins>
     </build>
 </project>

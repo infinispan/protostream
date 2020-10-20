@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<features name="protostream-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
-   <feature name="protostream" version="${project.version}" description="ProtoStream library for encoding Protobuf messages">
-      <bundle>mvn:org.jboss.logging/jboss-logging/${version.jboss.logging}</bundle>
-      <bundle>mvn:org.infinispan.protostream/protostream/${project.version}</bundle>
-   </feature>
-</features>
