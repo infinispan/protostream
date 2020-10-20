@@ -23,21 +23,6 @@ import javassist.NotFoundException;
  */
 public final class RuntimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
 
-   /**
-    * Flag indicating if we are running in OSGI.
-    */
-   private static final boolean IS_OSGI_CONTEXT;
-
-   static {
-      boolean isOSGi = false;
-      try {
-         isOSGi = RuntimeProtoSchemaGenerator.class.getClassLoader() instanceof org.osgi.framework.BundleReference;
-      } catch (NoClassDefFoundError ex) {
-         // Ignore exception, we're not in OSGI
-      }
-      IS_OSGI_CONTEXT = isOSGi;
-   }
-
    private final ClassPool classPool;
 
    public RuntimeProtoSchemaGenerator(XTypeFactory typeFactory, SerializationContext serializationContext,
@@ -79,16 +64,16 @@ public final class RuntimeProtoSchemaGenerator extends BaseProtoSchemaGenerator 
    }
 
    private static ClassPool getClassPool(Set<XClass> classes, ClassLoader classLoader) {
-      ClassLoader myCL = RuntimeProtoSchemaGenerator.class.getClassLoader();
-      ClassPool cp = new ClassPool(ClassPool.getDefault()) {
+      ClassPool cp = classLoader == null ? new ClassPool(ClassPool.getDefault()) : new ClassPool(ClassPool.getDefault()) {
          @Override
          public ClassLoader getClassLoader() {
-            return classLoader != null ? classLoader : (IS_OSGI_CONTEXT ? myCL : super.getClassLoader());
+            return classLoader;
          }
       };
       for (XClass c : classes) {
          cp.appendClassPath(new ClassClassPath(c.asClass()));
       }
+      ClassLoader myCL = RuntimeProtoSchemaGenerator.class.getClassLoader();
       cp.appendClassPath(new LoaderClassPath(myCL));
       if (classLoader != myCL) {
          cp.appendClassPath(new LoaderClassPath(classLoader));
