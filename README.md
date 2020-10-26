@@ -31,7 +31,7 @@ Target runtime platform is Java 8.
 
 Requires Java 11 or newer to build.
 
-Maven 3.3.3 or newer.
+Maven 3.5.4 or newer.
 
 Bugs
 ----
