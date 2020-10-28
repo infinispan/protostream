@@ -30,7 +30,7 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoBridgeFor;
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -165,7 +165,7 @@ final class AnnotatedClassScanner {
             visitProtoName(e);
          }
 
-         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoBridgeFor.class)) {
+         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoAdapter.class)) {
             visitProtoBridgeFor(e);
          }
 

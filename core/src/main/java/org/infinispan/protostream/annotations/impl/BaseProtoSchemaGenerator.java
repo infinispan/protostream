@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoBridgeFor;
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
@@ -262,11 +262,11 @@ public abstract class BaseProtoSchemaGenerator {
     * presence of ProtoBridgeFor annotation.
     */
    private XClass getMessageClass(XClass annotatedClass) {
-      ProtoBridgeFor bridgeFor = annotatedClass.getAnnotation(ProtoBridgeFor.class);
-      if (bridgeFor == null) {
+      ProtoAdapter protoAdapter = annotatedClass.getAnnotation(ProtoAdapter.class);
+      if (protoAdapter == null) {
          return annotatedClass;
       }
-      return typeFactory.fromClass(bridgeFor.value());
+      return typeFactory.fromClass(protoAdapter.value());
    }
 
    private void collectMetadata(ProtoTypeMetadata protoTypeMetadata) {
@@ -305,10 +305,10 @@ public abstract class BaseProtoSchemaGenerator {
     * Collect all superclasses and superinterfaces.
     */
    private void collectKnownClasses(XClass c) {
-      XClass b = getBridgeFor(c);
+      XClass b = getAdapterFor(c);
       if (b != null) {
          knownClasses.add(b);
-         // supers are not collected for bridges
+         // supers are not collected for adapters
          return;
       }
 
@@ -321,11 +321,11 @@ public abstract class BaseProtoSchemaGenerator {
       }
    }
 
-   protected XClass getBridgeFor(XClass c) {
-      ProtoBridgeFor bridgeFor = c.getAnnotation(ProtoBridgeFor.class);
-      if (bridgeFor != null) {
-         // TODO [anistor] also ensure that bridgeFor.value() is not part of current builder and is not scanned for @ProtoXyz annotations even if present
-         return typeFactory.fromClass(bridgeFor.value());
+   protected XClass getAdapterFor(XClass c) {
+      ProtoAdapter protoAdapter = c.getAnnotation(ProtoAdapter.class);
+      if (protoAdapter != null) {
+         // TODO [anistor] also ensure that protoAdapter.value() is not part of current builder and is not scanned for @ProtoXyz annotations even if present
+         return typeFactory.fromClass(protoAdapter.value());
       }
       return null;
    }

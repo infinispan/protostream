@@ -8,7 +8,7 @@ import javax.lang.model.type.TypeMirror;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
-import org.infinispan.protostream.annotations.ProtoBridgeFor;
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerator;
 import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
@@ -52,11 +52,11 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    }
 
    private XClass getMessageClass(XClass annotatedClass) {
-      ProtoBridgeFor bridgeFor = annotatedClass.getAnnotation(ProtoBridgeFor.class);
-      if (bridgeFor == null) {
+      ProtoAdapter protoAdapter = annotatedClass.getAnnotation(ProtoAdapter.class);
+      if (protoAdapter == null) {
          return annotatedClass;
       }
-      TypeMirror typeMirror = DangerousActions.getTypeMirror(bridgeFor, ProtoBridgeFor::value);
+      TypeMirror typeMirror = DangerousActions.getTypeMirror(protoAdapter, ProtoAdapter::value);
       return ((MirrorClassFactory) typeFactory).fromTypeMirror(typeMirror);
    }
 
@@ -90,22 +90,22 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    }
 
    @Override
-   protected XClass getBridgeFor(XClass c) {
-      ProtoBridgeFor annotation;
+   protected XClass getAdapterFor(XClass c) {
+      ProtoAdapter protoAdapter;
       try {
-         annotation = c.getAnnotation(ProtoBridgeFor.class);
-         if (annotation == null) {
+         protoAdapter = c.getAnnotation(ProtoAdapter.class);
+         if (protoAdapter == null) {
             return null;
          }
       } catch (ClassCastException e) {
          // javac soiling pants
-         throw new ProtoSchemaBuilderException("The class referenced by the ProtoBridgeFor annotation " +
-               "do not exist, possibly due to compilation errors in your source code or due to " +
+         throw new ProtoSchemaBuilderException("The class referenced by the ProtoAdapter annotation " +
+               "does not exist, possibly due to compilation errors in your source code or due to " +
                "incremental compilation issues caused by your build system. Please try a clean rebuild.");
 
       }
       // TODO [anistor] also ensure that typeMirror is not part of current serCtxInit and is not scanned for @ProtoXyz annotations even if present
-      TypeMirror typeMirror = DangerousActions.getTypeMirror(annotation, ProtoBridgeFor::value);
+      TypeMirror typeMirror = DangerousActions.getTypeMirror(protoAdapter, ProtoAdapter::value);
       return ((MirrorClassFactory) typeFactory).fromTypeMirror(typeMirror);
    }
 

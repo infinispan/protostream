@@ -45,14 +45,14 @@ import org.infinispan.protostream.annotations.impl.testdomain.TestArraysAndColle
 import org.infinispan.protostream.annotations.impl.testdomain.TestClass;
 import org.infinispan.protostream.annotations.impl.testdomain.TestClass3;
 import org.infinispan.protostream.annotations.impl.testdomain.TestEnum;
-import org.infinispan.protostream.annotations.impl.testdomain.UUIDBridge;
+import org.infinispan.protostream.annotations.impl.testdomain.UUIDAdapter;
 import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestClass2;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
-import org.infinispan.protostream.annotations.impl.testdomain.AddressBridge;
+import org.infinispan.protostream.annotations.impl.testdomain.AddressAdapter;
 import org.infinispan.protostream.impl.parser.SquareProtoParser;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.infinispan.protostream.test.ExpectedLogMessage;
@@ -1517,9 +1517,9 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       SerializationContext ctx = createContext();
       String schema = new ProtoSchemaBuilder()
             .fileName("address.proto")
-            .addClass(UUIDBridge.class)
-            .addClass(AddressBridge.class)
-            .addClass(AddressBridge.AddressBridge2.class)
+            .addClass(UUIDAdapter.class)
+            .addClass(AddressAdapter.class)
+            .addClass(AddressAdapter.AddressAdapter2.class)
             .build(ctx);
 
       assertTrue(schema.contains("message Address"));

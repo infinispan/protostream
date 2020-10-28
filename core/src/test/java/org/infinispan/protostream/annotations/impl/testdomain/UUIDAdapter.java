@@ -2,13 +2,13 @@ package org.infinispan.protostream.annotations.impl.testdomain;
 
 import java.util.UUID;
 
-import org.infinispan.protostream.annotations.ProtoBridgeFor;
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
 
-@ProtoBridgeFor(UUID.class)
-public class UUIDBridge {
+@ProtoAdapter(UUID.class)
+public class UUIDAdapter {
 
    @ProtoFactory
    UUID create(long mostSigBits, long leastSigBits) {

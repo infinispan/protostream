@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 // [anistor] TODO We also need a similar mechanism for enums.
 
 /**
- * A marshalling bridge for another class that cannot be annotated. This class will handle marshalling for it by
+ * A marshalling adapter for another class that cannot be annotated. This class will handle marshalling for it by
  * defining its schema via annotations.
  * <p>
  * The class bearing this annotation will have an annotated factory method for the marshalled class and annotated
@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface ProtoBridgeFor {
+public @interface ProtoAdapter {
 
    /**
     * The actual class being marshalled.

@@ -4,17 +4,17 @@ import java.util.UUID;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoBridgeFor;
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
 
-@AutoProtoSchemaBuilder(includeClasses = {AddressBridge.class, UUIDBridge.class}, schemaFilePath = "/")
+@AutoProtoSchemaBuilder(includeClasses = {AddressAdapter.class, UUIDAdapter.class}, schemaFilePath = "/")
 interface TestInitializer extends SerializationContextInitializer {
 }
 
-@ProtoBridgeFor(UUID.class)
-class UUIDBridge {
+@ProtoAdapter(UUID.class)
+class UUIDAdapter {
 
    @ProtoFactory
    UUID create(long mostSigBits, long leastSigBits) {
@@ -71,8 +71,8 @@ class Address {
    }
 }
 
-@ProtoBridgeFor(Address.class)
-class AddressBridge {
+@ProtoAdapter(Address.class)
+class AddressAdapter {
 
    @ProtoFactory
    public Address create(String street, Integer number, String postCode) {

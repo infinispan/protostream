@@ -1,6 +1,6 @@
 package org.infinispan.protostream.annotations.impl.testdomain;
 
-import org.infinispan.protostream.annotations.ProtoBridgeFor;
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
@@ -12,8 +12,8 @@ import org.infinispan.protostream.domain.Address;
  * @author anistor@redhat.com
  * @since 4.4
  */
-@ProtoBridgeFor(Address.class)
-public class AddressBridge {
+@ProtoAdapter(Address.class)
+public class AddressAdapter {
 
    //todo [anistor] when setters are present, allow factory with 0 args
    @ProtoFactory
@@ -48,12 +48,12 @@ public class AddressBridge {
       a.setNumber(number);
    }
 
-   // A funny case. A bridge nested inside a bridge should work just fine!
+   // A funny case. An adapter nested inside another adapter should work just fine!
    @ProtoName("Address2")
    @ProtoReserved(numbers = {6, 99})
    @ProtoTypeId(666)
-   @ProtoBridgeFor(Address.class)
-   public static class AddressBridge2 {
+   @ProtoAdapter(Address.class)
+   public static class AddressAdapter2 {
 
       @ProtoFactory
       public Address create(String street, Integer number, String postCode) {
