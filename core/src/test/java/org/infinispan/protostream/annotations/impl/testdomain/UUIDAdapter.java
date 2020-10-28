@@ -5,9 +5,11 @@ import java.util.UUID;
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.descriptors.Type;
 
 @ProtoAdapter(UUID.class)
+@ProtoReserved({100, 99})
 public class UUIDAdapter {
 
    @ProtoFactory

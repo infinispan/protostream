@@ -29,6 +29,7 @@ import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -591,6 +592,53 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       // ensure we do have some unknown fields there
       assertFalse(simple.unknownFieldSet.isEmpty());
+   }
+
+   static class TestCase_EnumProtoAdapter {
+
+      enum Color {
+         RED, GREEN, BLUE
+      }
+
+      @ProtoAdapter(Color.class)
+      @ProtoReserved({100, 99})
+      enum ColorEnumAdapter {
+
+         //todo [anistor] which one is the default according to proto2 and 3 ? https://developers.google.com/protocol-buffers/docs/proto3#enum
+         // maybe the one with ordinal 0 ?
+
+         @ProtoEnumValue(number = 0, name = "red")
+         RED,
+
+         @ProtoEnumValue(number = 1, name = "green")
+         GREEN,
+
+         @ProtoEnumValue(number = 2, name = "blue")
+         BLUE
+
+      //TODO [anistor] this generates a compilation error too late
+      //   @ProtoEnumValue(number = 3, name = "black")
+      //   BLACK
+      }
+   }
+
+   @Test
+   public void testEnumProtoAdapter() throws Exception {
+      SerializationContext ctx = createContext();
+
+      String schema = new ProtoSchemaBuilder()
+            .fileName("test1.proto")
+            .packageName("test_enum_adapter_package")
+            .addClass(TestCase_EnumProtoAdapter.ColorEnumAdapter.class)
+            .build(ctx);
+
+      assertTrue(schema.contains("enum Color"));
+
+      assertTrue(ctx.canMarshall("test_enum_adapter_package.Color"));
+      assertTrue(ctx.canMarshall(TestCase_EnumProtoAdapter.Color.class));
+
+      assertFalse(ctx.canMarshall("test_enum_adapter_package.ColorEnumAdapter"));
+      assertFalse(ctx.canMarshall(TestCase_EnumProtoAdapter.ColorEnumAdapter.class));
    }
 
    static class TestCase_DuplicateEnumValueName {

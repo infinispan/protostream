@@ -250,22 +250,23 @@ public abstract class BaseProtoSchemaGenerator {
    }
 
    protected ProtoTypeMetadata makeEnumTypeMetadata(XClass javaType) {
-      return new ProtoEnumTypeMetadata(javaType);
+      return new ProtoEnumTypeMetadata(javaType, getTargetClass(javaType));
    }
 
    protected ProtoTypeMetadata makeMessageTypeMetadata(XClass javaType) {
-      return new ProtoMessageTypeMetadata(this, javaType, getMessageClass(javaType));
+      return new ProtoMessageTypeMetadata(this, javaType, getTargetClass(javaType));
    }
 
    /**
-    * Get the marshalled class. The marshalled class and the annotated class are not always the same, depending on the
-    * presence of ProtoAdapter annotation.
+    * Get the marshalled class or enum. The marshalled class and the annotated class are not always the same, depending
+    * on the presence of the ProtoAdapter annotation which may establish a new target.
     */
-   private XClass getMessageClass(XClass annotatedClass) {
+   private XClass getTargetClass(XClass annotatedClass) {
       ProtoAdapter protoAdapter = annotatedClass.getAnnotation(ProtoAdapter.class);
       if (protoAdapter == null) {
          return annotatedClass;
       }
+      //todo [anistor] assert value() is != this to prevent trivial target cycle. also check for non-trivial target cycles
       return typeFactory.fromClass(protoAdapter.value());
    }
 

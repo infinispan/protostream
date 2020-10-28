@@ -36,14 +36,14 @@ import java.lang.annotation.Target;
 public @interface ProtoReserved {
 
    /**
-    * Numbers to reserve. Alias for {@link #value} (mutually exclusive).
-    */
-   int[] numbers() default {};
-
-   /**
-    * Alias for {@link #numbers} (mutually exclusive).
+    * Alias for {@link #numbers()} (mutually exclusive).
     */
    int[] value() default {};
+
+   /**
+    * Numbers to reserve. Alias for {@link #value()} (mutually exclusive).
+    */
+   int[] numbers() default {};
 
    /**
     * Number ranges to be reserved.

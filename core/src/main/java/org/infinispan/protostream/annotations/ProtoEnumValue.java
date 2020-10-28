@@ -18,12 +18,12 @@ import java.lang.annotation.Target;
 public @interface ProtoEnumValue {
 
    /**
-    * Alias for {@link #number}.
+    * Alias for {@link #number()}.
     */
    int value() default 0;
 
    /**
-    * The Protocol Buffers tag number.
+    * The Protocol Buffers tag number. Alias for {@link #value()} (mutually exclusive).
     */
    int number() default 0;
 
