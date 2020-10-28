@@ -13,6 +13,7 @@ import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerator;
 import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
 import org.infinispan.protostream.annotations.impl.ImportedProtoTypeMetadata;
+import org.infinispan.protostream.annotations.impl.ProtoEnumTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorClassFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
@@ -47,15 +48,21 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    }
 
    @Override
-   protected ProtoTypeMetadata makeMessageTypeMetadata(XClass javaType) {
-      return new CompileTimeProtoMessageTypeMetadata(this, javaType, getMessageClass(javaType));
+   protected ProtoTypeMetadata makeEnumTypeMetadata(XClass javaType) {
+      return new ProtoEnumTypeMetadata(javaType, getTargetClass(javaType));
    }
 
-   private XClass getMessageClass(XClass annotatedClass) {
+   @Override
+   protected ProtoTypeMetadata makeMessageTypeMetadata(XClass javaType) {
+      return new CompileTimeProtoMessageTypeMetadata(this, javaType, getTargetClass(javaType));
+   }
+
+   private XClass getTargetClass(XClass annotatedClass) {
       ProtoAdapter protoAdapter = annotatedClass.getAnnotation(ProtoAdapter.class);
       if (protoAdapter == null) {
          return annotatedClass;
       }
+      //todo [anistor] assert value() is != this to prevent trivial target cycle. also check for non-trivial target cycles
       TypeMirror typeMirror = DangerousActions.getTypeMirror(protoAdapter, ProtoAdapter::value);
       return ((MirrorClassFactory) typeFactory).fromTypeMirror(typeMirror);
    }

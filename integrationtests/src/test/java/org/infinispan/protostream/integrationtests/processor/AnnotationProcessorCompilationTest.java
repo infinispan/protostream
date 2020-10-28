@@ -146,6 +146,7 @@ public class AnnotationProcessorCompilationTest {
       assertTrue(schemaFile.isPresent());
       assertFileContains(schemaFile, "message Address");
       assertFileContains(schemaFile, "message UUID");
+      assertFileContains(schemaFile, "enum Color");
    }
 
    /**

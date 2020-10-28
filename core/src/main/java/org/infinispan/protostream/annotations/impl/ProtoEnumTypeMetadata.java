@@ -24,20 +24,26 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
    private static final Log log = Log.LogFactory.getLog(ProtoEnumTypeMetadata.class);
 
+   private final XClass annotatedEnumClass;
+
+   private final boolean isAdapter;
+
    private SortedMap<Integer, ProtoEnumValueMetadata> membersByNumber;
 
    private Map<String, ProtoEnumValueMetadata> membersByName;
 
-   ProtoEnumTypeMetadata(XClass enumClass) {
-      super(getProtoName(enumClass), enumClass);
+   public ProtoEnumTypeMetadata(XClass annotatedEnumClass, XClass enumClass) {
+      super(getProtoName(annotatedEnumClass, enumClass), enumClass);
+      this.annotatedEnumClass = annotatedEnumClass;
+      this.isAdapter = annotatedEnumClass != enumClass;
    }
 
-   private static String getProtoName(XClass enumClass) {
-      ProtoName annotation = enumClass.getAnnotation(ProtoName.class);
-      ProtoEnum protoEnumAnnotation = enumClass.getAnnotation(ProtoEnum.class);
+   private static String getProtoName(XClass annotatedEnumClass, XClass enumClass) {
+      ProtoName annotation = annotatedEnumClass.getAnnotation(ProtoName.class);
+      ProtoEnum protoEnumAnnotation = annotatedEnumClass.getAnnotation(ProtoEnum.class);
       if (annotation != null) {
          if (protoEnumAnnotation != null) {
-            throw new ProtoSchemaBuilderException("@ProtoEnum annotation cannot be used together with @ProtoName: " + enumClass.getName());
+            throw new ProtoSchemaBuilderException("@ProtoEnum annotation cannot be used together with @ProtoName: " + annotatedEnumClass.getName());
          }
          return annotation.value().isEmpty() ? enumClass.getSimpleName() : annotation.value();
       }
@@ -45,33 +51,43 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
+   public XClass getAnnotatedClass() {
+      return annotatedEnumClass;
+   }
+
+   @Override
+   public boolean isAdapter() {
+      return isAdapter;
+   }
+
+   @Override
    public void scanMemberAnnotations() {
       if (membersByNumber == null) {
          membersByNumber = new TreeMap<>();
          membersByName = new HashMap<>();
-         for (XEnumConstant ec : javaClass.getEnumConstants()) {
+         for (XEnumConstant ec : annotatedEnumClass.getEnumConstants()) {
             ProtoEnumValue annotation = ec.getAnnotation(ProtoEnumValue.class);
             if (annotation == null) {
-               throw new ProtoSchemaBuilderException("Enum constants must have the @ProtoEnumValue annotation: " + getJavaClassName() + '.' + ec.getName());
+               throw new ProtoSchemaBuilderException("Enum constants must have the @ProtoEnumValue annotation: " + getAnnotatedClassName() + '.' + ec.getName());
             }
             int number = getNumber(annotation, ec);
             if (membersByNumber.containsKey(number)) {
-               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + number + " on enum constant: " + getJavaClassName() + '.' + ec.getName());
+               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + number + " on enum constant: " + getAnnotatedClassName() + '.' + ec.getName());
             }
             String name = annotation.name();
             if (name.isEmpty()) {
                name = ec.getName();
             }
             if (membersByName.containsKey(name)) {
-               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum constant " + name + " on enum constant: " + getJavaClassName() + '.' + ec.getName());
+               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum constant " + name + " on enum constant: " + getAnnotatedClassName() + '.' + ec.getName());
             }
             ProtoEnumValueMetadata pevm = new ProtoEnumValueMetadata(number, name,
-                  ec.getOrdinal(), ec.getDeclaringClass().getCanonicalName() + '.' + ec.getName(), ec.getProtoDocs());
+                  ec.getOrdinal(), getJavaClassName() + '.' + ec.getName(), ec.getProtoDocs());
             membersByNumber.put(number, pevm);
             membersByName.put(pevm.getProtoName(), pevm);
          }
          if (membersByNumber.isEmpty()) {
-            throw new ProtoSchemaBuilderException("Enums without members are not allowed: " + getJavaClassName());
+            throw new ProtoSchemaBuilderException("Enums without members are not allowed: " + getAnnotatedClassName());
          }
       }
    }
@@ -81,7 +97,7 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       if (number == 0) {
          number = annotation.value();
       } else if (annotation.value() != 0) {
-         throw new ProtoSchemaBuilderException("@ProtoEnumValue.number() and value() are mutually exclusive: " + getJavaClassName() + '.' + ec.getName());
+         throw new ProtoSchemaBuilderException("@ProtoEnumValue.number() and value() are mutually exclusive: " + getAnnotatedClassName() + '.' + ec.getName());
       }
       return number;
    }
@@ -116,7 +132,7 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       iw.inc();
 
       ReservedProcessor reserved = new ReservedProcessor();
-      reserved.scan(javaClass);
+      reserved.scan(annotatedEnumClass);
 
       for (String memberName : membersByName.keySet()) {
          XClass where = reserved.checkReserved(name);
@@ -149,6 +165,8 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       return "ProtoEnumTypeMetadata{" +
             "name='" + name + '\'' +
             ", javaClass=" + javaClass +
+            ", annotatedEnumClass=" + annotatedEnumClass +
+            ", isAdapter=" + isAdapter +
             ", membersByNumber=" + membersByNumber +
             '}';
    }

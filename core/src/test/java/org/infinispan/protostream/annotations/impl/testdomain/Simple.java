@@ -10,6 +10,7 @@ import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
  * @since 3.0
  */
 @ProtoDoc("@TypeId(100010)")
+//todo [anistor] test with multiple type ids, in doc or direct annotation
 public class Simple {
 
    @ProtoDoc("Simple is elegant")

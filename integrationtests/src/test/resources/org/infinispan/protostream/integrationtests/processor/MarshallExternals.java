@@ -2,15 +2,51 @@ package test_marshall_externals;
 
 import java.util.UUID;
 
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoAdapter;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoReserved;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.descriptors.Type;
+import org.junit.Test;
 
-@AutoProtoSchemaBuilder(includeClasses = {AddressAdapter.class, UUIDAdapter.class}, schemaFilePath = "/")
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+@AutoProtoSchemaBuilder(includeClasses = {
+      AddressAdapter.class,
+      UUIDAdapter.class,
+      ColorEnumAdapter.class
+   },
+   schemaFilePath = "/"
+)
 interface TestInitializer extends SerializationContextInitializer {
+}
+
+enum Color {
+   RED, GREEN, BLUE
+}
+
+@ProtoAdapter(Color.class)
+@ProtoReserved({100, 99})
+enum ColorEnumAdapter {
+
+   @ProtoEnumValue(number = 0, name = "red")
+   RED,
+
+   @ProtoEnumValue(number = 1, name = "green")
+   GREEN,
+
+   @ProtoEnumValue(number = 2, name = "blue")
+   BLUE
+
+//TODO [anistor] this generates a compilation error too late
+//   @ProtoEnumValue(number = 3, name = "black")
+//   BLACK
 }
 
 @ProtoAdapter(UUID.class)

@@ -62,6 +62,7 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
    }
 
    public Integer getProtoTypeId() {
+      //todo [anistor] what if @Protodoc("@TypeId(xxx)") is used instead ?
       ProtoTypeId protoTypeId = getAnnotatedClass().getAnnotation(ProtoTypeId.class);
       return protoTypeId != null ? protoTypeId.value() : null;
    }
