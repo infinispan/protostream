@@ -259,7 +259,7 @@ public abstract class BaseProtoSchemaGenerator {
 
    /**
     * Get the marshalled class. The marshalled class and the annotated class are not always the same, depending on the
-    * presence of ProtoBridgeFor annotation.
+    * presence of ProtoAdapter annotation.
     */
    private XClass getMessageClass(XClass annotatedClass) {
       ProtoAdapter protoAdapter = annotatedClass.getAnnotation(ProtoAdapter.class);

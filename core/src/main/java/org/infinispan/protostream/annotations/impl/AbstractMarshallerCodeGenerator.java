@@ -28,7 +28,7 @@ public abstract class AbstractMarshallerCodeGenerator {
 
    private static final String PROTOSTREAM_PACKAGE = SerializationContext.class.getPackage().getName();
 
-   protected static final String BRIDGE_FIELD_NAME = "__b$";
+   protected static final String ADAPTER_FIELD_NAME = "__a$";
 
    private final XTypeFactory typeFactory;
 
@@ -163,7 +163,7 @@ public abstract class AbstractMarshallerCodeGenerator {
     * </code>
     */
    protected String generateReadFromMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
-      //todo [anistor] handle unknown fields for bridges also
+      //todo [anistor] handle unknown fields for adapters also
       String getUnknownFieldSetFieldStatement = null;
       String setUnknownFieldSetFieldStatement = null;
       if (messageTypeMetadata.getUnknownFieldSetField() != null) {
@@ -571,7 +571,7 @@ public abstract class AbstractMarshallerCodeGenerator {
     * </code>
     */
    protected String generateWriteToMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
-      //todo [anistor] handle unknown fields for bridges also
+      //todo [anistor] handle unknown fields for adapters also
       String getUnknownFieldSetFieldStatement = null;
       if (messageTypeMetadata.getUnknownFieldSetField() != null) {
          getUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetField().getName();
@@ -880,8 +880,8 @@ public abstract class AbstractMarshallerCodeGenerator {
    private String createGetPropExpr(ProtoMessageTypeMetadata messageTypeMetadata, ProtoFieldMetadata fieldMetadata, String obj) {
       String thisTarget;
       String thisArg;
-      if (messageTypeMetadata.isBridge()) {
-         thisTarget = BRIDGE_FIELD_NAME;
+      if (messageTypeMetadata.isAdapter()) {
+         thisTarget = ADAPTER_FIELD_NAME;
          thisArg = obj;
       } else {
          thisTarget = obj;
@@ -900,7 +900,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          readPropExpr.append(") ");
       }
       if (fieldMetadata.getField() != null) {
-         // TODO [anistor] complain if fieldMetadata.getProtoTypeMetadata().isBridge() !
+         // TODO [anistor] complain if fieldMetadata.getProtoTypeMetadata().isAdapter() !
          readPropExpr.append(thisTarget).append('.').append(fieldMetadata.getField().getName());
       } else {
          if (isJUOptional) {
@@ -918,14 +918,14 @@ public abstract class AbstractMarshallerCodeGenerator {
 
    private String createSetPropExpr(ProtoMessageTypeMetadata messageTypeMetadata, ProtoFieldMetadata fieldMetadata, String obj, String value) {
       StringBuilder setPropExpr = new StringBuilder();
-      setPropExpr.append(messageTypeMetadata.isBridge() ? BRIDGE_FIELD_NAME : obj).append('.');
+      setPropExpr.append(messageTypeMetadata.isAdapter() ? ADAPTER_FIELD_NAME : obj).append('.');
 
       if (fieldMetadata.getField() != null) {
-         // TODO [anistor] complain if fieldMetadata.getProtoTypeMetadata().isBridge() !
+         // TODO [anistor] complain if fieldMetadata.getProtoTypeMetadata().isAdapter() !
          setPropExpr.append(fieldMetadata.getField().getName()).append(" = ").append(value);
       } else {
          setPropExpr.append(fieldMetadata.getSetter().getName()).append('(');
-         if (messageTypeMetadata.isBridge()) {
+         if (messageTypeMetadata.isAdapter()) {
             setPropExpr.append(obj).append(", ");
          }
          setPropExpr.append(value).append(')');

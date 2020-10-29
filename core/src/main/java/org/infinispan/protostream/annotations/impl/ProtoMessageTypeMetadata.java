@@ -53,7 +53,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final XClass annotatedClass;
 
-   private final boolean isBridge;
+   private final boolean isAdapter;
 
    private XExecutable factory;
 
@@ -70,7 +70,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       this.protoSchemaGenerator = protoSchemaGenerator;
       this.annotatedClass = annotatedClass;
       this.typeFactory = annotatedClass.getFactory();
-      this.isBridge = javaClass != annotatedClass;
+      this.isAdapter = javaClass != annotatedClass;
 
       checkInstantiability();
    }
@@ -93,8 +93,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
-   public boolean isBridge() {
-      return isBridge;
+   public boolean isAdapter() {
+      return isAdapter;
    }
 
    public XExecutable getFactory() {
@@ -281,7 +281,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             if (factory != null) {
                throw new ProtoSchemaBuilderException("Found more than one @ProtoFactory annotated method / constructor : " + m);
             }
-            if (!isBridge && !m.isStatic()) {
+            if (!isAdapter && !m.isStatic()) {
                throw new ProtoSchemaBuilderException("@ProtoFactory annotated method must be static: " + m);
             }
             if (m.isPrivate()) {
@@ -295,7 +295,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
 
       if (factory == null) {
-         if (isBridge) {
+         if (isAdapter) {
             throw new ProtoSchemaBuilderException("The class " + getJavaClassName() +
                   " must be instantiable using an accessible @ProtoFactory annotated method defined by " + getAnnotatedClassName());
          }
@@ -322,8 +322,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
       for (XField field : clazz.getDeclaredFields()) {
          if (field.getAnnotation(ProtoUnknownFieldSet.class) != null) {
-            if (isBridge) {
-               throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoBridgeFor is present on a class : " + field);
+            if (isAdapter) {
+               throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + field);
             }
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
                throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + field);
@@ -332,8 +332,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          } else {
             ProtoField annotation = field.getAnnotation(ProtoField.class);
             if (annotation != null) {
-               if (isBridge) {
-                  throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoBridgeFor is present on a class : " + field);
+               if (isAdapter) {
+                  throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + field);
                }
                if (field.isStatic()) {
                   throw new ProtoSchemaBuilderException("Static fields cannot be @ProtoField annotated: " + field);
@@ -424,7 +424,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                } else {
                   throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                }
-               if (isBridge && method.getParameterTypes().length != 2 || !isBridge && method.getParameterTypes().length != 1) {
+               if (isAdapter && method.getParameterTypes().length != 2 || !isAdapter && method.getParameterTypes().length != 1) {
                   throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                }
                //TODO [anistor] also check setter args
@@ -439,7 +439,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                } else {
                   throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
                }
-               if (isBridge && method.getParameterTypes().length != 1 || !isBridge && method.getParameterTypes().length != 0) {
+               if (isAdapter && method.getParameterTypes().length != 1 || !isAdapter && method.getParameterTypes().length != 0) {
                   throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
                }
                //TODO [anistor] also check getter args
@@ -452,7 +452,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (method.isPrivate()) {
                   throw new ProtoSchemaBuilderException("Private methods cannot be @ProtoField annotated: " + method);
                }
-               if (!isBridge && method.isStatic()) {
+               if (!isAdapter && method.isStatic()) {
                   throw new ProtoSchemaBuilderException("Static methods cannot be @ProtoField annotated: " + method);
                }
                String propertyName;
@@ -468,7 +468,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                      // not a standard java-beans setter, use the whole name as property name
                      propertyName = method.getName();
                   }
-                  if (isBridge && method.getParameterTypes().length != 2 || !isBridge && method.getParameterTypes().length != 1) {
+                  if (isAdapter && method.getParameterTypes().length != 2 || !isAdapter && method.getParameterTypes().length != 1) {
                      throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                   }
                   //TODO [anistor] also check setter args
@@ -488,7 +488,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                      // not a standard java-beans getter
                      propertyName = method.getName();
                   }
-                  if (isBridge && method.getParameterTypes().length != 1 || !isBridge && method.getParameterTypes().length != 0) {
+                  if (isAdapter && method.getParameterTypes().length != 1 || !isAdapter && method.getParameterTypes().length != 0) {
                      throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
                   }
                   //TODO [anistor] also check getter args
@@ -934,7 +934,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       boolean isBoolean = propertyType == typeFactory.fromClass(boolean.class) || propertyType == typeFactory.fromClass(Boolean.class);
       String methodName = (isBoolean ? "is" : "get") + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
 
-      if (isBridge) {
+      if (isAdapter) {
          // lookup a java-bean style method first
          XMethod getter = annotatedClass.getMethod(methodName);
          if (getter == null && isBoolean) {
@@ -991,7 +991,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private XMethod findSetter(String propertyName, XClass propertyType) {
       String methodName = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-      if (isBridge) {
+      if (isAdapter) {
          // lookup a java-bean style method first
          XMethod setter = annotatedClass.getMethod(methodName, javaClass, propertyType);
          if (setter == null) {
@@ -1034,7 +1034,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             "name='" + name + '\'' +
             ", javaClass=" + javaClass +
             ", annotatedClass=" + annotatedClass +
-            ", isBridge=" + isBridge +
+            ", isAdapter=" + isAdapter +
             ", fieldsByNumber=" + fieldsByNumber +
             ", factory=" + factory +
             ", unknownFieldSetField=" + unknownFieldSetField +

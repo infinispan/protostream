@@ -1513,7 +1513,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
    }
 
    @Test
-   public void testBridge() throws Exception {
+   public void testAdapter() throws Exception {
       SerializationContext ctx = createContext();
       String schema = new ProtoSchemaBuilder()
             .fileName("address.proto")

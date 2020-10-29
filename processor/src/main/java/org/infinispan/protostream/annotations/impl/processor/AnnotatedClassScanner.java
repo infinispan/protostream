@@ -166,7 +166,7 @@ final class AnnotatedClassScanner {
          }
 
          for (Element e : roundEnv.getElementsAnnotatedWith(ProtoAdapter.class)) {
-            visitProtoBridgeFor(e);
+            visitProtoAdapter(e);
          }
 
          for (Element e : roundEnv.getElementsAnnotatedWith(ProtoTypeId.class)) {
@@ -240,9 +240,9 @@ final class AnnotatedClassScanner {
       collectClasses((TypeElement) enclosingElement);
    }
 
-   private void visitProtoBridgeFor(Element e) {
+   private void visitProtoAdapter(Element e) {
       if (e.getKind() != ElementKind.CLASS ) {
-         throw new AnnotationProcessingException(e, "@ProtoBridgeFor can only be applied to classes.");
+         throw new AnnotationProcessingException(e, "@ProtoAdapter can only be applied to classes.");
       }
       collectClasses((TypeElement) e);
    }

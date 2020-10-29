@@ -58,8 +58,8 @@ final class CompileTimeImportedProtoTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
-   public boolean isBridge() {
-      return protoTypeMetadata.isBridge();
+   public boolean isAdapter() {
+      return protoTypeMetadata.isAdapter();
    }
 
    @Override

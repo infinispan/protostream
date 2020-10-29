@@ -164,8 +164,8 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       marshallerImpl.setSuperclass(generatedMarshallerBaseClass);
       marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
-      if (pmtm.isBridge()) {
-         addBridgeField(marshallerImpl, pmtm);
+      if (pmtm.isAdapter()) {
+         addAdapterField(marshallerImpl, pmtm);
       }
 
       addMarshallerDelegateFields(marshallerImpl, pmtm);
@@ -199,15 +199,15 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       return generatedMarshallerClass;
    }
 
-   private void addBridgeField(CtClass marshallerImpl, ProtoMessageTypeMetadata messageTypeMetadata) throws CannotCompileException, NotFoundException {
-      CtClass bridgeClass = cp.getCtClass(messageTypeMetadata.getAnnotatedClass().getName());
-      CtField bridgeField = new CtField(bridgeClass, BRIDGE_FIELD_NAME, marshallerImpl);
-      bridgeField.setModifiers(Modifier.PRIVATE);
-      bridgeField.setModifiers(Modifier.FINAL);
-      marshallerImpl.addField(bridgeField);
+   private void addAdapterField(CtClass marshallerImpl, ProtoMessageTypeMetadata messageTypeMetadata) throws CannotCompileException, NotFoundException {
+      CtClass adapterClass = cp.getCtClass(messageTypeMetadata.getAnnotatedClass().getName());
+      CtField adapterField = new CtField(adapterClass, ADAPTER_FIELD_NAME, marshallerImpl);
+      adapterField.setModifiers(Modifier.PRIVATE);
+      adapterField.setModifiers(Modifier.FINAL);
+      marshallerImpl.addField(adapterField);
 
       marshallerImpl.addConstructor(CtNewConstructor.make("public " + marshallerImpl.getSimpleName() + "() { "
-            + BRIDGE_FIELD_NAME + " = new " + bridgeClass.getName() + "(); }", marshallerImpl));
+            + ADAPTER_FIELD_NAME + " = new " + adapterClass.getName() + "(); }", marshallerImpl));
    }
 
    /**

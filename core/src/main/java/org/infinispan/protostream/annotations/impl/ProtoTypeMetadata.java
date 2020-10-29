@@ -88,7 +88,7 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
       return canonicalName != null ? canonicalName : getAnnotatedClass().getName();
    }
 
-   public boolean isBridge() {
+   public boolean isAdapter() {
       return false;
    }
 

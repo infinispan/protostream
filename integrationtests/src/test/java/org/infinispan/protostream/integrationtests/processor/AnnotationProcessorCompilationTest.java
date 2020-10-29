@@ -137,7 +137,7 @@ public class AnnotationProcessorCompilationTest {
    }
 
    @Test
-   public void testBridge() {
+   public void testAdapter() {
       Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/MarshallExternals.java");
       assertThat(compilation).succeededWithoutWarnings();
       assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test_marshall_externals/TestInitializerImpl.java").isPresent());
