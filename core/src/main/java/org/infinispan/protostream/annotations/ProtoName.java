@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
 public @interface ProtoName {
 
    /**
-    * Defines the name of the Protobuf message or enum type. Must not be fully qualified.
+    * Defines the name of the Protobuf message or enum type. Must not be fully qualified (ie. no dots allowed).
     */
    String value();
 }
