@@ -20,8 +20,8 @@ import java.lang.annotation.Target;
 public @interface ProtoEnum {
 
    /**
-    * Defines the name of the Protobuf enum type. Must not be fully qualified. If missing, the Java class name ({@link
-    * Class#getSimpleName()}) will be used for Protobuf too.
+    * Defines the name of the Protobuf enum type. Must not be fully qualified (ie. no dots allowed).
+    * If missing, the Java class name ({@link Class#getSimpleName()}) will be used for Protobuf too.
     */
    String name() default "";
 }
