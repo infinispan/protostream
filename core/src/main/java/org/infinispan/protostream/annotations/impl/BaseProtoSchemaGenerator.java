@@ -257,19 +257,6 @@ public abstract class BaseProtoSchemaGenerator {
       return new ProtoMessageTypeMetadata(this, javaType, getTargetClass(javaType));
    }
 
-   /**
-    * Get the marshalled class or enum. The marshalled class and the annotated class are not always the same, depending
-    * on the presence of the ProtoAdapter annotation which may establish a new target.
-    */
-   private XClass getTargetClass(XClass annotatedClass) {
-      ProtoAdapter protoAdapter = annotatedClass.getAnnotation(ProtoAdapter.class);
-      if (protoAdapter == null) {
-         return annotatedClass;
-      }
-      //todo [anistor] assert value() is != this to prevent trivial target cycle. also check for non-trivial target cycles
-      return typeFactory.fromClass(protoAdapter.value());
-   }
-
    private void collectMetadata(ProtoTypeMetadata protoTypeMetadata) {
       boolean isUnknownClass = isUnknownClass(protoTypeMetadata.getJavaClass());
 
@@ -322,12 +309,25 @@ public abstract class BaseProtoSchemaGenerator {
       }
    }
 
-   protected XClass getAdapterFor(XClass c) {
-      ProtoAdapter protoAdapter = c.getAnnotation(ProtoAdapter.class);
+   protected XClass getAdapterFor(XClass annotatedClass) {
+      ProtoAdapter protoAdapter = annotatedClass.getAnnotation(ProtoAdapter.class);
       if (protoAdapter != null) {
          // TODO [anistor] also ensure that protoAdapter.value() is not part of current builder and is not scanned for @ProtoXyz annotations even if present
-         return typeFactory.fromClass(protoAdapter.value());
+         XClass target = typeFactory.fromClass(protoAdapter.value());
+         if (target == annotatedClass) {
+            throw new ProtoSchemaBuilderException(annotatedClass.getName() + " has an invalid @ProtoAdapter annotation pointing to self");
+         }
+         return target;
       }
       return null;
+   }
+
+   /**
+    * Get the marshalled class or enum. The marshalled class and the annotated class are not always the same, depending
+    * on the presence of the ProtoAdapter annotation which may establish a new target.
+    */
+   protected XClass getTargetClass(XClass annotatedClass) {
+      XClass target = getAdapterFor(annotatedClass);
+      return target == null ? annotatedClass : target;
    }
 }

@@ -57,16 +57,6 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
       return new CompileTimeProtoMessageTypeMetadata(this, javaType, getTargetClass(javaType));
    }
 
-   private XClass getTargetClass(XClass annotatedClass) {
-      ProtoAdapter protoAdapter = annotatedClass.getAnnotation(ProtoAdapter.class);
-      if (protoAdapter == null) {
-         return annotatedClass;
-      }
-      //todo [anistor] assert value() is != this to prevent trivial target cycle. also check for non-trivial target cycles
-      TypeMirror typeMirror = DangerousActions.getTypeMirror(protoAdapter, ProtoAdapter::value);
-      return ((MirrorClassFactory) typeFactory).fromTypeMirror(typeMirror);
-   }
-
    @Override
    protected ProtoTypeMetadata importProtoTypeMetadata(XClass javaType) {
       if (javaType == typeFactory.fromClass(WrappedMessage.class)) {
@@ -97,10 +87,10 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    }
 
    @Override
-   protected XClass getAdapterFor(XClass c) {
+   protected XClass getAdapterFor(XClass annotatedClass) {
       ProtoAdapter protoAdapter;
       try {
-         protoAdapter = c.getAnnotation(ProtoAdapter.class);
+         protoAdapter = annotatedClass.getAnnotation(ProtoAdapter.class);
          if (protoAdapter == null) {
             return null;
          }
@@ -113,7 +103,11 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
       }
       // TODO [anistor] also ensure that typeMirror is not part of current serCtxInit and is not scanned for @ProtoXyz annotations even if present
       TypeMirror typeMirror = DangerousActions.getTypeMirror(protoAdapter, ProtoAdapter::value);
-      return ((MirrorClassFactory) typeFactory).fromTypeMirror(typeMirror);
+      XClass target = ((MirrorClassFactory) typeFactory).fromTypeMirror(typeMirror);
+      if (target == annotatedClass) {
+         throw new ProtoSchemaBuilderException(annotatedClass.getName() + " has an invalid @ProtoAdapter annotation pointing to self");
+      }
+      return target;
    }
 
    public Set<String> getGeneratedMarshallerClasses() {
