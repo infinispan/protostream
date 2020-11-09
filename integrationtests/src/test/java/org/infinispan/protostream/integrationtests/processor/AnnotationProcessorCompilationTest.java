@@ -140,13 +140,19 @@ public class AnnotationProcessorCompilationTest {
    public void testAdapter() {
       Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/MarshallExternals.java");
       assertThat(compilation).succeededWithoutWarnings();
-      assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test_marshall_externals/TestInitializerImpl.java").isPresent());
+      assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test_marshall_externals/MarshallExternalsImpl.java").isPresent());
 
-      Optional<JavaFileObject> schemaFile = compilation.generatedFile(CLASS_OUTPUT, "TestInitializer.proto");
+      Optional<JavaFileObject> schemaFile = compilation.generatedFile(CLASS_OUTPUT, "MarshallExternals.proto");
       assertTrue(schemaFile.isPresent());
       assertFileContains(schemaFile, "message Address");
       assertFileContains(schemaFile, "message UUID");
       assertFileContains(schemaFile, "enum Color");
+   }
+
+   @Test
+   public void testBadEnumAdapter() {
+      Compilation compilation = compile("org/infinispan/protostream/integrationtests/processor/MarshallBadExternalEnum.java");
+      assertThat(compilation).hadErrorContaining("test_marshall_bad_external_enum.BadColorEnumAdapter.PINK does not have a corresponding enum value in test_marshall_bad_external_enum.Color");
    }
 
    /**

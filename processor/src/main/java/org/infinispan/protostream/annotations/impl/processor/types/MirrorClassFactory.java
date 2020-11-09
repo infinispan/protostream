@@ -339,6 +339,11 @@ public final class MirrorClassFactory implements XTypeFactory {
       }
 
       @Override
+      public XEnumConstant getEnumConstant(String name) {
+         throw new IllegalStateException(getName() + " is not an enum");
+      }
+
+      @Override
       public boolean isArray() {
          return false;
       }
@@ -536,6 +541,19 @@ public final class MirrorClassFactory implements XTypeFactory {
             return enumConstants.values();
          }
          throw new IllegalStateException(getName() + " is not an enum");
+      }
+
+      @Override
+      public XEnumConstant getEnumConstant(String name) {
+         if (enumConstants == null) {
+            throw new IllegalStateException(getName() + " is not an enum");
+         }
+         for (VariableElement v : enumConstants.keySet()) {
+            if (name.equals(v.getSimpleName().toString())) {
+               return enumConstants.get(v);
+            }
+         }
+         return null;
       }
 
       @Override
@@ -830,6 +848,11 @@ public final class MirrorClassFactory implements XTypeFactory {
 
       @Override
       public Iterable<? extends XEnumConstant> getEnumConstants() {
+         throw new IllegalStateException(getName() + " is not an enum");
+      }
+
+      @Override
+      public XEnumConstant getEnumConstant(String name) {
          throw new IllegalStateException(getName() + " is not an enum");
       }
 

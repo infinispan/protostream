@@ -344,6 +344,19 @@ public final class ReflectionClassFactory implements XTypeFactory {
       }
 
       @Override
+      public XEnumConstant getEnumConstant(String name) {
+         if (enumConstants == null) {
+            throw new IllegalStateException(getName() + " is not an enum");
+         }
+         for (Field f : enumConstants.keySet()) {
+            if (name.equals(f.getName())) {
+               return enumConstants.get(f);
+            }
+         }
+         return null;
+      }
+
+      @Override
       public boolean equals(Object obj) {
          if (obj == this) {
             return true;

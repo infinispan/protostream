@@ -2,7 +2,6 @@ package test_marshall_externals;
 
 import java.util.UUID;
 
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoAdapter;
@@ -10,7 +9,6 @@ import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoReserved;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.descriptors.Type;
 
 
@@ -21,7 +19,7 @@ import org.infinispan.protostream.descriptors.Type;
    },
    schemaFilePath = "/"
 )
-interface TestInitializer extends SerializationContextInitializer {
+interface MarshallExternals extends SerializationContextInitializer {
 }
 
 enum Color {
@@ -40,10 +38,6 @@ enum ColorEnumAdapter {
 
    @ProtoEnumValue(number = 2, name = "blue")
    BLUE
-
-//TODO [anistor] this generates a compilation error too late
-//   @ProtoEnumValue(number = 3, name = "black")
-//   BLACK
 }
 
 @ProtoAdapter(UUID.class)

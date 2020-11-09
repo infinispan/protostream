@@ -607,18 +607,11 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
          //todo [anistor] which one is the default according to proto2 and 3 ? https://developers.google.com/protocol-buffers/docs/proto3#enum
          // maybe the one with ordinal 0 ?
 
-         @ProtoEnumValue(number = 0, name = "red")
-         RED,
+         @ProtoEnumValue(number = 0, name = "red") RED,
 
-         @ProtoEnumValue(number = 1, name = "green")
-         GREEN,
+         @ProtoEnumValue(number = 1, name = "green") GREEN,
 
-         @ProtoEnumValue(number = 2, name = "blue")
-         BLUE
-
-      //TODO [anistor] this generates a compilation error too late
-      //   @ProtoEnumValue(number = 3, name = "black")
-      //   BLACK
+         @ProtoEnumValue(number = 2, name = "blue") BLUE
       }
    }
 
@@ -639,6 +632,35 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
       assertFalse(ctx.canMarshall("test_enum_adapter_package.ColorEnumAdapter"));
       assertFalse(ctx.canMarshall(TestCase_EnumProtoAdapter.ColorEnumAdapter.class));
+   }
+
+   static class TestCase_BadEnumProtoAdapter {
+
+      enum Color {
+         RED, GREEN
+      }
+
+      @ProtoAdapter(Color.class)
+      enum BadColorEnumAdapter {
+
+         @ProtoEnumValue(number = 0, name = "red") RED,
+
+         @ProtoEnumValue(number = 1, name = "pink") PINK
+      }
+   }
+
+   @Test
+   public void testBadEnumProtoAdapter() throws Exception {
+      exception.expect(ProtoSchemaBuilderException.class);
+      exception.expectMessage("org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.TestCase_BadEnumProtoAdapter.BadColorEnumAdapter.PINK does not have a corresponding enum value in org.infinispan.protostream.annotations.impl.ProtoSchemaBuilderTest.TestCase_BadEnumProtoAdapter.Color");
+
+      SerializationContext ctx = createContext();
+
+      new ProtoSchemaBuilder()
+            .fileName("test1.proto")
+            .packageName("test_bad_enum_adapter_package")
+            .addClass(TestCase_BadEnumProtoAdapter.BadColorEnumAdapter.class)
+            .build(ctx);
    }
 
    static class TestCase_DuplicateEnumValueName {

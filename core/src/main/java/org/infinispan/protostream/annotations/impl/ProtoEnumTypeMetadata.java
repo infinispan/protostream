@@ -85,9 +85,24 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
                   ec.getOrdinal(), getJavaClassName() + '.' + ec.getName(), ec.getProtoDocs());
             membersByNumber.put(number, pevm);
             membersByName.put(pevm.getProtoName(), pevm);
+
+            if (isAdapter()) {
+               XEnumConstant enumConstant = javaClass.getEnumConstant(ec.getName());
+               if (enumConstant == null) {
+                  throw new ProtoSchemaBuilderException(getAnnotatedClassName() + '.' + ec.getName() + " does not have a corresponding enum value in " + getJavaClassName());
+               }
+            }
+         }
+         if (isAdapter()) {
+            for (XEnumConstant ec : javaClass.getEnumConstants()) {
+               XEnumConstant enumConstant = annotatedEnumClass.getEnumConstant(ec.getName());
+               if (enumConstant == null) {
+                  throw new ProtoSchemaBuilderException(getAnnotatedClassName() + " does not have a corresponding enum value for " + getJavaClassName() + '.' + ec.getName());
+               }
+            }
          }
          if (membersByNumber.isEmpty()) {
-            throw new ProtoSchemaBuilderException("Enums without members are not allowed: " + getAnnotatedClassName());
+            throw new ProtoSchemaBuilderException("Enums must contain at least one value: " + getAnnotatedClassName());
          }
       }
    }

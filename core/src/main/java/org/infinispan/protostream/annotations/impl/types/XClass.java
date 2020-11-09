@@ -32,6 +32,8 @@ public interface XClass extends XElement {
     */
    Iterable<? extends XEnumConstant> getEnumConstants();
 
+   XEnumConstant getEnumConstant(String name);
+
    boolean isArray();
 
    /**
