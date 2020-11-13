@@ -5,7 +5,9 @@ import org.infinispan.protostream.sampledomain.User;
 
 /**
  * @author anistor@redhat.com
+ * @deprecated This marshalling mechanism will be removed in 5. Please switch to annotation based marshalling.
  */
+@Deprecated
 public class GenderMarshaller implements EnumMarshaller<User.Gender> {
 
    @Override

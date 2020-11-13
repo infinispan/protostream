@@ -10,7 +10,9 @@ import org.infinispan.protostream.sampledomain.Account;
 
 /**
  * @author anistor@redhat.com
+ * @deprecated This marshalling mechanism will be removed in 5. Please switch to annotation based marshalling.
  */
+@Deprecated
 public class AccountMarshaller implements MessageMarshaller<Account> {
 
    @Override
