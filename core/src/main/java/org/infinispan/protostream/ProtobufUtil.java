@@ -87,6 +87,7 @@ public final class ProtobufUtil {
       SerializationContextImpl serializationContext = new SerializationContextImpl(configuration);
 
       try {
+         // always register message-wrapping.proto
          serializationContext.registerProtoFiles(FileDescriptorSource.fromResources(WrappedMessage.PROTO_FILE));
       } catch (IOException | DescriptorParserException e) {
          throw new RuntimeException("Failed to initialize serialization context", e);
