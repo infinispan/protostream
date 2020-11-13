@@ -141,15 +141,6 @@
                     <include>**/*.proto</include>
                 </includes>
             </resource>
-
-            <!-- [anistor] TODO do not include features.xml in jar artifact, Karaf does not actually use it from there, it uses the attached features.xml -->
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>features.xml</include>
-                </includes>
-            </resource>
         </resources>
 
         <plugins>
@@ -214,11 +205,6 @@
                                         <Specification-Version>${project.version}</Specification-Version>
                                     </manifestEntries>
                                     <mainClass>org.infinispan.protostream.Version</mainClass>
-                                </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-                                    <resources>
-                                        <resource>features.xml</resource>
-                                    </resources>
                                 </transformer>
                             </transformers>
                         </configuration>
