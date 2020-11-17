@@ -1,6 +1,5 @@
 package org.infinispan.protostream;
 
-import static com.google.gson.stream.JsonToken.END_DOCUMENT;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME;
@@ -32,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -51,10 +51,10 @@ import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 
-import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.MalformedJsonException;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.google.protobuf.CodedOutputStream;
 
 /**
@@ -71,9 +71,10 @@ public final class ProtobufUtil {
    // Z-normalized RFC 3339 format
    private static final String RFC_3339_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
-   private static final Gson GSON = new Gson();
+   private static final JsonFactory jsonFactory = new JsonFactory();
 
    private static final String JSON_TYPE_FIELD = "_type";
+
    private static final String JSON_VALUE_FIELD = "_value";
 
    private ProtobufUtil() {
@@ -228,21 +229,20 @@ public final class ProtobufUtil {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
       RawProtoStreamWriter writer = RawProtoStreamWriterImpl.newInstance(baos);
 
-      JsonReader jsonReader = new JsonReader(reader);
-      jsonReader.setLenient(false);
+      JsonParser parser = jsonFactory.createParser(reader);
 
       try {
-         JsonToken token = jsonReader.peek();
-         while (jsonReader.hasNext() && !token.equals(END_DOCUMENT)) {
-            token = jsonReader.peek();
+         while (true) {
+            JsonToken token = parser.nextToken();
+            if (token == null) {
+               break;
+            }
             switch (token) {
-               case BEGIN_OBJECT:
-                  processJsonDocument(ctx, jsonReader, writer);
+               case START_OBJECT:
+                  processDocument(ctx, parser, writer);
                   break;
-               case NULL:
-                  jsonReader.nextNull();
-                  break;
-               case END_DOCUMENT:
+               case VALUE_NULL:
+                  // we got null input, we write nothing out
                   break;
                default:
                   throw new IllegalStateException("Invalid top level object! Found token: " + token);
@@ -250,7 +250,7 @@ public final class ProtobufUtil {
          }
          writer.flush();
          return baos.toByteArray();
-      } catch (MalformedJsonException e) {
+      } catch (JsonProcessingException e) {
          throw new IllegalStateException("Invalid JSON", e);
       } finally {
          baos.close();
@@ -258,8 +258,8 @@ public final class ProtobufUtil {
       }
    }
 
-   private static void writeEnumField(JsonReader reader, RawProtoStreamWriter writer, FieldDescriptor fd) throws IOException {
-      String value = reader.nextString();
+   private static void writeEnumField(JsonParser parser, RawProtoStreamWriter writer, FieldDescriptor fd) throws IOException {
+      String value = parser.getText();
       EnumDescriptor enumDescriptor = fd.getEnumType();
       EnumValueDescriptor valueDescriptor = enumDescriptor.findValueByName(value);
       if (valueDescriptor == null) {
@@ -269,181 +269,187 @@ public final class ProtobufUtil {
       writer.writeEnum(fd.getNumber(), choice);
    }
 
-   private static void writeField(JsonReader reader, RawProtoStreamWriter writer, Type fieldType, int fieldId) throws IOException {
+   private static void writeField(JsonParser parser, RawProtoStreamWriter writer, Type fieldType, int fieldNumber) throws IOException {
+      //TODO [anistor] all these number parsing below just masks an issue with quoted vs unquoted numeric literals
       switch (fieldType) {
          case DOUBLE:
-            writer.writeDouble(fieldId, reader.nextDouble());
+            writer.writeDouble(fieldNumber, Double.parseDouble(parser.getText()));
             break;
          case FLOAT:
-            writer.writeFloat(fieldId, Float.parseFloat(reader.nextString()));
+            writer.writeFloat(fieldNumber, Float.parseFloat(parser.getText()));
             break;
          case INT64:
-            writer.writeInt64(fieldId, reader.nextLong());
+            writer.writeInt64(fieldNumber, Long.parseLong(parser.getText()));
             break;
          case UINT64:
-            writer.writeUInt64(fieldId, reader.nextLong());
+            writer.writeUInt64(fieldNumber, Long.parseLong(parser.getText()));
             break;
          case FIXED64:
-            writer.writeFixed64(fieldId, reader.nextLong());
+            writer.writeFixed64(fieldNumber, Long.parseLong(parser.getText()));
             break;
          case SFIXED64:
-            writer.writeSFixed64(fieldId, reader.nextLong());
+            writer.writeSFixed64(fieldNumber, Long.parseLong(parser.getText()));
             break;
          case SINT64:
-            writer.writeSInt64(fieldId, reader.nextLong());
+            writer.writeSInt64(fieldNumber, Long.parseLong(parser.getText()));
             break;
          case INT32:
-            writer.writeInt32(fieldId, reader.nextInt());
+            writer.writeInt32(fieldNumber, Integer.parseInt(parser.getText()));
             break;
          case FIXED32:
-            writer.writeFixed32(fieldId, reader.nextInt());
+            writer.writeFixed32(fieldNumber, Integer.parseInt(parser.getText()));
             break;
          case UINT32:
-            writer.writeUInt32(fieldId, reader.nextInt());
+            writer.writeUInt32(fieldNumber, Integer.parseInt(parser.getText()));
             break;
          case SFIXED32:
-            writer.writeSFixed32(fieldId, reader.nextInt());
+            writer.writeSFixed32(fieldNumber, Integer.parseInt(parser.getText()));
             break;
          case SINT32:
-            writer.writeSInt32(fieldId, reader.nextInt());
+            writer.writeSInt32(fieldNumber, Integer.parseInt(parser.getText()));
             break;
          case BOOL:
-            writer.writeBool(fieldId, reader.nextBoolean());
+            writer.writeBool(fieldNumber, parser.getBooleanValue());
             break;
          case STRING:
-            writer.writeString(fieldId, reader.nextString());
+            writer.writeString(fieldNumber, parser.getText());
             break;
          case BYTES:
-            byte[] decoded = Base64.getDecoder().decode(reader.nextString());
-            writer.writeBytes(fieldId, decoded);
+            byte[] binary = parser.getBinaryValue();
+            writer.writeBytes(fieldNumber, binary);
             break;
          default:
             throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fieldType);
       }
    }
 
-   private static void expectField(String expected, String value) {
-      if (value == null || !value.equals(expected)) {
-         throw new IllegalStateException("The document should contain a top level field '" + expected + "'");
+   private static void expectField(String expectedFieldName, String actualFieldName) {
+      if (!expectedFieldName.equals(actualFieldName)) {
+         throw new IllegalStateException("The document should contain a top level field '" + expectedFieldName + "'");
       }
    }
 
-   private static void expectField(FieldDescriptor descriptor, String fieldName) {
-      if (descriptor == null)
-         throw new IllegalStateException("The field '" + fieldName + "' was not found in the Protobuf schema");
-   }
-
-   private static void processJsonDocument(ImmutableSerializationContext ctx, JsonReader reader, RawProtoStreamWriter writer) throws IOException {
-      reader.beginObject();
-
-      String currentField;
-      String topLevelTypeName;
-
-      JsonToken token = reader.peek();
-      while (reader.hasNext() && !(token == END_DOCUMENT)) {
-         token = reader.peek();
+   private static void processDocument(ImmutableSerializationContext ctx, JsonParser parser, RawProtoStreamWriter writer) throws IOException {
+      while (true) {
+         JsonToken token = parser.nextToken();
+         if (token == null) {
+            break;
+         }
          switch (token) {
-            case NAME:
-               currentField = reader.nextName();
+            case END_OBJECT:
+               return;
+            case FIELD_NAME:
+               String currentField = parser.getCurrentName();
                expectField(JSON_TYPE_FIELD, currentField);
                break;
-            case STRING:
-               topLevelTypeName = reader.nextString();
+            case VALUE_STRING:
+               String topLevelTypeName = parser.getText();
                Type fieldType = getFieldType(ctx, topLevelTypeName);
                switch (fieldType) {
                   case ENUM:
-                     processEnum(reader, writer, (EnumDescriptor) ctx.getDescriptorByName(topLevelTypeName));
+                     processEnum(parser, writer, (EnumDescriptor) ctx.getDescriptorByName(topLevelTypeName));
                      break;
                   case MESSAGE:
-                     processObject(ctx, reader, writer, topLevelTypeName, null, true);
+                     processObject(ctx, parser, writer, topLevelTypeName, null, true);
                      break;
                   default:
-                     processPrimitive(reader, writer, fieldType);
-                     break;
+                     processPrimitive(parser, writer, fieldType);
                }
          }
       }
    }
 
-   private static void processEnum(JsonReader reader, RawProtoStreamWriter writer, EnumDescriptor enumDescriptor) throws IOException {
-      while (reader.hasNext()) {
-         JsonToken token = reader.peek();
+   private static void processEnum(JsonParser parser, RawProtoStreamWriter writer, EnumDescriptor enumDescriptor) throws IOException {
+      while (true) {
+         JsonToken token = parser.nextToken();
+         if (token == null) {
+            break;
+         }
          switch (token) {
-            case NAME:
-               String fieldName = reader.nextName();
+            case END_OBJECT:
+               return;
+            case FIELD_NAME:
+               String fieldName = parser.getCurrentName();
                expectField(JSON_VALUE_FIELD, fieldName);
                break;
-            case STRING:
-               String read = reader.nextString();
-               EnumValueDescriptor valueByName = enumDescriptor.findValueByName(read);
-               if (valueByName == null) {
-                  throw new IllegalStateException("Invalid enum value '" + read + "'");
+            case VALUE_STRING: {
+               String enumValueName = parser.getText();
+               EnumValueDescriptor enumValueDescriptor = enumDescriptor.findValueByName(enumValueName);
+               if (enumValueDescriptor == null) {
+                  throw new IllegalStateException("Invalid enum value : '" + enumValueName + "'");
                }
-               int choice = valueByName.getNumber();
-               Integer typeId = enumDescriptor.getTypeId();
-               writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, typeId);
-               writer.writeEnum(WRAPPED_ENUM, choice);
+               writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, enumDescriptor.getTypeId());//todo [anistor] this seems to be a mistake! we need a typeid/typename only for top level, and this is not the case!
+               writer.writeEnum(WRAPPED_ENUM, enumValueDescriptor.getNumber());
                break;
-            case NULL:
-               reader.nextNull();
+            }
+            case VALUE_NULL:
                throw new IllegalStateException("Invalid enum value 'null'");
-            case BOOLEAN:
-               boolean bool = reader.nextBoolean();
-               throw new IllegalStateException("Invalid enum value '" + bool + "'");
-            case NUMBER:
-               long number = reader.nextLong();
-               throw new IllegalStateException("Invalid enum value '" + number + "'");
+            case VALUE_TRUE:
+            case VALUE_FALSE:
+            case VALUE_NUMBER_FLOAT:
+               throw new IllegalStateException("Invalid enum value '" + parser.getText() + "'");
             default:
-               throw new IllegalStateException("Unexpected token :" + token);
+               throw new IllegalStateException("Unexpected token : " + token);
          }
       }
    }
 
-   private static void processObject(ImmutableSerializationContext ctx, JsonReader reader, RawProtoStreamWriter writer, String type, Integer typeId, boolean topLevel) throws IOException {
-      GenericDescriptor descriptorByName = ctx.getDescriptorByName(type);
-
-      Descriptor messageDescriptor = (Descriptor) descriptorByName;
+   private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, RawProtoStreamWriter writer, String type, Integer fieldNumber, boolean topLevel) throws IOException {
+      Descriptor messageDescriptor = ctx.getMessageDescriptor(type);
 
       Set<String> requiredFields = messageDescriptor.getFields().stream()
-            .filter(FieldDescriptor::isRequired).map(FieldDescriptor::getName).collect(Collectors.toSet());
+            .filter(FieldDescriptor::isRequired).map(FieldDescriptor::getName).collect(Collectors.toCollection(HashSet::new));
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
-      RawProtoStreamWriter objectWriter = RawProtoStreamWriterImpl.newInstance(baos);
+      RawProtoStreamWriter nestedWriter = RawProtoStreamWriterImpl.newInstance(baos);
 
       String currentField = null;
-      while (reader.hasNext()) {
-         JsonToken token = reader.peek();
+
+      out:
+      while (true) {
+         JsonToken token = parser.nextToken();
+         if (token == null) {
+            break;
+         }
          switch (token) {
-            case BEGIN_ARRAY:
-               processArray(ctx, type, currentField, reader, objectWriter);
+            case END_OBJECT:
+               break out;
+            case START_ARRAY:
+               processArray(ctx, type, currentField, parser, nestedWriter);
                break;
-            case BEGIN_OBJECT:
-               reader.beginObject();
-               FieldDescriptor descriptor = ((Descriptor) descriptorByName).findFieldByName(currentField);
-               Descriptor messageType = descriptor.getMessageType();
+            case START_OBJECT: {
+               FieldDescriptor fd = messageDescriptor.findFieldByName(currentField);
+               Descriptor messageType = fd.getMessageType();
                if (messageType == null) {
                   throw new IllegalStateException("Field '" + currentField + "' is not an object");
                }
-               processObject(ctx, reader, objectWriter, messageType.getFullName(), descriptor.getNumber(), false);
-               requiredFields.remove(descriptor.getName());
+               processObject(ctx, parser, nestedWriter, messageType.getFullName(), fd.getNumber(), false);
+               requiredFields.remove(currentField);
                break;
-            case NAME:
-               currentField = reader.nextName();
+            }
+            case FIELD_NAME:
+               currentField = parser.getCurrentName();
                break;
-            case STRING:
-            case NUMBER:
-            case BOOLEAN:
-               FieldDescriptor fieldByName = ((Descriptor) descriptorByName).findFieldByName(currentField);
-               expectField(fieldByName, currentField);
-               if (fieldByName.getType() == Type.ENUM) {
-                  writeEnumField(reader, objectWriter, fieldByName);
-               } else {
-                  writeField(reader, objectWriter, fieldByName.getType(), fieldByName.getNumber());
+            case VALUE_STRING:
+            case VALUE_NUMBER_INT:
+            case VALUE_NUMBER_FLOAT:
+            case VALUE_TRUE:
+            case VALUE_FALSE: {
+               FieldDescriptor fd = messageDescriptor.findFieldByName(currentField);
+               if (fd == null) {
+                  throw new IllegalStateException("The field '" + currentField + "' was not found in the Protobuf schema");
                }
-               requiredFields.remove(fieldByName.getName());
+
+               if (fd.getType() == Type.ENUM) {
+                  writeEnumField(parser, nestedWriter, fd);
+               } else {
+                  writeField(parser, nestedWriter, fd.getType(), fd.getNumber());
+               }
+               requiredFields.remove(currentField);
                break;
-            case NULL:
-               reader.nextNull();
+            }
+            case VALUE_NULL:
+               // we got null in, we write nothing out
                break;
          }
       }
@@ -454,41 +460,47 @@ public final class ProtobufUtil {
       }
 
       if (topLevel) {
-         Integer topLevelTypeId = descriptorByName.getTypeId();
+         Integer topLevelTypeId = messageDescriptor.getTypeId();
          if (topLevelTypeId == null) {
             writer.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, type);
          } else {
             writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, topLevelTypeId);
          }
-         objectWriter.flush();
+         nestedWriter.flush();
          writer.writeBytes(WRAPPED_MESSAGE, baos.toByteArray());
       } else {
-         objectWriter.flush();
-         writer.writeBytes(typeId, baos.toByteArray());
+         nestedWriter.flush();
+         writer.writeBytes(fieldNumber, baos.toByteArray());
       }
 
       writer.flush();
-      reader.endObject();
    }
 
-   private static void processPrimitive(JsonReader reader, RawProtoStreamWriter writer, Type fieldType) throws IOException {
-      while (reader.hasNext()) {
-         JsonToken token = reader.peek();
+   private static void processPrimitive(JsonParser parser, RawProtoStreamWriter writer, Type fieldType) throws IOException {
+      while (true) {
+         JsonToken token = parser.nextToken();
+         if (token == null) {
+            break;
+         }
          switch (token) {
-            case NAME:
-               String fieldName = reader.nextName();
+            case END_OBJECT:
+               return;
+            case FIELD_NAME:
+               String fieldName = parser.getCurrentName();
                expectField(JSON_VALUE_FIELD, fieldName);
                break;
-            case STRING:
-            case NUMBER:
-            case BOOLEAN:
-               writeField(reader, writer, fieldType, getPrimitiveFieldId(fieldType));
+            case VALUE_STRING:
+            case VALUE_NUMBER_INT:
+            case VALUE_NUMBER_FLOAT:
+            case VALUE_TRUE:
+            case VALUE_FALSE:
+               writeField(parser, writer, fieldType, getPrimitiveFieldId(fieldType));
                break;
-            case NULL:
-               reader.nextNull();
+            case VALUE_NULL:
+               // we got null in, we do not output anything
                break;
             default:
-               throw new IllegalStateException("Unexpected token :" + token);
+               throw new IllegalStateException("Unexpected JSON token :" + token);
          }
       }
    }
@@ -564,45 +576,47 @@ public final class ProtobufUtil {
             return Type.SINT64;
          default:
             GenericDescriptor descriptorByName = ctx.getDescriptorByName(fullTypeName);
-            if (descriptorByName instanceof EnumDescriptor) {
-               return Type.ENUM;
-            }
-            return Type.MESSAGE;
+            return descriptorByName instanceof EnumDescriptor ? Type.ENUM : Type.MESSAGE;
       }
    }
 
-   private static void processArray(ImmutableSerializationContext ctx, String type, String field, JsonReader reader, RawProtoStreamWriter writer) throws IOException {
-      reader.beginArray();
-      while (reader.hasNext()) {
-         JsonToken token = reader.peek();
+   private static void processArray(ImmutableSerializationContext ctx, String type, String field, JsonParser parser, RawProtoStreamWriter writer) throws IOException {
+      while (true) {
+         JsonToken token = parser.nextToken();
+         if (token == null) {
+            break;
+         }
          switch (token) {
-            case BEGIN_ARRAY:
-               processArray(ctx, type, field, reader, writer);
-            case BEGIN_OBJECT:
-               reader.beginObject();
-               Descriptor d = (Descriptor) ctx.getDescriptorByName(type);
-               FieldDescriptor fieldByName = d.findFieldByName(field);
-               int number = fieldByName.getNumber();
-               processObject(ctx, reader, writer, fieldByName.getMessageType().getFullName(), number, false);
+            case END_ARRAY:
+               return;
+            case START_ARRAY:
+               processArray(ctx, type, field, parser, writer); //todo [anistor] array in array does not seem to work since initial version
                break;
-            case STRING:
-            case NUMBER:
-            case BOOLEAN:
-               Descriptor de = (Descriptor) ctx.getDescriptorByName(type);
-               FieldDescriptor fd = de.findFieldByName(field);
-               Type fieldType = fd.getType();
+            case START_OBJECT: {
+               Descriptor d = (Descriptor) ctx.getDescriptorByName(type);
+               FieldDescriptor fd = d.findFieldByName(field);
+               processObject(ctx, parser, writer, fd.getMessageType().getFullName(), fd.getNumber(), false);
+               break;
+            }
+            case VALUE_STRING:
+            case VALUE_NUMBER_INT:
+            case VALUE_NUMBER_FLOAT:
+            case VALUE_TRUE:
+            case VALUE_FALSE: {
+               Descriptor d = (Descriptor) ctx.getDescriptorByName(type);
+               FieldDescriptor fd = d.findFieldByName(field);
                if (!fd.isRepeated()) {
                   throw new IllegalStateException("Field '" + fd.getName() + "' is not an array");
                }
-               if (fieldType == Type.ENUM) {
-                  writeEnumField(reader, writer, fd);
+               if (fd.getType() == Type.ENUM) {
+                  writeEnumField(parser, writer, fd);
                } else {
-                  writeField(reader, writer, fieldType, fd.getNumber());
+                  writeField(parser, writer, fd.getType(), fd.getNumber());
                }
                break;
+            }
          }
       }
-      reader.endArray();
    }
 
    /**
@@ -672,16 +686,12 @@ public final class ProtobufUtil {
                }
                String type;
                if (descriptor instanceof FieldDescriptor) {
-                  type = FieldDescriptor.class.cast(descriptor).getTypeName();
+                  type = ((FieldDescriptor) descriptor).getTypeName();
                } else {
                   type = descriptor.getFullName();
                }
                jsonOut.append('\"').append(type).append('\"');
             }
-         }
-
-         private String escape(String tagValue) {
-            return GSON.toJson(tagValue);
          }
 
          @Override
@@ -699,17 +709,18 @@ public final class ProtobufUtil {
 
             switch (fieldDescriptor.getType()) {
                case STRING:
-                  jsonOut.append(escape((String) tagValue));
+                  escapeJson((String) tagValue, jsonOut, true);
                   break;
                case INT64:
                case SINT64:
                case UINT64:
                case FIXED64:
-                  jsonOut.append('\"').append(tagValue).append('\"');
+                  jsonOut.append('\"').append(tagValue).append('\"');  //todo [anistor] why do we quote number literals?
                   break;
                case FLOAT:
                   Float f = (Float) tagValue;
                   if (f.isInfinite() || f.isNaN()) {
+                     // Infinity and NaN need to be quoted
                      jsonOut.append('\"').append(f).append('\"');
                   } else {
                      jsonOut.append(f);
@@ -902,8 +913,84 @@ public final class ProtobufUtil {
       ProtobufParser.INSTANCE.parse(wrapperHandler, wrapperDescriptor, bytes);
    }
 
-   private static String formatDate(Date tagValue) {
-      return timestampFormat.get().format(tagValue);
+   // todo [anistor] do we really need html escaping? so far I'm keeping it so we behave like previous implementation
+   /**
+    * Escapes a string literal in order to have a valid JSON representation. Optionally it can also escape some html chars.
+    */
+   private static void escapeJson(String value, StringBuilder out, boolean htmlSafe) {
+      out.append('"');
+      int prev = 0;
+      int len = value.length();
+      for (int cur = 0; cur < len; cur++) {
+         char ch = value.charAt(cur);
+         String esc = null;
+         if (ch < ' ') {
+            switch (ch) {
+               case '\t':
+                  esc = "\\t";
+                  break;
+               case '\b':
+                  esc = "\\b";
+                  break;
+               case '\n':
+                  esc = "\\n";
+                  break;
+               case '\r':
+                  esc = "\\r";
+                  break;
+               case '\f':
+                  esc = "\\f";
+                  break;
+               default:
+                  esc = String.format("\\u%04x", (int) ch);
+            }
+         } else if (ch < 128) {
+            if (ch == '"') {
+               esc = "\\\"";
+            } else if (ch == '\\') {
+               esc = "\\\\";
+            } else if (htmlSafe) {
+               switch (ch) {
+                  case '<':
+                     esc = "\\u003c";
+                     break;
+                  case '>':
+                     esc = "\\u003e";
+                     break;
+                  case '&':
+                     esc = "\\u0026";
+                     break;
+                  case '=':
+                     esc = "\\u003d";
+                     break;
+                  case '\'':
+                     esc = "\\u0027";
+                     break;
+               }
+            }
+         } else if (ch == '\u2028') {
+            esc = "\\u2028";
+         } else if (ch == '\u2029') {
+            esc = "\\u2029";
+         } else {
+            continue;
+         }
+         if (esc != null) {
+            if (prev < cur) {
+               out.append(value, prev, cur);
+            }
+            prev = cur + 1;
+            out.append(esc);
+         }
+      }
+      if (prev < len) {
+         out.append(value, prev, len);
+      }
+      out.append('"');
+   }
+
+   private static String formatDate(Date date) {
+      return timestampFormat.get().format(date);
    }
 
    private static final ThreadLocal<DateFormat> timestampFormat = ThreadLocal.withInitial(() -> {

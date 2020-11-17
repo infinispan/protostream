@@ -5,6 +5,7 @@ import static org.infinispan.protostream.domain.Account.Currency.USD;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -27,16 +28,14 @@ import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
  * @author anistor@redhat.com
  */
 public class ProtobufUtilTest extends AbstractProtoStreamTest {
-
-   private static final Gson GSON = new Gson();
 
    @Test(expected = InvalidProtocolBufferException.class)
    public void testFromByteArrayWithExtraPadding() throws Exception {
@@ -202,6 +201,16 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    @Test
+   public void testJsonWithNull() throws Exception {
+      SerializationContext ctx = createContext();
+      String json = "null";
+      byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+
+      Object obj = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertNull(obj);
+   }
+
+   @Test
    public void testWithMalformedJson() throws Exception {
       Throwable error = testFromJson("{'_type':'sample_bank_account.User.Address','street':'Abbey Rd',}");
       assertTrue(error instanceof IllegalStateException);
@@ -357,9 +366,12 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
    private void assertValid(String json) {
       try {
-         GSON.fromJson(json, Object.class);
-      } catch (JsonSyntaxException e) {
-         fail("Invalid json found:" + json);
+         JsonParser parser = new JsonFactory().createParser(json);
+         while (parser.nextToken() != null) {
+            // read all tokens and hope for no errors
+         }
+      } catch (Exception e) {
+         fail("Invalid JSON found : " + json);
       }
    }
 }
