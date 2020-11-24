@@ -186,6 +186,14 @@
                                     <exclude>org.jboss.logging:jboss-logging:jar:</exclude>
                                 </excludes>
                             </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>com.google.protobuf:protobuf-java:jar:</artifact>
+                                    <excludes>
+                                        <exclude>google/protobuf/**</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.protobuf</pattern>
@@ -219,7 +227,6 @@
                                         <Specification-Vendor>JBoss, a division of Red Hat</Specification-Vendor>
                                         <Specification-Version>${project.version}</Specification-Version>
                                     </manifestEntries>
-                                    <mainClass>org.infinispan.protostream.Version</mainClass>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
                                     <resources>
