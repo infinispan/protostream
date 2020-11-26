@@ -19,11 +19,6 @@
     </description>
     <url>https://github.com/infinispan/protostream</url>
 
-    <properties>
-        <intermediary_jar_name>intermediary-${project.build.finalName}</intermediary_jar_name>
-        <intermediary_jar_path>${project.build.directory}/${intermediary_jar_name}.jar</intermediary_jar_path>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -163,7 +158,6 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>${intermediary_jar_name}</finalName>
                             <minimizeJar>true</minimizeJar>
                             <artifactSet>
                                 <excludes>
