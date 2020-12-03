@@ -183,7 +183,7 @@ public final class WrappedMessage {
    public static final int WRAPPED_DESCRIPTOR_TYPE_ID = 19;
 
    /**
-    * @deprecated Use {@link #WRAPPED_DESCRIPTOR_TYPE_ID} instead.
+    * @deprecated Use {@link #WRAPPED_DESCRIPTOR_TYPE_ID} instead. This will be removed in ver. 5.
     */
    @Deprecated
    public static final int WRAPPED_DESCRIPTOR_ID = WRAPPED_DESCRIPTOR_TYPE_ID;

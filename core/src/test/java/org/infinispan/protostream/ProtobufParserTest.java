@@ -78,7 +78,7 @@ public class ProtobufParserTest extends AbstractProtoStreamTest {
 
          @Override
          public void onStart(GenericDescriptor descriptor) {
-            log.debugf("onStart %s" + descriptor);
+            log.debugf("onStart %s", descriptor);
          }
 
          @Override
