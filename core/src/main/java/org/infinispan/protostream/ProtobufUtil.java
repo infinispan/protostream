@@ -59,7 +59,7 @@ import com.google.protobuf.CodedOutputStream;
 
 /**
  * This is the entry point to the ProtoStream library. This class provides methods to write and read Java objects
- * to/from a Protobuf encoded data stream.
+ * to/from a Protobuf encoded data stream. Also provides conversion to and from canonical JSON.
  *
  * @author anistor@redhat.com
  * @since 1.0
@@ -337,7 +337,7 @@ public final class ProtobufUtil {
       reader.beginObject();
 
       String currentField;
-      String topLevelType;
+      String topLevelTypeName;
 
       JsonToken token = reader.peek();
       while (reader.hasNext() && !(token == END_DOCUMENT)) {
@@ -348,14 +348,14 @@ public final class ProtobufUtil {
                expectField(JSON_TYPE_FIELD, currentField);
                break;
             case STRING:
-               topLevelType = reader.nextString();
-               Type fieldType = getFieldType(ctx, topLevelType);
+               topLevelTypeName = reader.nextString();
+               Type fieldType = getFieldType(ctx, topLevelTypeName);
                switch (fieldType) {
                   case ENUM:
-                     processEnum(reader, writer, (EnumDescriptor) ctx.getDescriptorByName(topLevelType));
+                     processEnum(reader, writer, (EnumDescriptor) ctx.getDescriptorByName(topLevelTypeName));
                      break;
                   case MESSAGE:
-                     processObject(ctx, reader, writer, topLevelType, null, true);
+                     processObject(ctx, reader, writer, topLevelTypeName, null, true);
                      break;
                   default:
                      processPrimitive(reader, writer, fieldType);
@@ -381,7 +381,7 @@ public final class ProtobufUtil {
                }
                int choice = valueByName.getNumber();
                Integer typeId = enumDescriptor.getTypeId();
-               writer.writeInt32(WRAPPED_DESCRIPTOR_TYPE_ID, typeId);
+               writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, typeId);
                writer.writeEnum(WRAPPED_ENUM, choice);
                break;
             case NULL:
@@ -454,11 +454,11 @@ public final class ProtobufUtil {
       }
 
       if (topLevel) {
-         Integer tlt = descriptorByName.getTypeId();
-         if (tlt == null) {
+         Integer topLevelTypeId = descriptorByName.getTypeId();
+         if (topLevelTypeId == null) {
             writer.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, type);
          } else {
-            writer.writeInt32(WRAPPED_DESCRIPTOR_TYPE_ID, tlt);
+            writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, topLevelTypeId);
          }
          objectWriter.flush();
          writer.writeBytes(WRAPPED_MESSAGE, baos.toByteArray());
@@ -469,7 +469,6 @@ public final class ProtobufUtil {
 
       writer.flush();
       reader.endObject();
-
    }
 
    private static void processPrimitive(JsonReader reader, RawProtoStreamWriter writer, Type fieldType) throws IOException {
