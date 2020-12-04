@@ -28,7 +28,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoReserved.Range;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleEnum;
 import org.junit.Test;
@@ -1291,16 +1290,24 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
+   @AutoProtoSchemaBuilder(schemaFileName = "generic_message.proto", service = false,
+         includeClasses = {
+               GenericMessage.class,
+               GenericMessage.OtherMessage.class
+         }
+   )
+   interface TestGenericMessageSerializationContextInitializer extends GeneratedSchema {
+   }
+
    @Test
    public void testGenericMessage() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
-      String schema = new ProtoSchemaBuilder()
-            .fileName("generic_message.proto")
-            .addClass(GenericMessage.class)
-            .addClass(GenericMessage.OtherMessage.class)
-            .build(ctx);
 
-      assertTrue(schema.contains("message GenericMessage"));
+      GeneratedSchema generatedSchema = new TestGenericMessageSerializationContextInitializerImpl();
+      generatedSchema.registerSchema(ctx);
+      generatedSchema.registerMarshallers(ctx);
+
+      assertTrue(generatedSchema.getProtoFile().contains("message GenericMessage"));
 
       GenericMessage genericMessage = new GenericMessage();
       genericMessage.field1 = new WrappedMessage(3.1415d);
