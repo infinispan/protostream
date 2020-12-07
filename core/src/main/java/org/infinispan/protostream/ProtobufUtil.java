@@ -124,6 +124,9 @@ public final class ProtobufUtil {
    }
 
    private static <A> A readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in, Class<A> clazz) throws IOException {
+      if (clazz.isEnum()) {
+         throw new IllegalArgumentException("The Class argument must not be an Enum");
+      }
       BaseMarshallerDelegate<A> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(clazz);
       return marshallerDelegate.unmarshall(null, null, in);
    }
