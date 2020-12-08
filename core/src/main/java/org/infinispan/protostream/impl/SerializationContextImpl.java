@@ -10,7 +10,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -47,7 +46,7 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final Configuration configuration;
 
-   private final DescriptorParser parser;
+   private final SquareProtoParser parser;
 
    private final Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<>();
 
