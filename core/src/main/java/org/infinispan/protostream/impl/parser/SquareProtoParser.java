@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.protostream.DescriptorParser;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.config.Configuration;
@@ -25,7 +24,7 @@ import com.squareup.protoparser.ProtoParser;
  * @author anistor@redhat.com
  * @since 2.0
  */
-public final class SquareProtoParser implements DescriptorParser {
+public final class SquareProtoParser {
 
    private static final ProtofileMapper PROTOFILE_MAPPER = new ProtofileMapper();
 
@@ -35,7 +34,17 @@ public final class SquareProtoParser implements DescriptorParser {
       this.configuration = configuration;
    }
 
-   @Override
+   /**
+    * Parses a set of .proto files but does not resolve type dependencies and does not detect semantic errors like
+    * duplicate type definitions. If the {@link FileDescriptorSource} parameter does not include a progress callback
+    * parsing will stop on first encountered error. If a callback exists all files will be processed; only one error per
+    * file is reported and parsing will continue with the next file.
+    *
+    * @param fileDescriptorSource the set of descriptors to parse
+    * @return a map of successfully parsed {@link FileDescriptor} objects keyed by with their names
+    * @throws DescriptorParserException if parsing errors were encountered and no progress callback was specified in the
+    *                                   {@link FileDescriptorSource}
+    */
    public Map<String, FileDescriptor> parse(FileDescriptorSource fileDescriptorSource) throws DescriptorParserException {
       Map<String, String> input = fileDescriptorSource.getFiles();
       Map<String, FileDescriptor> fileDescriptorMap = new LinkedHashMap<>(input.size());
