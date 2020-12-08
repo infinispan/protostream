@@ -121,7 +121,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       marshallerImpl.addInterface(enumMarshallerInterface);
       marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
-      marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + petm.getJavaClass().getName() + ".class; }", marshallerImpl));
+      marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + petm.getJavaClassName() + ".class; }", marshallerImpl));
       marshallerImpl.addMethod(CtNewMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(petm.getFullName()) + "\"; }", marshallerImpl));
 
       CtMethod ctDecodeMethod = new CtMethod(decodeMethod, marshallerImpl, null);
@@ -170,7 +170,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
 
       addMarshallerDelegateFields(marshallerImpl, pmtm);
 
-      marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + pmtm.getJavaClass().getName() + ".class; }", marshallerImpl));
+      marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + pmtm.getJavaClass().getCanonicalName() + ".class; }", marshallerImpl));
       marshallerImpl.addMethod(CtNewMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(pmtm.getFullName()) + "\"; }", marshallerImpl));
 
       CtMethod ctReadFromMethod = new CtMethod(readFromMethod, marshallerImpl, null);
