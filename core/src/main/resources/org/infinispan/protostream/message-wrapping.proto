@@ -1,4 +1,4 @@
-syntax = "proto3";
+syntax = "proto2";
 
 package org.infinispan.protostream;
 
@@ -6,15 +6,18 @@ package org.infinispan.protostream;
  * Protobuf messages do not indicate their message type or structure. Readers of protobuf data streams are expected to
  * know in advance what message type to expect next in the stream. Also, the wire format is not self-delimiting so the
  * length of the next message must be computed based on the known schema so that not too much nor too little is read.
- * This is particularly important if a sequence multiple messages are contained in a stream. A detailed explanation is
- * offered here: https://developers.google.com/protocol-buffers/docs/techniques#streaming
+ * This is particularly important if a sequence of multiple messages are contained in a stream. A detailed explanation
+ * is offered here: https://developers.google.com/protocol-buffers/docs/techniques#streaming
  * <p>
  * WrappedMessage solves this problem of self-describing messages by allowing the stream reader to detect
  * the type of the message. Still, only the type name (or type id) is provided but the actual schema is not provided as
  * it would not be efficient to carry so much information over the wire with each message. The application is expected
- * to have knowledge of the schema and use it once it learns the type.
+ * to have knowledge of the schema and use it once it learns the type name/id.
  * <p>
  * This is similar to 'google.protobuf.Any' but is also able to handle scalars not just messages.
+ * <p>
+ * Fields should ideally arrive in the data stream in the order defined here for efficiency reasons, but implementations
+ * should be able to deal with any field order.
  *
  * @TypeId(0)
  */
@@ -50,40 +53,52 @@ message WrappedMessage {
       /** There is no native Date type in protobuf so it is mapped to int64 (milliseconds). */
       int64 wrappedDateMillis = 23;
 
-      /** There is no native Instant type in protobuf so it is mapped to an int64 (seconds) + and int32 (nanoseconds). */
+      /**
+      * There is no native Instant type in protobuf so it is mapped to an int64 (the seconds) + an int32 (the nanoseconds).
+      * The field wrappedInstantNanos must be also present if this field is present.
+      * A close equivalent to this, with binary compatible representation, is google.protobuf.Timestamp defined in timestamp.proto.
+      */
       int64 wrappedInstantSeconds = 24;
 
-      /** The nanoseconds of the Instant. */
-      int32 wrappedInstantNanos = 25;
-
       /**
-       * This is used if the wrapped value is an enum.
+       * This is used if the wrapped value is an enum. The actual type is indicated by oneof typeNameOrId, which
+       * is required if this field is present.
        */
       int32 wrappedEnum = 18;
 
       /**
-       * Stores the message's protobuf encoded bytes if the wrapped value is a message type.
+       * Stores the message's protobuf encoded bytes when the wrapped value is a message type.
+       * This is similar to google.protobuf.Any.value field. The actual type is indicated by oneof typeNameOrId, which
+       * is required if this field is present.
        */
       bytes wrappedMessage = 17;
    }
 
    /**
-    * Stores the fully qualified type name or numeric type id. This is not used for primitve types, only for message or
-    * enum types.
+    * The nanoseconds of the Instant. Always present if wrappedInstantSeconds is present.
+    * This field is declared outside of scalarOrMessage oneof because it's not legal to have two of the oneof fields
+    * present simultaneously in the data stream.
+    */
+   optional int32 wrappedInstantNanos = 25;
+
+   /**
+    * Stores the fully qualified type name or the optional numeric type id of the payload. This is not used for primitive types
+    * (scalars), only for message and enum types.
     */
    oneof typeNameOrId {
 
       /**
        * Stores the fully qualified type name if the wrapped value is a message or an enum type.
+       * This is similar to google.protobuf.Any.type_url field.
        */
-      string wrappedDescriptorFullName = 16;
+      string wrappedTypeName = 16;
 
       /**
-       * This is used as an alternative to wrappedDescriptorFullName if a unique id was assigned to the type with the
-       * TypeId annotation. Values in the range 0..65535 are reserved for internal use by Protostream and other projects
+       * This is used as an alternative to wrappedTypeName if a unique id was assigned to the type with the TypeId
+       * annotation. Values in the range 0..65535 are reserved for internal use by Protostream and other projects
        * from the Infinispan organisation.
        */
-      uint32 wrappedDescriptorId = 19;
+      uint32 wrappedTypeId = 19;
    }
 }
 

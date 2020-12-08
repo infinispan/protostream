@@ -47,7 +47,7 @@ public final class WrappedMessage {
    public static final String PROTOBUF_TYPE_NAME = "org.infinispan.protostream.WrappedMessage";
 
    /**
-    * The type id of WrappedMessage.
+    * The type id of WrappedMessage itself.
     */
    public static final int PROTOBUF_TYPE_ID = 0;
 
@@ -162,9 +162,15 @@ public final class WrappedMessage {
    public static final int WRAPPED_SINT64 = 15;
 
    /**
-    * The name of the fully qualified message or enum descriptor, if the wrapped object is a message or enum.
+    * The name of the fully qualified message or enum type name, when the wrapped object is a message or enum.
     */
-   public static final int WRAPPED_DESCRIPTOR_FULL_NAME = 16;
+   public static final int WRAPPED_TYPE_NAME = 16;
+
+   /**
+    * @deprecated Use {@link #WRAPPED_TYPE_NAME} instead. This will be removed in ver. 5.
+    */
+   @Deprecated
+   public static final int WRAPPED_DESCRIPTOR_FULL_NAME = WRAPPED_TYPE_NAME;
 
    /**
     * A byte array containing the encoded message.
@@ -178,15 +184,21 @@ public final class WrappedMessage {
 
    /**
     * The (optional) numeric type id of the wrapped message or enum. This is an alternative to {@link
-    * #WRAPPED_DESCRIPTOR_FULL_NAME}.
+    * #WRAPPED_TYPE_NAME}.
     */
-   public static final int WRAPPED_DESCRIPTOR_TYPE_ID = 19;
+   public static final int WRAPPED_TYPE_ID = 19;
 
    /**
-    * @deprecated Use {@link #WRAPPED_DESCRIPTOR_TYPE_ID} instead. This will be removed in ver. 5.
+    * @deprecated Use {@link #WRAPPED_TYPE_ID} instead. This will be removed in ver. 5.
     */
    @Deprecated
-   public static final int WRAPPED_DESCRIPTOR_ID = WRAPPED_DESCRIPTOR_TYPE_ID;
+   public static final int WRAPPED_DESCRIPTOR_TYPE_ID = WRAPPED_TYPE_ID;
+
+   /**
+    * @deprecated Use {@link #WRAPPED_TYPE_ID} instead. This will be removed in ver. 5.
+    */
+   @Deprecated
+   public static final int WRAPPED_DESCRIPTOR_ID = WRAPPED_TYPE_ID;
 
    /**
     * The wrapped object or (boxed) primitive.
