@@ -10,7 +10,9 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
  * @author gustavonalle
  * @author anistor@redhat.com
  * @since 2.0
+ * @deprecated since 4.4. Will be removed in 5.0 with no replacement
  */
+@Deprecated
 public interface DescriptorParser {
 
    /**
