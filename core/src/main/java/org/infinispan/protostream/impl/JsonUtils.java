@@ -160,6 +160,16 @@ public final class JsonUtils {
                writer.writeEnum(WRAPPED_ENUM, enumValueDescriptor.getNumber());
                break;
             }
+            case VALUE_NUMBER_INT: {
+               int enumValueNumber = parser.getIntValue();
+               EnumValueDescriptor enumValueDescriptor = enumDescriptor.findValueByNumber(enumValueNumber);
+               if (enumValueDescriptor == null) {
+                  throw new IllegalStateException("Invalid enum value : " + enumValueNumber);
+               }
+               writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, enumDescriptor.getTypeId());//todo [anistor] same as previous todo
+               writer.writeEnum(WRAPPED_ENUM, enumValueDescriptor.getNumber());
+               break;
+            }
             case VALUE_NULL:
                throw new IllegalStateException("Invalid enum value 'null'");
             case VALUE_TRUE:
