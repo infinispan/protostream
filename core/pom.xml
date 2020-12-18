@@ -163,6 +163,7 @@
                                 <excludes>
                                     <exclude>net.jcip:jcip-annotations:jar:</exclude>
                                     <exclude>org.jboss.logging:jboss-logging:jar:</exclude>
+                                    <exclude>com.fasterxml.jackson.core:jackson-core:jar:</exclude>
                                 </excludes>
                             </artifactSet>
                             <filters>
