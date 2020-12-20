@@ -16,7 +16,7 @@
     <name>ProtoStream - integration tests</name>
     <description>
         Integration tests for basic annotation processing, multi-module annotation processing,
-        compatibility with the reference protostream-java implementation.
+        compatibility with the reference protobuf-java implementation.
     </description>
 
     <dependencies>
