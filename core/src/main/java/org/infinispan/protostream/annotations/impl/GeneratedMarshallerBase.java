@@ -14,12 +14,12 @@ import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
  * @author anistor@redhat.com
  * @since 3.0
  */
+@SuppressWarnings("unused")
 public class GeneratedMarshallerBase {
 
    /**
     * Invoked by generated code.
     */
-   @SuppressWarnings("unused")
    protected final <T> T readMessage(BaseMarshallerDelegate<T> marshallerDelegate, RawProtoStreamReader in) throws IOException {
       return marshallerDelegate.unmarshall(null, null, in);
    }
@@ -38,7 +38,6 @@ public class GeneratedMarshallerBase {
    /**
     * Invoked by generated code.
     */
-   @SuppressWarnings("unused")
    protected final <T> void writeNestedMessage(BaseMarshallerDelegate<T> marshallerDelegate, RawProtoStreamWriter out, int fieldNumber, T message) throws IOException {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       RawProtoStreamWriter nested = RawProtoStreamWriterImpl.newInstance(baos);

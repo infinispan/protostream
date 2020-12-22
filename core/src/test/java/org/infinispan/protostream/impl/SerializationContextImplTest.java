@@ -143,7 +143,7 @@ public class SerializationContextImplTest {
       });
    }
 
-   // ColorType2 should be an Enum, but it is, so an exception is thrown
+   // ColorType2 should be an Enum, but it isn't, so an exception is thrown
    class ColorType2 {
       public int rgb;
    }
