@@ -36,6 +36,7 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       super(getProtoName(annotatedEnumClass, enumClass), enumClass);
       this.annotatedEnumClass = annotatedEnumClass;
       this.isAdapter = annotatedEnumClass != enumClass;
+      validateName();
    }
 
    private static String getProtoName(XClass annotatedEnumClass, XClass enumClass) {

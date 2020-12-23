@@ -73,6 +73,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       this.isAdapter = javaClass != annotatedClass;
 
       checkInstantiability();
+
+      validateName();
    }
 
    private static String getProtoName(XClass annotatedClass, XClass javaClass) {
