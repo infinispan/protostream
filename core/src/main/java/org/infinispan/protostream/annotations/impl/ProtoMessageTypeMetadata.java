@@ -67,6 +67,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       this.typeFactory = annotatedClass.getFactory();
 
       checkInstantiability();
+
+      validateName();
    }
 
    private static String getProtoName(XClass annotatedClass) {

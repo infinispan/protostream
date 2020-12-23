@@ -30,6 +30,7 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
    ProtoEnumTypeMetadata(XClass enumClass) {
       super(getProtoName(enumClass), enumClass);
+      validateName();
    }
 
    private static String getProtoName(XClass enumClass) {

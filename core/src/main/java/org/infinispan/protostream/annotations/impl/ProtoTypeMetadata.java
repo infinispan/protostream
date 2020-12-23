@@ -24,6 +24,18 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
       this.javaClass = javaClass;
    }
 
+   protected void validateName() {
+      if (name == null || name.isEmpty()) {
+         throw new IllegalArgumentException("Illegal protobuf name for class " + javaClass.getCanonicalName() + ". Name cannot be null or empty.");
+      }
+      for (int i = 0; i < name.length(); i++) {
+         char ch = name.charAt(i);
+         if (ch != '.' && !Character.isJavaIdentifierPart(ch)) { //todo [anistor] validate against protobuf identifier rules, not java identifier rules (but they are close enough)
+            throw new IllegalArgumentException("Illegal protobuf name for class " + javaClass.getCanonicalName() + ". Invalid identifier : " + name);
+         }
+      }
+   }
+
    public String getName() {
       return name;
    }
