@@ -32,7 +32,7 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
    void writeTo(ProtoStreamWriter writer, T t) throws IOException;
 
    /**
-    * An high-level interface for the wire encoding of a Protobuf stream that allows reading named (and typed) message
+    * A high-level interface for the wire encoding of a Protobuf stream that allows reading named (and typed) message
     * fields.
     */
    interface ProtoStreamReader {
@@ -88,7 +88,7 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
    }
 
    /**
-    * An high-level interface for the wire encoding of a Protobuf stream that allows writing named (and typed) message
+    * A high-level interface for the wire encoding of a Protobuf stream that allows writing named (and typed) message
     * fields.
     */
    interface ProtoStreamWriter {

@@ -2,7 +2,8 @@ package org.infinispan.protostream;
 
 /**
  * This is the base interface of the marshaller hierarchy, exposing common methods for identifying the Java and Protobuf
- * types handled by this marshaller instance. The marshaller implementation must be stateless and thread-safe.
+ * types handled by this marshaller instance. A marshaller handles a single type pair. The marshaller implementation
+ * must be stateless and thread-safe.
  *
  * @author anistor@redhat.com
  * @since 1.0
