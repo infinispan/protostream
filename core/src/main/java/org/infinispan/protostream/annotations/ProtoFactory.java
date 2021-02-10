@@ -11,21 +11,25 @@ import java.lang.annotation.Target;
  * message class. Cannot be used with instance methods. The method or constructor must not be private and must have a
  * signature containing the exact same number of parameters as the protobuf fields of the corresponding message. Each
  * parameter must correspond to a protobuf field, named identically to the name of the Java field/property used for
- * declaring the protobuf field and the type of each parameter must also be identical to the type of the corresponding
- * field/property. The ordering of parameters versus fields is not relevant because they are matched by name, not by
- * position. A single constructor or static method is allowed to have this annotation in a ProtoStream marshallable
- * class. This annotation is not inherited, occurrences in superclass/superinterfaces are ignored for this class.
+ * declaring the protobuf field and the type of each parameter must also be identical to the Java type of the
+ * corresponding field/property. The ordering of parameters versus fields is not relevant because they are matched by
+ * name, not by position.
+ *
+ * <p>A <b>single</b> constructor or static method is allowed to have this annotation in a ProtoStream marshallable
+ * class.
+ *
+ * <p>This annotation is not inherited, occurrences in superclass/superinterfaces are ignored for current class.
  *
  * <p>This annotation can be used support creation of immutable messages (that have final fields or do not have setters).
  * In that case all protobuf fields should be declared with annotations on instance fields or getter methods.
  *
  * <p>This annotation is not mandatory, but classes that do not have a constructor or static method annotated with this
- * annotation are expected to have an accessible no-argument constructor to be used for instantiating the class.
+ * annotation are expected to have an accessible no-argument constructor instead to be used for instantiating the class.
  *
  * <p><b>NOTE:</b>
  * This annotation can be processed at <em>runtime</em> (see {@link ProtoSchemaBuilder }) only if method parameter name
- * debug information was emitted by the compiler, ie. the compiler was invoked with the <i>-parameters</i> flag. Usage
- * of this annotation at <em>compile time</em> is possible regardless of that.
+ * debug information was emitted into the class file by the compiler, ie. the compiler was invoked with the
+ * <i>-parameters</i> flag. Usage of this annotation at <em>compile time</em> is possible regardless of that.
  *
  * @author anistor@redhat.com
  * @since 4.3
