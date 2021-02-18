@@ -596,11 +596,12 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static class TestCase_EnumProtoAdapter {
 
-      enum Color {
+      enum ColorEnum {
          RED, GREEN, BLUE
       }
 
-      @ProtoAdapter(Color.class)
+      @ProtoAdapter(ColorEnum.class)
+      @ProtoName("Color")
       @ProtoReserved({100, 99})
       enum ColorEnumAdapter {
 
@@ -628,7 +629,7 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       assertTrue(schema.contains("enum Color"));
 
       assertTrue(ctx.canMarshall("test_enum_adapter_package.Color"));
-      assertTrue(ctx.canMarshall(TestCase_EnumProtoAdapter.Color.class));
+      assertTrue(ctx.canMarshall(TestCase_EnumProtoAdapter.ColorEnum.class));
 
       assertFalse(ctx.canMarshall("test_enum_adapter_package.ColorEnumAdapter"));
       assertFalse(ctx.canMarshall(TestCase_EnumProtoAdapter.ColorEnumAdapter.class));
@@ -636,12 +637,12 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
 
    static class TestCase_BadEnumProtoAdapter {
 
-      enum Color {
+      enum ColorEnum {
          RED, GREEN
       }
 
-      @ProtoAdapter(Color.class)
-      enum BadColorEnumAdapter {
+      @ProtoAdapter(ColorEnum.class)
+      enum BadColorEnumAdapter { // enum values do not have 1 to 1 correspondence ...
 
          @ProtoEnumValue(number = 0, name = "red") RED,
 

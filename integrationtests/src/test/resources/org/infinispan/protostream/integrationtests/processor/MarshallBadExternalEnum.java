@@ -1,23 +1,20 @@
 package test_marshall_bad_external_enum;
 
-import java.util.UUID;
-
-import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoAdapter;
-import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.*;
+import org.infinispan.protostream.annotations.*;
 
 
 @AutoProtoSchemaBuilder(includeClasses = BadColorEnumAdapter.class, schemaFilePath = "/")
 interface MarshallBadExternalEnum extends SerializationContextInitializer {
 }
 
-enum Color {
+enum ColorEnum {
    RED
 }
 
-@ProtoAdapter(Color.class)
-enum BadColorEnumAdapter {
+@ProtoAdapter(ColorEnum.class)
+@ProtoName("Color")
+enum BadColorEnumAdapter { // enum values do not have 1 to 1 correspondence ...
 
    @ProtoEnumValue(number = 0, name = "red")
    RED,

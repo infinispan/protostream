@@ -8,6 +8,7 @@ import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.descriptors.Type;
 
@@ -22,11 +23,12 @@ import org.infinispan.protostream.descriptors.Type;
 interface MarshallExternals extends SerializationContextInitializer {
 }
 
-enum Color {
+enum ColorEnum {
    RED, GREEN, BLUE
 }
 
-@ProtoAdapter(Color.class)
+@ProtoAdapter(ColorEnum.class)
+@ProtoName("Color")
 @ProtoReserved({100, 99})
 enum ColorEnumAdapter {
 
