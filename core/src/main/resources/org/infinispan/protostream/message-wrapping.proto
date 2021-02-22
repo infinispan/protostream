@@ -72,6 +72,11 @@ message WrappedMessage {
        * is required if this field is present.
        */
       bytes wrappedMessage = 17;
+
+      /**
+       * A flag that indicates that the contents of the wrapper is empty/null.
+       */
+      bool wrappedEmpty = 26;
    }
 
    /**
@@ -100,7 +105,30 @@ message WrappedMessage {
        */
       uint32 wrappedTypeId = 19;
    }
+
+   /**
+    * Number of repeated elements. Optional; if present it indicates a container (array or Collection). The value must
+    * be positive, or 0 if the array/collection is empty. If this is present, then containerTypeNameOrId and
+    * containerMessage must also be present.
+    */
+   optional uint32 wrappedContainerSize = 27;
+
+   oneof wrappedContainerTypeNameOrId {
+
+      /**
+       * Stores the fully qualified type name if the container.
+       */
+      string wrappedContainerTypeName = 28;
+
+      /**
+       * This is used as an alternative to wrappedContainerTypeName if a unique id was assigned to the type with the
+       */
+      uint32 wrappedContainerTypeId = 29;
+   }
+
+   /**
+    * The fields of the container itself. Must always be present when wrappedContainerSize is present. If the container
+    * type itself does not have any fields then this will be a zero length bytes field.
+    */
+   optional bytes wrappedContainerMessage = 30;
 }
-
-
-//todo [anistor] how do we handle arrays and collections?

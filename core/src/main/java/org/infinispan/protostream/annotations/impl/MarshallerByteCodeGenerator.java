@@ -10,6 +10,8 @@ import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
+import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
+import org.infinispan.protostream.containers.IterableElementContainerAdapter;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.Log;
@@ -53,6 +55,8 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
    private final CtClass ioExceptionClass;
    private final CtClass enumMarshallerInterface;
    private final CtClass protoStreamMarshallerInterface;
+   private final CtClass indexedContainerAdapterInterface;
+   private final CtClass iterableContainerAdapterInterface;
    private final CtClass generatedMarshallerBaseClass;
    private final CtClass baseMarshallerDelegateClass;
    private final CtClass enumMarshallerDelegateClass;
@@ -67,6 +71,8 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       ioExceptionClass = cp.getCtClass(IOException.class.getName());
       enumMarshallerInterface = cp.getCtClass(EnumMarshaller.class.getName());
       protoStreamMarshallerInterface = cp.getCtClass(ProtoStreamMarshaller.class.getName());
+      indexedContainerAdapterInterface = cp.getCtClass(IndexedElementContainerAdapter.class.getName());
+      iterableContainerAdapterInterface = cp.getCtClass(IterableElementContainerAdapter.class.getName());
       generatedMarshallerBaseClass = cp.getCtClass(GeneratedMarshallerBase.class.getName());
       baseMarshallerDelegateClass = cp.getCtClass(BaseMarshallerDelegate.class.getName());
       enumMarshallerDelegateClass = cp.getCtClass(EnumMarshallerDelegate.class.getName());
@@ -164,6 +170,30 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
          addAdapterField(marshallerImpl, pmtm);
       }
 
+      if (pmtm.isIndexedContainer()) {
+         marshallerImpl.addInterface(indexedContainerAdapterInterface);
+         if (pmtm.isAdapter()) {
+            marshallerImpl.addMethod(CtNewMethod.make("public final int getNumElements(java.lang.Object container) { return " + ADAPTER_FIELD_NAME + ".getNumElements(container); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final java.lang.Object getElement(java.lang.Object container, int index) { return " + ADAPTER_FIELD_NAME + ".getElement(container, index); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final void setElement(java.lang.Object container, int index, java.lang.Object element) { " + ADAPTER_FIELD_NAME + ".setElement(container, index, element); }", marshallerImpl));
+         } else {
+            marshallerImpl.addMethod(CtNewMethod.make("public final int getNumElements(java.lang.Object container) { return ((" + iterableContainerAdapterInterface.getName() + ") container).getNumElements(); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final java.lang.Object getElement(java.lang.Object container, int index) { return ((" + iterableContainerAdapterInterface.getName() + ") container).getElement(index); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final void setElement(java.lang.Object container, int index, java.lang.Object element) { ((" + iterableContainerAdapterInterface.getName() + ") container).setElement(index, element); }", marshallerImpl));
+         }
+      } else if (pmtm.isIterableContainer()) {
+         marshallerImpl.addInterface(iterableContainerAdapterInterface);
+         if (pmtm.isAdapter()) {
+            marshallerImpl.addMethod(CtNewMethod.make("public final int getNumElements(java.lang.Object container) { return " + ADAPTER_FIELD_NAME + ".getNumElements(container); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final java.util.Iterator getElements(java.lang.Object container) { return " + ADAPTER_FIELD_NAME + ".getElements(container); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final void appendElement(java.lang.Object container, java.lang.Object element) { " + ADAPTER_FIELD_NAME + ".appendElement(container, element); }", marshallerImpl));
+         } else {
+            marshallerImpl.addMethod(CtNewMethod.make("public final int getNumElements(java.lang.Object container) { return ((" + iterableContainerAdapterInterface.getName() + ") container).getNumElements(); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final java.util.Iterator getElements(java.lang.Object container) { return ((" + iterableContainerAdapterInterface.getName() + ") container).getElements(); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final void appendElement(java.lang.Object container, java.lang.Object element) { ((" + iterableContainerAdapterInterface.getName() + ") container).appendElement(element); }", marshallerImpl));
+         }
+      }
+
       addMarshallerDelegateFields(marshallerImpl, pmtm);
 
       marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + pmtm.getJavaClass().getCanonicalName() + ".class; }", marshallerImpl));
@@ -198,8 +228,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
    private void addAdapterField(CtClass marshallerImpl, ProtoMessageTypeMetadata messageTypeMetadata) throws CannotCompileException, NotFoundException {
       CtClass adapterClass = cp.getCtClass(messageTypeMetadata.getAnnotatedClass().getName());
       CtField adapterField = new CtField(adapterClass, ADAPTER_FIELD_NAME, marshallerImpl);
-      adapterField.setModifiers(Modifier.PRIVATE);
-      adapterField.setModifiers(Modifier.FINAL);
+      adapterField.setModifiers(Modifier.PRIVATE | Modifier.FINAL);
       marshallerImpl.addField(adapterField);
 
       marshallerImpl.addConstructor(CtNewConstructor.make("public " + marshallerImpl.getSimpleName() + "() { "

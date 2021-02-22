@@ -28,6 +28,10 @@ import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMember;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
+import org.infinispan.protostream.containers.IndexedElementContainer;
+import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
+import org.infinispan.protostream.containers.IterableElementContainer;
+import org.infinispan.protostream.containers.IterableElementContainerAdapter;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.Log;
@@ -55,6 +59,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final boolean isAdapter;
 
+   private final boolean isIndexedContainer;
+
+   private final boolean isIterableContainer;
+
    private XExecutable factory;
 
    private XField unknownFieldSetField;
@@ -71,6 +79,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       this.annotatedClass = annotatedClass;
       this.typeFactory = annotatedClass.getFactory();
       this.isAdapter = javaClass != annotatedClass;
+      this.isIndexedContainer = annotatedClass.isAssignableTo(isAdapter ? IndexedElementContainerAdapter.class : IndexedElementContainer.class);
+      this.isIterableContainer = annotatedClass.isAssignableTo(isAdapter ? IterableElementContainerAdapter.class : IterableElementContainer.class);
 
       checkInstantiability();
 
@@ -97,6 +107,14 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    @Override
    public boolean isAdapter() {
       return isAdapter;
+   }
+
+   public boolean isIndexedContainer() {
+      return isIndexedContainer;
+   }
+
+   public boolean isIterableContainer() {
+      return isIterableContainer;
    }
 
    public XExecutable getFactory() {
