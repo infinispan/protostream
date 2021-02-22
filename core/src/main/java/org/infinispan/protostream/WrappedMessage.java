@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
 
+import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
 import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
-import org.infinispan.protostream.impl.WireFormat;
 
 /**
  * A wrapper for messages, enums or primitive types that encodes the type of the inner object/value and also helps keep
@@ -287,93 +287,136 @@ public final class WrappedMessage {
       while ((tag = in.readTag()) != 0) {
          fieldCount++;
          switch (tag) {
-            case WRAPPED_TYPE_NAME << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED: {
+            case WRAPPED_TYPE_NAME << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
                expectedFieldCount = 2;
                typeName = in.readString();
                break;
             }
-            case WRAPPED_TYPE_ID << 3 | WireFormat.WIRETYPE_VARINT: {
+            case WRAPPED_TYPE_ID << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
                expectedFieldCount = 2;
                typeId = mapTypeIdIn(in.readInt32(), ctx);
                break;
             }
-            case WRAPPED_ENUM << 3 | WireFormat.WIRETYPE_VARINT:
+            case WRAPPED_ENUM << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 2;
                enumValue = in.readEnum();
                break;
-            case WRAPPED_MESSAGE << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
+            }
+            case WRAPPED_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
+               expectedFieldCount = 2;
                messageBytes = in.readByteArray();
                break;
-            case WRAPPED_STRING << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
+            }
+            case WRAPPED_STRING << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
+               expectedFieldCount = 1;
                value = in.readString();
                break;
-            case WRAPPED_CHAR << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_CHAR << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = (char) in.readInt32();
                break;
-            case WRAPPED_SHORT << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_SHORT << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = (short) in.readInt32();
                break;
-            case WRAPPED_BYTE << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_BYTE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = (byte) in.readInt32();
                break;
-            case WRAPPED_DATE_MILLIS << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_DATE_MILLIS << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = new Date(in.readInt64());
                break;
-            case WRAPPED_INSTANT_SECONDS << 3 | WireFormat.WIRETYPE_VARINT: {
+            }
+            case WRAPPED_INSTANT_SECONDS << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
                expectedFieldCount = 2;
                long seconds = in.readInt64();
                value = value == null ? Instant.ofEpochSecond(seconds, 0) : Instant.ofEpochSecond(seconds, ((Instant) value).getNano());
                break;
             }
-            case WRAPPED_INSTANT_NANOS << 3 | WireFormat.WIRETYPE_VARINT: {
+            case WRAPPED_INSTANT_NANOS << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
                expectedFieldCount = 2;
                int nanos = in.readInt32();
                value = value == null ? Instant.ofEpochSecond(0, nanos) : Instant.ofEpochSecond(((Instant) value).getEpochSecond(), nanos);
                break;
             }
-            case WRAPPED_BYTES << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED:
+            case WRAPPED_BYTES << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
+               expectedFieldCount = 1;
                value = in.readByteArray();
                break;
-            case WRAPPED_BOOL << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_BOOL << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = in.readBool();
                break;
-            case WRAPPED_DOUBLE << 3 | WireFormat.WIRETYPE_FIXED64:
+            }
+            case WRAPPED_DOUBLE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED64: {
+               expectedFieldCount = 1;
                value = in.readDouble();
                break;
-            case WRAPPED_FLOAT << 3 | WireFormat.WIRETYPE_FIXED32:
+            }
+            case WRAPPED_FLOAT << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED32: {
+               expectedFieldCount = 1;
                value = in.readFloat();
                break;
-            case WRAPPED_FIXED32 << 3 | WireFormat.WIRETYPE_FIXED32:
+            }
+            case WRAPPED_FIXED32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED32: {
+               expectedFieldCount = 1;
                value = in.readFixed32();
                break;
-            case WRAPPED_SFIXED32 << 3 | WireFormat.WIRETYPE_FIXED32:
+            }
+            case WRAPPED_SFIXED32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED32: {
+               expectedFieldCount = 1;
                value = in.readSFixed32();
                break;
-            case WRAPPED_FIXED64 << 3 | WireFormat.WIRETYPE_FIXED64:
+            }
+            case WRAPPED_FIXED64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED64: {
+               expectedFieldCount = 1;
                value = in.readFixed64();
                break;
-            case WRAPPED_SFIXED64 << 3 | WireFormat.WIRETYPE_FIXED64:
+            }
+            case WRAPPED_SFIXED64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED64: {
+               expectedFieldCount = 1;
                value = in.readSFixed64();
                break;
-            case WRAPPED_INT64 << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_INT64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = in.readInt64();
                break;
-            case WRAPPED_UINT64 << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_UINT64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = in.readUInt64();
                break;
-            case WRAPPED_SINT64 << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_SINT64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = in.readSInt64();
                break;
-            case WRAPPED_INT32 << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_INT32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = in.readInt32();
                break;
-            case WRAPPED_UINT32 << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_UINT32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = in.readUInt32();
                break;
-            case WRAPPED_SINT32 << 3 | WireFormat.WIRETYPE_VARINT:
+            }
+            case WRAPPED_SINT32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+               expectedFieldCount = 1;
                value = in.readSInt32();
                break;
+            }
             default:
-               throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : " + WireFormat.getTagFieldNumber(tag) + ", Wire type : " + WireFormat.getTagWireType(tag) + ")");
+               throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : "
+                     + WireType.getTagFieldNumber(tag) + ", Wire type : " + WireType.getTagWireType(tag) + ")");
          }
       }
 

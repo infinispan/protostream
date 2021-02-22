@@ -3,6 +3,8 @@ package org.infinispan.protostream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.infinispan.protostream.descriptors.WireType;
+
 /**
  * @author anistor@redhat.com
  * @since 3.0
@@ -12,6 +14,8 @@ public interface RawProtoStreamWriter {
    void flush() throws IOException;
 
    void writeTag(int number, int wireType) throws IOException;
+
+   void writeTag(int number, WireType wireType) throws IOException;
 
    void writeUInt32NoTag(int value) throws IOException;
 

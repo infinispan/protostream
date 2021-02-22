@@ -58,6 +58,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
       return name;
    }
 
+   //todo [anistor] make a clear distinction between full field name and path
    @Override
    public final String getFullName() {
       return fullName;

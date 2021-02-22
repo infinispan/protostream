@@ -19,6 +19,7 @@ import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.descriptors.WireType;
 import org.jboss.logging.Logger;
 
 /**
@@ -31,15 +32,15 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
    private static final EnumSet<Type> primitiveTypes = EnumSet.of(
          Type.DOUBLE,
          Type.FLOAT,
-         Type.INT64,
-         Type.UINT64,
          Type.INT32,
-         Type.FIXED64,
+         Type.INT64,
+         Type.UINT32,
+         Type.UINT64,
          Type.FIXED32,
+         Type.FIXED64,
          Type.BOOL,
          Type.STRING,
          Type.BYTES,
-         Type.UINT32,
          Type.SFIXED32,
          Type.SFIXED64,
          Type.SINT32,
@@ -333,7 +334,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
       A a;
       if (fd.getType() == Type.GROUP) {
          a = marshallerDelegate.unmarshall(fd, this, in);
-         in.checkLastTagWas(WireFormat.makeTag(fd.getNumber(), WireFormat.WIRETYPE_END_GROUP));
+         in.checkLastTagWas(WireType.makeTag(fd.getNumber(), WireType.END_GROUP));
       } else if (fd.getType() == Type.MESSAGE) {
          if (length < 0) {
             length = in.readRawVarint32();

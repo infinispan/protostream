@@ -241,7 +241,7 @@ final class AnnotatedClassScanner {
    }
 
    private void visitProtoAdapter(Element e) {
-      if (e.getKind() != ElementKind.CLASS ) {
+      if (e.getKind() != ElementKind.CLASS) {
          throw new AnnotationProcessingException(e, "@ProtoAdapter can only be applied to classes.");
       }
       collectClasses((TypeElement) e);
