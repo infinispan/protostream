@@ -10,10 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.RawProtobufMarshaller;
+import org.infinispan.protostream.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerator;
 import org.infinispan.protostream.annotations.impl.GeneratedMarshallerBase;
@@ -167,8 +164,8 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.append("@SuppressWarnings(\"all\")\n");
       iw.append("public final class ").append(marshallerClassName)
             .append(" extends ").append(GeneratedMarshallerBase.class.getName())
-            .append(" implements ").append(RawProtobufMarshaller.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>')
-            .append(" {\n\n");
+            .append(" implements ").append(ProtoStreamMarshaller.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>');
+      iw.append(" {\n\n");
       iw.inc();
 
       if (pmtm.isAdapter()) {
@@ -181,24 +178,22 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
 
       iw.append("@Override\npublic String getTypeName() { return \"").append(makeQualifiedTypeName(pmtm.getFullName())).append("\"; }\n\n");
 
-      String readFromSrc = generateReadFromMethodBody(pmtm);
-      String readFromSig = "public " + pmtm.getJavaClassName() + " readFrom("
-            + ImmutableSerializationContext.class.getName() + " $1, "
-            + RawProtoStreamReader.class.getName() + " $2) throws java.io.IOException";
+      String readMethodSrc = generateReadMethodBody(pmtm);
+      String readMethodSig = "public " + pmtm.getJavaClassName() + " read("
+            + ProtoStreamMarshaller.ReadContext.class.getCanonicalName() + " $1) throws java.io.IOException";
       if (log.isTraceEnabled()) {
-         log.tracef("%s %s", readFromSig, readFromSrc);
+         log.tracef("%s %s", readMethodSig, readMethodSrc);
       }
-      iw.append("@Override\n").append(readFromSig).append(' ').append(readFromSrc).append('\n');
+      iw.append("@Override\n").append(readMethodSig).append(' ').append(readMethodSrc).append('\n');
 
-      String writeToSrc = generateWriteToMethodBody(pmtm);
-      String writeToSig = "public void writeTo("
-            + ImmutableSerializationContext.class.getName() + " $1, "
-            + RawProtoStreamWriter.class.getName() + " $2, "
-            + pmtm.getJavaClassName() + " $3) throws java.io.IOException";
+      String writeMethodSrc = generateWriteMethodBody(pmtm);
+      String writeMethodSig = "public void write("
+            + ProtoStreamMarshaller.WriteContext.class.getCanonicalName() + " $1, "
+            + pmtm.getJavaClassName() + " $2) throws java.io.IOException";
       if (log.isTraceEnabled()) {
-         log.tracef("%s %s", writeToSig, writeToSrc);
+         log.tracef("%s %s", writeMethodSig, writeMethodSrc);
       }
-      iw.append("@Override\n").append(writeToSig).append(' ').append(writeToSrc);
+      iw.append("@Override\n").append(writeMethodSig).append(' ').append(writeMethodSrc);
 
       iw.dec();
       iw.append("}\n");

@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.TagReader;
+import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.WireType;
 
@@ -60,7 +60,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
    }
 
    @Override
-   public void readAllFields(RawProtoStreamReader input) throws IOException {
+   public void readAllFields(TagReader input) throws IOException {
       while (true) {
          int tag = input.readTag();
          if (tag == 0 || !readSingleField(tag, input)) {
@@ -70,7 +70,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
    }
 
    @Override
-   public boolean readSingleField(int tag, RawProtoStreamReader input) throws IOException {
+   public boolean readSingleField(int tag, TagReader input) throws IOException {
       WireType wireType = WireType.fromTag(tag);
       switch (wireType) {
          case VARINT:
@@ -116,7 +116,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
    }
 
    @Override
-   public void writeTo(RawProtoStreamWriter output) throws IOException {
+   public void writeTo(TagWriter output) throws IOException {
       if (fields != null) {
          // we sort by tag to ensure we always have a predictable output order
          SortedMap<Integer, Deque> sorted = new TreeMap<>(fields);
@@ -130,7 +130,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
    /**
     * Serializes a field, including field number, and writes it to {@code output}.
     */
-   private void writeField(int tag, Deque<?> values, RawProtoStreamWriter output) throws IOException {
+   private void writeField(int tag, Deque<?> values, TagWriter output) throws IOException {
       final WireType wireType = WireType.fromTag(tag);
       final int fieldNumber = WireType.getTagFieldNumber(tag);
       switch (wireType) {
@@ -200,7 +200,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
    @Override
    public void writeExternal(ObjectOutput out) throws IOException {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
-      RawProtoStreamWriter output = RawProtoStreamWriterImpl.newInstance(baos);
+      TagWriter output = TagWriterImpl.newInstance(null, baos);
       writeTo(output);
       output.flush();
       ByteBuffer buffer = baos.getByteBuffer();
@@ -215,7 +215,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
       int len = in.readInt();
       byte[] bytes = new byte[len];
       in.readFully(bytes);
-      readAllFields(RawProtoStreamReaderImpl.newInstance(bytes));
+      readAllFields(TagReaderImpl.newInstance(null, bytes));
    }
 
    @Override

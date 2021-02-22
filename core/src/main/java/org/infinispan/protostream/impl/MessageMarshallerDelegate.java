@@ -4,8 +4,7 @@ import java.io.IOException;
 
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.ProtoStreamMarshaller;
 import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.UnknownFieldSetHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -15,9 +14,7 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
  * @author anistor@redhat.com
  * @since 1.0
  */
-final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
-
-   private final SerializationContextImpl ctx;
+final class MessageMarshallerDelegate<T> extends BaseMarshallerDelegate<T> {
 
    private final MessageMarshaller<T> marshaller;
 
@@ -25,11 +22,32 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
 
    private final FieldDescriptor[] fieldDescriptors;
 
-   MessageMarshallerDelegate(SerializationContextImpl ctx, MessageMarshaller<T> marshaller, Descriptor messageDescriptor) {
-      this.ctx = ctx;
+   private final UnknownFieldSetHandler<T> unknownFieldSetHandler;
+
+   private static final UnknownFieldSetHandler<Message> legacyUnknownFieldSetHandler = new UnknownFieldSetHandler<Message>() {
+      @Override
+      public UnknownFieldSet getUnknownFieldSet(Message message) {
+         return message.getUnknownFieldSet();
+      }
+
+      @Override
+      public void setUnknownFieldSet(Message message, UnknownFieldSet unknownFieldSet) {
+         message.setUnknownFieldSet(unknownFieldSet);
+      }
+   };
+
+   MessageMarshallerDelegate(MessageMarshaller<T> marshaller, Descriptor messageDescriptor) {
       this.marshaller = marshaller;
       this.messageDescriptor = messageDescriptor;
-      fieldDescriptors = messageDescriptor.getFields().toArray(new FieldDescriptor[0]);
+      this.fieldDescriptors = messageDescriptor.getFields().toArray(new FieldDescriptor[0]);
+
+      if (marshaller instanceof UnknownFieldSetHandler) {
+         unknownFieldSetHandler = (UnknownFieldSetHandler<T>) marshaller;
+      } else if (Message.class.isAssignableFrom(marshaller.getJavaClass())) {
+         unknownFieldSetHandler = (UnknownFieldSetHandler<T>) legacyUnknownFieldSetHandler;
+      } else {
+         unknownFieldSetHandler = null;
+      }
    }
 
    @Override
@@ -37,35 +55,16 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
       return marshaller;
    }
 
-   Descriptor getMessageDescriptor() {
-      return messageDescriptor;
-   }
-
-   FieldDescriptor getFieldByName(String fieldName) throws IOException {
-      FieldDescriptor fd = messageDescriptor.findFieldByName(fieldName);
-      if (fd == null) {
-         throw new IOException("Unknown field name : " + fieldName);
-      }
-      return fd;
-   }
-
    @Override
-   public void marshall(FieldDescriptor fieldDescriptor, T message, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
-      if (writer == null) {
-         writer = new ProtoStreamWriterImpl(ctx);
-      }
-      WriteMessageContext messageContext = writer.pushContext(fieldDescriptor, this, out);
+   public void marshall(ProtoStreamMarshaller.WriteContext ctx, FieldDescriptor fieldDescriptor, T message) throws IOException {
+      ProtoStreamWriterImpl writer = (ProtoStreamWriterImpl) ctx.getWriter();
+      ProtoStreamWriterImpl.WriteMessageContext messageContext = writer.enterContext(fieldDescriptor, messageDescriptor, (TagWriterImpl) ctx);
 
       marshaller.writeTo(writer, message);
 
-      UnknownFieldSet unknownFieldSet = null;
-      if (marshaller instanceof UnknownFieldSetHandler) {
-         unknownFieldSet = ((UnknownFieldSetHandler<T>) marshaller).getUnknownFieldSet(message);
-      } else if (message instanceof Message) {
-         unknownFieldSet = ((Message) message).getUnknownFieldSet();
-      }
+      UnknownFieldSet unknownFieldSet = unknownFieldSetHandler != null ? unknownFieldSetHandler.getUnknownFieldSet(message) : null;
 
-      if (unknownFieldSet != null) {
+      if (unknownFieldSet != null && !unknownFieldSet.isEmpty()) {
          // validate that none of the unknown fields are actually declared by the known descriptor
          for (FieldDescriptor fd : fieldDescriptors) {
             if (unknownFieldSet.hasTag(fd.getWireTag())) {
@@ -86,38 +85,34 @@ final class MessageMarshallerDelegate<T> implements BaseMarshallerDelegate<T> {
          }
       }
 
-      writer.popContext();
+      writer.exitContext();
    }
 
    @Override
-   public T unmarshall(FieldDescriptor fieldDescriptor, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
-      if (reader == null) {
-         reader = new ProtoStreamReaderImpl(ctx);
-      }
-      ReadMessageContext messageContext = reader.pushContext(fieldDescriptor, this, in);
+   public T unmarshall(ProtoStreamMarshaller.ReadContext ctx, FieldDescriptor fieldDescriptor) throws IOException {
+      ProtoStreamReaderImpl reader = (ProtoStreamReaderImpl) ctx.getReader();
+      ProtoStreamReaderImpl.ReadMessageContext messageContext = reader.enterContext(fieldDescriptor, messageDescriptor, (TagReaderImpl) ctx);
 
       T message = marshaller.readFrom(reader);
 
-      messageContext.unknownFieldSet.readAllFields(in);
+      UnknownFieldSet unknownFieldSet = messageContext.getUnknownFieldSet();
 
-      if (!messageContext.unknownFieldSet.isEmpty()) {
-         if (marshaller instanceof UnknownFieldSetHandler) {
-            ((UnknownFieldSetHandler<T>) marshaller).setUnknownFieldSet(message, messageContext.unknownFieldSet);
-         } else if (message instanceof Message) {
-            ((Message) message).setUnknownFieldSet(messageContext.unknownFieldSet);
-         }
+      unknownFieldSet.readAllFields(ctx.getIn());
+
+      if (unknownFieldSetHandler != null && !unknownFieldSet.isEmpty()) {
+         unknownFieldSetHandler.setUnknownFieldSet(message, unknownFieldSet);
       }
 
       // check that all required fields were seen in the stream, even if not actually read (because are unknown)
       for (FieldDescriptor fd : fieldDescriptors) {
          if (fd.isRequired()
                && !messageContext.isFieldMarked(fd.getNumber())
-               && !messageContext.unknownFieldSet.hasTag(fd.getWireTag())) {
+               && !unknownFieldSet.hasTag(fd.getWireTag())) {
             throw new IOException("Required field \"" + fd.getFullName() + "\" was not encountered in the stream");
          }
       }
 
-      reader.popContext();
+      reader.exitContext();
       return message;
    }
 }

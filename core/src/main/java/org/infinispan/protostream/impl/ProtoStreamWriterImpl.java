@@ -9,8 +9,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
+import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.TagWriter;
+import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
@@ -23,33 +25,49 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    private static final Log log = Log.LogFactory.getLog(ProtoStreamWriterImpl.class);
 
+   /**
+    * The size of the buffer used when copying stream to stream.
+    */
    private static final int CHUNK_SIZE = 4096;
 
-   private final SerializationContextImpl ctx;
+   private final TagWriterImpl ctx;
+
+   private final SerializationContextImpl serCtx;
 
    private WriteMessageContext messageContext;
 
-   ProtoStreamWriterImpl(SerializationContextImpl ctx) {
-      this.ctx = ctx;
+   static final class WriteMessageContext extends MessageContext<WriteMessageContext> {
+
+      final TagWriterImpl out;
+
+      WriteMessageContext(WriteMessageContext parent, FieldDescriptor fieldDescriptor, Descriptor messageDescriptor, TagWriterImpl out) {
+         super(parent, fieldDescriptor, messageDescriptor);
+         this.out = out;
+      }
    }
 
-   WriteMessageContext pushContext(FieldDescriptor fd, MessageMarshallerDelegate<?> marshallerDelegate, RawProtoStreamWriter out) {
-      messageContext = new WriteMessageContext(messageContext, fd == null ? null : fd.getName(), marshallerDelegate, out);
+   ProtoStreamWriterImpl(TagWriterImpl ctx, SerializationContextImpl serCtx) {
+      this.ctx = ctx;
+      this.serCtx = serCtx;
+   }
+
+   WriteMessageContext enterContext(FieldDescriptor fd, Descriptor messageDescriptor, TagWriterImpl out) {
+      messageContext = new WriteMessageContext(messageContext, fd, messageDescriptor, out);
       return messageContext;
    }
 
-   void popContext() {
+   void exitContext() {
       messageContext = messageContext.getParentContext();
    }
 
    @Override
    public ImmutableSerializationContext getSerializationContext() {
-      return ctx;
+      return serCtx;
    }
 
    @Override
    public void writeInt(String fieldName, int value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       switch (fd.getType()) {
          case INT32:
@@ -74,7 +92,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeInt(String fieldName, Integer value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
@@ -105,13 +123,13 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeInts(String fieldName, int[] array) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkRepeatedFieldWrite(fd);
       if (array == null) {
          // a repeated field can never be flagged as required
          return;
       }
-      final RawProtoStreamWriter out = messageContext.out;
+      final TagWriter out = messageContext.out;
       final int fieldNumber = fd.getNumber();
       switch (fd.getType()) {
          case INT32:
@@ -146,7 +164,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeLong(String fieldName, long value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       switch (fd.getType()) {
          case INT64:
@@ -171,7 +189,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeLong(String fieldName, Long value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
@@ -202,13 +220,13 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeLongs(String fieldName, long[] array) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkRepeatedFieldWrite(fd);
       if (array == null) {
          // a repeated field can never be flagged as required
          return;
       }
-      final RawProtoStreamWriter out = messageContext.out;
+      final TagWriter out = messageContext.out;
       final int fieldNumber = fd.getNumber();
       switch (fd.getType()) {
          case INT64:
@@ -257,7 +275,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeDouble(String fieldName, double value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (fd.getType() != Type.DOUBLE) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
@@ -267,7 +285,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeDouble(String fieldName, Double value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.DOUBLE) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
@@ -283,7 +301,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeDoubles(String fieldName, double[] array) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.DOUBLE) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
@@ -292,7 +310,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          // a repeated field can never be flagged as required
          return;
       }
-      final RawProtoStreamWriter out = messageContext.out;
+      final TagWriter out = messageContext.out;
       final int fieldNumber = fd.getNumber();
       for (double value : array) {
          out.writeDouble(fieldNumber, value);
@@ -301,7 +319,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeFloat(String fieldName, float value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.FLOAT) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
@@ -311,7 +329,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeFloat(String fieldName, Float value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.FLOAT) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
@@ -327,7 +345,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeFloats(String fieldName, float[] array) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.FLOAT) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
@@ -336,7 +354,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          // a repeated field can never be flagged as required
          return;
       }
-      final RawProtoStreamWriter out = messageContext.out;
+      final TagWriter out = messageContext.out;
       final int fieldNumber = fd.getNumber();
       for (float value : array) {
          out.writeFloat(fieldNumber, value);
@@ -345,7 +363,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeBoolean(String fieldName, boolean value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.BOOL) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
@@ -355,7 +373,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeBoolean(String fieldName, Boolean value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.BOOL) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
@@ -371,7 +389,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeBooleans(String fieldName, boolean[] array) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.BOOL) {
          throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
       }
@@ -380,7 +398,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          // a repeated field can never be flagged as required
          return;
       }
-      final RawProtoStreamWriter out = messageContext.out;
+      final TagWriter out = messageContext.out;
       final int fieldNumber = fd.getNumber();
       for (boolean value : array) {
          out.writeBool(fieldNumber, value);
@@ -389,7 +407,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeString(String fieldName, String value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (fd.getType() != Type.STRING) {
          throw new IllegalArgumentException("Declared field type is not of type string : " + fd.getFullName());
@@ -405,7 +423,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeBytes(String fieldName, byte[] value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (fd.getType() != Type.BYTES) {
          throw new IllegalArgumentException("Declared field type is not of type bytes : " + fd.getFullName());
@@ -421,7 +439,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public void writeBytes(String fieldName, InputStream input) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (fd.getType() != Type.BYTES) {
          throw new IllegalArgumentException("Declared field type is not of type bytes : " + fd.getFullName());
@@ -441,7 +459,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
       input.close();
 
-      RawProtoStreamWriter out = messageContext.out;
+      TagWriter out = messageContext.out;
       out.writeTag(fd.getNumber(), WireType.LENGTH_DELIMITED);
       out.writeUInt32NoTag(len);
       for (byte[] chunk : chunks) {
@@ -451,7 +469,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (value == null) {
          if (fd.isRequired()) {
@@ -477,7 +495,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public <E extends Enum<E>> void writeEnum(String fieldName, E value) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.ENUM) {
          throw new IllegalArgumentException("Declared field type is not an enum : " + fd.getFullName());
       }
@@ -492,36 +510,36 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    }
 
    private void writeMessage(FieldDescriptor fd, Object value, Class<?> clazz) throws IOException {
-      BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
+      BaseMarshallerDelegate marshallerDelegate = serCtx.getMarshallerDelegate(clazz);
       ByteArrayOutputStreamEx nestedBaos = new ByteArrayOutputStreamEx();
-      RawProtoStreamWriter nestedOut = RawProtoStreamWriterImpl.newInstance(nestedBaos);
-      marshallerDelegate.marshall(fd, value, this, nestedOut);
+      TagWriterImpl nestedOut = TagWriterImpl.newNestedInstance(messageContext.out, nestedBaos);
+      marshallerDelegate.marshall(nestedOut, fd, value);
       nestedOut.flush();
       messageContext.out.writeBytes(fd.getNumber(), nestedBaos.getByteBuffer());
    }
 
    private void writeGroup(FieldDescriptor fd, Object value, Class<?> clazz) throws IOException {
-      BaseMarshallerDelegate marshallerDelegate = ctx.getMarshallerDelegate(clazz);
+      BaseMarshallerDelegate marshallerDelegate = serCtx.getMarshallerDelegate(clazz);
       messageContext.out.writeTag(fd.getNumber(), WireType.START_GROUP);
-      marshallerDelegate.marshall(fd, value, this, messageContext.out);
+      marshallerDelegate.marshall(messageContext.out, fd, value);
       messageContext.out.writeTag(fd.getNumber(), WireType.END_GROUP);
    }
 
    private <T extends Enum<T>> void writeEnum(FieldDescriptor fd, T value) throws IOException {
-      BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) ctx.getMarshallerDelegate(value.getClass());
-      marshallerDelegate.marshall(fd, value, this, messageContext.out);
+      BaseMarshallerDelegate<T> marshallerDelegate = (BaseMarshallerDelegate<T>) serCtx.getMarshallerDelegate(value.getClass());
+      marshallerDelegate.marshall(messageContext.out, fd, value);
    }
 
    @Override
    public <E> void writeCollection(String fieldName, Collection<? super E> collection, Class<E> elementClass) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkRepeatedFieldWrite(fd);
       if (collection == null) {
          // a repeated field can never be flagged as required
          return;
       }
 
-      final RawProtoStreamWriter out = messageContext.out;
+      final TagWriter out = messageContext.out;
       final int fieldNumber = fd.getNumber();
       switch (fd.getType()) {
          case GROUP:
@@ -654,14 +672,14 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    @Override
    public <E> void writeArray(String fieldName, E[] array, Class<? extends E> elementClass) throws IOException {
-      final FieldDescriptor fd = messageContext.marshallerDelegate.getFieldByName(fieldName);
+      final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkRepeatedFieldWrite(fd);
       if (array == null) {
          // a repeated field can never be flagged as required
          return;
       }
 
-      final RawProtoStreamWriter out = messageContext.out;
+      final TagWriter out = messageContext.out;
       final int fieldNumber = fd.getNumber();
       switch (fd.getType()) {
          case GROUP:
@@ -819,7 +837,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          throw new IllegalStateException("A field cannot be written twice : " + fd.getFullName());
       }
 
-      if (ctx.getConfiguration().logOutOfSequenceWrites()
+      if (serCtx.getConfiguration().logOutOfSequenceWrites()
             && log.isEnabled(Logger.Level.WARN)
             && messageContext.getMaxSeenFieldNumber() > fd.getNumber()) {
          log.fieldWriteOutOfSequence(fd.getFullName());
@@ -838,7 +856,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          throw new IllegalStateException("A field cannot be written twice : " + fd.getFullName());
       }
 
-      if (ctx.getConfiguration().logOutOfSequenceWrites()
+      if (serCtx.getConfiguration().logOutOfSequenceWrites()
             && log.isEnabled(Logger.Level.WARN)
             && messageContext.getMaxSeenFieldNumber() > fd.getNumber()) {
          log.fieldWriteOutOfSequence(fd.getFullName());

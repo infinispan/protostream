@@ -1,14 +1,18 @@
 package org.infinispan.protostream;
 
+import java.io.IOException;
 import java.util.BitSet;
 
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 
 /**
+ * A nested message processing context.
+ *
  * @author anistor@redhat.com
  * @since 1.0
  */
-public class MessageContext<E extends MessageContext> {
+public class MessageContext<E extends MessageContext<E>> {
 
    /**
     * The context of the outer message or null if this is a top level message.
@@ -16,33 +20,37 @@ public class MessageContext<E extends MessageContext> {
    private final E parentContext;
 
    /**
-    * If this is a nested context this is the name of the outer field being processed. This is null for root context.
+    * If this is a nested context this is the outer field being processed. This is null for the root context.
     */
-   private final String fieldName;
+   private final FieldDescriptor fieldDescriptor;
 
-   private String fullFieldName;
+   /**
+    * Dot separated path of the field.
+    */
+   private String fieldPath;
 
    /**
     * The descriptor of the current message.
     */
    private final Descriptor messageDescriptor;
 
-   private final BitSet seenFields;      //todo [anistor] need a sparse bitset here
+   private final BitSet seenFields;      //todo [anistor] need a sparse bitset here to avoid memory waste
+
    private int maxSeenFieldNumber = 0;
 
-   public MessageContext(E parentContext, String fieldName, Descriptor messageDescriptor) {
+   public MessageContext(E parentContext, FieldDescriptor fieldDescriptor, Descriptor messageDescriptor) {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
-      if (parentContext != null && fieldName == null) {
-         throw new IllegalArgumentException("fieldName cannot be null for nested contexts");
+      if (parentContext != null && fieldDescriptor == null) {
+         throw new IllegalArgumentException("fieldDescriptor cannot be null for nested contexts");
       }
-      if (parentContext == null && fieldName != null) {
-         throw new IllegalArgumentException("fieldName must be null for root contexts");
+      if (parentContext == null && fieldDescriptor != null) {
+         throw new IllegalArgumentException("fieldDescriptor must be null for root contexts");
       }
 
       this.parentContext = parentContext;
-      this.fieldName = fieldName;
+      this.fieldDescriptor = fieldDescriptor;
       this.messageDescriptor = messageDescriptor;
 
       seenFields = new BitSet(messageDescriptor.getFields().size() + messageDescriptor.getOneOfs().size());
@@ -55,28 +63,41 @@ public class MessageContext<E extends MessageContext> {
    /**
     * Gets the name of the nested field.
     *
-    * @return the name of the nested field if any or  {@code null} if this is the root context
+    * @return the name of the nested field or {@code null} if this is the root context
     */
-   public String getFieldName() {
-      return fieldName;
+   public FieldDescriptor getField() {
+      return fieldDescriptor;
    }
 
-   public String getFullFieldName() {
-      if (fieldName == null) {
+   /**
+    * Gets the full path of the nested field.
+    *
+    * @return the full path of the nested field or {@code null} if this is the root context
+    */
+   public String getFieldPath() {
+      if (fieldDescriptor == null) {
          return null;
       }
-      if (fullFieldName == null) {
+      if (fieldPath == null) {
          String pfqn = null;
          if (parentContext != null) {
-            pfqn = parentContext.getFullFieldName();
+            pfqn = parentContext.getFieldPath();
          }
-         fullFieldName = pfqn != null ? pfqn + '.' + fieldName : fieldName;
+         fieldPath = pfqn != null ? pfqn + '.' + fieldDescriptor.getName() : fieldDescriptor.getName(); // todo [anistor] use fieldDescriptor.getFullName()
       }
-      return fullFieldName;
+      return fieldPath;
    }
 
    public Descriptor getMessageDescriptor() {
       return messageDescriptor;
+   }
+
+   public FieldDescriptor getFieldByName(String fieldName) throws IOException {
+      FieldDescriptor fd = messageDescriptor.findFieldByName(fieldName);
+      if (fd == null) {
+         throw new IOException("Unknown field name : " + fieldName);
+      }
+      return fd;
    }
 
    public boolean isFieldMarked(int fieldNumber) {
@@ -93,7 +114,7 @@ public class MessageContext<E extends MessageContext> {
       if (seenFields.get(fieldNumber)) {
          return false;
       }
-      seenFields.set(fieldNumber);
+      seenFields.set(fieldNumber); //todo [anistor] this can cause the bitset grow dangerously
       if (maxSeenFieldNumber < fieldNumber) {
          maxSeenFieldNumber = fieldNumber;
       }

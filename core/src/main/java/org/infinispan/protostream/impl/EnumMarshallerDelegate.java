@@ -5,8 +5,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.TagReader;
+import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
@@ -16,7 +17,7 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
  * @author anistor@redhat.com
  * @since 1.0
  */
-public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMarshallerDelegate<T> {
+public final class EnumMarshallerDelegate<T extends Enum<T>> extends BaseMarshallerDelegate<T> {
 
    private final EnumMarshaller<T> enumMarshaller;
 
@@ -24,7 +25,7 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
 
    EnumMarshallerDelegate(EnumMarshaller<T> enumMarshaller, EnumDescriptor enumDescriptor) {
       this.enumMarshaller = enumMarshaller;
-      definedValues = new HashSet<>(enumDescriptor.getValues().size());
+      definedValues = new HashSet<>();
       for (EnumValueDescriptor evd : enumDescriptor.getValues()) {
          definedValues.add(evd.getNumber());
       }
@@ -36,11 +37,11 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
    }
 
    @Override
-   public void marshall(FieldDescriptor fd, T value, ProtoStreamWriterImpl writer, RawProtoStreamWriter out) throws IOException {
-      writeEnum(fd.getNumber(), value, out);
+   public void marshall(ProtoStreamMarshaller.WriteContext ctx, FieldDescriptor fd, T value) throws IOException {
+      encode(fd.getNumber(), value, ctx.getOut());
    }
 
-   public void writeEnum(int fieldNumber, T value, RawProtoStreamWriter out) throws IOException {
+   public void encode(int fieldNumber, T value, TagWriter out) throws IOException {
       int enumValue = enumMarshaller.encode(value);
       if (!definedValues.contains(enumValue)) {
          throw new IllegalStateException("Undefined enum value " + enumValue + " for " + enumMarshaller.getTypeName());
@@ -49,18 +50,16 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
    }
 
    @Override
-   public T unmarshall(FieldDescriptor fd, ProtoStreamReaderImpl reader, RawProtoStreamReader in) throws IOException {
-      if (reader == null) {
-         throw new IllegalStateException("reader is null");
-      }
-
+   public T unmarshall(ProtoStreamMarshaller.ReadContext ctx, FieldDescriptor fd) throws IOException {
       final int expectedTag = fd.getWireTag();
       int enumValue;
+      ProtoStreamReaderImpl reader = (ProtoStreamReaderImpl) ctx.getReader();
       UnknownFieldSet unknownFieldSet = reader.getUnknownFieldSet();
-      Object o = unknownFieldSet.consumeTag(expectedTag);
-      if (o != null) {
-         enumValue = ((Long) o).intValue();
+      Object value = unknownFieldSet.consumeTag(expectedTag);
+      if (value != null) {
+         enumValue = ((Long) value).intValue();
       } else {
+         TagReader in = ctx.getIn();
          while (true) {
             int tag = in.readTag();
             if (tag == 0) {
@@ -74,10 +73,10 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> implements BaseMars
          }
       }
 
-      return readEnum(expectedTag, enumValue, unknownFieldSet);
+      return decode(expectedTag, enumValue, unknownFieldSet);
    }
 
-   public T readEnum(int expectedTag, int enumValue, UnknownFieldSet unknownFieldSet) {
+   public T decode(int expectedTag, int enumValue, UnknownFieldSet unknownFieldSet) {
       T decoded = enumMarshaller.decode(enumValue);
 
       if (decoded == null && unknownFieldSet != null) {
