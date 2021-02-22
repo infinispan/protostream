@@ -7,10 +7,7 @@ import java.util.Set;
 
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.RawProtobufMarshaller;
+import org.infinispan.protostream.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
@@ -32,7 +29,7 @@ import javassist.NotFoundException;
 // TODO [anistor] bounded streams should be checked to be exactly as the size indicated
 
 /**
- * Generates bytecode for implementation classes of {@link EnumMarshaller} and {@link RawProtobufMarshaller}. This class
+ * Generates bytecode for implementation classes of {@link EnumMarshaller} and {@link ProtoStreamMarshaller}. This class
  * relies heavily on javassist library (and should be the only place where javassist is used throughout this project).
  *
  * @author anistor@readhat.com
@@ -55,12 +52,12 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
    private final ClassPool cp;
    private final CtClass ioExceptionClass;
    private final CtClass enumMarshallerInterface;
-   private final CtClass rawProtobufMarshallerInterface;
+   private final CtClass protoStreamMarshallerInterface;
    private final CtClass generatedMarshallerBaseClass;
    private final CtClass baseMarshallerDelegateClass;
    private final CtClass enumMarshallerDelegateClass;
-   private final CtMethod readFromMethod;
-   private final CtMethod writeToMethod;
+   private final CtMethod readMethod;
+   private final CtMethod writeMethod;
    private final CtMethod decodeMethod;
    private final CtMethod encodeMethod;
 
@@ -69,15 +66,14 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       this.cp = cp;
       ioExceptionClass = cp.getCtClass(IOException.class.getName());
       enumMarshallerInterface = cp.getCtClass(EnumMarshaller.class.getName());
-      rawProtobufMarshallerInterface = cp.getCtClass(RawProtobufMarshaller.class.getName());
+      protoStreamMarshallerInterface = cp.getCtClass(ProtoStreamMarshaller.class.getName());
       generatedMarshallerBaseClass = cp.getCtClass(GeneratedMarshallerBase.class.getName());
       baseMarshallerDelegateClass = cp.getCtClass(BaseMarshallerDelegate.class.getName());
       enumMarshallerDelegateClass = cp.getCtClass(EnumMarshallerDelegate.class.getName());
-      String rawProtobufInputStreamName = RawProtoStreamReader.class.getName().replace('.', '/');
-      String rawProtobufOutputStreamName = RawProtoStreamWriter.class.getName().replace('.', '/');
-      String serializationContextName = ImmutableSerializationContext.class.getName().replace('.', '/');
-      readFromMethod = rawProtobufMarshallerInterface.getMethod("readFrom", "(L" + serializationContextName + ";L" + rawProtobufInputStreamName + ";)Ljava/lang/Object;");
-      writeToMethod = rawProtobufMarshallerInterface.getMethod("writeTo", "(L" + serializationContextName + ";L" + rawProtobufOutputStreamName + ";Ljava/lang/Object;)V");
+      String readContextName = ProtoStreamMarshaller.ReadContext.class.getName().replace('.', '/');
+      String writeContextName = ProtoStreamMarshaller.WriteContext.class.getName().replace('.', '/');
+      readMethod = protoStreamMarshallerInterface.getMethod("read", "(L" + readContextName + ";)Ljava/lang/Object;");
+      writeMethod = protoStreamMarshallerInterface.getMethod("write", "(L" + writeContextName + ";Ljava/lang/Object;)V");
       decodeMethod = enumMarshallerInterface.getMethod("decode", "(I)Ljava/lang/Enum;");
       encodeMethod = enumMarshallerInterface.getMethod("encode", "(Ljava/lang/Enum;)I");
    }
@@ -149,18 +145,18 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
    }
 
    /**
-    * Generates an implementation of {@link RawProtobufMarshaller} as a static nested class in the message class to be
+    * Generates an implementation of {@link ProtoStreamMarshaller} as a static nested class in the message class to be
     * marshalled. The InnerClasses attribute of the outer class is not altered, so this is not officially considered a
     * nested class.
     */
-   private Class<RawProtobufMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) throws NotFoundException, CannotCompileException {
+   private Class<ProtoStreamMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) throws NotFoundException, CannotCompileException {
       String marshallerClassName = makeUniqueMarshallerClassName();
       CtClass annotatedClass = cp.get(pmtm.getAnnotatedClass().getName());
       CtClass marshallerImpl = annotatedClass.makeNestedClass(marshallerClassName, true);
       if (log.isTraceEnabled()) {
          log.tracef("Generating message marshaller %s for %s", marshallerImpl.getName(), pmtm.getJavaClass().getName());
       }
-      marshallerImpl.addInterface(rawProtobufMarshallerInterface);
+      marshallerImpl.addInterface(protoStreamMarshallerInterface);
       marshallerImpl.setSuperclass(generatedMarshallerBaseClass);
       marshallerImpl.setModifiers(marshallerImpl.getModifiers() & ~Modifier.ABSTRACT | Modifier.FINAL);
 
@@ -173,27 +169,27 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + pmtm.getJavaClass().getCanonicalName() + ".class; }", marshallerImpl));
       marshallerImpl.addMethod(CtNewMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(pmtm.getFullName()) + "\"; }", marshallerImpl));
 
-      CtMethod ctReadFromMethod = new CtMethod(readFromMethod, marshallerImpl, null);
+      CtMethod ctReadFromMethod = new CtMethod(readMethod, marshallerImpl, null);
       ctReadFromMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
       ctReadFromMethod.setModifiers(ctReadFromMethod.getModifiers() | Modifier.FINAL);
-      String readFromSrc = generateReadFromMethodBody(pmtm);
+      String readFromSrc = generateReadMethodBody(pmtm);
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", ctReadFromMethod.getLongName(), readFromSrc);
       }
       ctReadFromMethod.setBody(readFromSrc);
       marshallerImpl.addMethod(ctReadFromMethod);
 
-      CtMethod ctWriteToMethod = new CtMethod(writeToMethod, marshallerImpl, null);
+      CtMethod ctWriteToMethod = new CtMethod(writeMethod, marshallerImpl, null);
       ctWriteToMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
       ctWriteToMethod.setModifiers(ctWriteToMethod.getModifiers() | Modifier.FINAL);
-      String writeToSrc = generateWriteToMethodBody(pmtm);
+      String writeToSrc = generateWriteMethodBody(pmtm);
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", ctWriteToMethod.getLongName(), writeToSrc);
       }
       ctWriteToMethod.setBody(writeToSrc);
       marshallerImpl.addMethod(ctWriteToMethod);
 
-      Class<RawProtobufMarshaller> generatedMarshallerClass = (Class<RawProtobufMarshaller>) marshallerImpl.toClass();
+      Class<ProtoStreamMarshaller> generatedMarshallerClass = (Class<ProtoStreamMarshaller>) marshallerImpl.toClass();
       marshallerImpl.detach();
 
       return generatedMarshallerClass;

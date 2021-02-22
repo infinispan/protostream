@@ -7,11 +7,9 @@ import org.infinispan.protostream.descriptors.WireType;
 
 /**
  * @author anistor@redhat.com
- * @since 3.0
- * @deprecated replaced by {@link TagWriter}. To be removed in 5.0.
+ * @since 4.4
  */
-@Deprecated
-public interface RawProtoStreamWriter {
+public interface TagWriter extends RawProtoStreamWriter {
 
    void flush() throws IOException;
 

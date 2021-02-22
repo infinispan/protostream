@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufParser;
-import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.TagHandler;
+import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -76,7 +76,7 @@ public final class JsonUtils {
 
    public static byte[] fromCanonicalJSON(ImmutableSerializationContext ctx, Reader reader) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
-      RawProtoStreamWriter writer = RawProtoStreamWriterImpl.newInstance(baos);
+      TagWriter writer = TagWriterImpl.newInstance(ctx, baos);
 
       JsonParser parser = jsonFactory.createParser(reader);
 
@@ -107,7 +107,7 @@ public final class JsonUtils {
       }
    }
 
-   private static void processDocument(ImmutableSerializationContext ctx, JsonParser parser, RawProtoStreamWriter writer) throws IOException {
+   private static void processDocument(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer) throws IOException {
       while (true) {
          JsonToken token = parser.nextToken();
          if (token == null) {
@@ -137,7 +137,7 @@ public final class JsonUtils {
       }
    }
 
-   private static void processEnum(JsonParser parser, RawProtoStreamWriter writer, EnumDescriptor enumDescriptor) throws IOException {
+   private static void processEnum(JsonParser parser, TagWriter writer, EnumDescriptor enumDescriptor) throws IOException {
       while (true) {
          JsonToken token = parser.nextToken();
          if (token == null) {
@@ -182,14 +182,14 @@ public final class JsonUtils {
       }
    }
 
-   private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, RawProtoStreamWriter writer, String type, Integer fieldNumber, boolean topLevel) throws IOException {
+   private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, String type, Integer fieldNumber, boolean topLevel) throws IOException {
       Descriptor messageDescriptor = ctx.getMessageDescriptor(type);
 
       Set<String> requiredFields = messageDescriptor.getFields().stream()
             .filter(FieldDescriptor::isRequired).map(FieldDescriptor::getName).collect(Collectors.toCollection(HashSet::new));
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
-      RawProtoStreamWriter nestedWriter = RawProtoStreamWriterImpl.newInstance(baos);
+      TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, baos);
 
       String currentField = null;
 
@@ -264,7 +264,7 @@ public final class JsonUtils {
       writer.flush();
    }
 
-   private static void processPrimitive(JsonParser parser, RawProtoStreamWriter writer, Type fieldType) throws IOException {
+   private static void processPrimitive(JsonParser parser, TagWriter writer, Type fieldType) throws IOException {
       while (true) {
          JsonToken token = parser.nextToken();
          if (token == null) {
@@ -368,7 +368,7 @@ public final class JsonUtils {
       }
    }
 
-   private static void processArray(ImmutableSerializationContext ctx, String type, String field, JsonParser parser, RawProtoStreamWriter writer) throws IOException {
+   private static void processArray(ImmutableSerializationContext ctx, String type, String field, JsonParser parser, TagWriter writer) throws IOException {
       while (true) {
          JsonToken token = parser.nextToken();
          if (token == null) {
@@ -717,7 +717,7 @@ public final class JsonUtils {
       ProtobufParser.INSTANCE.parse(wrapperHandler, wrapperDescriptor, bytes);
    }
 
-   private static void writeEnumField(JsonParser parser, RawProtoStreamWriter writer, FieldDescriptor fd) throws IOException {
+   private static void writeEnumField(JsonParser parser, TagWriter writer, FieldDescriptor fd) throws IOException {
       String value = parser.getText();
       EnumDescriptor enumDescriptor = fd.getEnumType();
       EnumValueDescriptor valueDescriptor = enumDescriptor.findValueByName(value);
@@ -728,7 +728,7 @@ public final class JsonUtils {
       writer.writeEnum(fd.getNumber(), choice);
    }
 
-   private static void writeField(JsonParser parser, RawProtoStreamWriter writer, Type fieldType, int fieldNumber) throws IOException {
+   private static void writeField(JsonParser parser, TagWriter writer, Type fieldType, int fieldNumber) throws IOException {
       //TODO [anistor] all these number parsing below just masks an issue with quoted vs unquoted numeric literals
       switch (fieldType) {
          case DOUBLE:

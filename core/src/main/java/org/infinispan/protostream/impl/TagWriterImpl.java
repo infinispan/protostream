@@ -3,8 +3,12 @@ package org.infinispan.protostream.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.ImmutableSerializationContext;
+import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.WireType;
 
 import com.google.protobuf.CodedOutputStream;
@@ -13,36 +17,49 @@ import com.google.protobuf.CodedOutputStream;
  * @author anistor@redhat.com
  * @since 3.0
  */
-public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
+public final class TagWriterImpl implements TagWriter, ProtoStreamMarshaller.WriteContext {
 
    private final CodedOutputStream delegate;
 
-   private RawProtoStreamWriterImpl(CodedOutputStream delegate) {
+   private final SerializationContextImpl serCtx;
+
+   // lazily initialized
+   private Map<Object, Object> params = null;
+
+   // lazily initialized
+   private ProtoStreamWriterImpl writer = null;
+
+   private TagWriterImpl(SerializationContextImpl serCtx, CodedOutputStream delegate) {
+      this.serCtx = serCtx;
       this.delegate = delegate;
    }
 
-   public static RawProtoStreamWriter newInstance(OutputStream output) {
-      return new RawProtoStreamWriterImpl(CodedOutputStream.newInstance(output));
+   public static TagWriterImpl newNestedInstance(ProtoStreamMarshaller.WriteContext parentCtx, OutputStream output) {
+      TagWriterImpl parent = (TagWriterImpl) parentCtx;
+      TagWriterImpl nestedCtx = new TagWriterImpl(parent.serCtx, CodedOutputStream.newInstance(output));
+      nestedCtx.params = parent.params;
+      nestedCtx.writer = parent.writer;
+      return nestedCtx;
    }
 
-   public static RawProtoStreamWriter newInstance(OutputStream output, int bufferSize) {
-      return new RawProtoStreamWriterImpl(CodedOutputStream.newInstance(output, bufferSize));
+   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output) {
+      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(output));
    }
 
-   public static RawProtoStreamWriter newInstance(byte[] flatArray) {
-      return new RawProtoStreamWriterImpl(CodedOutputStream.newInstance(flatArray));
+   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output, int bufferSize) {
+      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(output, bufferSize));
    }
 
-   public static RawProtoStreamWriter newInstance(byte[] flatArray, int offset, int length) {
-      return new RawProtoStreamWriterImpl(CodedOutputStream.newInstance(flatArray, offset, length));
+   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, byte[] flatArray) {
+      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(flatArray));
    }
 
-   public static RawProtoStreamWriter newInstance(ByteBuffer byteBuffer) {
-      return new RawProtoStreamWriterImpl(CodedOutputStream.newInstance(byteBuffer));
+   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, byte[] flatArray, int offset, int length) {
+      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(flatArray, offset, length));
    }
 
-   public CodedOutputStream getDelegate() {
-      return delegate;
+   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, ByteBuffer byteBuffer) {
+      return new TagWriterImpl((SerializationContextImpl) serCtx, CodedOutputStream.newInstance(byteBuffer));
    }
 
    @Override
@@ -165,5 +182,42 @@ public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
    @Override
    public void writeRawBytes(byte[] value, int offset, int length) throws IOException {
       delegate.writeRawBytes(value, offset, length);
+   }
+
+   @Override
+   public SerializationContextImpl getSerializationContext() {
+      return serCtx;
+   }
+
+   @Override
+   public Object getParamValue(Object key) {
+      if (params == null) {
+         return null;
+      }
+      return params.get(key);
+   }
+
+   @Override
+   public void setParamValue(Object key, Object value) {
+      if (params == null) {
+         params = new HashMap<>();
+      }
+      params.put(key, value);
+   }
+
+   @Override
+   public TagWriter getOut() {
+      return this;
+   }
+
+   /**
+    * @deprecated this will be removed in 5.0 together with {@link org.infinispan.protostream.MessageMarshaller}
+    */
+   @Deprecated
+   public ProtoStreamWriterImpl getWriter() {
+      if (writer == null) {
+         writer = new ProtoStreamWriterImpl(this, serCtx);
+      }
+      return writer;
    }
 }

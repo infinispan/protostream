@@ -30,7 +30,7 @@ public interface UnknownFieldSet extends Serializable {
    /**
     * Parse an entire message from {@code input} and merge its fields into this set.
     */
-   void readAllFields(RawProtoStreamReader input) throws IOException;
+   void readAllFields(TagReader input) throws IOException;
 
    /**
     * Parse a single field from {@code input} and merge it into this set.
@@ -38,7 +38,7 @@ public interface UnknownFieldSet extends Serializable {
     * @param tag The field's tag number, which was already parsed (tag contains both field id and wire type).
     * @return {@code false} if the tag is an end group tag.
     */
-   boolean readSingleField(int tag, RawProtoStreamReader input) throws IOException;
+   boolean readSingleField(int tag, TagReader input) throws IOException;
 
    /**
     * Convenience method for merging a new field containing a single varint value. This is used in particular when an
@@ -51,7 +51,7 @@ public interface UnknownFieldSet extends Serializable {
    /**
     * Writes all fields from this set to the {@code output} stream.
     */
-   void writeTo(RawProtoStreamWriter output) throws IOException;
+   void writeTo(TagWriter output) throws IOException;
 
    /**
     * Reads and removes a field value from the set. The field is specified as a tag value composed of the numeric id of

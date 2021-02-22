@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.TagReader;
+import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XConstructor;
@@ -48,6 +50,12 @@ public abstract class AbstractMarshallerCodeGenerator {
       this.protobufSchemaPackage = protobufSchemaPackage;
    }
 
+   /**
+    * Signature of generated method is:
+    * <code>
+    * public java.lang.Enum decode(int $1)
+    * </code>
+    */
    protected String generateEnumDecodeMethodBody(ProtoEnumTypeMetadata enumTypeMetadata) {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
@@ -65,6 +73,12 @@ public abstract class AbstractMarshallerCodeGenerator {
       return iw.toString();
    }
 
+   /**
+    * Signature of generated method is:
+    * <code>
+    * public int encode(java.lang.Enum $1)
+    * </code>
+    */
    protected String generateEnumEncodeMethodBody(ProtoEnumTypeMetadata enumTypeMetadata) {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
@@ -159,11 +173,11 @@ public abstract class AbstractMarshallerCodeGenerator {
    /**
     * Signature of generated method is:
     * <code>
-    * public java.lang.Object readFrom(org.infinispan.protostream.ImmutableSerializationContext $1,
-    * org.infinispan.protostream.RawProtoStreamReader $2) throws java.io.IOException
+    * public java.lang.Object read(org.infinispan.protostream.ProtoStreamMarshaller.ReadContext $1,
+    * java.lang.Object $2) throws java.io.IOException
     * </code>
     */
-   protected String generateReadFromMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
+   protected String generateReadMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
       //todo [anistor] handle unknown fields for adapters also
       String getUnknownFieldSetFieldStatement = null;
       String setUnknownFieldSetFieldStatement = null;
@@ -181,6 +195,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
+      iw.append("final ").append(TagReader.class.getName()).append(" $in = $1.getIn();\n");
 
       // if there is no factory then the class must have setters or the fields should be directly accessible and not be final
       final boolean noFactory = messageTypeMetadata.getFactory() == null;
@@ -257,7 +272,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.append("boolean done = false;\n");
       iw.append("while (!done) {\n");
       iw.inc();
-      iw.append("final int tag = $2.readTag();\n");
+      iw.append("final int tag = $in.readTag();\n");
       iw.append("switch (tag) {\n");
       iw.inc();
       iw.append("case 0:\n");
@@ -290,7 +305,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                if (noFactory || fieldMetadata.isRepeated()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');
                }
-               iw.append(v).append(" = ").append(box(convert("$2." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata), fieldMetadata.getJavaType())).append(";\n");
+               iw.append(v).append(" = ").append(box(convert("$in." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata), fieldMetadata.getJavaType())).append(";\n");
                genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
                break;
             }
@@ -299,27 +314,27 @@ public abstract class AbstractMarshallerCodeGenerator {
                if (noFactory || fieldMetadata.isRepeated()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');
                }
-               iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(mdField).append(", $2);\n");
-               iw.append("$2.checkLastTagWas(").append(makeFieldTag(fieldMetadata.getNumber(), WireType.END_GROUP)).append(");\n");
+               iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(mdField).append(", $1);\n");
+               iw.append("$in.checkLastTagWas(").append(makeFieldTag(fieldMetadata.getNumber(), WireType.END_GROUP)).append(");\n");
                genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
                break;
             }
             case MESSAGE: {
                String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-               iw.append("int length = $2.readRawVarint32();\n");
-               iw.append("int oldLimit = $2.pushLimit(length);\n");
+               iw.append("int length = $in.readRawVarint32();\n");
+               iw.append("int oldLimit = $in.pushLimit(length);\n");
                if (noFactory || fieldMetadata.isRepeated()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');
                }
-               iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(mdField).append(", $2);\n");
-               iw.append("$2.checkLastTagWas(0);\n");
-               iw.append("$2.popLimit(oldLimit);\n");
+               iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(mdField).append(", $1);\n");
+               iw.append("$in.checkLastTagWas(0);\n");
+               iw.append("$in.popLimit(oldLimit);\n");
                genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
                break;
             }
             case ENUM: {
                String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-               iw.append("int enumVal = $2.readEnum();\n");
+               iw.append("int enumVal = $in.readEnum();\n");
                if (noFactory || fieldMetadata.isRepeated()) {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');
                }
@@ -349,10 +364,10 @@ public abstract class AbstractMarshallerCodeGenerator {
       if (getUnknownFieldSetFieldStatement != null) {
          iw.append(PROTOSTREAM_PACKAGE).append(".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\n");
          iw.append("if (u == null) u = new ").append(PROTOSTREAM_PACKAGE).append(".impl.UnknownFieldSetImpl();\n");
-         iw.append("if (!u.readSingleField(tag, $2)) done = true;\n");
+         iw.append("if (!u.readSingleField(tag, $in)) done = true;\n");
          iw.append("if (!u.isEmpty()) ").append(setUnknownFieldSetFieldStatement).append(";\n");
       } else {
-         iw.append("if (!$2.skipField(tag)) done = true;\n");
+         iw.append("if (!$in.skipField(tag)) done = true;\n");
       }
       iw.dec().append("}\n");
       iw.dec().append("}\n");
@@ -577,11 +592,11 @@ public abstract class AbstractMarshallerCodeGenerator {
    /**
     * Signature of generated method is:
     * <code>
-    * public void writeTo(org.infinispan.protostream.ImmutableSerializationContext $1,
-    * org.infinispan.protostream.RawProtoStreamWriter $2, java.lang.Object $3) throws java.io.IOException
+    * public void write(org.infinispan.protostream.ProtoStreamMarshaller.WriteContext $1,
+    * java.lang.Object $2) throws java.io.IOException
     * </code>
     */
-   protected String generateWriteToMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
+   protected String generateWriteMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
       //todo [anistor] handle unknown fields for adapters also
       String getUnknownFieldSetFieldStatement = null;
       if (messageTypeMetadata.getUnknownFieldSetField() != null) {
@@ -595,7 +610,8 @@ public abstract class AbstractMarshallerCodeGenerator {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
-      iw.append("final ").append(messageTypeMetadata.getJavaClassName()).append(" o = (").append(messageTypeMetadata.getJavaClassName()).append(") $3;\n");
+      iw.append("final ").append(TagWriter.class.getName()).append(" $out = $1.getOut();\n");
+      iw.append("final ").append(messageTypeMetadata.getJavaClassName()).append(" o = (").append(messageTypeMetadata.getJavaClassName()).append(") $2;\n");
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          iw.append("{\n");
          iw.inc();
@@ -660,16 +676,16 @@ public abstract class AbstractMarshallerCodeGenerator {
             case SFIXED64:
             case SINT32:
             case SINT64: {
-               iw.append("$2.").append(makeStreamIOMethodName(fieldMetadata, true)).append("(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(unbox(v, fieldMetadata.getJavaType())).append(");\n");
+               iw.append("$out.").append(makeStreamIOMethodName(fieldMetadata, true)).append("(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(unbox(v, fieldMetadata.getJavaType())).append(");\n");
                break;
             }
             case GROUP: {
                iw.append("{\n");
                iw.inc();
                String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-               iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_START_GROUP);\n");
-               iw.append("writeMessage(").append(mdField).append(", $2, ").append(v).append(");\n");
-               iw.append("$2.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_END_GROUP);\n");
+               iw.append("$out.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_START_GROUP);\n");
+               iw.append("writeMessage(").append(mdField).append(", $1, ").append(v).append(");\n");
+               iw.append("$out.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_END_GROUP);\n");
                iw.dec();
                iw.append("}\n");
                break;
@@ -678,7 +694,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                iw.append("{\n");
                iw.inc();
                String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-               iw.append("writeNestedMessage(").append(mdField).append(", $2, ").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(v).append(");\n");
+               iw.append("writeNestedMessage(").append(mdField).append(", $1, ").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(v).append(");\n");
                iw.dec();
                iw.append("}\n");
                break;
@@ -687,7 +703,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                iw.append("{\n");
                iw.inc();
                String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-               iw.append("$2.writeEnum(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(mdField).append(".getMarshaller().encode(").append(v).append("));\n");
+               iw.append("$out.writeEnum(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(mdField).append(".getMarshaller().encode(").append(v).append("));\n");
                iw.dec();
                iw.append("}\n");
                break;
@@ -707,7 +723,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       if (getUnknownFieldSetFieldStatement != null) {
          iw.append("{\n").inc();
          iw.append(PROTOSTREAM_PACKAGE).append(".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\n");
-         iw.append("if (u != null && !u.isEmpty()) u.writeTo($2);\n");
+         iw.append("if (u != null && !u.isEmpty()) u.writeTo($out);\n");
          iw.dec().append("}\n");
       }
 
@@ -723,7 +739,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          iw.append("(").append(PROTOSTREAM_PACKAGE).append(".impl.EnumMarshallerDelegate) ");
       }
       iw.append("((").append(PROTOSTREAM_PACKAGE)
-            .append(".impl.SerializationContextImpl) $1).getMarshallerDelegate(")
+            .append(".impl.SerializationContextImpl) $1.getSerializationContext()).getMarshallerDelegate(")
             .append(fieldMetadata.getJavaTypeName()).append(".class);\n");
       return fieldName;
    }

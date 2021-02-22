@@ -7,7 +7,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
-import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
+import org.infinispan.protostream.impl.TagReaderImpl;
 
 /**
  * @author anistor@redhat.com
@@ -21,7 +21,7 @@ public final class ProtobufParser {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
-      RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(input);
+      TagReader in = TagReaderImpl.newInstance(null, input);
 
       parseInternal(tagHandler, messageDescriptor, in);
    }
@@ -30,7 +30,7 @@ public final class ProtobufParser {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
-      RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(buf, off, len);
+      TagReader in = TagReaderImpl.newInstance(null, buf, off, len);
 
       parseInternal(tagHandler, messageDescriptor, in);
    }
@@ -39,12 +39,12 @@ public final class ProtobufParser {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
-      RawProtoStreamReader in = RawProtoStreamReaderImpl.newInstance(buf);
+      TagReader in = TagReaderImpl.newInstance(null, buf);
 
       parseInternal(tagHandler, messageDescriptor, in);
    }
 
-   public void parse(TagHandler tagHandler, Descriptor messageDescriptor, RawProtoStreamReader in) throws IOException {
+   public void parse(TagHandler tagHandler, Descriptor messageDescriptor, TagReader in) throws IOException {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("messageDescriptor cannot be null");
       }
@@ -52,13 +52,13 @@ public final class ProtobufParser {
       parseInternal(tagHandler, messageDescriptor, in);
    }
 
-   private void parseInternal(TagHandler tagHandler, Descriptor messageDescriptor, RawProtoStreamReader in) throws IOException {
+   private void parseInternal(TagHandler tagHandler, Descriptor messageDescriptor, TagReader in) throws IOException {
       tagHandler.onStart(messageDescriptor);
       parseMessage(tagHandler, messageDescriptor, in);
       tagHandler.onEnd();
    }
 
-   private void parseMessage(TagHandler tagHandler, Descriptor messageDescriptor, RawProtoStreamReader in) throws IOException {
+   private void parseMessage(TagHandler tagHandler, Descriptor messageDescriptor, TagReader in) throws IOException {
       int tag;
       while ((tag = in.readTag()) != 0) {
          final int fieldNumber = WireType.getTagFieldNumber(tag);

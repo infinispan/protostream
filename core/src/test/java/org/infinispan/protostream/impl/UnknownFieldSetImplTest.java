@@ -1,7 +1,5 @@
 package org.infinispan.protostream.impl;
 
-import static org.junit.Assert.assertArrayEquals;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,12 +11,14 @@ import java.util.HashSet;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.TagReader;
+import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
+
+import static org.junit.Assert.assertArrayEquals;
 
 /**
  * @author anistor@redhat.com
@@ -39,16 +39,16 @@ public class UnknownFieldSetImplTest extends AbstractProtoStreamTest {
 
    private byte[] marshall(UnknownFieldSetImpl unknownFieldSet) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      RawProtoStreamWriter out = RawProtoStreamWriterImpl.newInstance(baos);
-      unknownFieldSet.writeTo(out);
-      out.flush();
+      TagWriter tagWriter = TagWriterImpl.newInstance(null, baos);
+      unknownFieldSet.writeTo(tagWriter);
+      tagWriter.flush();
       return baos.toByteArray();
    }
 
    private UnknownFieldSetImpl unmarshall(byte[] bytes) throws IOException {
-      RawProtoStreamReader codedInputStream = RawProtoStreamReaderImpl.newInstance(new ByteArrayInputStream(bytes));
+      TagReader tagReader = TagReaderImpl.newInstance(null, new ByteArrayInputStream(bytes));
       UnknownFieldSetImpl unknownFieldSet = new UnknownFieldSetImpl();
-      unknownFieldSet.readAllFields(codedInputStream);
+      unknownFieldSet.readAllFields(tagReader);
       return unknownFieldSet;
    }
 

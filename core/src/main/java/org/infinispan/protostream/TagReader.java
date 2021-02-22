@@ -5,11 +5,11 @@ import java.nio.ByteBuffer;
 
 /**
  * @author anistor@redhat.com
- * @since 3.0
- * @deprecated replaced by {@link TagReader}. To be removed in 5.0.
+ * @since 4.4
  */
-@Deprecated
-public interface RawProtoStreamReader {
+public interface TagReader extends RawProtoStreamReader {
+
+   boolean isAtEnd() throws IOException;
 
    int readTag() throws IOException;
 

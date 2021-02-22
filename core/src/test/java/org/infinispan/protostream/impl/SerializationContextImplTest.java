@@ -1,12 +1,5 @@
 package org.infinispan.protostream.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,17 +9,22 @@ import java.util.Map;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.ProtoStreamMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.WireType;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author anistor@redhat.com
@@ -228,11 +226,12 @@ public class SerializationContextImplTest {
          }
 
          private BaseMarshaller<?> makeMarshaller() {
-            return new RawProtobufMarshaller<X>() {
+            return new ProtoStreamMarshaller<X>() {
 
                @Override
-               public X readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
+               public X read(ReadContext ctx) throws IOException {
                   Integer f = null;
+                  TagReader in = ctx.getIn();
                   if (in.readTag() == WireType.makeTag(1, WireType.VARINT)) {
                      f = in.readInt32();
                   }
@@ -240,8 +239,8 @@ public class SerializationContextImplTest {
                }
 
                @Override
-               public void writeTo(ImmutableSerializationContext ctx, RawProtoStreamWriter out, X x) throws IOException {
-                  out.writeInt32(1, x.f);
+               public void write(WriteContext ctx, X x) throws IOException {
+                  ctx.getOut().writeInt32(1, x.f);
                }
 
                @Override

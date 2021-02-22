@@ -8,9 +8,9 @@ import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
-import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
-import org.infinispan.protostream.impl.RawProtoStreamWriterImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
+import org.infinispan.protostream.impl.TagReaderImpl;
+import org.infinispan.protostream.impl.TagWriterImpl;
 
 /**
  * A wrapper for messages, enums or primitive types that encodes the type of the inner object/value and also helps keep
@@ -216,7 +216,7 @@ public final class WrappedMessage {
       return value;
    }
 
-   static void writeMessage(ImmutableSerializationContext ctx, RawProtoStreamWriter out, Object t) throws IOException {
+   static void writeMessage(ImmutableSerializationContext ctx, TagWriter out, Object t) throws IOException {
       if (t == null) {
          return;
       }
@@ -262,19 +262,19 @@ public final class WrappedMessage {
          }
 
          if (t.getClass().isEnum()) {
-            ((EnumMarshallerDelegate) marshallerDelegate).writeEnum(WRAPPED_ENUM, (Enum) t, out);
+            ((EnumMarshallerDelegate) marshallerDelegate).encode(WRAPPED_ENUM, (Enum) t, out);
          } else {
             ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
-            RawProtoStreamWriter nestedOut = RawProtoStreamWriterImpl.newInstance(buffer);
-            marshallerDelegate.marshall(null, t, null, nestedOut);
-            nestedOut.flush();
+            TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, buffer);
+            marshallerDelegate.marshall(nestedCtx, null, t);
+            nestedCtx.flush();
             out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
          }
       }
       out.flush();
    }
 
-   static <T> T readMessage(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
+   static <T> T readMessage(ImmutableSerializationContext ctx, TagReader in) throws IOException {
       String typeName = null;
       Integer typeId = null;
       int enumValue = -1;
@@ -441,8 +441,8 @@ public final class WrappedMessage {
       BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(typeName);
       if (messageBytes != null) {
          // it's a Message type
-         RawProtoStreamReader nestedInput = RawProtoStreamReaderImpl.newInstance(messageBytes);
-         return (T) marshallerDelegate.unmarshall(null, null, nestedInput);
+         TagReaderImpl nestedInput = TagReaderImpl.newInstance(ctx, messageBytes);
+         return (T) marshallerDelegate.unmarshall(nestedInput, null);
       } else {
          // it's an Enum
          EnumMarshaller marshaller = (EnumMarshaller) marshallerDelegate.getMarshaller();
@@ -498,7 +498,7 @@ public final class WrappedMessage {
     * Marshaller for WrappedMessage. This marshaller is not meant to handle unknown fields at the top level as they are
     * very unlikely to ever appear. The handling of unknown fields for the inner message type will work as usual.
     */
-   static final class Marshaller implements RawProtobufMarshaller<WrappedMessage> {
+   static final BaseMarshaller<WrappedMessage> MARSHALLER = new ProtoStreamMarshaller<WrappedMessage>() {
 
       @Override
       public Class<WrappedMessage> getJavaClass() {
@@ -511,13 +511,13 @@ public final class WrappedMessage {
       }
 
       @Override
-      public WrappedMessage readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
-         return new WrappedMessage(readMessage(ctx, in));
+      public WrappedMessage read(ReadContext ctx) throws IOException {
+         return new WrappedMessage(readMessage(ctx.getSerializationContext(), ctx.getIn()));
       }
 
       @Override
-      public void writeTo(ImmutableSerializationContext ctx, RawProtoStreamWriter out, WrappedMessage wrappedMessage) throws IOException {
-         writeMessage(ctx, out, wrappedMessage.value);
+      public void write(WriteContext ctx, WrappedMessage wrappedMessage) throws IOException {
+         writeMessage(ctx.getSerializationContext(), ctx.getOut(), wrappedMessage.value);
       }
-   }
+   };
 }
