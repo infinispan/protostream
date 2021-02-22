@@ -29,8 +29,6 @@ import org.infinispan.protostream.descriptors.Type;
 
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_DOUBLE;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_ENUM;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED32;
@@ -44,6 +42,8 @@ import static org.infinispan.protostream.WrappedMessage.WRAPPED_SFIXED64;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_SINT32;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_SINT64;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_STRING;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_TYPE_ID;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_TYPE_NAME;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT32;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT64;
 
@@ -156,7 +156,7 @@ public final class JsonUtils {
                if (enumValueDescriptor == null) {
                   throw new IllegalStateException("Invalid enum value : '" + enumValueName + "'");
                }
-               writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, enumDescriptor.getTypeId());//todo [anistor] this seems to be a mistake! we need a typeid/typename only for top level, and this is not the case!
+               writer.writeUInt32(WRAPPED_TYPE_ID, enumDescriptor.getTypeId());//todo [anistor] this seems to be a mistake! we need a typeid/typename only for top level, and this is not the case!
                writer.writeEnum(WRAPPED_ENUM, enumValueDescriptor.getNumber());
                break;
             }
@@ -166,7 +166,7 @@ public final class JsonUtils {
                if (enumValueDescriptor == null) {
                   throw new IllegalStateException("Invalid enum value : " + enumValueNumber);
                }
-               writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, enumDescriptor.getTypeId());//todo [anistor] same as previous todo
+               writer.writeUInt32(WRAPPED_TYPE_ID, enumDescriptor.getTypeId());//todo [anistor] same as previous todo
                writer.writeEnum(WRAPPED_ENUM, enumValueDescriptor.getNumber());
                break;
             }
@@ -250,9 +250,9 @@ public final class JsonUtils {
       if (topLevel) {
          Integer topLevelTypeId = messageDescriptor.getTypeId();
          if (topLevelTypeId == null) {
-            writer.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, type);
+            writer.writeString(WRAPPED_TYPE_NAME, type);
          } else {
-            writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, topLevelTypeId);
+            writer.writeUInt32(WRAPPED_TYPE_ID, topLevelTypeId);
          }
          nestedWriter.flush();
          writer.writeBytes(WRAPPED_MESSAGE, baos.toByteArray());
@@ -660,10 +660,10 @@ public final class JsonUtils {
                return;
             }
             switch (fieldNumber) {
-               case WRAPPED_DESCRIPTOR_TYPE_ID:
+               case WRAPPED_TYPE_ID:
                   typeId = (Integer) tagValue;
                   break;
-               case WRAPPED_DESCRIPTOR_FULL_NAME:
+               case WRAPPED_TYPE_NAME:
                   typeName = (String) tagValue;
                   break;
                case WRAPPED_MESSAGE:
