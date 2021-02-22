@@ -11,6 +11,8 @@ import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XEnumConstant;
+import org.infinispan.protostream.containers.ElementContainer;
+import org.infinispan.protostream.containers.ElementContainerAdapter;
 import org.infinispan.protostream.impl.Log;
 
 /**
@@ -36,6 +38,18 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       super(getProtoName(annotatedEnumClass, enumClass), enumClass);
       this.annotatedEnumClass = annotatedEnumClass;
       this.isAdapter = annotatedEnumClass != enumClass;
+
+      // Enums cannot be element containers!
+      if (isAdapter) {
+         if (annotatedEnumClass.isAssignableTo(ElementContainerAdapter.class)) {
+            throw new ProtoSchemaBuilderException("ElementContainerAdapter interface should not be implemented by annotated adapters for enums: " + annotatedEnumClass.getName());
+         }
+      } else {
+         if (annotatedEnumClass.isAssignableTo(ElementContainer.class)) {
+            throw new ProtoSchemaBuilderException("ElementContainer interface should not be implemented by annotated enums: " + annotatedEnumClass.getName());
+         }
+      }
+
       validateName();
    }
 

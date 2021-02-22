@@ -172,11 +172,23 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
          addAdapterField(iw, pmtm);
       }
 
+      if (pmtm.isIndexedContainer()) {
+         //iw.append(", ").append(IndexedContainerAdapter.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>');
+      } else if (pmtm.isIterableContainer()) {
+         //iw.append(", ").append(IndexedContainerAdapter.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>');
+      }
+
       addMarshallerDelegateFields(iw, pmtm);
 
       iw.append("@Override\npublic Class<").append(pmtm.getJavaClassName()).append("> getJavaClass() { return ").append(pmtm.getJavaClassName()).append(".class; }\n\n");
 
       iw.append("@Override\npublic String getTypeName() { return \"").append(makeQualifiedTypeName(pmtm.getFullName())).append("\"; }\n\n");
+
+      if (pmtm.isIndexedContainer()) {
+         //iw.append("@Override\npublic int getContainerField() { return 1; }\n\n");
+      } else if (pmtm.isIterableContainer()) {
+         //iw.append("@Override\npublic int getContainerField() { return 1; }\n\n");
+      }
 
       String readMethodSrc = generateReadMethodBody(pmtm);
       String readMethodSig = "public " + pmtm.getJavaClassName() + " read("

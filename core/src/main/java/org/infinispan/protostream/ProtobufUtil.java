@@ -114,15 +114,15 @@ public final class ProtobufUtil {
    }
 
    public static <A> A fromWrappedByteArray(ImmutableSerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
-      return WrappedMessage.readMessage(ctx, TagReaderImpl.newInstance(ctx, bytes, offset, length));
+      return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, bytes, offset, length));
    }
 
    public static <A> A fromWrappedByteBuffer(ImmutableSerializationContext ctx, ByteBuffer byteBuffer) throws IOException {
-      return WrappedMessage.readMessage(ctx, TagReaderImpl.newInstance(ctx, byteBuffer));
+      return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, byteBuffer));
    }
 
    public static <A> A fromWrappedStream(ImmutableSerializationContext ctx, InputStream in) throws IOException {
-      return WrappedMessage.readMessage(ctx, TagReaderImpl.newInstance(ctx, in));
+      return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, in));
    }
 
    //todo [anistor] should make it possible to plug in a custom wrapping strategy instead of the default one
@@ -132,13 +132,13 @@ public final class ProtobufUtil {
 
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t, int bufferSize) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(bufferSize);
-      WrappedMessage.writeMessage(ctx, TagWriterImpl.newInstance(ctx, baos), t);
+      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, baos), t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toWrappedByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(BUFFER_SIZE);
-      WrappedMessage.writeMessage(ctx, TagWriterImpl.newInstance(ctx, baos), t);
+      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, baos), t);
       return baos.getByteBuffer();
    }
 
@@ -147,7 +147,7 @@ public final class ProtobufUtil {
    }
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t, int bufferSize) throws IOException {
-      WrappedMessage.writeMessage(ctx, TagWriterImpl.newInstance(ctx, out, bufferSize), t);
+      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, out, bufferSize), t);
    }
 
    /**
