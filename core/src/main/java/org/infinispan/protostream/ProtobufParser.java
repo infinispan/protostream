@@ -6,8 +6,8 @@ import java.io.InputStream;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.protostream.impl.RawProtoStreamReaderImpl;
-import org.infinispan.protostream.impl.WireFormat;
 
 /**
  * @author anistor@redhat.com
@@ -61,12 +61,12 @@ public final class ProtobufParser {
    private void parseMessage(TagHandler tagHandler, Descriptor messageDescriptor, RawProtoStreamReader in) throws IOException {
       int tag;
       while ((tag = in.readTag()) != 0) {
-         final int fieldNumber = WireFormat.getTagFieldNumber(tag);
-         final int wireType = WireFormat.getTagWireType(tag);
+         final int fieldNumber = WireType.getTagFieldNumber(tag);
+         final WireType wireType = WireType.fromTag(tag);
          final FieldDescriptor fd = messageDescriptor != null ? messageDescriptor.findFieldByNumber(fieldNumber) : null;
 
          switch (wireType) {
-            case WireFormat.WIRETYPE_LENGTH_DELIMITED: {
+            case LENGTH_DELIMITED: {
                if (fd == null) {
                   byte[] value = in.readByteArray();
                   tagHandler.onTag(fieldNumber, null, value);
@@ -88,30 +88,30 @@ public final class ProtobufParser {
                break;
             }
 
-            case WireFormat.WIRETYPE_START_GROUP: {
+            case START_GROUP: {
                if (fd != null) {
                   tagHandler.onStartNested(fieldNumber, null);
                   parseMessage(tagHandler, null, in);
-                  in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
+                  in.checkLastTagWas(WireType.makeTag(fieldNumber, WireType.END_GROUP));
                   tagHandler.onEndNested(fieldNumber, null);
                } else {
                   tagHandler.onStartNested(fieldNumber, fd);
                   parseMessage(tagHandler, fd.getMessageType(), in);
-                  in.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
+                  in.checkLastTagWas(WireType.makeTag(fieldNumber, WireType.END_GROUP));
                   tagHandler.onEndNested(fieldNumber, fd);
                }
                break;
             }
 
-            case WireFormat.WIRETYPE_FIXED32:
-            case WireFormat.WIRETYPE_FIXED64:
-            case WireFormat.WIRETYPE_VARINT: {
+            case FIXED32:
+            case FIXED64:
+            case VARINT: {
                if (fd == null) {
-                  if (wireType == WireFormat.WIRETYPE_FIXED32) {
+                  if (wireType == WireType.FIXED32) {
                      tagHandler.onTag(fieldNumber, null, in.readFixed32());
-                  } else if (wireType == WireFormat.WIRETYPE_FIXED64) {
+                  } else if (wireType == WireType.FIXED64) {
                      tagHandler.onTag(fieldNumber, null, in.readFixed64());
-                  } else if (wireType == WireFormat.WIRETYPE_VARINT) {
+                  } else {
                      tagHandler.onTag(fieldNumber, null, in.readRawVarint64());
                   }
                } else {

@@ -1,57 +1,55 @@
 package org.infinispan.protostream.descriptors;
 
-import org.infinispan.protostream.impl.WireFormat;
-
 /**
  * Type of a field in Protobuf, can be any value defined in <a href="https://developers.google.com/protocol-buffers/docs/proto3#scalar">https://developers.google.com/protocol-buffers/docs/proto3#scalar</a>
- * plus composite types group, message and enum.
+ * or a message or an enum.
  *
  * @author gustavonalle
  * @since 2.0
  */
 public enum Type {
 
-   DOUBLE(JavaType.DOUBLE, WireFormat.WIRETYPE_FIXED64),
+   DOUBLE(JavaType.DOUBLE, WireType.FIXED64),
 
-   FLOAT(JavaType.FLOAT, WireFormat.WIRETYPE_FIXED32),
+   FLOAT(JavaType.FLOAT, WireType.FIXED32),
 
-   INT64(JavaType.LONG, WireFormat.WIRETYPE_VARINT),
+   INT64(JavaType.LONG, WireType.VARINT),
 
-   UINT64(JavaType.LONG, WireFormat.WIRETYPE_VARINT),
+   UINT64(JavaType.LONG, WireType.VARINT),
 
-   INT32(JavaType.INT, WireFormat.WIRETYPE_VARINT),
+   INT32(JavaType.INT, WireType.VARINT),
 
-   FIXED64(JavaType.LONG, WireFormat.WIRETYPE_FIXED64),
+   FIXED64(JavaType.LONG, WireType.FIXED64),
 
-   FIXED32(JavaType.INT, WireFormat.WIRETYPE_FIXED32),
+   FIXED32(JavaType.INT, WireType.FIXED32),
 
-   BOOL(JavaType.BOOLEAN, WireFormat.WIRETYPE_VARINT),
+   BOOL(JavaType.BOOLEAN, WireType.VARINT),
 
-   STRING(JavaType.STRING, WireFormat.WIRETYPE_LENGTH_DELIMITED),
+   STRING(JavaType.STRING, WireType.LENGTH_DELIMITED),
 
-   BYTES(JavaType.BYTE_STRING, WireFormat.WIRETYPE_LENGTH_DELIMITED),
+   BYTES(JavaType.BYTE_STRING, WireType.LENGTH_DELIMITED),
 
-   UINT32(JavaType.INT, WireFormat.WIRETYPE_VARINT),
+   UINT32(JavaType.INT, WireType.VARINT),
 
-   SFIXED32(JavaType.INT, WireFormat.WIRETYPE_FIXED32),
+   SFIXED32(JavaType.INT, WireType.FIXED32),
 
-   SFIXED64(JavaType.LONG, WireFormat.WIRETYPE_FIXED64),
+   SFIXED64(JavaType.LONG, WireType.FIXED64),
 
-   SINT32(JavaType.INT, WireFormat.WIRETYPE_VARINT),
+   SINT32(JavaType.INT, WireType.VARINT),
 
-   SINT64(JavaType.LONG, WireFormat.WIRETYPE_VARINT),
+   SINT64(JavaType.LONG, WireType.VARINT),
 
-   GROUP(JavaType.MESSAGE, WireFormat.WIRETYPE_START_GROUP),
+   GROUP(JavaType.MESSAGE, WireType.START_GROUP),
 
-   MESSAGE(JavaType.MESSAGE, WireFormat.WIRETYPE_LENGTH_DELIMITED),
+   MESSAGE(JavaType.MESSAGE, WireType.LENGTH_DELIMITED),
 
-   ENUM(JavaType.ENUM, WireFormat.WIRETYPE_VARINT);
+   ENUM(JavaType.ENUM, WireType.VARINT);
 
    private final JavaType javaType;
 
-   private final int wireType;
+   private final WireType wireType;
 
-   Type(JavaType javaType, int wireType) {
+   Type(JavaType javaType, WireType wireType) {
       this.javaType = javaType;
       this.wireType = wireType;
    }
@@ -60,10 +58,13 @@ public enum Type {
       return javaType;
    }
 
-   public int getWireType() {
+   public WireType getWireType() {
       return wireType;
    }
 
+   /**
+    * Returns {@code true} only if the type is an unsigned numeric type, {@code false} otherwise.
+    */
    public boolean isUnsigned() {
       return this == UINT32 ||
             this == UINT64 ||

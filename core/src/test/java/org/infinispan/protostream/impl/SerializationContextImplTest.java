@@ -24,6 +24,7 @@ import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.descriptors.WireType;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -232,7 +233,7 @@ public class SerializationContextImplTest {
                @Override
                public X readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
                   Integer f = null;
-                  if (in.readTag() == WireFormat.makeTag(1, WireFormat.WIRETYPE_VARINT)) {
+                  if (in.readTag() == WireType.makeTag(1, WireType.VARINT)) {
                      f = in.readInt32();
                   }
                   return new X(f);

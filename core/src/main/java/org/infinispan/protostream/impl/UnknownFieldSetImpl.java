@@ -15,6 +15,7 @@ import java.util.TreeMap;
 import org.infinispan.protostream.RawProtoStreamReader;
 import org.infinispan.protostream.RawProtoStreamWriter;
 import org.infinispan.protostream.UnknownFieldSet;
+import org.infinispan.protostream.descriptors.WireType;
 
 /**
  * {@link UnknownFieldSet} implementation. This is not thread-safe. This class should never be directly instantiated by
@@ -70,31 +71,31 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
 
    @Override
    public boolean readSingleField(int tag, RawProtoStreamReader input) throws IOException {
-      int wireType = WireFormat.getTagWireType(tag);
+      WireType wireType = WireType.fromTag(tag);
       switch (wireType) {
-         case WireFormat.WIRETYPE_VARINT:
+         case VARINT:
             getField(tag).addLast(input.readInt64());
             return true;
 
-         case WireFormat.WIRETYPE_FIXED64:
+         case FIXED64:
             getField(tag).addLast(input.readFixed64());
             return true;
 
-         case WireFormat.WIRETYPE_LENGTH_DELIMITED:
+         case LENGTH_DELIMITED:
             getField(tag).addLast(input.readByteArray());
             return true;
 
-         case WireFormat.WIRETYPE_START_GROUP:
+         case START_GROUP:
             UnknownFieldSetImpl unknownFieldSet = new UnknownFieldSetImpl();
             unknownFieldSet.readAllFields(input);
-            input.checkLastTagWas(WireFormat.makeTag(WireFormat.getTagFieldNumber(tag), WireFormat.WIRETYPE_END_GROUP));
+            input.checkLastTagWas(WireType.makeTag(WireType.getTagFieldNumber(tag), WireType.END_GROUP));
             getField(tag).addLast(unknownFieldSet);
             return true;
 
-         case WireFormat.WIRETYPE_END_GROUP:
+         case END_GROUP:
             return false;
 
-         case WireFormat.WIRETYPE_FIXED32:
+         case FIXED32:
             getField(tag).addLast(input.readFixed32());
             return true;
 
@@ -108,7 +109,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
       if (tag == 0) {
          throw new IllegalArgumentException("Zero is not a valid tag");
       }
-      if (WireFormat.getTagWireType(tag) != WireFormat.WIRETYPE_VARINT) {
+      if (WireType.fromTag(tag) != WireType.VARINT) {
          throw new IllegalArgumentException("The tag is not a VARINT: " + tag);
       }
       getField(tag).addLast(value);
@@ -130,34 +131,34 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
     * Serializes a field, including field number, and writes it to {@code output}.
     */
    private void writeField(int tag, Deque<?> values, RawProtoStreamWriter output) throws IOException {
-      final int wireType = WireFormat.getTagWireType(tag);
-      final int fieldNumber = WireFormat.getTagFieldNumber(tag);
+      final WireType wireType = WireType.fromTag(tag);
+      final int fieldNumber = WireType.getTagFieldNumber(tag);
       switch (wireType) {
-         case WireFormat.WIRETYPE_VARINT:
+         case VARINT:
             for (long value : (Deque<Long>) values) {
                output.writeUInt64(fieldNumber, value);
             }
             break;
-         case WireFormat.WIRETYPE_FIXED32:
+         case FIXED32:
             for (int value : (Deque<Integer>) values) {
                output.writeFixed32(fieldNumber, value);
             }
             break;
-         case WireFormat.WIRETYPE_FIXED64:
+         case FIXED64:
             for (long value : (Deque<Long>) values) {
                output.writeFixed64(fieldNumber, value);
             }
             break;
-         case WireFormat.WIRETYPE_LENGTH_DELIMITED:
+         case LENGTH_DELIMITED:
             for (byte[] value : (Deque<byte[]>) values) {
                output.writeBytes(fieldNumber, value);
             }
             break;
-         case WireFormat.WIRETYPE_START_GROUP:
+         case START_GROUP:
             for (UnknownFieldSetImpl value : (Deque<UnknownFieldSetImpl>) values) {
                output.writeUInt32NoTag(tag);
                value.writeTo(output);
-               output.writeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP);
+               output.writeTag(fieldNumber, WireType.END_GROUP);
             }
             break;
          default:
@@ -170,16 +171,9 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
       if (tag == 0) {
          throw new IllegalArgumentException("0 is not a valid tag number");
       }
-      int wireType = WireFormat.getTagWireType(tag);
-      switch (wireType) {
-         case WireFormat.WIRETYPE_VARINT:
-         case WireFormat.WIRETYPE_FIXED32:
-         case WireFormat.WIRETYPE_FIXED64:
-         case WireFormat.WIRETYPE_LENGTH_DELIMITED:
-         case WireFormat.WIRETYPE_START_GROUP:
-            break;
-         default:
-            throw new IllegalArgumentException("Tag " + tag + " has invalid wire type " + wireType);
+      WireType wireType = WireType.fromTag(tag);
+      if (wireType == WireType.END_GROUP) {
+         throw new IllegalArgumentException("Tag " + tag + " has invalid wire type " + wireType);
       }
       if (fields == null) {
          return null;
@@ -226,8 +220,6 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
 
    @Override
    public String toString() {
-      return "UnknownFieldSetImpl{" +
-            "fields=" + fields +
-            '}';
+      return "UnknownFieldSetImpl{fields=" + fields + '}';
    }
 }

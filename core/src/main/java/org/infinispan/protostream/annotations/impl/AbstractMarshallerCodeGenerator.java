@@ -19,6 +19,7 @@ import org.infinispan.protostream.annotations.impl.types.XExecutable;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.descriptors.WireType;
 
 /**
  * @author anistor@readhat.com
@@ -265,7 +266,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.dec();
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          final String v = makeFieldLocalVar(fieldMetadata);
-         iw.append("case ").append(String.valueOf(fieldMetadata.getNumber() << 3 | fieldMetadata.getProtobufType().getWireType())).append(": {\n");
+         iw.append("case ").append(makeFieldTag(fieldMetadata.getNumber(), fieldMetadata.getProtobufType().getWireType())).append(": {\n");
          iw.inc();
          if (BaseProtoSchemaGenerator.generateMarshallerDebugComments) {
             iw.append("// type = ").append(fieldMetadata.getProtobufType().toString()).append(", name = ").append(fieldMetadata.getName()).append('\n');
@@ -299,7 +300,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                   iw.append(fieldMetadata.getJavaTypeName()).append(' ');
                }
                iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(mdField).append(", $2);\n");
-               iw.append("$2.checkLastTagWas(").append(String.valueOf(fieldMetadata.getNumber() << 3 | org.infinispan.protostream.impl.WireFormat.WIRETYPE_END_GROUP)).append(");\n");
+               iw.append("$2.checkLastTagWas(").append(makeFieldTag(fieldMetadata.getNumber(), WireType.END_GROUP)).append(");\n");
                genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
                break;
             }
@@ -503,6 +504,12 @@ public abstract class AbstractMarshallerCodeGenerator {
 
       iw.dec().append("}\n");
       return iw.toString();
+   }
+
+   private static String makeFieldTag(int fieldNumber, WireType wireType) {
+      return "(" + fieldNumber + " << "
+            + PROTOSTREAM_PACKAGE + ".descriptors.WireType.TAG_TYPE_NUM_BITS | "
+            + PROTOSTREAM_PACKAGE + ".descriptors.WireType.WIRETYPE_" + wireType.name() + ")";
    }
 
    /**

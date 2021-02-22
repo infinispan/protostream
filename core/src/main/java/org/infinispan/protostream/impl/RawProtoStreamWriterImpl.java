@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 import org.infinispan.protostream.RawProtoStreamWriter;
+import org.infinispan.protostream.descriptors.WireType;
 
 import com.google.protobuf.CodedOutputStream;
 
@@ -46,7 +47,12 @@ public final class RawProtoStreamWriterImpl implements RawProtoStreamWriter {
 
    @Override
    public void writeTag(int number, int wireType) throws IOException {
-      delegate.writeTag(number, wireType);
+      writeTag(number, WireType.fromValue(wireType));
+   }
+
+   @Override
+   public void writeTag(int number, WireType wireType) throws IOException {
+      delegate.writeTag(number, wireType.value);
    }
 
    @Override

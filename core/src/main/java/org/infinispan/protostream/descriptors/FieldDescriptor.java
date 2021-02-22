@@ -9,7 +9,6 @@ import java.util.Map;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
-import org.infinispan.protostream.impl.WireFormat;
 
 /**
  * Represents a field in a proto file.
@@ -52,7 +51,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
    }
 
    public int getWireTag() {
-      return WireFormat.makeTag(number, type.getWireType());
+      return WireType.makeTag(number, type.getWireType());
    }
 
    public Type getType() {
