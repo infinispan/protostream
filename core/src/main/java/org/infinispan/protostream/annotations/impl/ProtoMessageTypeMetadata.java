@@ -671,10 +671,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             }
             return (byte) v;
          }
-         if (fieldType.isAssignableTo(typeFactory.fromClass(Date.class))) {
+         if (fieldType.isAssignableTo(Date.class)) {
             return Long.parseUnsignedLong(defaultValue);
          }
-         if (fieldType.isAssignableTo(typeFactory.fromClass(Instant.class))) {
+         if (fieldType.isAssignableTo(Instant.class)) {
             return Long.parseUnsignedLong(defaultValue);
          }
       } catch (NumberFormatException e) {
@@ -851,9 +851,9 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                return Type.INT32;
             } else if (javaType == typeFactory.fromClass(Boolean.class) || javaType == typeFactory.fromClass(boolean.class)) {
                return Type.BOOL;
-            } else if (javaType.isAssignableTo(typeFactory.fromClass(Date.class))) {
+            } else if (javaType.isAssignableTo(Date.class)) {
                return Type.FIXED64;
-            } else if (javaType.isAssignableTo(typeFactory.fromClass(Instant.class))) {
+            } else if (javaType.isAssignableTo(Instant.class)) {
                return Type.FIXED64;
             } else {
                ProtoTypeMetadata m = protoSchemaGenerator.scanAnnotations(javaType);
@@ -909,7 +909,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          case SFIXED64:
          case SINT64:
             if (javaType != typeFactory.fromClass(Long.class) && javaType != typeFactory.fromClass(long.class)
-                  && !javaType.isAssignableTo(typeFactory.fromClass(Date.class)) && !javaType.isAssignableTo(typeFactory.fromClass(Instant.class)))
+                  && !javaType.isAssignableTo(Date.class) && !javaType.isAssignableTo(Instant.class))
                throw new ProtoSchemaBuilderException("Incompatible types : " + javaType.getCanonicalName() + " vs " + declaredType);
             break;
       }
@@ -929,7 +929,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          // A byte[] mapped to BYTES needs special handling. This will not be mapped to a repeatable field.
          return false;
       }
-      return javaType.isArray() || javaType.isAssignableTo(typeFactory.fromClass(Collection.class));
+      return javaType.isArray() || javaType.isAssignableTo(Collection.class);
    }
 
    private XMethod findGetter(String propertyName, XClass propertyType) {

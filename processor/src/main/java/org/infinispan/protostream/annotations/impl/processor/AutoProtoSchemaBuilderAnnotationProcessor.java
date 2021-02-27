@@ -46,7 +46,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.IndentWriter;
 import org.infinispan.protostream.annotations.impl.processor.types.HasModelElement;
-import org.infinispan.protostream.annotations.impl.processor.types.MirrorClassFactory;
+import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
 
@@ -75,7 +75,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
    private boolean isDebugEnabled;
 
-   private MirrorClassFactory typeFactory;
+   private MirrorTypeFactory typeFactory;
 
    /**
     * Keep track of what we process so we do not get into a dependency loop and cause a stack overflow.
@@ -95,7 +95,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       super.init(processingEnv);
 
       isDebugEnabled = processingEnv.getOptions().containsKey(DEBUG_OPTION);
-      typeFactory = new MirrorClassFactory(processingEnv);
+      typeFactory = new MirrorTypeFactory(processingEnv);
       types = processingEnv.getTypeUtils();
       elements = processingEnv.getElementUtils();
       filer = processingEnv.getFiler();

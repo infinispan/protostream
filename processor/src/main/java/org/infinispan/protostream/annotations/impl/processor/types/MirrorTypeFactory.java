@@ -29,6 +29,7 @@ import javax.lang.model.util.Types;
 
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.impl.types.DocumentationExtractor;
+import org.infinispan.protostream.annotations.impl.types.ReflectionTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XConstructor;
 import org.infinispan.protostream.annotations.impl.types.XEnumConstant;
@@ -37,13 +38,13 @@ import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 
 /**
- * Implementation relying primarily on javax.lang.model.type.TypeMirror, but also capable to use reflection similarly to
- * {@link org.infinispan.protostream.annotations.impl.types.ReflectionClassFactory}.
+ * Implementation relying primarily on {@link javax.lang.model.type.TypeMirror}, but also capable to use reflection
+ * similarly to {@link ReflectionTypeFactory}.
  *
  * @author anistor@redhat.com
  * @since 4.3
  */
-public final class MirrorClassFactory implements XTypeFactory {
+public final class MirrorTypeFactory implements XTypeFactory {
 
    private final Elements elements;
 
@@ -69,7 +70,7 @@ public final class MirrorClassFactory implements XTypeFactory {
 
    private final MirrorPrimitiveType doubleType;
 
-   public MirrorClassFactory(ProcessingEnvironment processingEnv) {
+   public MirrorTypeFactory(ProcessingEnvironment processingEnv) {
       elements = processingEnv.getElementUtils();
       types = processingEnv.getTypeUtils();
       voidType = new MirrorPrimitiveType(void.class, types.getNoType(TypeKind.VOID));
@@ -133,7 +134,8 @@ public final class MirrorClassFactory implements XTypeFactory {
       }
       TypeElement typeElement = elements.getTypeElement(typeName);
       if (typeElement == null) {
-         throw new RuntimeException("Type not found : " + typeName);
+         // this should never happen because once we have a java.lang.Class instance we should always be able to obtain its TypeElement
+         throw new IllegalStateException("Type not found : " + typeName);
       }
       return fromTypeMirror(typeElement.asType());
    }
@@ -295,7 +297,7 @@ public final class MirrorClassFactory implements XTypeFactory {
 
       @Override
       public XTypeFactory getFactory() {
-         return MirrorClassFactory.this;
+         return MirrorTypeFactory.this;
       }
 
       @Override
@@ -496,7 +498,7 @@ public final class MirrorClassFactory implements XTypeFactory {
 
       @Override
       public XTypeFactory getFactory() {
-         return MirrorClassFactory.this;
+         return MirrorTypeFactory.this;
       }
 
       @Override
@@ -807,7 +809,7 @@ public final class MirrorClassFactory implements XTypeFactory {
 
       @Override
       public XTypeFactory getFactory() {
-         return MirrorClassFactory.this;
+         return MirrorTypeFactory.this;
       }
 
       @Override
@@ -990,7 +992,7 @@ public final class MirrorClassFactory implements XTypeFactory {
          if (returnType.isArray()) {
             return returnType.getComponentType();
          }
-         if (returnType.isAssignableTo(fromClass(Collection.class))) {
+         if (returnType.isAssignableTo(Collection.class)) {
             List<? extends TypeMirror> typeArguments = ((DeclaredType) unwrapOptionalReturnType()).getTypeArguments();
             if (typeArguments.size() == 1) {
                TypeMirror arg = typeArguments.get(0);
@@ -1219,7 +1221,7 @@ public final class MirrorClassFactory implements XTypeFactory {
          if (getType().isArray()) {
             return getType().getComponentType();
          }
-         if (getType().isAssignableTo(fromClass(Collection.class))) {
+         if (getType().isAssignableTo(Collection.class)) {
             List<? extends TypeMirror> typeArguments = ((DeclaredType) field.asType()).getTypeArguments();
             if (typeArguments.size() == 1) {
                TypeMirror arg = typeArguments.get(0);

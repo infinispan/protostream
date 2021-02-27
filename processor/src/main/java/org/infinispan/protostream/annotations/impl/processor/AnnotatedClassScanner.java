@@ -38,7 +38,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.protostream.annotations.impl.processor.types.MirrorClassFactory;
+import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.impl.Log;
 
@@ -61,7 +61,7 @@ final class AnnotatedClassScanner {
    private final Messager messager;
    private final Elements elements;
    private final Types types;
-   private final MirrorClassFactory typeFactory;
+   private final MirrorTypeFactory typeFactory;
 
    private final Element builderElement;
    private final AutoProtoSchemaBuilder builderAnnotation;
@@ -74,7 +74,7 @@ final class AnnotatedClassScanner {
    private final String initializerClassName;
    private final String initializerFQClassName;
 
-   AnnotatedClassScanner(Messager messager, Elements elements, Types types, MirrorClassFactory typeFactory,
+   AnnotatedClassScanner(Messager messager, Elements elements, Types types, MirrorTypeFactory typeFactory,
                          Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
       this.messager = messager;
       this.elements = elements;

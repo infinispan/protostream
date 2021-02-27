@@ -9,11 +9,11 @@ import org.junit.Test;
  * @author anistor@redhat.com
  * @since 4.3
  */
-public class ReflectionClassFactoryTest {
+public class ReflectionTypeFactoryTest {
 
    @Test
    public void testFromClass() {
-      ReflectionClassFactory typeFactory = new ReflectionClassFactory();
+      ReflectionTypeFactory typeFactory = new ReflectionTypeFactory();
 
       XClass integerClass = typeFactory.fromClass(Integer.class);
 

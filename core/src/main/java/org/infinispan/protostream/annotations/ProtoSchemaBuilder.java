@@ -26,7 +26,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.Version;
 import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
 import org.infinispan.protostream.annotations.impl.RuntimeProtoSchemaGenerator;
-import org.infinispan.protostream.annotations.impl.types.ReflectionClassFactory;
+import org.infinispan.protostream.annotations.impl.types.ReflectionTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
@@ -297,7 +297,7 @@ public final class ProtoSchemaBuilder {
     * @throws IOException
     */
    public String build(SerializationContext serializationContext, ClassLoader classLoader) throws ProtoSchemaBuilderException, IOException {
-      ReflectionClassFactory typeFactory = new ReflectionClassFactory();
+      ReflectionTypeFactory typeFactory = new ReflectionTypeFactory();
       Set<XClass> xclasses = classes.stream().map(typeFactory::fromClass).collect(Collectors.toCollection(LinkedHashSet::new));
       BaseProtoSchemaGenerator.generateSchemaDebugComments = generateSchemaDebugComments;
       return new RuntimeProtoSchemaGenerator(typeFactory, serializationContext, generator, fileName, packageName, xclasses, autoImportClasses, classLoader)

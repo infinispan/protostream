@@ -15,7 +15,7 @@ import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
 import org.infinispan.protostream.annotations.impl.ImportedProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoEnumTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
-import org.infinispan.protostream.annotations.impl.processor.types.MirrorClassFactory;
+import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
@@ -103,7 +103,7 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
       }
       // TODO [anistor] also ensure that typeMirror is not part of current serCtxInit and is not scanned for @ProtoXyz annotations even if present
       TypeMirror typeMirror = DangerousActions.getTypeMirror(protoAdapter, ProtoAdapter::value);
-      XClass target = ((MirrorClassFactory) typeFactory).fromTypeMirror(typeMirror);
+      XClass target = ((MirrorTypeFactory) typeFactory).fromTypeMirror(typeMirror);
       if (target == annotatedClass) {
          throw new ProtoSchemaBuilderException(annotatedClass.getName() + " has an invalid @ProtoAdapter annotation pointing to self");
       }

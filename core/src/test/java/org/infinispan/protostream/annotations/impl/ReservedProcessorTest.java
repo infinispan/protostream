@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
-import org.infinispan.protostream.annotations.impl.types.ReflectionClassFactory;
+import org.infinispan.protostream.annotations.impl.types.ReflectionTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,7 +31,7 @@ public class ReservedProcessorTest {
 
    @Test
    public void testEmpty() {
-      XClass classToTest = new ReflectionClassFactory().fromClass(Integer.class);
+      XClass classToTest = new ReflectionTypeFactory().fromClass(Integer.class);
 
       ReservedProcessor rp = new ReservedProcessor();
       rp.scan(classToTest);
@@ -48,7 +48,7 @@ public class ReservedProcessorTest {
 
    @Test
    public void testReservedNumbers() {
-      XClass classToTest = new ReflectionClassFactory().fromClass(TestingReserved.class);
+      XClass classToTest = new ReflectionTypeFactory().fromClass(TestingReserved.class);
 
       ReservedProcessor rp = new ReservedProcessor();
       rp.scan(classToTest);
@@ -68,7 +68,7 @@ public class ReservedProcessorTest {
       expectedException.expect(ProtoSchemaBuilderException.class);
       expectedException.expectMessage("Found duplicate @ProtoReserved number 1 in org.infinispan.protostream.annotations.impl.ReservedProcessorTest.DuplicateNumber");
 
-      XClass classToTest = new ReflectionClassFactory().fromClass(DuplicateNumber.class);
+      XClass classToTest = new ReflectionTypeFactory().fromClass(DuplicateNumber.class);
 
       new ReservedProcessor().scan(classToTest);
    }
@@ -82,7 +82,7 @@ public class ReservedProcessorTest {
       expectedException.expect(ProtoSchemaBuilderException.class);
       expectedException.expectMessage("Found duplicate @ProtoReserved name \"triceratops\" in org.infinispan.protostream.annotations.impl.ReservedProcessorTest.DuplicateName");
 
-      XClass classToTest = new ReflectionClassFactory().fromClass(DuplicateName.class);
+      XClass classToTest = new ReflectionTypeFactory().fromClass(DuplicateName.class);
 
       new ReservedProcessor().scan(classToTest);
    }

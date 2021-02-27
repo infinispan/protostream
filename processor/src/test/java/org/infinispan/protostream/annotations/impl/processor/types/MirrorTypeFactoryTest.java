@@ -20,7 +20,7 @@ import org.junit.Test;
  * @author anistor@redhat.com
  * @since 4.3
  */
-public class MirrorClassFactoryTest {
+public class MirrorTypeFactoryTest {
 
    @Test
    public void testFromClass() {
@@ -44,7 +44,7 @@ public class MirrorClassFactoryTest {
       when(elementsMock.getTypeElement("java.lang.Integer")).thenReturn(typeElementMock);
       when(elementsMock.getBinaryName(typeElementMock)).thenReturn(nameMock);
 
-      MirrorClassFactory typeFactory = new MirrorClassFactory(processingEnvironmentMock);
+      MirrorTypeFactory typeFactory = new MirrorTypeFactory(processingEnvironmentMock);
 
       XClass integerClass = typeFactory.fromClass(Integer.class);
 
@@ -73,7 +73,7 @@ public class MirrorClassFactoryTest {
       when(elementsMock.getTypeElement("java.lang.Integer")).thenReturn(typeElementMock);
       when(elementsMock.getBinaryName(typeElementMock)).thenReturn(nameMock);
 
-      MirrorClassFactory typeFactory = new MirrorClassFactory(processingEnvironmentMock);
+      MirrorTypeFactory typeFactory = new MirrorTypeFactory(processingEnvironmentMock);
 
       XClass integerClass = typeFactory.fromTypeMirror(typeMirrorMock);
 
