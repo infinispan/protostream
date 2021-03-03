@@ -14,6 +14,7 @@ import org.infinispan.protostream.Message;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.TagWriter;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XConstructor;
@@ -196,6 +197,10 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.append("{\n");
       iw.inc();
       iw.append("final ").append(TagReader.class.getName()).append(" $in = $1.getIn();\n");
+
+      if (messageTypeMetadata.isContainer()) {
+         iw.append("int __v$size = ((java.lang.Integer) $1.getParamValue(\"" + WrappedMessage.CONTAINER_SIZE_CONTEXT_PARAM + "\")).intValue();");
+      }
 
       // if there is no factory then the class must have setters or the fields should be directly accessible and not be final
       final boolean noFactory = messageTypeMetadata.getFactory() == null;
@@ -495,6 +500,10 @@ public abstract class AbstractMarshallerCodeGenerator {
          for (String paramName : factory.getParameterNames()) {
             if (first) {
                first = false;
+               if (messageTypeMetadata.isContainer()) {
+                  iw.append("__v$size");
+                  continue;
+               }
             } else {
                iw.append(", ");
             }

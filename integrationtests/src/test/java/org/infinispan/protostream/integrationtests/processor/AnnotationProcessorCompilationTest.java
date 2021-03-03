@@ -146,6 +146,19 @@ public class AnnotationProcessorCompilationTest {
       assertThat(compilation).hadErrorContaining("test_marshall_bad_external_enum.BadColorEnumAdapter.PINK does not have a corresponding enum value in test_marshall_bad_external_enum.Color");
    }
 
+   @Test
+   public void testElementContainer() {
+      Compilation compilation = CompilationUtils.compile("org/infinispan/protostream/integrationtests/processor/TestElementContainer.java");
+      assertThat(compilation).succeededWithoutWarnings();
+      assertTrue(compilation.generatedFile(SOURCE_OUTPUT, "test_element_container/TestElementContainerImpl.java").isPresent());
+
+      Optional<JavaFileObject> schemaFile = compilation.generatedFile(CLASS_OUTPUT, "TestElementContainer.proto");
+      assertTrue(schemaFile.isPresent());
+      assertFileContains(schemaFile, "\nmessage IntArray {\n}\n");
+      assertFileContains(schemaFile, "\nmessage ArrayList {\n}\n");
+      assertFileContains(schemaFile, "\nmessage HashSet {\n}\n");
+   }
+
    /**
     * Asserts that the file contains a given expected string.
     */

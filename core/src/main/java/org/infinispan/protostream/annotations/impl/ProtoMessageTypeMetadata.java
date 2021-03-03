@@ -117,6 +117,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return isIterableContainer;
    }
 
+   public boolean isContainer() {
+      return isIterableContainer || isIndexedContainer;
+   }
+
    public XExecutable getFactory() {
       scanMemberAnnotations();
       return factory;
@@ -212,29 +216,39 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
          discoverFields(annotatedClass, new HashSet<>());
          if (fieldsByNumber.isEmpty()) {
+            //todo avoid this warning in case where not necessary
             // TODO [anistor] remove the "The class should be either annotated or it should have a custom marshaller" part after MessageMarshaller is removed in 5
             log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", getAnnotatedClassName());
          }
 
          // If we have a factory method / constructor, we must ensure its parameters match the declared fields
          if (factory != null) {
-            String[] parameterNames = factory.getParameterNames();
             String factoryKind = factory instanceof XConstructor ? "constructor" : (factory.isStatic() ? "static method" : "method");
-            if (parameterNames.length != fieldsByNumber.size()) {
+            XClass[] parameterTypes = factory.getParameterTypes();
+            int startPos = 0;
+            if (isIndexedContainer || isIterableContainer) {
+               if (parameterTypes.length == 0 || parameterTypes[0] != typeFactory.fromClass(int.class)) {
+                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
+                        + " signature mismatch. The first parameter is expected to be of type 'int' : "
+                        + factory.toGenericString());
+               }
+               startPos = 1;
+            }
+            String[] parameterNames = factory.getParameterNames();
+            if (parameterNames.length != fieldsByNumber.size() + startPos) {
                throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
-                     + " signature mismatch. Expected " + fieldsByNumber.size() + " parameters but found "
+                     + " signature mismatch. Expected " + (fieldsByNumber.size() + startPos) + " parameters but found "
                      + parameterNames.length + " : " + factory.toGenericString());
             }
-            XClass[] parameterTypes = factory.getParameterTypes();
-            for (int i = 0; i < parameterNames.length; i++) {
-               String parameterName = parameterNames[i];
+            for (; startPos < parameterNames.length; startPos++) {
+               String parameterName = parameterNames[startPos];
                ProtoFieldMetadata fieldMetadata = getFieldByPropertyName(parameterName);
                if (fieldMetadata == null) {
                   throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
                         + " signature mismatch. The parameter '" + parameterName
                         + "' does not match any field : " + factory.toGenericString());
                }
-               XClass parameterType = parameterTypes[i];
+               XClass parameterType = parameterTypes[startPos];
                boolean paramTypeMismatch = false;
                if (fieldMetadata.isArray()) {
                   if (!parameterType.isArray() || parameterType.getComponentType() != fieldMetadata.getJavaType()) {
@@ -268,7 +282,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    /**
-    * Ensure we have a proper constructor or factory method.
+    * Ensure we either have a suitable constructor or a factory method.
     */
    private void checkInstantiability() {
       // ensure the class is not abstract
@@ -315,7 +329,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
 
       if (factory == null) {
-         if (isAdapter) {
+         if (isAdapter || isContainer()) {
             throw new ProtoSchemaBuilderException("The class " + getJavaClassName() +
                   " must be instantiable using an accessible @ProtoFactory annotated method defined by " + getAnnotatedClassName());
          }
@@ -358,7 +372,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (field.isStatic()) {
                   throw new ProtoSchemaBuilderException("Static fields cannot be @ProtoField annotated: " + field);
                }
-               if (factory == null && field.isFinal()) {
+               if (factory == null && field.isFinal()) { //todo [anistor] maybe allow this
                   throw new ProtoSchemaBuilderException("Final fields cannot be @ProtoField annotated: " + field);
                }
                if (field.isPrivate()) {

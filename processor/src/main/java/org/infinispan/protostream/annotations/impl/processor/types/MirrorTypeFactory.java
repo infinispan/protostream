@@ -284,7 +284,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
    /**
     * A primitive type or void.
     */
-   private final class MirrorPrimitiveType implements XClass {
+   private final class MirrorPrimitiveType implements XClass, HasModelElement {
 
       private final Class<?> clazz;
 
@@ -450,6 +450,11 @@ public final class MirrorTypeFactory implements XTypeFactory {
       @Override
       public String toString() {
          return clazz.toString();
+      }
+
+      @Override
+      public Element getElement() {
+         return types.asElement(primitiveType);
       }
    }
 
@@ -799,7 +804,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
    }
 
-   private final class MirrorArray implements XClass {
+   private final class MirrorArray implements XClass, HasModelElement {
 
       private final XClass componentType;
 
@@ -964,6 +969,11 @@ public final class MirrorTypeFactory implements XTypeFactory {
       @Override
       public String toString() {
          return "[" + componentType.toString();
+      }
+
+      @Override
+      public Element getElement() {
+         return ((HasModelElement) componentType).getElement();
       }
    }
 

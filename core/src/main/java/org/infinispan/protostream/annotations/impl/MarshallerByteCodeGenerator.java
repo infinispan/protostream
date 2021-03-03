@@ -199,25 +199,25 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       marshallerImpl.addMethod(CtNewMethod.make("public final Class getJavaClass() { return " + pmtm.getJavaClass().getCanonicalName() + ".class; }", marshallerImpl));
       marshallerImpl.addMethod(CtNewMethod.make("public final String getTypeName() { return \"" + makeQualifiedTypeName(pmtm.getFullName()) + "\"; }", marshallerImpl));
 
-      CtMethod ctReadFromMethod = new CtMethod(readMethod, marshallerImpl, null);
-      ctReadFromMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
-      ctReadFromMethod.setModifiers(ctReadFromMethod.getModifiers() | Modifier.FINAL);
-      String readFromSrc = generateReadMethodBody(pmtm);
+      CtMethod ctReadMethod = new CtMethod(readMethod, marshallerImpl, null);
+      ctReadMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
+      ctReadMethod.setModifiers(ctReadMethod.getModifiers() | Modifier.FINAL);
+      String readBody = generateReadMethodBody(pmtm);
       if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctReadFromMethod.getLongName(), readFromSrc);
+         log.tracef("%s %s", ctReadMethod.getLongName(), readBody);
       }
-      ctReadFromMethod.setBody(readFromSrc);
-      marshallerImpl.addMethod(ctReadFromMethod);
+      ctReadMethod.setBody(readBody);
+      marshallerImpl.addMethod(ctReadMethod);
 
-      CtMethod ctWriteToMethod = new CtMethod(writeMethod, marshallerImpl, null);
-      ctWriteToMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
-      ctWriteToMethod.setModifiers(ctWriteToMethod.getModifiers() | Modifier.FINAL);
-      String writeToSrc = generateWriteMethodBody(pmtm);
+      CtMethod ctWriteMethod = new CtMethod(writeMethod, marshallerImpl, null);
+      ctWriteMethod.setExceptionTypes(new CtClass[]{ioExceptionClass});
+      ctWriteMethod.setModifiers(ctWriteMethod.getModifiers() | Modifier.FINAL);
+      String writeBody = generateWriteMethodBody(pmtm);
       if (log.isTraceEnabled()) {
-         log.tracef("%s %s", ctWriteToMethod.getLongName(), writeToSrc);
+         log.tracef("%s %s", ctWriteMethod.getLongName(), writeBody);
       }
-      ctWriteToMethod.setBody(writeToSrc);
-      marshallerImpl.addMethod(ctWriteToMethod);
+      ctWriteMethod.setBody(writeBody);
+      marshallerImpl.addMethod(ctWriteMethod);
 
       Class<ProtoStreamMarshaller> generatedMarshallerClass = (Class<ProtoStreamMarshaller>) marshallerImpl.toClass();
       marshallerImpl.detach();

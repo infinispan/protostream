@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import javax.lang.model.element.Element;
+
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
@@ -241,7 +243,8 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
    }
 
    private void emitSource(String fqn, String source, ProtoTypeMetadata ptm) throws IOException {
-      generatedFilesWriter.addMarshallerSourceFile(fqn, source, ((HasModelElement) ptm.getJavaClass()).getElement());
+      Element originatingElement = ((HasModelElement) ptm.getJavaClass()).getElement();
+      generatedFilesWriter.addMarshallerSourceFile(fqn, source, originatingElement);
       generatedClasses.add(fqn);
    }
 
