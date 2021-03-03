@@ -27,10 +27,9 @@ public class ElementContainerTest {
    @ProtoName("IntArray")
    public static final class IntArrayAdapter implements IndexedElementContainerAdapter<int[], Integer> {
 
-      //todo [anistor] The generated marshaller must get size from context and pass it to factory/constructor
       @ProtoFactory
-      public int[] create(/*int whateverNameFirstArgForSize*/) {
-         return new int[5/*whateverNameFirstArgForSize*/];
+      public int[] create(int theSize) {
+         return new int[theSize];
       }
 
       @Override
@@ -74,10 +73,9 @@ public class ElementContainerTest {
    @ProtoAdapter(ArrayList.class)
    public static final class ArrayListAdapter1<T> implements IndexedElementContainerAdapter<ArrayList<T>, T> {
 
-      //todo [anistor] The generated marshaller must get size from context and pass it to factory/constructor
       @ProtoFactory
-      public ArrayList<?> create(/*int whateverNameFirstArgForSize*/) {
-         return new ArrayList<>(/*whateverNameFirstArgForSize*/);
+      public ArrayList<?> create(int numElements) {
+         return new ArrayList<>(numElements);
       }
 
       @Override
@@ -92,8 +90,9 @@ public class ElementContainerTest {
 
       @Override
       public void setElement(ArrayList<T> container, int index, T element) {
-         if (index >= container.size())
-            container.add(null); //todo [anistor] The generated marshaller must get size from context and pass it to factory/constructor
+         while (container.size() <= index) {
+            container.add(null);
+         }
          container.set(index, element);
       }
    }
@@ -124,8 +123,8 @@ public class ElementContainerTest {
    public static final class ArrayListAdapter2<T> implements IterableElementContainerAdapter<ArrayList<T>, T> {
 
       @ProtoFactory
-      public ArrayList<?> create(/*int whateverNameFirstArgForSize*/) {
-         return new ArrayList<>(/*whateverNameFirstArgForSize*/);
+      public ArrayList<?> create(int size) {
+         return new ArrayList<>(size);
       }
 
       @Override

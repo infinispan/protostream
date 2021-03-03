@@ -1,6 +1,8 @@
 package org.infinispan.protostream.containers;
 
 /**
+ * A container adapter that allows random access by position.
+ *
  * @author anistor@redhat.com
  * @since 4.4
  */
