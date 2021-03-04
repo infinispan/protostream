@@ -268,6 +268,12 @@ public abstract class AbstractMarshallerCodeGenerator {
                      || fieldMetadata.getProtobufType().getJavaType() == JavaType.ENUM
                      || fieldMetadata.getProtobufType().getJavaType() == JavaType.MESSAGE) {
                   iw.append(" = null");
+               } else if (fieldMetadata.isPrimitive()) {
+                  if (fieldMetadata.getProtobufType() == Type.BOOL) {
+                     iw.append(" = false");
+                  } else {
+                     iw.append(" = 0");
+                  }
                }
             }
             iw.append(";\n");
@@ -280,10 +286,11 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.append("final int tag = $in.readTag();\n");
       iw.append("switch (tag) {\n");
       iw.inc();
-      iw.append("case 0:\n");
+      iw.append("case 0: {\n");
       iw.inc();
       iw.append("done = true;\nbreak;\n");
       iw.dec();
+      iw.append("}\n");
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          final String v = makeFieldLocalVar(fieldMetadata);
          iw.append("case ").append(makeFieldTag(fieldMetadata.getNumber(), fieldMetadata.getProtobufType().getWireType())).append(": {\n");
