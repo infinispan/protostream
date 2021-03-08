@@ -252,6 +252,14 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
       iw.append(";\n");
    }
 
+   public boolean isPrimitive() {
+      XTypeFactory factory = javaType.getFactory();
+      return javaType == factory.fromClass(float.class) || javaType == factory.fromClass(double.class) ||
+            javaType == factory.fromClass(long.class) || javaType == factory.fromClass(int.class) ||
+            javaType == factory.fromClass(short.class) || javaType == factory.fromClass(byte.class) ||
+            javaType == factory.fromClass(boolean.class) || javaType == factory.fromClass(char.class);
+   }
+
    public boolean isBoxedPrimitive() {
       XTypeFactory factory = javaType.getFactory();
       return javaType == factory.fromClass(Float.class) || javaType == factory.fromClass(Double.class) ||

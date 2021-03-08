@@ -45,6 +45,12 @@ public abstract class AbstractMarshallerCodeGenerator {
       this.protobufSchemaPackage = protobufSchemaPackage;
    }
 
+   /**
+    * Signature of generated method is:
+    * <code>
+    * public java.lang.Enum decode(int $1)
+    * </code>
+    */
    protected String generateEnumDecodeMethodBody(ProtoEnumTypeMetadata enumTypeMetadata) {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
@@ -62,6 +68,12 @@ public abstract class AbstractMarshallerCodeGenerator {
       return iw.toString();
    }
 
+   /**
+    * Signature of generated method is:
+    * <code>
+    * public int encode(java.lang.Enum $1)
+    * </code>
+    */
    protected String generateEnumEncodeMethodBody(ProtoEnumTypeMetadata enumTypeMetadata) {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
@@ -244,6 +256,12 @@ public abstract class AbstractMarshallerCodeGenerator {
                      || fieldMetadata.getProtobufType().getJavaType() == JavaType.ENUM
                      || fieldMetadata.getProtobufType().getJavaType() == JavaType.MESSAGE) {
                   iw.append(" = null");
+               } else if (fieldMetadata.isPrimitive()) {
+                  if (fieldMetadata.getProtobufType() == Type.BOOL) {
+                     iw.append(" = false");
+                  } else {
+                     iw.append(" = 0");
+                  }
                }
             }
             iw.append(";\n");
@@ -256,10 +274,11 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.append("final int tag = $2.readTag();\n");
       iw.append("switch (tag) {\n");
       iw.inc();
-      iw.append("case 0:\n");
+      iw.append("case 0: {\n");
       iw.inc();
       iw.append("done = true;\nbreak;\n");
       iw.dec();
+      iw.append("}\n");
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          final String v = makeFieldLocalVar(fieldMetadata);
          iw.append("case ").append(String.valueOf(fieldMetadata.getNumber() << 3 | fieldMetadata.getProtobufType().getWireType())).append(": {\n");
@@ -911,7 +930,6 @@ public abstract class AbstractMarshallerCodeGenerator {
       setPropExpr.append(obj).append('.');
 
       if (fieldMetadata.getField() != null) {
-         // TODO [anistor] complain if fieldMetadata.getProtoTypeMetadata().isBridge() !
          setPropExpr.append(fieldMetadata.getField().getName()).append(" = ").append(value);
       } else {
          setPropExpr.append(fieldMetadata.getSetter().getName()).append('(').append(value).append(')');

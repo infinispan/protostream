@@ -1486,6 +1486,45 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
       }
    }
 
+   static final class AlphaColor {
+
+      private final int r;
+
+      private final int g;
+
+      private final int b;
+
+      private final float transparency;
+
+      @ProtoFactory
+      public AlphaColor(int r, int g, int b, float transparency) {
+         this.r = r;
+         this.g = g;
+         this.b = b;
+         this.transparency = transparency;
+      }
+
+      @ProtoField(number = 1, required = true)
+      public int getR() {
+         return r;
+      }
+
+      @ProtoField(number = 2, required = true)
+      public int getG() {
+         return g;
+      }
+
+      @ProtoField(number = 3, required = true)
+      public int getB() {
+         return b;
+      }
+
+      @ProtoField(number = 4, required = true)
+      public float getTransparency() {
+         return transparency;
+      }
+   }
+
    @Test
    public void testFactoryMethod() throws Exception {
       SerializationContext ctx = createContext();
@@ -1493,10 +1532,12 @@ public class ProtoSchemaBuilderTest extends AbstractProtoStreamTest {
             .fileName("immutable.proto")
             .addClass(RGBColor.class)
             .addClass(ImmutableColor.class)
+            .addClass(AlphaColor.class)
             .build(ctx);
 
       assertTrue(schema.contains("message RGBColor"));
       assertTrue(schema.contains("message ImmutableColor"));
+      assertTrue(schema.contains("message AlphaColor"));
 
       RGBColor color = new RGBColor(55, 66, 77);
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, color);

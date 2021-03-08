@@ -217,7 +217,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                if (paramTypeMismatch) {
                   throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
                         + " signature mismatch: " + factory.toGenericString() + ". The parameter '"
-                        + parameterName + "' does not match the field definition.");
+                        + parameterName + "' does not match the type from the field definition.");
                }
             }
          }
@@ -234,7 +234,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    /**
-    * Ensure we have a proper constructor or factory method.
+    * Ensure we either have a suitable constructor or a factory method.
     */
    private void checkInstantiability() {
       // ensure the class is not abstract

@@ -266,11 +266,16 @@ public abstract class BaseProtoSchemaGenerator {
                + " which was not added to the builder and 'autoImportClasses' is disabled.");
       }
 
+      ProtoTypeMetadata existingByClass = metadataByClass.get(protoTypeMetadata.getJavaClass());
+      if (existingByClass != null) {
+         throw new ProtoSchemaBuilderException("Found a duplicate type definition. Java type '" + protoTypeMetadata.getJavaClassName() + "' is defined by "
+               + protoTypeMetadata.getAnnotatedClassName() + " and also by " + existingByClass.getAnnotatedClassName());
+      }
       String fullName = protoTypeMetadata.getFullName();
-      ProtoTypeMetadata existing = metadataByTypeName.get(fullName);
-      if (existing != null) {
+      ProtoTypeMetadata existingByName = metadataByTypeName.get(fullName);
+      if (existingByName != null) {
          throw new ProtoSchemaBuilderException("Found a duplicate type definition. Type '" + fullName + "' is defined by "
-               + protoTypeMetadata.getJavaClassName() + " and also by " + existing.getJavaClassName());
+               + protoTypeMetadata.getAnnotatedClassName() + " and also by " + existingByName.getAnnotatedClassName());
       }
       metadataByTypeName.put(fullName, protoTypeMetadata);
       metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);
