@@ -978,7 +978,7 @@ public final class MirrorClassFactory implements XTypeFactory {
          if (returnType.isArray()) {
             return returnType.getComponentType();
          }
-         if (returnType.isAssignableTo(fromClass(Collection.class))) {
+         if (returnType.isAssignableTo(Collection.class)) {
             List<? extends TypeMirror> typeArguments = ((DeclaredType) unwrapOptionalReturnType()).getTypeArguments();
             if (typeArguments.size() == 1) {
                TypeMirror arg = typeArguments.get(0);
@@ -1207,7 +1207,7 @@ public final class MirrorClassFactory implements XTypeFactory {
          if (getType().isArray()) {
             return getType().getComponentType();
          }
-         if (getType().isAssignableTo(fromClass(Collection.class))) {
+         if (getType().isAssignableTo(Collection.class)) {
             List<? extends TypeMirror> typeArguments = ((DeclaredType) field.asType()).getTypeArguments();
             if (typeArguments.size() == 1) {
                TypeMirror arg = typeArguments.get(0);

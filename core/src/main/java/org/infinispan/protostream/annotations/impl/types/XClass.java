@@ -47,6 +47,14 @@ public interface XClass extends XElement {
 
    boolean isAssignableTo(XClass c);
 
+   /**
+    * Should only be used with class literals. Any other type of usage should be considered suspect.
+    */
+   default boolean isAssignableTo(Class<?> c) {
+      XClass xc = getFactory().fromClass(c);
+      return isAssignableTo(xc);
+   }
+
    XConstructor getDeclaredConstructor(XClass... argTypes);
 
    Iterable<? extends XConstructor> getDeclaredConstructors();

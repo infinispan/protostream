@@ -181,7 +181,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       } else if (messageTypeMetadata.getUnknownFieldSetGetter() != null) {
          getUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetGetter().getName() + "()";
          setUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetSetter().getName() + "(u)";
-      } else if (messageTypeMetadata.getJavaClass().isAssignableTo(typeFactory.fromClass(Message.class))) {
+      } else if (messageTypeMetadata.getJavaClass().isAssignableTo(Message.class)) {
          getUnknownFieldSetFieldStatement = "o.getUnknownFieldSet()";
          setUnknownFieldSetFieldStatement = "o.setUnknownFieldSet(u)";
       }
@@ -523,9 +523,9 @@ public abstract class AbstractMarshallerCodeGenerator {
     */
    private String toJavaLiteral(Object value, XClass javaType) {
       String v;
-      if (javaType.isAssignableTo(typeFactory.fromClass(Date.class))) {
+      if (javaType.isAssignableTo(Date.class)) {
          v = value + "L";
-      } else if (javaType.isAssignableTo(typeFactory.fromClass(Instant.class))) {
+      } else if (javaType.isAssignableTo(Instant.class)) {
          v = value + "L";
       } else if (value instanceof ProtoEnumValueMetadata) {
          v = ((ProtoEnumValueMetadata) value).getJavaEnumName();
@@ -592,7 +592,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          getUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetField().getName();
       } else if (messageTypeMetadata.getUnknownFieldSetGetter() != null) {
          getUnknownFieldSetFieldStatement = "o." + messageTypeMetadata.getUnknownFieldSetGetter().getName() + "()";
-      } else if (messageTypeMetadata.getJavaClass().isAssignableTo(typeFactory.fromClass(Message.class))) {
+      } else if (messageTypeMetadata.getJavaClass().isAssignableTo(Message.class)) {
          getUnknownFieldSetFieldStatement = "o.getUnknownFieldSet()";
       }
 
@@ -842,14 +842,14 @@ public abstract class AbstractMarshallerCodeGenerator {
     */
    private String box(String v, XClass clazz) {
       if (clazz != null) {
-         if (clazz.isAssignableTo(typeFactory.fromClass(Date.class))) {
+         if (clazz.isAssignableTo(Date.class)) {
             // just check this type really has a public constructor that accepts a long timestamp param
             XConstructor ctor = clazz.getDeclaredConstructor(typeFactory.fromClass(long.class));
             if (ctor == null || !ctor.isPublic()) {
                throw new ProtoSchemaBuilderException("Type " + clazz.getCanonicalName() + " is not a valid Date type because it does not have an accessible constructor that accepts a 'long' timestamp parameter");
             }
             return "new " + clazz.getName() + "(" + v + ")";
-         } else if (clazz.isAssignableTo(typeFactory.fromClass(Instant.class))) {
+         } else if (clazz.isAssignableTo(Instant.class)) {
             return "java.time.Instant.ofEpochMilli(" + v + ")";
          } else if (clazz == typeFactory.fromClass(Float.class)) {
             return "new java.lang.Float(" + v + ")";
@@ -873,9 +873,9 @@ public abstract class AbstractMarshallerCodeGenerator {
    }
 
    private String unbox(String v, XClass clazz) {
-      if (clazz.isAssignableTo(typeFactory.fromClass(Date.class))) {
+      if (clazz.isAssignableTo(Date.class)) {
          return v + ".getTime()";
-      } else if (clazz.isAssignableTo(typeFactory.fromClass(Instant.class))) {
+      } else if (clazz.isAssignableTo(Instant.class)) {
          return v + ".toEpochMilli()";
       } else if (clazz == typeFactory.fromClass(Float.class)) {
          return v + ".floatValue()";
