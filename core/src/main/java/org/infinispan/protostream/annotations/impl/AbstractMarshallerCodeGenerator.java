@@ -625,9 +625,8 @@ public abstract class AbstractMarshallerCodeGenerator {
 
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
-      iw.inc();
-
       if (!messageTypeMetadata.getFields().isEmpty() || getUnknownFieldSetFieldStatement != null) {
+         iw.inc();
          iw.append("final ").append(TagWriter.class.getName()).append(" $out = $1.getOut();\n");
          iw.append("final ").append(messageTypeMetadata.getJavaClassName()).append(" o = (").append(messageTypeMetadata.getJavaClassName()).append(") $2;\n");
          for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
@@ -744,9 +743,10 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.append("if (u != null && !u.isEmpty()) u.writeTo($out);\n");
             iw.dec().append("}\n");
          }
+
+         iw.dec();
       }
 
-      iw.dec();
       iw.append("}\n");
       return iw.toString();
    }
