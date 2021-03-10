@@ -50,7 +50,7 @@ final class IntArrayAdapter implements IndexedElementContainerAdapter<int[], Int
 final class ArrayListAdapter<T> implements IndexedElementContainerAdapter<ArrayList<T>, T> {
 
    @ProtoFactory
-   public ArrayList<?> create(int numElements) {
+   public ArrayList<T> create(int numElements) {
       return new ArrayList<>(numElements);
    }
 
@@ -77,7 +77,7 @@ final class ArrayListAdapter<T> implements IndexedElementContainerAdapter<ArrayL
 final class HashSetAdapter<T> implements IterableElementContainerAdapter<HashSet<T>, T> {
 
    @ProtoFactory
-   public HashSet<?> create(int size) {
+   public HashSet<T> create(int size) {
       return new HashSet<>(size);
    }
 

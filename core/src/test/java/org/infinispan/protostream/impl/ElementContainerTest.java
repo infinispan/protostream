@@ -74,7 +74,7 @@ public class ElementContainerTest {
    public static final class ArrayListAdapter1<T> implements IndexedElementContainerAdapter<ArrayList<T>, T> {
 
       @ProtoFactory
-      public ArrayList<?> create(int numElements) {
+      public ArrayList<T> create(int numElements) {
          return new ArrayList<>(numElements);
       }
 
@@ -123,7 +123,7 @@ public class ElementContainerTest {
    public static final class ArrayListAdapter2<T> implements IterableElementContainerAdapter<ArrayList<T>, T> {
 
       @ProtoFactory
-      public ArrayList<?> create(int size) {
+      public ArrayList<T> create(int size) {
          return new ArrayList<>(size);
       }
 
