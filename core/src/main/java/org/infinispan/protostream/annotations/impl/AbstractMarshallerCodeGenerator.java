@@ -499,7 +499,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             if (factory.isStatic()) {
                iw.append(messageTypeMetadata.getAnnotatedClassName()).append('.').append(factory.getName());
             } else {
-               iw.append("new ").append(messageTypeMetadata.getAnnotatedClassName()).append("()").append('.').append(factory.getName());
+               iw.append(ADAPTER_FIELD_NAME).append('.').append(factory.getName());
             }
          }
          iw.append('(');
