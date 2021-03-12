@@ -12,7 +12,7 @@ import java.util.Set;
 import javax.lang.model.element.Element;
 
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerator;
 import org.infinispan.protostream.annotations.impl.GeneratedMarshallerBase;
@@ -169,7 +169,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.append("@SuppressWarnings(\"all\")\n");
       iw.append("public final class ").append(marshallerClassName)
             .append(" extends ").append(GeneratedMarshallerBase.class.getName())
-            .append(" implements ").append(ProtoStreamMarshaller.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>');
+            .append(" implements ").append(ProtobufTagMarshaller.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>');
       iw.append(" {\n\n");
       iw.inc();
 
@@ -197,7 +197,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
 
       String readMethodSrc = generateReadMethodBody(pmtm);
       String readMethodSig = "public " + pmtm.getJavaClassName() + " read("
-            + ProtoStreamMarshaller.ReadContext.class.getCanonicalName() + " $1) throws java.io.IOException";
+            + ProtobufTagMarshaller.ReadContext.class.getCanonicalName() + " $1) throws java.io.IOException";
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", readMethodSig, readMethodSrc);
       }
@@ -205,7 +205,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
 
       String writeMethodSrc = generateWriteMethodBody(pmtm);
       String writeMethodSig = "public void write("
-            + ProtoStreamMarshaller.WriteContext.class.getCanonicalName() + " $1, "
+            + ProtobufTagMarshaller.WriteContext.class.getCanonicalName() + " $1, "
             + pmtm.getJavaClassName() + " $2) throws java.io.IOException";
       if (log.isTraceEnabled()) {
          log.tracef("%s %s", writeMethodSig, writeMethodSrc);

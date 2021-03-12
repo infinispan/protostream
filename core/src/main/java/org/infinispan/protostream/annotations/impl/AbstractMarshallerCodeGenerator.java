@@ -196,10 +196,10 @@ public abstract class AbstractMarshallerCodeGenerator {
       IndentWriter iw = new IndentWriter();
       iw.append("{\n");
       iw.inc();
-      iw.append("final ").append(TagReader.class.getName()).append(" $in = $1.getIn();\n");
+      iw.append("final ").append(TagReader.class.getName()).append(" $in = $1.getReader();\n");
 
       if (messageTypeMetadata.isContainer()) {
-         iw.append("int __v$size = ((java.lang.Integer) $1.getParamValue(\"" + WrappedMessage.CONTAINER_SIZE_CONTEXT_PARAM + "\")).intValue();");
+         iw.append("int __v$size = ((java.lang.Integer) $1.getParam(\"" + WrappedMessage.CONTAINER_SIZE_CONTEXT_PARAM + "\")).intValue();");
       }
 
       // if there is no factory then the class must have setters or the fields should be directly accessible and not be final
@@ -627,7 +627,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.append("{\n");
       if (!messageTypeMetadata.getFields().isEmpty() || getUnknownFieldSetFieldStatement != null) {
          iw.inc();
-         iw.append("final ").append(TagWriter.class.getName()).append(" $out = $1.getOut();\n");
+         iw.append("final ").append(TagWriter.class.getName()).append(" $out = $1.getWriter();\n");
          iw.append("final ").append(messageTypeMetadata.getJavaClassName()).append(" o = (").append(messageTypeMetadata.getJavaClassName()).append(") $2;\n");
          for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
             iw.append("{\n");

@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;
 
 import com.google.protobuf.CodedInputStream;
@@ -16,7 +16,7 @@ import com.google.protobuf.CodedInputStream;
  * @author anistor@redhat.com
  * @since 3.0
  */
-public final class TagReaderImpl implements TagReader, ProtoStreamMarshaller.ReadContext {
+public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.ReadContext {
 
    private final CodedInputStream delegate;
 
@@ -33,7 +33,7 @@ public final class TagReaderImpl implements TagReader, ProtoStreamMarshaller.Rea
       this.delegate = delegate;
    }
 
-   public static TagReaderImpl newNestedInstance(ProtoStreamMarshaller.ReadContext parentCtx, InputStream input) {
+   public static TagReaderImpl newNestedInstance(ProtobufTagMarshaller.ReadContext parentCtx, InputStream input) {
       TagReaderImpl parent = (TagReaderImpl) parentCtx;
       TagReaderImpl nestedCtx = new TagReaderImpl(parent.getSerializationContext(), CodedInputStream.newInstance(input));
       nestedCtx.params = parent.params;
@@ -41,7 +41,7 @@ public final class TagReaderImpl implements TagReader, ProtoStreamMarshaller.Rea
       return nestedCtx;
    }
 
-   public static TagReaderImpl newNestedInstance(ProtoStreamMarshaller.ReadContext parentCtx, byte[] buf) {
+   public static TagReaderImpl newNestedInstance(ProtobufTagMarshaller.ReadContext parentCtx, byte[] buf) {
       TagReaderImpl parent = (TagReaderImpl) parentCtx;
       TagReaderImpl nestedCtx = new TagReaderImpl(parent.getSerializationContext(), CodedInputStream.newInstance(buf));
       nestedCtx.params = parent.params;
@@ -200,7 +200,7 @@ public final class TagReaderImpl implements TagReader, ProtoStreamMarshaller.Rea
    }
 
    @Override
-   public Object getParamValue(Object key) {
+   public Object getParam(Object key) {
       if (params == null) {
          return null;
       }
@@ -208,7 +208,7 @@ public final class TagReaderImpl implements TagReader, ProtoStreamMarshaller.Rea
    }
 
    @Override
-   public void setParamValue(Object key, Object value) {
+   public void setParam(Object key, Object value) {
       if (params == null) {
          params = new HashMap<>();
       }
@@ -216,7 +216,7 @@ public final class TagReaderImpl implements TagReader, ProtoStreamMarshaller.Rea
    }
 
    @Override
-   public TagReader getIn() {
+   public TagReader getReader() {
       return this;
    }
 
@@ -224,7 +224,7 @@ public final class TagReaderImpl implements TagReader, ProtoStreamMarshaller.Rea
     * @deprecated this will be removed in 5.0 together with {@link org.infinispan.protostream.MessageMarshaller}
     */
    @Deprecated
-   public ProtoStreamReaderImpl getReader() {
+   public ProtoStreamReaderImpl getProtoStreamReader() {
       if (reader == null) {
          reader = new ProtoStreamReaderImpl(this, serCtx);
       }

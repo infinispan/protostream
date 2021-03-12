@@ -15,7 +15,7 @@ import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -279,8 +279,8 @@ public final class SerializationContextImpl implements SerializationContext {
          }
          EnumDescriptor enumDescriptor = getEnumDescriptor(marshaller.getTypeName());
          return new EnumMarshallerDelegate<>((EnumMarshaller) marshaller, enumDescriptor);
-      } else if (marshaller instanceof ProtoStreamMarshaller) {
-         return new RawProtoStreamMarshallerDelegate<>((ProtoStreamMarshaller<T>) marshaller);
+      } else if (marshaller instanceof ProtobufTagMarshaller) {
+         return new RawProtoStreamMarshallerDelegate<>((ProtobufTagMarshaller<T>) marshaller);
       }
       Descriptor messageDescriptor = getMessageDescriptor(marshaller.getTypeName());
       return new MessageMarshallerDelegate<>((MessageMarshaller<T>) marshaller, messageDescriptor);

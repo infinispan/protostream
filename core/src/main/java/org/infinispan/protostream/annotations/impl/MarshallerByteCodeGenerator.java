@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
@@ -31,7 +31,7 @@ import javassist.NotFoundException;
 // TODO [anistor] bounded streams should be checked to be exactly as the size indicated
 
 /**
- * Generates bytecode for implementation classes of {@link EnumMarshaller} and {@link ProtoStreamMarshaller}. This class
+ * Generates bytecode for implementation classes of {@link EnumMarshaller} and {@link ProtobufTagMarshaller}. This class
  * relies heavily on javassist library (and should be the only place where javassist is used throughout this project).
  *
  * @author anistor@readhat.com
@@ -70,14 +70,14 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       this.cp = cp;
       ioExceptionClass = cp.getCtClass(IOException.class.getName());
       enumMarshallerInterface = cp.getCtClass(EnumMarshaller.class.getName());
-      protoStreamMarshallerInterface = cp.getCtClass(ProtoStreamMarshaller.class.getName());
+      protoStreamMarshallerInterface = cp.getCtClass(ProtobufTagMarshaller.class.getName());
       indexedContainerAdapterInterface = cp.getCtClass(IndexedElementContainerAdapter.class.getName());
       iterableContainerAdapterInterface = cp.getCtClass(IterableElementContainerAdapter.class.getName());
       generatedMarshallerBaseClass = cp.getCtClass(GeneratedMarshallerBase.class.getName());
       baseMarshallerDelegateClass = cp.getCtClass(BaseMarshallerDelegate.class.getName());
       enumMarshallerDelegateClass = cp.getCtClass(EnumMarshallerDelegate.class.getName());
-      String readContextName = ProtoStreamMarshaller.ReadContext.class.getName().replace('.', '/');
-      String writeContextName = ProtoStreamMarshaller.WriteContext.class.getName().replace('.', '/');
+      String readContextName = ProtobufTagMarshaller.ReadContext.class.getName().replace('.', '/');
+      String writeContextName = ProtobufTagMarshaller.WriteContext.class.getName().replace('.', '/');
       readMethod = protoStreamMarshallerInterface.getMethod("read", "(L" + readContextName + ";)Ljava/lang/Object;");
       writeMethod = protoStreamMarshallerInterface.getMethod("write", "(L" + writeContextName + ";Ljava/lang/Object;)V");
       decodeMethod = enumMarshallerInterface.getMethod("decode", "(I)Ljava/lang/Enum;");
@@ -151,11 +151,11 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
    }
 
    /**
-    * Generates an implementation of {@link ProtoStreamMarshaller} as a static nested class in the message class to be
+    * Generates an implementation of {@link ProtobufTagMarshaller} as a static nested class in the message class to be
     * marshalled. The InnerClasses attribute of the outer class is not altered, so this is not officially considered a
     * nested class.
     */
-   private Class<ProtoStreamMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) throws NotFoundException, CannotCompileException {
+   private Class<ProtobufTagMarshaller> generateMessageMarshaller(ProtoMessageTypeMetadata pmtm) throws NotFoundException, CannotCompileException {
       String marshallerClassName = makeUniqueMarshallerClassName();
       CtClass annotatedClass = cp.get(pmtm.getAnnotatedClass().getName());
       CtClass marshallerImpl = annotatedClass.makeNestedClass(marshallerClassName, true);
@@ -219,7 +219,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       ctWriteMethod.setBody(writeBody);
       marshallerImpl.addMethod(ctWriteMethod);
 
-      Class<ProtoStreamMarshaller> generatedMarshallerClass = (Class<ProtoStreamMarshaller>) marshallerImpl.toClass();
+      Class<ProtobufTagMarshaller> generatedMarshallerClass = (Class<ProtobufTagMarshaller>) marshallerImpl.toClass();
       marshallerImpl.detach();
 
       return generatedMarshallerClass;

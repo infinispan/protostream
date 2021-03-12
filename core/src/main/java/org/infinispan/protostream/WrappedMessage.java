@@ -599,10 +599,10 @@ public final class WrappedMessage {
       if (!(containerMarshaller instanceof ElementContainerAdapter)) {
          throw new IllegalStateException("The unmarshaller is not a container adapter : " + containerMarshaller.getJavaClass().getName());
       }
-      TagReaderImpl nestedInput = TagReaderImpl.newNestedInstance((ProtoStreamMarshaller.ReadContext) in, containerMessage);
+      TagReaderImpl nestedInput = TagReaderImpl.newNestedInstance((ProtobufTagMarshaller.ReadContext) in, containerMessage);
 
       // pass the size to the marshaller of the container object
-      nestedInput.setParamValue(CONTAINER_SIZE_CONTEXT_PARAM, containerSize);
+      nestedInput.setParam(CONTAINER_SIZE_CONTEXT_PARAM, containerSize);
       Object container = marshallerDelegate.unmarshall(nestedInput, null);
       if (container == null) {
          throw new IllegalStateException("The unmarshalled container must not be null");
@@ -672,7 +672,7 @@ public final class WrappedMessage {
     * Marshaller for WrappedMessage. This marshaller is not meant to handle unknown fields at the top level as they are
     * very unlikely to ever appear. The handling of unknown fields for the inner message type will work as usual.
     */
-   static final BaseMarshaller<WrappedMessage> MARSHALLER = new ProtoStreamMarshaller<WrappedMessage>() {
+   static final BaseMarshaller<WrappedMessage> MARSHALLER = new ProtobufTagMarshaller<WrappedMessage>() {
 
       @Override
       public Class<WrappedMessage> getJavaClass() {
@@ -686,12 +686,12 @@ public final class WrappedMessage {
 
       @Override
       public WrappedMessage read(ReadContext ctx) throws IOException {
-         return new WrappedMessage(readMessage(ctx.getSerializationContext(), ctx.getIn(), false));
+         return new WrappedMessage(readMessage(ctx.getSerializationContext(), ctx.getReader(), false));
       }
 
       @Override
       public void write(WriteContext ctx, WrappedMessage wrappedMessage) throws IOException {
-         writeMessage(ctx.getSerializationContext(), ctx.getOut(), wrappedMessage.value, false);
+         writeMessage(ctx.getSerializationContext(), ctx.getWriter(), wrappedMessage.value, false);
       }
    };
 }
