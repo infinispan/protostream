@@ -1,4 +1,4 @@
-package org.infinispan.protostream.types.java;
+package org.infinispan.protostream.types.java.arrays;
 
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;

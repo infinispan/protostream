@@ -1,4 +1,4 @@
-package org.infinispan.protostream.types.java;
+package org.infinispan.protostream.types.java.util;
 
 import java.util.UUID;
 
