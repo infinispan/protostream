@@ -1,4 +1,4 @@
-package org.infinispan.protostream.types.java;
+package org.infinispan.protostream.types.java.collections;
 
 import java.util.HashSet;
 import java.util.Iterator;

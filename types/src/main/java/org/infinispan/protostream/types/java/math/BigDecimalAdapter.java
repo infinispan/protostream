@@ -1,4 +1,4 @@
-package org.infinispan.protostream.types.java;
+package org.infinispan.protostream.types.java.math;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

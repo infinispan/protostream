@@ -1,4 +1,4 @@
-package org.infinispan.protostream.types.java;
+package org.infinispan.protostream.types.java.collections;
 
 import java.util.ArrayList;
 import java.util.Iterator;
