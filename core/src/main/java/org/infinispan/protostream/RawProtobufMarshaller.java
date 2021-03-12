@@ -10,10 +10,10 @@ import java.io.IOException;
  *
  * @author anistor@redhat.com
  * @since 1.0
- * @deprecated replaced by {@link ProtoStreamMarshaller}. To be removed in version 5.
+ * @deprecated replaced by {@link ProtobufTagMarshaller}. To be removed in version 5.
  */
 @Deprecated
-public interface RawProtobufMarshaller<T> extends ProtoStreamMarshaller<T> {
+public interface RawProtobufMarshaller<T> extends ProtobufTagMarshaller<T> {
 
    T readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException;
 
@@ -21,11 +21,11 @@ public interface RawProtobufMarshaller<T> extends ProtoStreamMarshaller<T> {
 
    @Override
    default T read(ReadContext ctx) throws IOException {
-      return readFrom(ctx.getSerializationContext(), ctx.getIn());
+      return readFrom(ctx.getSerializationContext(), ctx.getReader());
    }
 
    @Override
    default void write(WriteContext ctx, T t) throws IOException {
-      writeTo(ctx.getSerializationContext(), ctx.getOut(), t);
+      writeTo(ctx.getSerializationContext(), ctx.getWriter(), t);
    }
 }

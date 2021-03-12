@@ -2,7 +2,7 @@ package org.infinispan.protostream;
 
 /**
  * An interface to be implemented by marshaller objects of type {@link MessageMarshaller}) that are able to handle
- * unknown fields by storing them into an {@link UnknownFieldSet}. {@link ProtoStreamMarshaller}s are expected to handle
+ * unknown fields by storing them into an {@link UnknownFieldSet}. {@link ProtobufTagMarshaller}s are expected to handle
  * unknown fields manually and cannot benefit from automatic handling by implementing this interface.
  *
  * @author anistor@redhat.com

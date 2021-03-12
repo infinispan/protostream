@@ -3,7 +3,7 @@ package org.infinispan.protostream.impl;
 import java.io.IOException;
 
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 
 /**
@@ -33,7 +33,7 @@ public abstract class BaseMarshallerDelegate<T> {
     * @param value           the value being marshalled (cannot be {@code null})
     * @throws IOException if marshalling fails for some reason
     */
-   public abstract void marshall(ProtoStreamMarshaller.WriteContext ctx, FieldDescriptor fieldDescriptor, T value) throws IOException;
+   public abstract void marshall(ProtobufTagMarshaller.WriteContext ctx, FieldDescriptor fieldDescriptor, T value) throws IOException;
 
    /**
     * Unmarshalls an object.
@@ -43,5 +43,5 @@ public abstract class BaseMarshallerDelegate<T> {
     *                        top-level object
     * @throws IOException if unmarshalling fails for some reason
     */
-   public abstract T unmarshall(ProtoStreamMarshaller.ReadContext ctx, FieldDescriptor fieldDescriptor) throws IOException;
+   public abstract T unmarshall(ProtobufTagMarshaller.ReadContext ctx, FieldDescriptor fieldDescriptor) throws IOException;
 }

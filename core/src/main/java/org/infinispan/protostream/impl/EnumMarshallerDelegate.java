@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.UnknownFieldSet;
@@ -37,8 +37,8 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> extends BaseMarshal
    }
 
    @Override
-   public void marshall(ProtoStreamMarshaller.WriteContext ctx, FieldDescriptor fd, T value) throws IOException {
-      encode(fd.getNumber(), value, ctx.getOut());
+   public void marshall(ProtobufTagMarshaller.WriteContext ctx, FieldDescriptor fd, T value) throws IOException {
+      encode(fd.getNumber(), value, ctx.getWriter());
    }
 
    public void encode(int fieldNumber, T value, TagWriter out) throws IOException {
@@ -50,16 +50,16 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> extends BaseMarshal
    }
 
    @Override
-   public T unmarshall(ProtoStreamMarshaller.ReadContext ctx, FieldDescriptor fd) throws IOException {
+   public T unmarshall(ProtobufTagMarshaller.ReadContext ctx, FieldDescriptor fd) throws IOException {
       final int expectedTag = fd.getWireTag();
       int enumValue;
-      ProtoStreamReaderImpl reader = (ProtoStreamReaderImpl) ctx.getReader();
+      ProtoStreamReaderImpl reader = ((TagReaderImpl) ctx).getProtoStreamReader();
       UnknownFieldSet unknownFieldSet = reader.getUnknownFieldSet();
       Object value = unknownFieldSet.consumeTag(expectedTag);
       if (value != null) {
          enumValue = ((Long) value).intValue();
       } else {
-         TagReader in = ctx.getIn();
+         TagReader in = ctx.getReader();
          while (true) {
             int tag = in.readTag();
             if (tag == 0) {

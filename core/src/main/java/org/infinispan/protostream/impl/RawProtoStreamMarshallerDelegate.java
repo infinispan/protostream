@@ -2,7 +2,7 @@ package org.infinispan.protostream.impl;
 
 import java.io.IOException;
 
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 
 /**
@@ -11,24 +11,24 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
  */
 final class RawProtoStreamMarshallerDelegate<T> extends BaseMarshallerDelegate<T> {
 
-   private final ProtoStreamMarshaller<T> marshaller;
+   private final ProtobufTagMarshaller<T> marshaller;
 
-   RawProtoStreamMarshallerDelegate(ProtoStreamMarshaller<T> marshaller) {
+   RawProtoStreamMarshallerDelegate(ProtobufTagMarshaller<T> marshaller) {
       this.marshaller = marshaller;
    }
 
    @Override
-   public ProtoStreamMarshaller<T> getMarshaller() {
+   public ProtobufTagMarshaller<T> getMarshaller() {
       return marshaller;
    }
 
    @Override
-   public void marshall(ProtoStreamMarshaller.WriteContext ctx, FieldDescriptor fieldDescriptor, T value) throws IOException {
+   public void marshall(ProtobufTagMarshaller.WriteContext ctx, FieldDescriptor fieldDescriptor, T value) throws IOException {
       marshaller.write(ctx, value);
    }
 
    @Override
-   public T unmarshall(ProtoStreamMarshaller.ReadContext ctx, FieldDescriptor fieldDescriptor) throws IOException {
+   public T unmarshall(ProtobufTagMarshaller.ReadContext ctx, FieldDescriptor fieldDescriptor) throws IOException {
       return marshaller.read(ctx);
    }
 }

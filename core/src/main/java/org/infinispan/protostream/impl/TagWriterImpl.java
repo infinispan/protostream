@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.WireType;
 
@@ -17,7 +17,7 @@ import com.google.protobuf.CodedOutputStream;
  * @author anistor@redhat.com
  * @since 3.0
  */
-public final class TagWriterImpl implements TagWriter, ProtoStreamMarshaller.WriteContext {
+public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.WriteContext {
 
    private final CodedOutputStream delegate;
 
@@ -34,7 +34,7 @@ public final class TagWriterImpl implements TagWriter, ProtoStreamMarshaller.Wri
       this.delegate = delegate;
    }
 
-   public static TagWriterImpl newNestedInstance(ProtoStreamMarshaller.WriteContext parentCtx, OutputStream output) {
+   public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parentCtx, OutputStream output) {
       TagWriterImpl parent = (TagWriterImpl) parentCtx;
       TagWriterImpl nestedCtx = new TagWriterImpl(parent.serCtx, CodedOutputStream.newInstance(output));
       nestedCtx.params = parent.params;
@@ -190,7 +190,7 @@ public final class TagWriterImpl implements TagWriter, ProtoStreamMarshaller.Wri
    }
 
    @Override
-   public Object getParamValue(Object key) {
+   public Object getParam(Object key) {
       if (params == null) {
          return null;
       }
@@ -198,7 +198,7 @@ public final class TagWriterImpl implements TagWriter, ProtoStreamMarshaller.Wri
    }
 
    @Override
-   public void setParamValue(Object key, Object value) {
+   public void setParam(Object key, Object value) {
       if (params == null) {
          params = new HashMap<>();
       }
@@ -206,7 +206,7 @@ public final class TagWriterImpl implements TagWriter, ProtoStreamMarshaller.Wri
    }
 
    @Override
-   public TagWriter getOut() {
+   public TagWriter getWriter() {
       return this;
    }
 
@@ -214,7 +214,7 @@ public final class TagWriterImpl implements TagWriter, ProtoStreamMarshaller.Wri
     * @deprecated this will be removed in 5.0 together with {@link org.infinispan.protostream.MessageMarshaller}
     */
    @Deprecated
-   public ProtoStreamWriterImpl getWriter() {
+   public ProtoStreamWriterImpl getProtoStreamWriter() {
       if (writer == null) {
          writer = new ProtoStreamWriterImpl(this, serCtx);
       }

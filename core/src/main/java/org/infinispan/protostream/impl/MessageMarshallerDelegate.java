@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.UnknownFieldSetHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -56,8 +56,8 @@ final class MessageMarshallerDelegate<T> extends BaseMarshallerDelegate<T> {
    }
 
    @Override
-   public void marshall(ProtoStreamMarshaller.WriteContext ctx, FieldDescriptor fieldDescriptor, T message) throws IOException {
-      ProtoStreamWriterImpl writer = (ProtoStreamWriterImpl) ctx.getWriter();
+   public void marshall(ProtobufTagMarshaller.WriteContext ctx, FieldDescriptor fieldDescriptor, T message) throws IOException {
+      ProtoStreamWriterImpl writer = ((TagWriterImpl) ctx).getProtoStreamWriter();
       ProtoStreamWriterImpl.WriteMessageContext messageContext = writer.enterContext(fieldDescriptor, messageDescriptor, (TagWriterImpl) ctx);
 
       marshaller.writeTo(writer, message);
@@ -89,15 +89,14 @@ final class MessageMarshallerDelegate<T> extends BaseMarshallerDelegate<T> {
    }
 
    @Override
-   public T unmarshall(ProtoStreamMarshaller.ReadContext ctx, FieldDescriptor fieldDescriptor) throws IOException {
-      ProtoStreamReaderImpl reader = (ProtoStreamReaderImpl) ctx.getReader();
+   public T unmarshall(ProtobufTagMarshaller.ReadContext ctx, FieldDescriptor fieldDescriptor) throws IOException {
+      ProtoStreamReaderImpl reader = ((TagReaderImpl) ctx).getProtoStreamReader();
       ProtoStreamReaderImpl.ReadMessageContext messageContext = reader.enterContext(fieldDescriptor, messageDescriptor, (TagReaderImpl) ctx);
 
       T message = marshaller.readFrom(reader);
 
-      UnknownFieldSet unknownFieldSet = messageContext.getUnknownFieldSet();
-
-      unknownFieldSet.readAllFields(ctx.getIn());
+      UnknownFieldSet unknownFieldSet = messageContext.unknownFieldSet;
+      unknownFieldSet.readAllFields(ctx.getReader());
 
       if (unknownFieldSetHandler != null && !unknownFieldSet.isEmpty()) {
          unknownFieldSetHandler.setUnknownFieldSet(message, unknownFieldSet);

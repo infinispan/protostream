@@ -10,7 +10,7 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagReader;
@@ -226,12 +226,12 @@ public class SerializationContextImplTest {
          }
 
          private BaseMarshaller<?> makeMarshaller() {
-            return new ProtoStreamMarshaller<X>() {
+            return new ProtobufTagMarshaller<X>() {
 
                @Override
                public X read(ReadContext ctx) throws IOException {
                   Integer f = null;
-                  TagReader in = ctx.getIn();
+                  TagReader in = ctx.getReader();
                   if (in.readTag() == WireType.makeTag(1, WireType.VARINT)) {
                      f = in.readInt32();
                   }
@@ -240,7 +240,7 @@ public class SerializationContextImplTest {
 
                @Override
                public void write(WriteContext ctx, X x) throws IOException {
-                  ctx.getOut().writeInt32(1, x.f);
+                  ctx.getWriter().writeInt32(1, x.f);
                }
 
                @Override

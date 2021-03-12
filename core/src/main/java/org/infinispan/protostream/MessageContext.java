@@ -61,9 +61,9 @@ public class MessageContext<E extends MessageContext<E>> {
    }
 
    /**
-    * Gets the name of the nested field.
+    * Gets the nested field.
     *
-    * @return the name of the nested field or {@code null} if this is the root context
+    * @return the descriptor of the nested field or {@code null} if this is the root context
     */
    public FieldDescriptor getField() {
       return fieldDescriptor;
@@ -83,7 +83,7 @@ public class MessageContext<E extends MessageContext<E>> {
          if (parentContext != null) {
             pfqn = parentContext.getFieldPath();
          }
-         fieldPath = pfqn != null ? pfqn + '.' + fieldDescriptor.getName() : fieldDescriptor.getName(); // todo [anistor] use fieldDescriptor.getFullName()
+         fieldPath = pfqn != null ? pfqn + '.' + fieldDescriptor.getName() : fieldDescriptor.getName(); // todo [anistor] use fieldDescriptor.getFullName() ?
       }
       return fieldPath;
    }
