@@ -1,14 +1,13 @@
 package org.infinispan.protostream.types.protobuf;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-public class BytesValue {
+public final class BytesValue {
 
-   private byte[] value;
+   private final byte[] value;
 
-   public BytesValue() {
-   }
-
+   @ProtoFactory
    public BytesValue(byte[] value) {
       this.value = value;
    }
@@ -16,9 +15,5 @@ public class BytesValue {
    @ProtoField(value = 1)
    public byte[] getValue() {
       return value;
-   }
-
-   public void setValue(byte[] value) {
-      this.value = value;
    }
 }

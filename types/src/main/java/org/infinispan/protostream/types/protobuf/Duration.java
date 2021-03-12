@@ -1,16 +1,15 @@
 package org.infinispan.protostream.types.protobuf;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-public class Duration {
+public final class Duration {
 
-   private long seconds;
+   private final long seconds;
 
-   private long nanos;
+   private final long nanos;
 
-   public Duration() {
-   }
-
+   @ProtoFactory
    public Duration(long seconds, long nanos) {
       this.seconds = seconds;
       this.nanos = nanos;
@@ -21,16 +20,8 @@ public class Duration {
       return seconds;
    }
 
-   public void setSeconds(long seconds) {
-      this.seconds = seconds;
-   }
-
    @ProtoField(value = 2, defaultValue = "0")
    public long getNanos() {
       return nanos;
-   }
-
-   public void setNanos(long nanos) {
-      this.nanos = nanos;
    }
 }

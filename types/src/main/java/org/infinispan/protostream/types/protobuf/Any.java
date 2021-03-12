@@ -1,16 +1,15 @@
 package org.infinispan.protostream.types.protobuf;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-public class Any {
+public final class Any {
 
-   private String typeUrl;
+   private final String typeUrl;
 
-   private byte[] value;
+   private final byte[] value;
 
-   public Any() {
-   }
-
+   @ProtoFactory
    public Any(String typeUrl, byte[] value) {
       this.typeUrl = typeUrl;
       this.value = value;
@@ -21,16 +20,8 @@ public class Any {
       return typeUrl;
    }
 
-   public void setTypeUrl(String typeUrl) {
-      this.typeUrl = typeUrl;
-   }
-
    @ProtoField(2)
    public byte[] getValue() {
       return value;
-   }
-
-   public void setValue(byte[] value) {
-      this.value = value;
    }
 }

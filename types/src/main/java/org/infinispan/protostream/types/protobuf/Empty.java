@@ -1,10 +1,10 @@
 package org.infinispan.protostream.types.protobuf;
 
-import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoFactory;
 
-@ProtoName("Empty")
-public class Empty {
+public final class Empty {
 
+   @ProtoFactory
    public Empty() {
    }
 }

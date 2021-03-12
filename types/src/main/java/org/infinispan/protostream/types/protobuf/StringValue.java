@@ -1,14 +1,13 @@
 package org.infinispan.protostream.types.protobuf;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-public class StringValue {
+public final class StringValue {
 
-   private String value;
+   private final String value;
 
-   public StringValue() {
-   }
-
+   @ProtoFactory
    public StringValue(String value) {
       this.value = value;
    }
@@ -16,9 +15,5 @@ public class StringValue {
    @ProtoField(value = 1)
    public String getValue() {
       return value;
-   }
-
-   public void setValue(String value) {
-      this.value = value;
    }
 }

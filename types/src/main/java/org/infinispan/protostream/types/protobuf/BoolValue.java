@@ -1,14 +1,13 @@
 package org.infinispan.protostream.types.protobuf;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-public class BoolValue {
+public final class BoolValue {
 
-   private boolean value;
+   private final boolean value;
 
-   public BoolValue() {
-   }
-
+   @ProtoFactory
    public BoolValue(boolean value) {
       this.value = value;
    }
@@ -16,9 +15,5 @@ public class BoolValue {
    @ProtoField(value = 1, defaultValue = "false")
    public boolean getValue() {
       return value;
-   }
-
-   public void setValue(boolean value) {
-      this.value = value;
    }
 }

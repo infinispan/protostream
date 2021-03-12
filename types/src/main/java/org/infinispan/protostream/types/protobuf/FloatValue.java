@@ -1,14 +1,13 @@
 package org.infinispan.protostream.types.protobuf;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-public class FloatValue {
+public final class FloatValue {
 
-   private float value;
+   private final float value;
 
-   public FloatValue() {
-   }
-
+   @ProtoFactory
    public FloatValue(float value) {
       this.value = value;
    }
@@ -16,9 +15,5 @@ public class FloatValue {
    @ProtoField(value = 1, defaultValue = "0")
    public float getValue() {
       return value;
-   }
-
-   public void setValue(float value) {
-      this.value = value;
    }
 }
