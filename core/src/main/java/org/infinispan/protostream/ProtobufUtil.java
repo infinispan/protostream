@@ -24,7 +24,9 @@ import org.infinispan.protostream.impl.TagWriterImpl;
  */
 public final class ProtobufUtil {
 
-   private static final int BUFFER_SIZE = 512;
+   public static final int DEFAULT_STREAM_BUFFER_SIZE = 4096;
+
+   private static final int DEFAULT_ARRAY_BUFFER_SIZE = 512;
 
    private ProtobufUtil() {
    }
@@ -48,7 +50,19 @@ public final class ProtobufUtil {
       return serializationContext;
    }
 
-   private static <A> void writeTo(ImmutableSerializationContext ctx, TagWriterImpl out, A t) throws IOException {
+   public static <A> int computeMessageSize(ImmutableSerializationContext ctx, A t) throws IOException {
+      TagWriterImpl out = TagWriterImpl.newInstance(ctx);
+      write(ctx, out, t);
+      return out.getWrittenBytes();
+   }
+
+   public static <A> int computeWrappedMessageSize(ImmutableSerializationContext ctx, A t) throws IOException {
+      TagWriterImpl out = TagWriterImpl.newInstance(ctx);
+      WrappedMessage.write(ctx, out, t);
+      return out.getWrittenBytes();
+   }
+
+   private static <A> void write(ImmutableSerializationContext ctx, TagWriterImpl out, A t) throws IOException {
       if (t == null) {
          throw new IllegalArgumentException("Object to marshall cannot be null");
       }
@@ -58,17 +72,17 @@ public final class ProtobufUtil {
    }
 
    public static void writeTo(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
-      writeTo(ctx, TagWriterImpl.newInstance(ctx, out), t);
+      write(ctx, TagWriterImpl.newInstance(ctx, out), t);
    }
 
    public static byte[] toByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(DEFAULT_ARRAY_BUFFER_SIZE);
       writeTo(ctx, baos, t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(BUFFER_SIZE);
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(DEFAULT_ARRAY_BUFFER_SIZE);
       writeTo(ctx, baos, t);
       return baos.getByteBuffer();
    }
@@ -102,7 +116,7 @@ public final class ProtobufUtil {
     * Parses a top-level message that was wrapped according to the org.infinispan.protostream.WrappedMessage proto
     * definition.
     *
-    * @param ctx the serialization context
+    * @param ctx   the serialization context
     * @param bytes the array of bytes to parse
     * @return the unwrapped object
     * @throws IOException in case parsing fails
@@ -125,7 +139,7 @@ public final class ProtobufUtil {
 
    //todo [anistor] should make it possible to plug in a custom wrapping strategy instead of the default one
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
-      return toWrappedByteArray(ctx, t, BUFFER_SIZE);
+      return toWrappedByteArray(ctx, t, DEFAULT_ARRAY_BUFFER_SIZE);
    }
 
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t, int bufferSize) throws IOException {
@@ -135,13 +149,13 @@ public final class ProtobufUtil {
    }
 
    public static ByteBuffer toWrappedByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(BUFFER_SIZE);
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(DEFAULT_ARRAY_BUFFER_SIZE);
       WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, baos), t);
       return baos.getByteBuffer();
    }
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
-      toWrappedStream(ctx, out, t, 4096);
+      toWrappedStream(ctx, out, t, DEFAULT_STREAM_BUFFER_SIZE);
    }
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t, int bufferSize) throws IOException {

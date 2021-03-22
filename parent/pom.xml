@@ -353,6 +353,7 @@
                     <configuration>
                         <source>${version.java}</source>
                         <target>${version.java}</target>
+                        <release>8</release>
                         <encoding>UTF-8</encoding>
                         <!-- both maven and javac are buggy regarding handling of APs with incremental compilation -->
                         <useIncrementalCompilation>false</useIncrementalCompilation>

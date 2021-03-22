@@ -36,6 +36,31 @@ import com.fasterxml.jackson.core.JsonParser;
  */
 public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
+   @Test
+   public void testComputeMessageSize() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+
+      User user = new User();
+      user.setId(1);
+      user.setName("John");
+      user.setSurname("Batman");
+      user.setGender(User.Gender.MALE);
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
+      user.setAddresses(Arrays.asList(new Address("Old Street", "XYZ42", -12), new Address("Bond Street", "W23", 2)));
+
+      int expectedMessageSize = ProtobufUtil.toByteArray(ctx, user).length;
+
+      int messageSize = ProtobufUtil.computeMessageSize(ctx, user);
+
+      assertEquals(expectedMessageSize, messageSize);
+
+      expectedMessageSize = ProtobufUtil.toWrappedByteArray(ctx, user).length;
+
+      messageSize = ProtobufUtil.computeWrappedMessageSize(ctx, user);
+
+      assertEquals(expectedMessageSize, messageSize);
+   }
+
    @Test(expected = MalformedProtobufException.class)
    public void testFromByteArrayWithExtraPadding() throws Exception {
       ImmutableSerializationContext ctx = createContext();
