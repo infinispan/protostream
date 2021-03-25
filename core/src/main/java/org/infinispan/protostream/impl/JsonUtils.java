@@ -519,7 +519,7 @@ public final class JsonUtils {
                case SINT64:
                case UINT64:
                case FIXED64:
-                  jsonOut.append('\"').append(tagValue).append('\"');  //todo [anistor] why do we quote number literals?
+                  jsonOut.append(tagValue);
                   break;
                case FLOAT:
                   Float f = (Float) tagValue;

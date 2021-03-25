@@ -35,6 +35,7 @@ public class User implements Externalizable {   // implement Externalizable just
    private String notes;
    private Instant creationDate;
    private Instant passwordExpirationDate;
+   private Long qrCode;
 
    @ProtoField(number = 1, required = true)
    public int getId() {
@@ -135,6 +136,15 @@ public class User implements Externalizable {   // implement Externalizable just
       this.passwordExpirationDate = passwordExpirationDate;
    }
 
+   @ProtoField(number = 12)
+   public Long getQrCode() {
+      return qrCode;
+   }
+
+   public void setQrCode(Long qrCode) {
+      this.qrCode = qrCode;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -149,6 +159,7 @@ public class User implements Externalizable {   // implement Externalizable just
             ", notes=" + notes +
             ", creationDate='" + creationDate + '\'' +
             ", passwordExpirationDate='" + passwordExpirationDate + '\'' +
+            ", qrCode=" + qrCode +
             '}';
    }
 
@@ -216,6 +227,12 @@ public class User implements Externalizable {   // implement Externalizable just
       } else {
          out.writeBoolean(false);
       }
+      if (qrCode != null) {
+         out.writeBoolean(true);
+         out.writeLong(qrCode);
+      } else {
+         out.writeBoolean(false);
+      }
    }
 
    @Override
@@ -261,6 +278,9 @@ public class User implements Externalizable {   // implement Externalizable just
          int nanos = in.readInt();
          passwordExpirationDate = Instant.ofEpochSecond(seconds, nanos);
       }
+      if (in.readBoolean()) {
+         qrCode = in.readLong();
+      }
    }
 
    @Override
@@ -278,11 +298,12 @@ public class User implements Externalizable {   // implement Externalizable just
             gender == user.gender &&
             Objects.equals(notes, user.notes) &&
             Objects.equals(creationDate, user.creationDate) &&
-            Objects.equals(passwordExpirationDate, user.passwordExpirationDate);
+            Objects.equals(passwordExpirationDate, user.passwordExpirationDate) &&
+            Objects.equals(qrCode, user.qrCode);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, name, surname, salutation, accountIds, addresses, age, gender, notes, creationDate, passwordExpirationDate);
+      return Objects.hash(id, name, surname, salutation, accountIds, addresses, age, gender, notes, creationDate, passwordExpirationDate, qrCode);
    }
 }
