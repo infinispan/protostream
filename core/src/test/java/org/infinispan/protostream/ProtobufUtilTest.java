@@ -124,7 +124,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, user);
 
-      int[] seenTypeId = new int[] { -1 };
+      int[] seenTypeId = new int[]{-1};
 
       TagHandler tagHandler = new TagHandler() {
          @Override
@@ -292,6 +292,21 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       testJsonConversion(ctx, User.Gender.FEMALE);
       testJsonConversion(ctx, account);
       testJsonConversion(ctx, user);
+   }
+
+   @Test
+   public void testJsonLong() throws IOException {
+      ImmutableSerializationContext ctx = createContext();
+
+      User user = new User();
+      user.setName("");
+      user.setId(1);
+      user.setQrCode(12345667L);
+
+      byte[] marshalled = ProtobufUtil.toWrappedByteArray(ctx, user);
+      String json = ProtobufUtil.toCanonicalJSON(ctx, marshalled, true);
+
+      assertTrue(json.contains("\"qrCode\": 12345667"));
    }
 
    @Test

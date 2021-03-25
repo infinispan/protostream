@@ -47,6 +47,7 @@ public class UserMarshaller implements MessageMarshaller<User> {
       String notes = reader.readString("notes");
       Instant creationDate = reader.readInstant("creationDate");
       Instant passwordExpirationDate = reader.readInstant("passwordExpirationDate");
+      Long qrCode = reader.readLong("qrCode");
 
       User user = new User();
       user.setId(id);
@@ -60,6 +61,7 @@ public class UserMarshaller implements MessageMarshaller<User> {
       user.setNotes(notes);
       user.setCreationDate(creationDate);
       user.setPasswordExpirationDate(passwordExpirationDate);
+      user.setQrCode(qrCode);
       return user;
    }
 
@@ -76,5 +78,6 @@ public class UserMarshaller implements MessageMarshaller<User> {
       writer.writeString("notes", user.getNotes());
       writer.writeInstant("creationDate", user.getCreationDate());
       writer.writeInstant("passwordExpirationDate", user.getPasswordExpirationDate());
+      writer.writeLong("qrCode", user.getQrCode());
    }
 }
