@@ -8,9 +8,13 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.descriptors.Type;
 
-@ProtoTypeId(10005 /* ProtoStreamTypeIds.UUID */)
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
+@ProtoTypeId(10005 /* see org.infinispan.commons.marshall.ProtoStreamTypeIds.UUID */)
 @ProtoAdapter(UUID.class)
-public class UUIDAdapter {
+public final class UUIDAdapter {
 
    @ProtoFactory
    UUID create(Long mostSigBits, Long leastSigBits, Long mostSigBitsFixed, Long leastSigBitsFixed) {

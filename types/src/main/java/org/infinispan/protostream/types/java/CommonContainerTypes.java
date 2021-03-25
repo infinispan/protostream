@@ -14,6 +14,10 @@ import org.infinispan.protostream.types.java.arrays.StringArrayAdapter;
 import org.infinispan.protostream.types.java.collections.ArrayListAdapter;
 import org.infinispan.protostream.types.java.collections.HashSetAdapter;
 
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
 @AutoProtoSchemaBuilder(
       schemaFileName = "common-container-types.proto",
       schemaFilePath = "/infinispan",

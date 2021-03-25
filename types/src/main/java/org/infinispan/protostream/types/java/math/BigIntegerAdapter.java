@@ -6,8 +6,12 @@ import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
 @ProtoAdapter(BigInteger.class)
-public class BigIntegerAdapter {
+public final class BigIntegerAdapter {
 
    @ProtoFactory
    BigInteger create(byte[] bytes) {

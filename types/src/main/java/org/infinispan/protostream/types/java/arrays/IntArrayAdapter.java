@@ -5,9 +5,13 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
 @ProtoAdapter(int[].class)
 @ProtoName("IntArray")
-public class IntArrayAdapter implements IndexedElementContainerAdapter<int[], Integer> {
+public final class IntArrayAdapter implements IndexedElementContainerAdapter<int[], Integer> {
 
    @ProtoFactory
    public int[] create(int size) {

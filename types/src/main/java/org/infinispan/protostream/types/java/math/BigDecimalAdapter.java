@@ -7,8 +7,12 @@ import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
 @ProtoAdapter(BigDecimal.class)
-public class BigDecimalAdapter {
+public final class BigDecimalAdapter {
 
    @ProtoFactory
    BigDecimal create(byte[] unscaledValue, int scale) {

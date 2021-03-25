@@ -7,8 +7,12 @@ import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
 
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
 @ProtoAdapter(ArrayList.class)
-public class ArrayListAdapter<T> implements IterableElementContainerAdapter<ArrayList<T>, T> {
+public final class ArrayListAdapter<T> implements IterableElementContainerAdapter<ArrayList<T>, T> {
 
    @ProtoFactory
    public ArrayList<?> create(int size) {

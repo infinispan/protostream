@@ -4,9 +4,13 @@ import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoName;
 
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
 @ProtoAdapter(Double[].class)
 @ProtoName("DoubleArray")
-public class DoubleArrayAdapter extends GenericArrayAdapter<Double> {
+public final class DoubleArrayAdapter extends GenericArrayAdapter<Double> {
 
    @ProtoFactory
    public Double[] create(int size) {

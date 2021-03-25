@@ -2,6 +2,10 @@ package org.infinispan.protostream.types.java.arrays;
 
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
 abstract class GenericArrayAdapter<T> implements IndexedElementContainerAdapter<T[], T> {
 
    public abstract T[] create(int size);

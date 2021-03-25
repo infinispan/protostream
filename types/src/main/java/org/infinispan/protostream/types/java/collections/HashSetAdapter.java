@@ -7,8 +7,12 @@ import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
 
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
 @ProtoAdapter(HashSet.class)
-public class HashSetAdapter<T> implements IterableElementContainerAdapter<HashSet<T>, T> {
+public final class HashSetAdapter<T> implements IterableElementContainerAdapter<HashSet<T>, T> {
 
    @ProtoFactory
    public HashSet<T> create(int size) {

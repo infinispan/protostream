@@ -6,6 +6,10 @@ import org.infinispan.protostream.types.java.math.BigDecimalAdapter;
 import org.infinispan.protostream.types.java.math.BigIntegerAdapter;
 import org.infinispan.protostream.types.java.util.UUIDAdapter;
 
+/**
+ * @author anistor@redhat.com
+ * @since 4.4
+ */
 @AutoProtoSchemaBuilder(
       schemaFileName = "common-types.proto",
       schemaFilePath = "/infinispan",
