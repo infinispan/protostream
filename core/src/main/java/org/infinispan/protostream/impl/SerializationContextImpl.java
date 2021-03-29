@@ -280,7 +280,7 @@ public final class SerializationContextImpl implements SerializationContext {
          EnumDescriptor enumDescriptor = getEnumDescriptor(marshaller.getTypeName());
          return new EnumMarshallerDelegate<>((EnumMarshaller) marshaller, enumDescriptor);
       } else if (marshaller instanceof ProtobufTagMarshaller) {
-         return new RawProtoStreamMarshallerDelegate<>((ProtobufTagMarshaller<T>) marshaller);
+         return new ProtobufTagMarshallerDelegate<>((ProtobufTagMarshaller<T>) marshaller);
       }
       Descriptor messageDescriptor = getMessageDescriptor(marshaller.getTypeName());
       return new MessageMarshallerDelegate<>((MessageMarshaller<T>) marshaller, messageDescriptor);

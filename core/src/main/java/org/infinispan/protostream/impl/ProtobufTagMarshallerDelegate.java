@@ -9,11 +9,11 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
  * @author anistor@redhat.com
  * @since 1.0
  */
-final class RawProtoStreamMarshallerDelegate<T> extends BaseMarshallerDelegate<T> {
+final class ProtobufTagMarshallerDelegate<T> extends BaseMarshallerDelegate<T> {
 
    private final ProtobufTagMarshaller<T> marshaller;
 
-   RawProtoStreamMarshallerDelegate(ProtobufTagMarshaller<T> marshaller) {
+   ProtobufTagMarshallerDelegate(ProtobufTagMarshaller<T> marshaller) {
       this.marshaller = marshaller;
    }
 
