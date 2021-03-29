@@ -11,7 +11,7 @@
 
     <groupId>org.infinispan.protostream</groupId>
     <artifactId>parent</artifactId>
-    <version>4.4.0.Beta2</version>
+    <version>4.4.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>ProtoStream - parent</name>
