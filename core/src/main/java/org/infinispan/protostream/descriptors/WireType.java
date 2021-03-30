@@ -1,5 +1,7 @@
 package org.infinispan.protostream.descriptors;
 
+import org.infinispan.protostream.MalformedProtobufException;
+
 /**
  * Protobuf wire encoding type. Also provide helper functions for extracting the wire type and field number out of a tag.
  *
@@ -51,9 +53,9 @@ public enum WireType {
    /**
     * Gets the WireType enum value corresponding to a numeric wire type.
     */
-   public static WireType fromValue(int wireType) {
+   public static WireType fromValue(int wireType) throws MalformedProtobufException {
       if (wireType < 0 || wireType >= VALUES.length) {
-         throw new IllegalArgumentException("Invalid wire type " + wireType);
+         throw new MalformedProtobufException("Invalid wire type " + wireType);
       }
       return VALUES[wireType];
    }
@@ -61,10 +63,10 @@ public enum WireType {
    /**
     * Extracts the WireType from a numeric tag.
     */
-   public static WireType fromTag(int tag) {
+   public static WireType fromTag(int tag) throws MalformedProtobufException {
       int wireType = getTagWireType(tag);
       if (wireType < 0 || wireType >= VALUES.length) {
-         throw new IllegalArgumentException("Invalid wire type " + wireType + " in tag " + tag);
+         throw new MalformedProtobufException("Invalid wire type " + wireType + " in tag " + tag);
       }
       return VALUES[wireType];
    }
@@ -81,7 +83,7 @@ public enum WireType {
    }
 
    /**
-    * Given a tag value, determines the wire type (the lower 3 bits).
+    * Given a tag value, determines the wire type (the lower 3 bits). Does not validate the resulting value.
     */
    public static int getTagWireType(int tag) {
       return tag & TAG_TYPE_BIT_MASK;

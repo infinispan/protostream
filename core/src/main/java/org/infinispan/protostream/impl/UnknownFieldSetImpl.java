@@ -107,9 +107,9 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
    @Override
    public void putVarintField(int tag, int value) {
       if (tag == 0) {
-         throw new IllegalArgumentException("Zero is not a valid tag");
+         throw new IllegalArgumentException("0 is not a valid tag");
       }
-      if (WireType.fromTag(tag) != WireType.VARINT) {
+      if (WireType.getTagWireType(tag) != WireType.WIRETYPE_VARINT) {
          throw new IllegalArgumentException("The tag is not a VARINT: " + tag);
       }
       getField(tag).addLast(value);
@@ -171,9 +171,8 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
       if (tag == 0) {
          throw new IllegalArgumentException("0 is not a valid tag number");
       }
-      WireType wireType = WireType.fromTag(tag);
-      if (wireType == WireType.END_GROUP) {
-         throw new IllegalArgumentException("Tag " + tag + " has invalid wire type " + wireType);
+      if (WireType.getTagWireType(tag) == WireType.WIRETYPE_END_GROUP) {
+         throw new IllegalArgumentException("Tag " + tag + " is an end group tag");
       }
       if (fields == null) {
          return null;
