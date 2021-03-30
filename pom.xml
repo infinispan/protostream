@@ -17,7 +17,7 @@
     <description>Aggregator module for the ProtoStream project. Builds the distribution of the project.</description>
 
     <prerequisites>
-        <maven>3.5.4</maven>
+        <maven>3.6.0</maven>
     </prerequisites>
 
     <properties>

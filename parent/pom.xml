@@ -113,10 +113,10 @@
         <version.maven.animalsniffer>1.18</version.maven.animalsniffer>
         <version.maven.shade>3.2.3</version.maven.shade>
 
-        <version.protobuf>3.15.5</version.protobuf>
+        <version.protobuf>3.15.6</version.protobuf>
         <version.javax.annotation-api>1.3.2</version.javax.annotation-api>
         <version.junit>4.13.1</version.junit>
-        <version.compile-testing>0.18</version.compile-testing>
+        <version.compile-testing>0.19</version.compile-testing>
         <version.mockito>2.27.0</version.mockito>
         <version.jcipannotations>1.0</version.jcipannotations>
         <version.fest.assertions>2.0M10</version.fest.assertions>
@@ -127,8 +127,8 @@
         <version.log4j>2.13.2</version.log4j>
         <version.jboss.marshalling>2.0.9.Final</version.jboss.marshalling>
         <version.javassist>3.26.0-GA</version.javassist>
-        <version.commons-cli>1.2</version.commons-cli>
-        <version.jackson>2.11.0</version.jackson>
+        <version.commons-cli>1.3.1</version.commons-cli>
+        <version.jackson>2.12.1</version.jackson>
         <version.auto-service>1.0-rc7</version.auto-service>
     </properties>
 
