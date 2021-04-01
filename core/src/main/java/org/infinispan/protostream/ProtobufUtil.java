@@ -3,8 +3,6 @@ package org.infinispan.protostream;
 import static com.google.gson.stream.JsonToken.END_DOCUMENT;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_DOUBLE;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_ENUM;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED32;
@@ -18,6 +16,8 @@ import static org.infinispan.protostream.WrappedMessage.WRAPPED_SFIXED64;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_SINT32;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_SINT64;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_STRING;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_TYPE_ID;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_TYPE_NAME;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT32;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT64;
 
@@ -383,8 +383,12 @@ public final class ProtobufUtil {
                   throw new IllegalStateException("Invalid enum value '" + read + "'");
                }
                int choice = valueByName.getNumber();
-               Integer typeId = enumDescriptor.getTypeId();
-               writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, typeId);
+               Integer topLevelTypeId = enumDescriptor.getTypeId();
+               if (topLevelTypeId == null) {
+                  writer.writeString(WRAPPED_TYPE_NAME, enumDescriptor.getFullName());
+               } else {
+                  writer.writeUInt32(WRAPPED_TYPE_ID, topLevelTypeId);
+               }
                writer.writeEnum(WRAPPED_ENUM, choice);
                break;
             case NULL:
@@ -459,9 +463,9 @@ public final class ProtobufUtil {
       if (topLevel) {
          Integer topLevelTypeId = descriptorByName.getTypeId();
          if (topLevelTypeId == null) {
-            writer.writeString(WRAPPED_DESCRIPTOR_FULL_NAME, type);
+            writer.writeString(WRAPPED_TYPE_NAME, type);
          } else {
-            writer.writeUInt32(WRAPPED_DESCRIPTOR_TYPE_ID, topLevelTypeId);
+            writer.writeUInt32(WRAPPED_TYPE_ID, topLevelTypeId);
          }
          objectWriter.flush();
          writer.writeBytes(WRAPPED_MESSAGE, baos.toByteArray());
@@ -848,10 +852,10 @@ public final class ProtobufUtil {
                return;
             }
             switch (fieldNumber) {
-               case WRAPPED_DESCRIPTOR_TYPE_ID:
+               case WRAPPED_TYPE_ID:
                   typeId = (Integer) tagValue;
                   break;
-               case WRAPPED_DESCRIPTOR_FULL_NAME:
+               case WRAPPED_TYPE_NAME:
                   typeName = (String) tagValue;
                   break;
                case WRAPPED_MESSAGE:
