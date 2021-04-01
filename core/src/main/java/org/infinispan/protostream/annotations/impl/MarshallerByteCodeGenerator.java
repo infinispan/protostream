@@ -177,9 +177,9 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
             marshallerImpl.addMethod(CtNewMethod.make("public final java.lang.Object getElement(java.lang.Object container, int index) { return " + ADAPTER_FIELD_NAME + ".getElement(container, index); }", marshallerImpl));
             marshallerImpl.addMethod(CtNewMethod.make("public final void setElement(java.lang.Object container, int index, java.lang.Object element) { " + ADAPTER_FIELD_NAME + ".setElement(container, index, element); }", marshallerImpl));
          } else {
-            marshallerImpl.addMethod(CtNewMethod.make("public final int getNumElements(java.lang.Object container) { return ((" + iterableContainerAdapterInterface.getName() + ") container).getNumElements(); }", marshallerImpl));
-            marshallerImpl.addMethod(CtNewMethod.make("public final java.lang.Object getElement(java.lang.Object container, int index) { return ((" + iterableContainerAdapterInterface.getName() + ") container).getElement(index); }", marshallerImpl));
-            marshallerImpl.addMethod(CtNewMethod.make("public final void setElement(java.lang.Object container, int index, java.lang.Object element) { ((" + iterableContainerAdapterInterface.getName() + ") container).setElement(index, element); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final int getNumElements(java.lang.Object container) { return ((" + indexedContainerAdapterInterface.getName() + ") container).getNumElements(); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final java.lang.Object getElement(java.lang.Object container, int index) { return ((" + indexedContainerAdapterInterface.getName() + ") container).getElement(index); }", marshallerImpl));
+            marshallerImpl.addMethod(CtNewMethod.make("public final void setElement(java.lang.Object container, int index, java.lang.Object element) { ((" + indexedContainerAdapterInterface.getName() + ") container).setElement(index, element); }", marshallerImpl));
          }
       } else if (pmtm.isIterableContainer()) {
          marshallerImpl.addInterface(iterableContainerAdapterInterface);

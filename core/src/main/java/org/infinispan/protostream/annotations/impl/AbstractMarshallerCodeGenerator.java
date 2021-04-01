@@ -199,7 +199,8 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.append("final ").append(TagReader.class.getName()).append(" $in = $1.getReader();\n");
 
       if (messageTypeMetadata.isContainer()) {
-         iw.append("int __v$size = ((java.lang.Integer) $1.getParam(\"" + WrappedMessage.CONTAINER_SIZE_CONTEXT_PARAM + "\")).intValue();");
+         iw.append("Object __v$sizeParam = $1.getParam(\"" + WrappedMessage.CONTAINER_SIZE_CONTEXT_PARAM + "\");\n");
+         iw.append("int __v$size = ((java.lang.Integer) __v$sizeParam).intValue();\n");
       }
 
       // if there is no factory then the class must have setters or the fields should be directly accessible and not be final

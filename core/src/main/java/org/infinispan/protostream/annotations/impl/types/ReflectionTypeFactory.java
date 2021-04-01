@@ -18,6 +18,9 @@ import java.util.Optional;
 
 import org.infinispan.protostream.annotations.ProtoDoc;
 
+//todo [anistor] revisit this and improve handling of generic types based on ideas from
+// https://github.com/XDean/Java-EX/blob/297b21df13ebe25e991ec3741af21b3592e92375/src/main/java/xdean/jex/util/reflect/GenericUtil.java
+
 /**
  * Implementation relying on reflection.
  *
@@ -187,6 +190,24 @@ public final class ReflectionTypeFactory implements XTypeFactory {
          return xInterfaces;
       }
 
+      //todo [anistor] Needs further testing! ATM this is not used because we're generating 'type-erased' code.
+      @Override
+      public String[] getGenericInterfaceParameterTypes(Class<?> c) {
+         for (Class<?> i : clazz.getInterfaces()) {
+            if (c.isAssignableFrom(i)) {
+               TypeVariable<? extends Class<?>>[] typeParameters = i.getTypeParameters();
+               String[] params = new String[typeParameters.length];
+               int j = 0;
+               for (TypeVariable<?> t : typeParameters) {
+                  params[j++] = t.getGenericDeclaration().toString();
+               }
+               return params;
+            }
+         }
+         XClass superclass = getSuperclass();
+         return superclass != null ? superclass.getGenericInterfaceParameterTypes(c) : null;
+      }
+
       @Override
       public boolean isAssignableTo(XClass other) {
          if (this == other) {
@@ -283,7 +304,7 @@ public final class ReflectionTypeFactory implements XTypeFactory {
 
       @Override
       public XMethod getMethod(String methodName, XClass... xArgTypes) {
-         Method method = findMethod(clazz , methodName, argsAsClass(xArgTypes));
+         Method method = findMethod(clazz, methodName, argsAsClass(xArgTypes));
          return method == null ? null : cacheMethod(method);
       }
 

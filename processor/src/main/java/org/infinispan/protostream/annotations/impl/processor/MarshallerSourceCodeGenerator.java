@@ -24,6 +24,8 @@ import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.processor.types.HasModelElement;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
+import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
+import org.infinispan.protostream.containers.IterableElementContainerAdapter;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.Log;
@@ -170,17 +172,19 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.append("public final class ").append(marshallerClassName)
             .append(" extends ").append(GeneratedMarshallerBase.class.getName())
             .append(" implements ").append(ProtobufTagMarshaller.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>');
+      String elementType = null;
+      if (pmtm.isIndexedContainer()) {
+         elementType = pmtm.getAnnotatedClass().getGenericInterfaceParameterTypes(IndexedElementContainerAdapter.class)[1];
+         iw.append(", ").append(IndexedElementContainerAdapter.class.getName()).append('<').append(pmtm.getJavaClassName()).append(", ").append(elementType).append(">");
+      } else if (pmtm.isIterableContainer()) {
+         elementType = pmtm.getAnnotatedClass().getGenericInterfaceParameterTypes(IterableElementContainerAdapter.class)[1];
+         iw.append(", ").append(IterableElementContainerAdapter.class.getName()).append('<').append(pmtm.getJavaClassName()).append(", ").append(elementType).append(">");
+      }
       iw.append(" {\n\n");
       iw.inc();
 
       if (pmtm.isAdapter()) {
          addAdapterField(iw, pmtm);
-      }
-
-      if (pmtm.isIndexedContainer()) {
-         //iw.append(", ").append(IndexedContainerAdapter.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>');
-      } else if (pmtm.isIterableContainer()) {
-         //iw.append(", ").append(IndexedContainerAdapter.class.getName()).append('<').append(pmtm.getJavaClassName()).append('>');
       }
 
       addMarshallerDelegateFields(iw, pmtm);
@@ -190,9 +194,25 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.append("@Override\npublic String getTypeName() { return \"").append(makeQualifiedTypeName(pmtm.getFullName())).append("\"; }\n\n");
 
       if (pmtm.isIndexedContainer()) {
-         //iw.append("@Override\npublic int getContainerField() { return 1; }\n\n");
+         if (pmtm.isAdapter()) {
+            iw.append("@Override\npublic int getNumElements(").append(pmtm.getJavaClassName()).append(" container) { return ").append(ADAPTER_FIELD_NAME).append(".getNumElements(container); }\n");
+            iw.append("@Override\npublic ").append(elementType).append(" getElement(").append(pmtm.getJavaClassName()).append(" container, int index) { return ").append(ADAPTER_FIELD_NAME).append(".getElement(container, index); }\n");
+            iw.append("@Override\npublic void setElement(").append(pmtm.getJavaClassName()).append(" container, int index, ").append(elementType).append(" element) { ").append(ADAPTER_FIELD_NAME).append(".setElement(container, index, element); }\n");
+         } else {
+            iw.append("@Override\npublic int getNumElements(").append(pmtm.getJavaClassName()).append(" container) { return ((").append(IndexedElementContainerAdapter.class.getName()).append(") container).getNumElements(); }\n");
+            iw.append("@Override\npublic ").append(elementType).append(" getElement(").append(pmtm.getJavaClassName()).append(" container, int index) { return ((").append(IndexedElementContainerAdapter.class.getName()).append(") container).getElement(index); }\n");
+            iw.append("@Override\npublic void setElement(").append(pmtm.getJavaClassName()).append(" container, int index, ").append(elementType).append(" element) { ((").append(IndexedElementContainerAdapter.class.getName()).append(") container).setElement(index, element); }\n");
+         }
       } else if (pmtm.isIterableContainer()) {
-         //iw.append("@Override\npublic int getContainerField() { return 1; }\n\n");
+         if (pmtm.isAdapter()) {
+            iw.append("@Override\npublic int getNumElements(").append(pmtm.getJavaClassName()).append(" container) { return ").append(ADAPTER_FIELD_NAME).append(".getNumElements(container); }\n");
+            iw.append("@Override\npublic java.util.Iterator getElements(").append(pmtm.getJavaClassName()).append(" container) { return ").append(ADAPTER_FIELD_NAME).append(".getElements(container); }\n");
+            iw.append("@Override\npublic void appendElement(").append(pmtm.getJavaClassName()).append(" container, ").append(elementType).append(" element) { ").append(ADAPTER_FIELD_NAME).append(".appendElement(container, element); }\n");
+         } else {
+            iw.append("@Override\npublic int getNumElements(").append(pmtm.getJavaClassName()).append(" container) { return ((").append(IterableElementContainerAdapter.class.getName()).append(") container).getNumElements(); }\n");
+            iw.append("@Override\npublic java.util.Iterator getElements(").append(pmtm.getJavaClassName()).append(" container) { return ((").append(IterableElementContainerAdapter.class.getName()).append(") container).getElements(); }\n");
+            iw.append("@Override\npublic void appendElement(").append(pmtm.getJavaClassName()).append(" container, ").append(elementType).append(" element) { ((").append(IterableElementContainerAdapter.class.getName()).append(") container).appendElement(element); }\n");
+         }
       }
 
       String readMethodSrc = generateReadMethodBody(pmtm);

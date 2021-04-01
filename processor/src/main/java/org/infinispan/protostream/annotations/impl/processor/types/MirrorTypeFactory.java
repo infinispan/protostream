@@ -24,6 +24,7 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -45,6 +46,8 @@ import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
  * @since 4.3
  */
 public final class MirrorTypeFactory implements XTypeFactory {
+
+   private static final XClass[] EMPTY_XCLASS_ARRAY = new XClass[0];
 
    private final Elements elements;
 
@@ -367,7 +370,12 @@ public final class MirrorTypeFactory implements XTypeFactory {
 
       @Override
       public XClass[] getInterfaces() {
-         return new XClass[0];
+         return EMPTY_XCLASS_ARRAY;
+      }
+
+      @Override
+      public String[] getGenericInterfaceParameterTypes(Class<?> c) {
+         return null;
       }
 
       @Override
@@ -593,6 +601,38 @@ public final class MirrorTypeFactory implements XTypeFactory {
             xclasses[i] = fromTypeMirror(interfaces.get(i));
          }
          return xclasses;
+      }
+
+      @Override
+      public String[] getGenericInterfaceParameterTypes(Class<?> c) {
+         String name = c.getCanonicalName();
+         if (name == null) {
+            name = c.getName();
+         }
+         TypeMirror i = types.erasure(elements.getTypeElement(name).asType());
+         return getGenericInterfaceParameterTypes(typeMirror, i);
+      }
+
+      private String[] getGenericInterfaceParameterTypes(TypeMirror typeMirror, TypeMirror i) {
+         if (types.isAssignable(typeMirror, i)) {
+            if (types.isSameType(types.erasure(typeMirror), i)) {
+               return ((DeclaredType) typeMirror).getTypeArguments().stream()
+                     .map((TypeMirror t) -> {
+                        if (t instanceof TypeVariable) {
+                           t = ((TypeVariable) t).getUpperBound();
+                        }
+                        return t.toString();
+                     })
+                     .toArray(String[]::new);
+            }
+            for (TypeMirror s : types.directSupertypes(typeMirror)) {
+               String[] params = getGenericInterfaceParameterTypes(s, i);
+               if (params != null) {
+                  return params;
+               }
+            }
+         }
+         return null;
       }
 
       @Override
@@ -885,7 +925,12 @@ public final class MirrorTypeFactory implements XTypeFactory {
 
       @Override
       public XClass[] getInterfaces() {
-         return new XClass[0];
+         return EMPTY_XCLASS_ARRAY;
+      }
+
+      @Override
+      public String[] getGenericInterfaceParameterTypes(Class<?> c) {
+         return null;
       }
 
       @Override

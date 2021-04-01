@@ -45,7 +45,15 @@ public interface XClass extends XElement {
 
    XClass getSuperclass();
 
+   /**
+    * Directly implemented interfaces.
+    */
    XClass[] getInterfaces();
+
+   /**
+    * Gets the actual type params of an interface implemented directly by this class or all its supers.
+    */
+   String[] getGenericInterfaceParameterTypes(Class<?> c);
 
    boolean isAssignableTo(XClass c);
 
