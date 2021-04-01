@@ -15,14 +15,21 @@ import org.infinispan.protostream.types.java.collections.ArrayListAdapter;
 import org.infinispan.protostream.types.java.collections.HashSetAdapter;
 
 /**
+ * Support for marshalling various {@link java.util.Collection} implementations and array or primitives.
+ *
  * @author anistor@redhat.com
  * @since 4.4
  */
 @AutoProtoSchemaBuilder(
-      schemaFileName = "common-container-types.proto",
+      className = "CommonContainerTypesSchema",
+      schemaFileName = "common-java-container-types.proto",
       schemaFilePath = "/infinispan",
       schemaPackageName = "org.infinispan.protostream.commons",
       includeClasses = {
+            // collections
+            ArrayListAdapter.class,
+            HashSetAdapter.class,
+            // arrays
             IntArrayAdapter.class,
             BooleanArrayAdapter.class,
             ByteArrayAdapter.class,
@@ -31,9 +38,7 @@ import org.infinispan.protostream.types.java.collections.HashSetAdapter;
             LongArrayAdapter.class,
             FloatArrayAdapter.class,
             DoubleArrayAdapter.class,
-            StringArrayAdapter.class,
-            ArrayListAdapter.class,
-            HashSetAdapter.class
+            StringArrayAdapter.class
       }
 )
 public interface CommonContainerTypes extends GeneratedSchema {

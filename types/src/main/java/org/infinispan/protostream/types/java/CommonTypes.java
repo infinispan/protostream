@@ -7,11 +7,14 @@ import org.infinispan.protostream.types.java.math.BigIntegerAdapter;
 import org.infinispan.protostream.types.java.util.UUIDAdapter;
 
 /**
+ * Support for marshalling some frequently used Java types from 'java.math' and java.util' packages.
+ *
  * @author anistor@redhat.com
  * @since 4.4
  */
 @AutoProtoSchemaBuilder(
-      schemaFileName = "common-types.proto",
+      className = "CommonTypesSchema",
+      schemaFileName = "common-java-types.proto",
       schemaFilePath = "/infinispan",
       schemaPackageName = "org.infinispan.protostream.commons",
       includeClasses = {
