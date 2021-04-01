@@ -26,7 +26,7 @@ public final class ProtobufUtil {
 
    public static final int DEFAULT_STREAM_BUFFER_SIZE = 4096;
 
-   private static final int DEFAULT_ARRAY_BUFFER_SIZE = 512;
+   public static final int DEFAULT_ARRAY_BUFFER_SIZE = 512;
 
    private ProtobufUtil() {
    }
