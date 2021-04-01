@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufParser;
+import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.WrappedMessage;
@@ -60,8 +61,6 @@ import com.fasterxml.jackson.core.JsonToken;
  */
 public final class JsonUtils {
 
-   private static final int BUFFER_SIZE = 512;
-
    // Z-normalized RFC 3339 format
    private static final String RFC_3339_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
@@ -75,7 +74,7 @@ public final class JsonUtils {
    }
 
    public static byte[] fromCanonicalJSON(ImmutableSerializationContext ctx, Reader reader) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
       TagWriter writer = TagWriterImpl.newInstance(ctx, baos);
 
       JsonParser parser = jsonFactory.createParser(reader);
@@ -114,25 +113,80 @@ public final class JsonUtils {
             break;
          }
          switch (token) {
-            case END_OBJECT:
+            case END_OBJECT: {
                return;
-            case FIELD_NAME:
+            }
+            case FIELD_NAME: {
                String currentField = parser.getCurrentName();
                expectField(JSON_TYPE_FIELD, currentField);
                break;
-            case VALUE_STRING:
+            }
+            case VALUE_STRING: {
                String topLevelTypeName = parser.getText();
-               Type fieldType = getFieldType(ctx, topLevelTypeName);
+               GenericDescriptor descriptorByName = null;
+               Type fieldType;
+               switch (topLevelTypeName) {
+                  case "double":
+                     fieldType = Type.DOUBLE;
+                     break;
+                  case "float":
+                     fieldType = Type.FLOAT;
+                     break;
+                  case "int32":
+                     fieldType = Type.INT32;
+                     break;
+                  case "int64":
+                     fieldType = Type.INT64;
+                     break;
+                  case "fixed32":
+                     fieldType = Type.FIXED32;
+                     break;
+                  case "fixed64":
+                     fieldType = Type.FIXED64;
+                     break;
+                  case "bool":
+                     fieldType = Type.BOOL;
+                     break;
+                  case "string":
+                     fieldType = Type.STRING;
+                     break;
+                  case "bytes":
+                     fieldType = Type.BYTES;
+                     break;
+                  case "uint32":
+                     fieldType = Type.UINT32;
+                     break;
+                  case "uint64":
+                     fieldType = Type.UINT64;
+                     break;
+                  case "sfixed32":
+                     fieldType = Type.SFIXED32;
+                     break;
+                  case "sfixed64":
+                     fieldType = Type.SFIXED64;
+                     break;
+                  case "sint32":
+                     fieldType = Type.SINT32;
+                     break;
+                  case "sint64":
+                     fieldType = Type.SINT64;
+                     break;
+                  default:
+                     descriptorByName = ctx.getDescriptorByName(topLevelTypeName);
+                     fieldType = descriptorByName instanceof EnumDescriptor ? Type.ENUM : Type.MESSAGE;
+               }
+
                switch (fieldType) {
                   case ENUM:
-                     processEnum(parser, writer, (EnumDescriptor) ctx.getDescriptorByName(topLevelTypeName));
+                     processEnum(parser, writer, (EnumDescriptor) descriptorByName);
                      break;
                   case MESSAGE:
-                     processObject(ctx, parser, writer, topLevelTypeName, null, true);
+                     processObject(ctx, parser, writer, (Descriptor) descriptorByName, null, true);
                      break;
                   default:
                      processPrimitive(parser, writer, fieldType);
                }
+            }
          }
       }
    }
@@ -156,7 +210,12 @@ public final class JsonUtils {
                if (enumValueDescriptor == null) {
                   throw new IllegalStateException("Invalid enum value : '" + enumValueName + "'");
                }
-               writer.writeUInt32(WRAPPED_TYPE_ID, enumDescriptor.getTypeId());//todo [anistor] this seems to be a mistake! we need a typeid/typename only for top level, and this is not the case!
+               Integer topLevelTypeId = enumDescriptor.getTypeId();
+               if (topLevelTypeId == null) {
+                  writer.writeString(WRAPPED_TYPE_NAME, enumDescriptor.getFullName());
+               } else {
+                  writer.writeUInt32(WRAPPED_TYPE_ID, topLevelTypeId);
+               }
                writer.writeEnum(WRAPPED_ENUM, enumValueDescriptor.getNumber());
                break;
             }
@@ -166,7 +225,12 @@ public final class JsonUtils {
                if (enumValueDescriptor == null) {
                   throw new IllegalStateException("Invalid enum value : " + enumValueNumber);
                }
-               writer.writeUInt32(WRAPPED_TYPE_ID, enumDescriptor.getTypeId());//todo [anistor] same as previous todo
+               Integer topLevelTypeId = enumDescriptor.getTypeId();
+               if (topLevelTypeId == null) {
+                  writer.writeString(WRAPPED_TYPE_NAME, enumDescriptor.getFullName());
+               } else {
+                  writer.writeUInt32(WRAPPED_TYPE_ID, topLevelTypeId);
+               }
                writer.writeEnum(WRAPPED_ENUM, enumValueDescriptor.getNumber());
                break;
             }
@@ -182,13 +246,13 @@ public final class JsonUtils {
       }
    }
 
-   private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, String type, Integer fieldNumber, boolean topLevel) throws IOException {
-      Descriptor messageDescriptor = ctx.getMessageDescriptor(type);
-
+   private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber, boolean topLevel) throws IOException {
       Set<String> requiredFields = messageDescriptor.getFields().stream()
-            .filter(FieldDescriptor::isRequired).map(FieldDescriptor::getName).collect(Collectors.toCollection(HashSet::new));
+            .filter(FieldDescriptor::isRequired)
+            .map(FieldDescriptor::getName)
+            .collect(Collectors.toCollection(HashSet::new));
 
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(BUFFER_SIZE);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
       TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, baos);
 
       String currentField = null;
@@ -203,7 +267,7 @@ public final class JsonUtils {
             case END_OBJECT:
                break out;
             case START_ARRAY:
-               processArray(ctx, type, currentField, parser, nestedWriter);
+               processArray(ctx, messageDescriptor.getFullName(), currentField, parser, nestedWriter);
                break;
             case START_OBJECT: {
                FieldDescriptor fd = messageDescriptor.findFieldByName(currentField);
@@ -211,7 +275,7 @@ public final class JsonUtils {
                if (messageType == null) {
                   throw new IllegalStateException("Field '" + currentField + "' is not an object");
                }
-               processObject(ctx, parser, nestedWriter, messageType.getFullName(), fd.getNumber(), false);
+               processObject(ctx, parser, nestedWriter, messageType, fd.getNumber(), false);
                requiredFields.remove(currentField);
                break;
             }
@@ -250,7 +314,7 @@ public final class JsonUtils {
       if (topLevel) {
          Integer topLevelTypeId = messageDescriptor.getTypeId();
          if (topLevelTypeId == null) {
-            writer.writeString(WRAPPED_TYPE_NAME, type);
+            writer.writeString(WRAPPED_TYPE_NAME, messageDescriptor.getFullName());
          } else {
             writer.writeUInt32(WRAPPED_TYPE_ID, topLevelTypeId);
          }
@@ -330,44 +394,6 @@ public final class JsonUtils {
       }
    }
 
-   private static Type getFieldType(ImmutableSerializationContext ctx, String fullTypeName) {
-      switch (fullTypeName) {
-         case "double":
-            return Type.DOUBLE;
-         case "float":
-            return Type.FLOAT;
-         case "int32":
-            return Type.INT32;
-         case "int64":
-            return Type.INT64;
-         case "fixed32":
-            return Type.FIXED32;
-         case "fixed64":
-            return Type.FIXED64;
-         case "bool":
-            return Type.BOOL;
-         case "string":
-            return Type.STRING;
-         case "bytes":
-            return Type.BYTES;
-         case "uint32":
-            return Type.UINT32;
-         case "uint64":
-            return Type.UINT64;
-         case "sfixed32":
-            return Type.SFIXED32;
-         case "sfixed64":
-            return Type.SFIXED64;
-         case "sint32":
-            return Type.SINT32;
-         case "sint64":
-            return Type.SINT64;
-         default:
-            GenericDescriptor descriptorByName = ctx.getDescriptorByName(fullTypeName);
-            return descriptorByName instanceof EnumDescriptor ? Type.ENUM : Type.MESSAGE;
-      }
-   }
-
    private static void processArray(ImmutableSerializationContext ctx, String type, String field, JsonParser parser, TagWriter writer) throws IOException {
       while (true) {
          JsonToken token = parser.nextToken();
@@ -383,7 +409,7 @@ public final class JsonUtils {
             case START_OBJECT: {
                Descriptor d = (Descriptor) ctx.getDescriptorByName(type);
                FieldDescriptor fd = d.findFieldByName(field);
-               processObject(ctx, parser, writer, fd.getMessageType().getFullName(), fd.getNumber(), false);
+               processObject(ctx, parser, writer, fd.getMessageType(), fd.getNumber(), false);
                break;
             }
             case VALUE_STRING:
