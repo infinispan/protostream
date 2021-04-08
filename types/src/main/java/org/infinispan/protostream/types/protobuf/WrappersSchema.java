@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 @AutoProtoSchemaBuilder(
       schemaFileName = "wrappers.proto",
-      schemaFilePath = "/google/protobuf",
+      schemaFilePath = "/protostream/google/protobuf",
       schemaPackageName = "google.protobuf",
       includeClasses = {
             WrappersSchema.DoubleValue.class,

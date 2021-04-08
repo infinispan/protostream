@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
  */
 @AutoProtoSchemaBuilder(
       schemaFileName = "empty.proto",
-      schemaFilePath = "/google/protobuf",
+      schemaFilePath = "/protostream/google/protobuf",
       schemaPackageName = "google.protobuf",
       includeClasses = EmptySchema.Empty.class
 )

@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 @AutoProtoSchemaBuilder(
       schemaFileName = "timestamp.proto",
-      schemaFilePath = "/google/protobuf",
+      schemaFilePath = "/protostream/google/protobuf",
       schemaPackageName = "google.protobuf",
       includeClasses = TimestampSchema.Timestamp.class
 )
