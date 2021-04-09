@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoName;
  */
 @ProtoAdapter(String[].class)
 @ProtoName("StringArray")
-public final class StringArrayAdapter extends GenericArrayAdapter<String> {
+public final class StringArrayAdapter extends AbstractArrayAdapter<String> {
 
    @ProtoFactory
    public String[] create(int size) {

@@ -9,8 +9,8 @@ import org.infinispan.protostream.annotations.ProtoName;
  * @since 4.4
  */
 @ProtoAdapter(Integer[].class)
-@ProtoName("IntegerArray")
-public final class IntegerArrayAdapter extends GenericArrayAdapter<Integer> {
+@ProtoName("BoxedIntegerArray")
+public final class BoxedIntegerArrayAdapter extends AbstractArrayAdapter<Integer> {
 
    @ProtoFactory
    public Integer[] create(int size) {

@@ -15,7 +15,7 @@ import org.infinispan.protostream.types.java.util.UUIDAdapter;
 @AutoProtoSchemaBuilder(
       className = "CommonTypesSchema",
       schemaFileName = "common-java-types.proto",
-      schemaFilePath = "/infinispan",
+      schemaFilePath = "/protostream",
       schemaPackageName = "org.infinispan.protostream.commons",
       includeClasses = {
             UUIDAdapter.class,

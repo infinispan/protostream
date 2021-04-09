@@ -8,12 +8,12 @@ import org.infinispan.protostream.annotations.ProtoName;
  * @author anistor@redhat.com
  * @since 4.4
  */
-@ProtoAdapter(Byte[].class)
-@ProtoName("ByteArray")
-public final class ByteArrayAdapter extends GenericArrayAdapter<Byte> {
+@ProtoAdapter(Float[].class)
+@ProtoName("BoxedFloatArray")
+public final class BoxedFloatArrayAdapter extends AbstractArrayAdapter<Float> {
 
    @ProtoFactory
-   public Byte[] create(int size) {
-      return new Byte[size];
+   public Float[] create(int size) {
+      return new Float[size];
    }
 }
