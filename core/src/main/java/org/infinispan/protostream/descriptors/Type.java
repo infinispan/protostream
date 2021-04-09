@@ -56,6 +56,47 @@ public enum Type {
       this.wireType = wireType;
    }
 
+   /**
+    * If the type name is a primitive, it returns the corresponding enum constant, otherwise it returns {@code null}.
+    */
+   public static Type primitiveFromString(String typeName) {
+      switch (typeName) {
+         case "double":
+            return DOUBLE;
+         case "float":
+            return FLOAT;
+         case "int64":
+            return INT64;
+         case "uint64":
+            return UINT64;
+         case "sint64":
+            return SINT64;
+         case "fixed64":
+            return FIXED64;
+         case "sfixed64":
+            return SFIXED64;
+         case "int32":
+            return INT32;
+         case "uint32":
+            return UINT32;
+         case "sint32":
+            return SINT32;
+         case "fixed32":
+            return FIXED32;
+         case "sfixed32":
+            return SFIXED32;
+         case "bool":
+            return BOOL;
+         case "string":
+            return STRING;
+         case "bytes":
+            return BYTES;
+         default:
+            // unknown type, not a primitive for sure
+            return null;
+      }
+   }
+
    public JavaType getJavaType() {
       return javaType;
    }
@@ -64,6 +105,9 @@ public enum Type {
       return wireType;
    }
 
+   /**
+    * Returns {@code true} only if the type is an unsigned numeric type, {@code false} otherwise.
+    */
    public boolean isUnsigned() {
       return this == UINT32 ||
             this == UINT64 ||

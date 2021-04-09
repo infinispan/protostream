@@ -36,15 +36,16 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
 
    private FieldDescriptor(Builder builder) {
       super(builder.name, null, builder.documentation);
-      this.number = builder.number;
-      this.label = builder.label;
-      this.options = unmodifiableList(builder.options);
+      number = builder.number;
+      label = builder.label;
+      options = unmodifiableList(builder.options);
       for (Option opt : options) {
          optionByName.put(opt.getName(), opt.getValue());
       }
-      this.typeName = builder.typeName;
-      this.defaultValue = builder.defaultValue;
-      this.isExtension = builder.isExtension;
+      typeName = builder.typeName;
+      type = Type.primitiveFromString(typeName);
+      defaultValue = builder.defaultValue;
+      isExtension = builder.isExtension;
    }
 
    public int getNumber() {
@@ -57,10 +58,6 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
 
    public Type getType() {
       return type;
-   }
-
-   void setType(Type type) {
-      this.type = type;
    }
 
    public Descriptor getMessageType() {
@@ -233,14 +230,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       }
 
       public FieldDescriptor build() {
-         FieldDescriptor fieldDescriptor = new FieldDescriptor(this);
-         try {
-            Type fieldType = Type.valueOf(typeName.toUpperCase());
-            fieldDescriptor.setType(fieldType);
-         } catch (IllegalArgumentException ignored) {
-            // TODO [anistor] This (harmless exception) happens because typeName is not a primitive but a user defined type. A nicer validation would be better.
-         }
-         return fieldDescriptor;
+         return new FieldDescriptor(this);
       }
    }
 }
