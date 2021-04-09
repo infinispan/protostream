@@ -333,7 +333,10 @@ public final class FileDescriptor {
 
    private void resolveFieldTypes(Descriptor descriptor) {
       for (FieldDescriptor fieldDescriptor : descriptor.getFields()) {
-         if (fieldDescriptor.getType() == null) {
+         if (fieldDescriptor.getType() == null ||
+               fieldDescriptor.getType() == Type.GROUP ||
+               fieldDescriptor.getType() == Type.MESSAGE ||
+               fieldDescriptor.getType() == Type.ENUM) {
             GenericDescriptor res = searchType(fieldDescriptor.getTypeName(), descriptor);
             if (res instanceof EnumDescriptor) {
                fieldDescriptor.setEnumType((EnumDescriptor) res);

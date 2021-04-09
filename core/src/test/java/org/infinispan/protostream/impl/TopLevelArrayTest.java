@@ -149,7 +149,7 @@ public class TopLevelArrayTest {
             "}\n" +
             "/** @TypeId(75001) */\n" +
             "message MyMessage {\n" +
-            "   optional String field1 = 1;\n" +
+            "   optional string field1 = 1;\n" +
             "}\n";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource()
