@@ -4,6 +4,7 @@ import static org.infinispan.protostream.descriptors.WireType.FIXED_32_SIZE;
 import static org.infinispan.protostream.descriptors.WireType.FIXED_64_SIZE;
 import static org.infinispan.protostream.descriptors.WireType.MAX_VARINT_SIZE;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
@@ -243,6 +244,36 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       return this;
    }
 
+
+   @Override
+   public byte[] fullBufferArray() throws IOException {
+      checkBufferUnused("fullBufferArray");
+      
+      return decoder.getBufferArray();
+   }
+
+   @Override
+   public InputStream fullBufferInputStream() throws IOException {
+      checkBufferUnused("fullBufferInputStream");
+      
+      if (isInputStream()) {
+         return ((InputStreamDecoder)decoder).getInputStream();
+      } else {
+         return new ByteArrayInputStream(decoder.getBufferArray());
+      }
+   }
+
+   private void checkBufferUnused(String methodName) {
+      if (decoder.getPos() > 0) {
+         throw new IllegalStateException(methodName + " in marshaller can only be used on an unprocessed buffer");
+      }
+   }
+
+   @Override
+   public boolean isInputStream() {
+      return (decoder instanceof InputStreamDecoder);
+   }
+
    /**
     * @deprecated this will be removed in 5.0 together with {@link org.infinispan.protostream.MessageMarshaller}
     */
@@ -263,6 +294,12 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       protected int globalLimit = Integer.MAX_VALUE;
 
       protected int lastTag;
+
+      abstract int getEnd();
+
+      abstract int getPos();
+
+      abstract byte[] getBufferArray() throws IOException;
 
       abstract boolean isAtEnd() throws IOException;
 
@@ -432,6 +469,21 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
       private void adjustEnd() {
          end = stop - start > limit ? start + limit : stop;
+      }
+
+      @Override
+      int getEnd() {
+         return end;
+      }
+
+      @Override
+      int getPos() {
+         return pos;
+      }
+
+      @Override
+      byte[] getBufferArray() throws IOException {
+         return array;
       }
 
       @Override
@@ -632,6 +684,22 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       private void adjustEnd() {
          end = stop - start > limit ? start + limit : stop;
       }
+
+      @Override
+      int getEnd() {
+         return end;
+      }
+
+      @Override
+      int getPos() {
+         return buf.position() - start;
+      }
+
+      @Override
+      byte[] getBufferArray() throws IOException {
+         return buf.array();
+      }
+      
 
       @Override
       boolean isAtEnd() {
@@ -977,6 +1045,26 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
+      int getEnd() {
+         return end;
+      }
+
+      @Override
+      int getPos() {
+         return pos;
+      }
+
+      @Override
+      byte[] getBufferArray() throws IOException {
+         fillBuffer(buf.length);
+         return buf;
+      }
+
+      InputStream getInputStream() {
+         return in;
+      }
+
+      @Override
       boolean isAtEnd() throws IOException {
          return pos == end && !tryFillBuffer(1);
       }
@@ -1161,4 +1249,5 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          }
       }
    }
+
 }
