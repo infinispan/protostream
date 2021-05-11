@@ -12,7 +12,7 @@ import org.infinispan.protostream.descriptors.Type;
  * @author anistor@redhat.com
  * @since 4.4
  */
-@ProtoTypeId(10005 /* see org.infinispan.commons.marshall.ProtoStreamTypeIds.UUID */)
+@ProtoTypeId(1005 /* see org.infinispan.commons.marshall.ProtoStreamTypeIds.UUID */)
 @ProtoAdapter(UUID.class)
 public final class UUIDAdapter {
 
