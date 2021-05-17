@@ -1,52 +1,37 @@
 package org.infinispan.protostream;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Objects;
-import java.util.Properties;
 
 /**
- * Contains version information about this ProtoStream release.
+ * Provides version information about this ProtoStream release.
  *
  * @author anistor@redhat.com
  * @since 4.2
  */
 public final class Version implements Comparable<Version> {
 
-   private static final Version VERSION = getArtifactVersion();
+   private static final Version VERSION = getVersion(Version.class);
 
    /**
-    * We try to obtain the Maven pom.properties of the artifact and get the build version from there.
+    * Try to obtain the version from the manifest.
     */
-   private static Version getArtifactVersion() {
-      int major = 0;
-      int minor = 0;
-      int micro = 0;
-      String suffix = null;
+   public static Version getVersion(Class<?> clazz) {
+      String version = clazz.getPackage().getImplementationVersion();
 
-      InputStream res = Version.class.getResourceAsStream("/META-INF/maven/org.infinispan.protostream/protostream/pom.properties");
-      if (res != null) {
+      if (version != null) {
          try {
-            Properties pomProps = new Properties();
-            pomProps.load(res);
-            String version = pomProps.getProperty("version", "0.0.0-UNKNOWN");
             String[] versionParts = version.split("[.\\-]");
-            major = Integer.parseInt(versionParts[0]);
-            if (versionParts.length > 1) {
-               minor = Integer.parseInt(versionParts[1]);
-            }
-            if (versionParts.length > 2) {
-               micro = Integer.parseInt(versionParts[2]);
-            }
-            if (versionParts.length > 3) {
-               suffix = versionParts[3];
-            }
-         } catch (IOException | NumberFormatException | ArrayIndexOutOfBoundsException e) {
-            // ignored
+            int major = Integer.parseInt(versionParts[0]);
+            int minor = versionParts.length > 1 ? Integer.parseInt(versionParts[1]) : 0;
+            int micro = versionParts.length > 2 ? Integer.parseInt(versionParts[2]) : 0;
+            String suffix = versionParts.length > 3 ? versionParts[3] : null;
+            return new Version(major, minor, micro, suffix);
+         } catch (Exception e) {
+            // ignore
          }
       }
 
-      return new Version(major, minor, micro, suffix);
+      return new Version(0, 0, 0, "UNKNOWN");
    }
 
    public static Version getVersion() {
@@ -72,7 +57,14 @@ public final class Version implements Comparable<Version> {
       this.minor = minor;
       this.micro = micro;
       this.suffix = suffix;
-      versionString = major + "." + minor + "." + micro + (suffix != null ? "." + suffix : "");
+      if (suffix == null) {
+         suffix = "";
+      } else if ("SNAPSHOT".equals(suffix)) {
+         suffix = "-SNAPSHOT";
+      } else {
+         suffix = '.' + suffix;
+      }
+      versionString = major + "." + minor + "." + micro + suffix;
    }
 
    public int getMajor() {
@@ -124,7 +116,11 @@ public final class Version implements Comparable<Version> {
          if (d == 0) {
             d = micro - other.micro;
             if (d == 0) {
-               d = suffix.compareTo(other.suffix);
+               if (suffix == null) {
+                  d = other.suffix == null ? 0 : -1;
+               } else {
+                  d = other.suffix == null ? 1 : suffix.compareTo(other.suffix);
+               }
             }
          }
       }
