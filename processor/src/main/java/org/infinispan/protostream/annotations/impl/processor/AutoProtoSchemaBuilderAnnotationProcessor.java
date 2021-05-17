@@ -41,6 +41,7 @@ import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.Version;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
@@ -66,8 +67,6 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
     * The FQN of the one and only annotation we claim.
     */
    static final String ANNOTATION_NAME = "org.infinispan.protostream.annotations.AutoProtoSchemaBuilder";
-
-   private static boolean checkForMinRequiredJava = true;
 
    private final ServiceLoaderFileGenerator serviceLoaderFileGenerator = new ServiceLoaderFileGenerator(SerializationContextInitializer.class);
 
@@ -102,6 +101,8 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       messager = processingEnv.getMessager();
 
       generatedFilesWriter = new GeneratedFilesWriter(filer);
+
+      ensureRequiredEnv();
    }
 
    @Override
@@ -172,8 +173,6 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
          logDebug("AutoProtoSchemaBuilderAnnotationProcessor annotations=%s, rootElements=%s", annotations, roundEnv.getRootElements());
       }
 
-      ensureMinRequiredJava();
-
       Optional<? extends TypeElement> claimedAnnotation = annotations.stream()
             .filter(a -> a.getQualifiedName().contentEquals(ANNOTATION_NAME))
             .findAny();
@@ -208,15 +207,18 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return claimedAnnotation.isPresent();
    }
 
-   private void ensureMinRequiredJava() {
-      if (checkForMinRequiredJava && getJavaMajorVersion() < 9) {
-
-         // check and complain only once
-         checkForMinRequiredJava = false;
-
+   private void ensureRequiredEnv() {
+      if (getJavaMajorVersion() < 9) {
          reportWarning(null, "Please ensure you use at least Java ver. 9 for compilation in order to avoid various " +
                "compiler related bugs from older Java versions that impact the AutoProtoSchemaBuilder annotation " +
                "processor (you can still set the output target to 8 or above).");
+      }
+
+      Version procVersion = Version.getVersion(AutoProtoSchemaBuilder.class);
+      if (Version.getVersion().compareTo(procVersion) != 0) {
+         // protostream core and processor versions must be identical to ensure compatibility
+         reportWarning(null, "Version mismatch! protostream (%s) and protostream-processor (%s) are expected to be the same version. " +
+               "Mixing different versions is unsupported and can lead to unintended consequences.", Version.getVersion(), procVersion);
       }
    }
 
