@@ -57,7 +57,11 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parent, OutputStream output) {
-      return new TagWriterImpl((TagWriterImpl) parent, new OutputStreamEncoder(output, ProtobufUtil.DEFAULT_STREAM_BUFFER_SIZE));
+      TagWriterImpl parentTagWriter = (TagWriterImpl) parent;
+      if (parentTagWriter.encoder instanceof OutputStreamEncoder) {
+         return new TagWriterImpl(parentTagWriter, new OutputStreamEncoder(output, (OutputStreamEncoder) parentTagWriter.encoder));
+      }
+      return new TagWriterImpl(parentTagWriter, new OutputStreamEncoder(output, ProtobufUtil.DEFAULT_STREAM_BUFFER_SIZE));
    }
 
    public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parent, byte[] buf) {
@@ -65,11 +69,20 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamEncoder(output, ProtobufUtil.DEFAULT_STREAM_BUFFER_SIZE));
+      return newInstance(serCtx, output, ProtobufUtil.DEFAULT_STREAM_BUFFER_SIZE);
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output, int bufferSize) {
       return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamEncoder(output, bufferSize));
+   }
+
+   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output, TagWriter detachedParent) {
+      Encoder parentEncoder = ((TagWriterImpl) detachedParent).encoder;
+      if (parentEncoder instanceof OutputStreamEncoder) {
+         return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamEncoder(output, ((OutputStreamEncoder) parentEncoder)));
+      } else {
+         return newInstance(serCtx, output);
+      }
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf) {
@@ -419,8 +432,6 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
       private final byte[] array;
 
-      protected final int offset;
-
       protected final int limit;
 
       protected int pos;
@@ -442,7 +453,6 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
             throw new IllegalArgumentException("end position is outside array bounds");
          }
          this.array = array;
-         this.offset = offset;
          this.limit = offset + length;
          this.pos = offset;
       }
@@ -594,12 +604,14 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
       private final ByteBuffer buffer;
 
+      protected final int offset;
       private final int startPos;
 
       private HeapByteBufferEncoder(ByteBuffer buffer) {
          super(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
          this.buffer = buffer;
          this.startPos = buffer.position();
+         this.offset = buffer.arrayOffset() + buffer.position();
       }
 
       @Override
@@ -728,6 +740,15 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          bufferSize = Math.max(bufferSize, MAX_VARINT_SIZE * 2);
          buffer = new ByteArrayEncoder(new byte[bufferSize], 0, bufferSize);
          this.out = out;
+      }
+
+      /**
+       * Constructor that reuses the parent's buffer
+       */
+      OutputStreamEncoder(OutputStream out, OutputStreamEncoder parent) {
+         this.out = out;
+         this.buffer = parent.buffer;
+         assert buffer.pos == 0;
       }
 
       @Override

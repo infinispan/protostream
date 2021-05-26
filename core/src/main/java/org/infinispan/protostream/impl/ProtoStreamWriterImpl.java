@@ -511,6 +511,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    private void writeMessage(FieldDescriptor fd, Object value, Class<?> clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = serCtx.getMarshallerDelegate(clazz);
+      messageContext.out.flush();
       ByteArrayOutputStreamEx nestedBaos = new ByteArrayOutputStreamEx();
       TagWriterImpl nestedOut = TagWriterImpl.newNestedInstance(messageContext.out, nestedBaos);
       marshallerDelegate.marshall(nestedOut, fd, value);

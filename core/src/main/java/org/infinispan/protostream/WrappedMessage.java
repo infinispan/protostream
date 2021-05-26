@@ -296,11 +296,12 @@ public final class WrappedMessage {
             if (t.getClass().isEnum()) {
                ((EnumMarshallerDelegate) marshallerDelegate).encode(WRAPPED_ENUM, (Enum) t, out);
             } else {
-               ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
-               TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, buffer);
+               out.flush();
+               ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
+               TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, baos, out);
                marshallerDelegate.marshall(nestedCtx, null, t);
                nestedCtx.flush();
-               out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
+               out.writeBytes(WRAPPED_MESSAGE, baos.getByteBuffer());
             }
          }
       }
@@ -321,11 +322,11 @@ public final class WrappedMessage {
       int containerSize = ((ElementContainerAdapter) containerMarshaller).getNumElements(container);
       out.writeUInt32(WRAPPED_CONTAINER_SIZE, containerSize);
 
-      ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
-      TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, buffer);
+      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
+      TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, baos, out);
       marshallerDelegate.marshall(nestedCtx, null, container);
       nestedCtx.flush();
-      out.writeBytes(WRAPPED_CONTAINER_MESSAGE, buffer.getByteBuffer());
+      out.writeBytes(WRAPPED_CONTAINER_MESSAGE, baos.getByteBuffer());
 
       if (containerMarshaller instanceof IterableElementContainerAdapter) {
          Iterator elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);

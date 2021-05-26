@@ -38,6 +38,7 @@ public class GeneratedMarshallerBase {
     * Invoked by generated code.
     */
    protected final <T> void writeNestedMessage(BaseMarshallerDelegate<T> marshallerDelegate, ProtobufTagMarshaller.WriteContext ctx, int fieldNumber, T message) throws IOException {
+      ctx.getWriter().flush();
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       TagWriterImpl nested = TagWriterImpl.newNestedInstance(ctx, baos);
       writeMessage(marshallerDelegate, nested, message);
