@@ -322,6 +322,7 @@ public final class WrappedMessage {
       int containerSize = ((ElementContainerAdapter) containerMarshaller).getNumElements(container);
       out.writeUInt32(WRAPPED_CONTAINER_SIZE, containerSize);
 
+      out.flush();
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, baos, out);
       marshallerDelegate.marshall(nestedCtx, null, container);
