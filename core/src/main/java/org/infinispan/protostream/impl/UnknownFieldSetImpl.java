@@ -202,11 +202,9 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
       TagWriter output = TagWriterImpl.newInstance(null, baos);
       writeTo(output);
       output.flush();
-      ByteBuffer buffer = baos.getByteBuffer();
-      int off = buffer.arrayOffset();
-      int len = buffer.limit() - off;
+      int len = baos.count();
       out.writeInt(len);
-      out.write(buffer.array(), off, len);
+      out.write(baos.buf(), 0, len);
    }
 
    @Override

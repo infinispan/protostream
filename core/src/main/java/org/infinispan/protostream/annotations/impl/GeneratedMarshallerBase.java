@@ -3,6 +3,7 @@ package org.infinispan.protostream.annotations.impl;
 import java.io.IOException;
 
 import org.infinispan.protostream.ProtobufTagMarshaller;
+import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.TagWriterImpl;
@@ -42,6 +43,6 @@ public class GeneratedMarshallerBase {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       TagWriterImpl nested = TagWriterImpl.newNestedInstance(ctx, baos);
       writeMessage(marshallerDelegate, nested, message);
-      ctx.getWriter().writeBytes(fieldNumber, baos.getByteBuffer());
+      ctx.getWriter().writeBytes(fieldNumber, baos.buf(), 0, baos.count());
    }
 }

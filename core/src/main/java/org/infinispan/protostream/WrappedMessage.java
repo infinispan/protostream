@@ -301,7 +301,7 @@ public final class WrappedMessage {
                TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, baos, out);
                marshallerDelegate.marshall(nestedCtx, null, t);
                nestedCtx.flush();
-               out.writeBytes(WRAPPED_MESSAGE, baos.getByteBuffer());
+               out.writeBytes(WRAPPED_MESSAGE, baos.buf(), 0, baos.count());
             }
          }
       }
@@ -326,7 +326,7 @@ public final class WrappedMessage {
       TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, baos, out);
       marshallerDelegate.marshall(nestedCtx, null, container);
       nestedCtx.flush();
-      out.writeBytes(WRAPPED_CONTAINER_MESSAGE, baos.getByteBuffer());
+      out.writeBytes(WRAPPED_CONTAINER_MESSAGE, baos.buf(), 0, baos.count());
 
       if (containerMarshaller instanceof IterableElementContainerAdapter) {
          Iterator elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);

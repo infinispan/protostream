@@ -11,6 +11,7 @@ import java.util.List;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
@@ -516,7 +517,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       TagWriterImpl nestedOut = TagWriterImpl.newNestedInstance(messageContext.out, nestedBaos);
       marshallerDelegate.marshall(nestedOut, fd, value);
       nestedOut.flush();
-      messageContext.out.writeBytes(fd.getNumber(), nestedBaos.getByteBuffer());
+      messageContext.out.writeBytes(fd.getNumber(), nestedBaos.buf(), 0, nestedBaos.count());
    }
 
    private void writeGroup(FieldDescriptor fd, Object value, Class<?> clazz) throws IOException {
