@@ -87,14 +87,16 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
             }
             int number = getNumber(annotation, ec);
             if (membersByNumber.containsKey(number)) {
-               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + number + " on enum constant: " + getAnnotatedClassName() + '.' + ec.getName());
+               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + number + " on enum constant: " + getAnnotatedClassName() + '.' + ec.getName()
+                     + " clashes with " + membersByNumber.get(number).getJavaEnumName());
             }
             String name = annotation.name();
             if (name.isEmpty()) {
                name = ec.getName();
             }
             if (membersByName.containsKey(name)) {
-               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum constant " + name + " on enum constant: " + getAnnotatedClassName() + '.' + ec.getName());
+               throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum constant " + name + " on enum constant: " + getAnnotatedClassName() + '.' + ec.getName()
+                     + " clashes with " + membersByName.get(name).getJavaEnumName());
             }
             ProtoEnumValueMetadata pevm = new ProtoEnumValueMetadata(number, name,
                   ec.getOrdinal(), getJavaClassName() + '.' + ec.getName(), ec.getProtoDocs());
