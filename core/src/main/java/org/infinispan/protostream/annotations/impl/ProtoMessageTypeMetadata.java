@@ -357,26 +357,26 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       for (XField field : clazz.getDeclaredFields()) {
          if (field.getAnnotation(ProtoUnknownFieldSet.class) != null) {
             if (isAdapter) {
-               throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + field);
+               throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + clazz.getCanonicalName() + '.' + field);
             }
             if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
-               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + field);
+               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + clazz.getCanonicalName() + '.' + field);
             }
             unknownFieldSetField = field;
          } else {
             ProtoField annotation = field.getAnnotation(ProtoField.class);
             if (annotation != null) {
                if (isAdapter) {
-                  throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + field);
+                  throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + clazz.getCanonicalName() + '.' + field);
                }
                if (field.isStatic()) {
-                  throw new ProtoSchemaBuilderException("Static fields cannot be @ProtoField annotated: " + field);
+                  throw new ProtoSchemaBuilderException("Static fields cannot be @ProtoField annotated: " + clazz.getCanonicalName() + '.' + field);
                }
                if (factory == null && field.isFinal()) { //todo [anistor] maybe allow this
-                  throw new ProtoSchemaBuilderException("Final fields cannot be @ProtoField annotated: " + field);
+                  throw new ProtoSchemaBuilderException("Final fields cannot be @ProtoField annotated: " + clazz.getCanonicalName() + '.' + field);
                }
                if (field.isPrivate()) {
-                  throw new ProtoSchemaBuilderException("Private fields cannot be @ProtoField annotated: " + field);
+                  throw new ProtoSchemaBuilderException("Private fields cannot be @ProtoField annotated: " + clazz.getCanonicalName() + '.' + field);
                }
                int number = getNumber(annotation, field);
                String fieldName = annotation.name();
