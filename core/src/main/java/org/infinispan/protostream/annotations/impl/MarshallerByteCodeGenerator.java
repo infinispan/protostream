@@ -144,7 +144,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       ctEncodeMethod.setBody(encodeSrc);
       marshallerImpl.addMethod(ctEncodeMethod);
 
-      Class<EnumMarshaller> generatedMarshallerClass = (Class<EnumMarshaller>) marshallerImpl.toClass();
+      Class<EnumMarshaller> generatedMarshallerClass = (Class<EnumMarshaller>) marshallerImpl.toClass(petm.getAnnotatedClass().asClass());
       marshallerImpl.detach();
 
       return generatedMarshallerClass;
@@ -219,7 +219,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       ctWriteMethod.setBody(writeBody);
       marshallerImpl.addMethod(ctWriteMethod);
 
-      Class<ProtobufTagMarshaller> generatedMarshallerClass = (Class<ProtobufTagMarshaller>) marshallerImpl.toClass();
+      Class<ProtobufTagMarshaller> generatedMarshallerClass = (Class<ProtobufTagMarshaller>) marshallerImpl.toClass(pmtm.getAnnotatedClass().asClass());
       marshallerImpl.detach();
 
       return generatedMarshallerClass;

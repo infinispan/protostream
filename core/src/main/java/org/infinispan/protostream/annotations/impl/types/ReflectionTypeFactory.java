@@ -96,7 +96,6 @@ public final class ReflectionTypeFactory implements XTypeFactory {
 
       ReflectionClass(Class<?> clazz) {
          this.clazz = clazz;
-
          if (clazz.isEnum()) {
             enumConstants = new LinkedHashMap<>();
             for (Field f : clazz.getDeclaredFields()) {
