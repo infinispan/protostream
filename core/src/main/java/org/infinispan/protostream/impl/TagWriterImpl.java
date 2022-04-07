@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,8 +26,6 @@ import static org.infinispan.protostream.descriptors.WireType.MAX_VARINT_SIZE;
 public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.WriteContext {
 
    private static final Log log = Log.LogFactory.getLog(TagWriterImpl.class);
-
-   private static final Charset UTF8 = StandardCharsets.UTF_8;
 
    private final SerializationContextImpl serCtx;
 
@@ -125,10 +122,10 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       // Also, when just count bytes for message size we do a useless first conversion, and another one will follow later.
 
       // Charset.encode is not able to encode directly into our own buffers!
-      ByteBuffer utf8buffer = UTF8.encode(value);
+      byte[] utf8buffer = value.getBytes(StandardCharsets.UTF_8);
 
-      encoder.writeLengthDelimitedField(number, utf8buffer.remaining());
-      encoder.writeBytes(utf8buffer);
+      encoder.writeLengthDelimitedField(number, utf8buffer.length);
+      encoder.writeBytes(utf8buffer, 0, utf8buffer.length);
    }
 
    @Override

@@ -7,8 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
@@ -39,11 +38,7 @@ public final class SerializationContextImpl implements SerializationContext {
    /**
     * All descriptor related mutable internal state is protected by this RW lock.
     */
-   private final ReentrantReadWriteLock dReadWriteLock = new ReentrantReadWriteLock();
-
-   private final Lock dReadLock = dReadWriteLock.readLock();
-
-   private final Lock dWriteLock = dReadWriteLock.writeLock();
+   private final StampedLock descriptorLock = new StampedLock();
 
    private final Configuration configuration;
 
@@ -60,11 +55,7 @@ public final class SerializationContextImpl implements SerializationContext {
    /**
     * All marshaller related mutable internal state is protected by this RW lock.
     */
-   private final ReentrantReadWriteLock mReadWriteLock = new ReentrantReadWriteLock();
-
-   private final Lock mReadLock = mReadWriteLock.readLock();
-
-   private final Lock mWriteLock = mReadWriteLock.writeLock();
+   private final StampedLock manifestLock = new StampedLock();
 
    private final Map<String, Registration> marshallersByName = new HashMap<>();
 
@@ -87,21 +78,21 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public Map<String, FileDescriptor> getFileDescriptors() {
-      dReadLock.lock();
+      long stamp = descriptorLock.readLock();
       try {
          return Collections.unmodifiableMap(new HashMap<>(fileDescriptors));
       } finally {
-         dReadLock.unlock();
+         descriptorLock.unlockRead(stamp);
       }
    }
 
    @Override
    public Map<String, GenericDescriptor> getGenericDescriptors() {
-      dReadLock.lock();
+      long stamp = descriptorLock.readLock();
       try {
          return Collections.unmodifiableMap(new HashMap<>(genericDescriptors));
       } finally {
-         dReadLock.unlock();
+         descriptorLock.unlockRead(stamp);
       }
    }
 
@@ -111,7 +102,7 @@ public final class SerializationContextImpl implements SerializationContext {
          log.debugf("Registering proto files : %s", source.getFiles().keySet());
       }
       Map<String, FileDescriptor> fileDescriptorMap = parser.parse(source);
-      dWriteLock.lock();
+      long stamp = descriptorLock.writeLock();
       try {
          // unregister all types from the files that are being overwritten
          for (String fileName : fileDescriptorMap.keySet()) {
@@ -126,14 +117,14 @@ public final class SerializationContextImpl implements SerializationContext {
          ResolutionContext resolutionContext = new ResolutionContext(source.getProgressCallback(), fileDescriptors, genericDescriptors, typeIds, enumValueDescriptors);
          resolutionContext.resolve();
       } finally {
-         dWriteLock.unlock();
+         descriptorLock.unlockWrite(stamp);
       }
    }
 
    @Override
    public void unregisterProtoFile(String fileName) {
       log.debugf("Unregistering proto file : %s", fileName);
-      dWriteLock.lock();
+      long stamp = descriptorLock.writeLock();
       try {
          FileDescriptor fileDescriptor = fileDescriptors.remove(fileName);
          if (fileDescriptor != null) {
@@ -142,14 +133,14 @@ public final class SerializationContextImpl implements SerializationContext {
             throw new IllegalArgumentException("File " + fileName + " does not exist");
          }
       } finally {
-         dWriteLock.unlock();
+         descriptorLock.unlockWrite(stamp);
       }
    }
 
    @Override
    public void unregisterProtoFiles(Set<String> fileNames) {
       log.debugf("Unregistering proto files : %s", fileNames);
-      dWriteLock.lock();
+      long stamp = descriptorLock.writeLock();
       try {
          for (String fileName : fileNames) {
             FileDescriptor fileDescriptor = fileDescriptors.remove(fileName);
@@ -160,11 +151,11 @@ public final class SerializationContextImpl implements SerializationContext {
             }
          }
       } finally {
-         dWriteLock.unlock();
+         descriptorLock.unlockWrite(stamp);
       }
    }
 
-   @GuardedBy("dWriteLock")
+   @GuardedBy("descriptorLock")
    private void unregisterFileDescriptorTypes(FileDescriptor fileDescriptor) {
       if (fileDescriptor.isResolved()) {
          for (GenericDescriptor d : fileDescriptor.getTypes().values()) {
@@ -234,7 +225,7 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshaller argument cannot be null");
       }
 
-      mWriteLock.lock();
+      long stamp = manifestLock.writeLock();
       try {
          Registration existingByName = marshallersByName.get(marshaller.getTypeName());
          Registration existingByClass = marshallersByClass.get(marshaller.getJavaClass());
@@ -264,7 +255,7 @@ public final class SerializationContextImpl implements SerializationContext {
          marshallersByClass.put(marshaller.getJavaClass(), registration);
          marshallersByName.put(marshaller.getTypeName(), registration);
       } finally {
-         mWriteLock.unlock();
+         manifestLock.unlockWrite(stamp);
       }
    }
 
@@ -292,7 +283,7 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshaller argument cannot be null");
       }
 
-      mWriteLock.lock();
+      long stamp = manifestLock.writeLock();
       try {
          Registration existingByName = marshallersByName.get(marshaller.getTypeName());
          if (existingByName == null || existingByName.marshallerDelegate.getMarshaller() != marshaller) {
@@ -304,7 +295,7 @@ public final class SerializationContextImpl implements SerializationContext {
          marshallersByName.remove(marshaller.getTypeName());
          marshallersByClass.remove(marshaller.getJavaClass());
       } finally {
-         mWriteLock.unlock();
+         manifestLock.unlockWrite(stamp);
       }
    }
 
@@ -315,11 +306,11 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshallerProvider argument cannot be null");
       }
 
-      mWriteLock.lock();
+      long stamp = manifestLock.writeLock();
       try {
          legacyMarshallerProviders.add(marshallerProvider);
       } finally {
-         mWriteLock.unlock();
+         manifestLock.unlockWrite(stamp);
       }
    }
 
@@ -330,11 +321,11 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshallerProvider argument cannot be null");
       }
 
-      mWriteLock.lock();
+      long stamp = manifestLock.writeLock();
       try {
          legacyMarshallerProviders.remove(marshallerProvider);
       } finally {
-         mWriteLock.unlock();
+         manifestLock.unlockWrite(stamp);
       }
    }
 
@@ -344,7 +335,7 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshallerProvider argument cannot be null");
       }
 
-      mWriteLock.lock();
+      long stamp = manifestLock.writeLock();
       try {
          Registration byClass = marshallersByClass.get(marshallerProvider.getJavaClass());
          if (byClass != null) {
@@ -362,7 +353,7 @@ public final class SerializationContextImpl implements SerializationContext {
             marshallersByName.put(typeName, new Registration(makeMarshallerDelegate(marshaller), marshallerProvider));
          }
       } finally {
-         mWriteLock.unlock();
+         manifestLock.unlockWrite(stamp);
       }
    }
 
@@ -372,7 +363,7 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshallerProvider argument cannot be null");
       }
 
-      mWriteLock.lock();
+      long stamp = manifestLock.writeLock();
       try {
          Registration byClass = marshallersByClass.get(marshallerProvider.getJavaClass());
          if (byClass == null || byClass.marshallerProvider != marshallerProvider) {
@@ -381,34 +372,34 @@ public final class SerializationContextImpl implements SerializationContext {
          marshallersByClass.remove(marshallerProvider.getJavaClass());
          marshallersByName.keySet().removeAll(marshallerProvider.getTypeNames());
       } finally {
-         mWriteLock.unlock();
+         manifestLock.unlockWrite(stamp);
       }
    }
 
    @Override
    public boolean canMarshall(Class<?> javaClass) {
-      mReadLock.lock();
+      long stamp = manifestLock.readLock();
       try {
          return marshallersByClass.containsKey(javaClass) || getMarshallerFromLegacyProvider(javaClass) != null;
       } finally {
-         mReadLock.unlock();
+         manifestLock.unlockRead(stamp);
       }
    }
 
    @Override
    public boolean canMarshall(String fullTypeName) {
-      mReadLock.lock();
+      long stamp = manifestLock.readLock();
       try {
          return marshallersByName.containsKey(fullTypeName) || getMarshallerFromLegacyProvider(fullTypeName) != null;
       } finally {
-         mReadLock.unlock();
+         manifestLock.unlockRead(stamp);
       }
    }
 
    @Override
    public boolean canMarshall(Object object) {
       Class<?> javaClass = object.getClass();
-      mReadLock.lock();
+      long stamp = manifestLock.readLock();
       try {
          Registration registration = marshallersByClass.get(javaClass);
          if (registration != null) {
@@ -427,7 +418,7 @@ public final class SerializationContextImpl implements SerializationContext {
          BaseMarshaller<?> marshaller = getMarshallerFromLegacyProvider(javaClass);
          return marshaller != null;
       } finally {
-         mReadLock.unlock();
+         manifestLock.unlockRead(stamp);
       }
    }
 
@@ -447,7 +438,7 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(String typeName) {
-      mReadLock.lock();
+      long stamp = manifestLock.readLock();
       try {
          Registration registration = marshallersByName.get(typeName);
          if (registration != null) {
@@ -461,12 +452,12 @@ public final class SerializationContextImpl implements SerializationContext {
          //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
          return makeMarshallerDelegate(marshaller);
       } finally {
-         mReadLock.unlock();
+         manifestLock.unlockRead(stamp);
       }
    }
 
    public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> javaClass) {
-      mReadLock.lock();
+      long stamp = manifestLock.readLock();
       try {
          Registration registration = marshallersByClass.get(javaClass);
          if (registration != null) {
@@ -485,13 +476,13 @@ public final class SerializationContextImpl implements SerializationContext {
          //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
          return makeMarshallerDelegate(marshaller);
       } finally {
-         mReadLock.unlock();
+         manifestLock.unlockRead(stamp);
       }
    }
 
    public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(T object) {
       Class<T> javaClass = (Class<T>) object.getClass();
-      mReadLock.lock();
+      long stamp = manifestLock.readLock();
       try {
          Registration registration = marshallersByClass.get(javaClass);
          if (registration != null) {
@@ -514,11 +505,11 @@ public final class SerializationContextImpl implements SerializationContext {
          //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
          return makeMarshallerDelegate(marshaller);
       } finally {
-         mReadLock.unlock();
+         manifestLock.unlockRead(stamp);
       }
    }
 
-   @GuardedBy("mReadLock")
+   @GuardedBy("manifestLock")
    private <T> BaseMarshaller<T> getMarshallerFromLegacyProvider(Class<T> javaClass) {
       if (!legacyMarshallerProviders.isEmpty()) {
          for (MarshallerProvider mp : legacyMarshallerProviders) {
@@ -531,7 +522,7 @@ public final class SerializationContextImpl implements SerializationContext {
       return null;
    }
 
-   @GuardedBy("mReadLock")
+   @GuardedBy("manifestLock")
    private <T> BaseMarshaller<T> getMarshallerFromLegacyProvider(String fullTypeName) {
       if (!legacyMarshallerProviders.isEmpty()) {
          for (MarshallerProvider mp : legacyMarshallerProviders) {
@@ -562,7 +553,7 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("Type name argument cannot be null");
       }
 
-      dReadLock.lock();
+      long stamp = descriptorLock.readLock();
       try {
          GenericDescriptor descriptor = genericDescriptors.get(fullTypeName);
          if (descriptor == null) {
@@ -570,7 +561,7 @@ public final class SerializationContextImpl implements SerializationContext {
          }
          return descriptor;
       } finally {
-         dReadLock.unlock();
+         descriptorLock.unlockRead(stamp);
       }
    }
 
@@ -580,7 +571,7 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("Type id argument cannot be null");
       }
 
-      dReadLock.lock();
+      long stamp = descriptorLock.readLock();
       try {
          GenericDescriptor descriptor = typeIds.get(typeId);
          if (descriptor == null) {
@@ -588,7 +579,7 @@ public final class SerializationContextImpl implements SerializationContext {
          }
          return descriptor;
       } finally {
-         dReadLock.unlock();
+         descriptorLock.unlockRead(stamp);
       }
    }
 }
