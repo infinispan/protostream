@@ -1,6 +1,6 @@
 # ProtoStream
 [![Build Status](https://travis-ci.org/infinispan/protostream.svg?branch=master)](https://travis-ci.org/infinispan/protostream)
-[![Maven Central](https://img.shields.io/badge/maven/central-4.4.2.Final-green.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|4.4.0.Final|)
+[![Maven Central](https://img.shields.io/badge/maven/central-4.4.3-SNAPSHOT-green.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|4.4.0.Final|)
 [![Javadoc](https://img.shields.io/badge/Javadoc-online-green.svg)](http://www.javadoc.io/doc/org.infinispan.protostream/protostream)
 [![License](https://img.shields.io/github/license/infinispan/infinispan.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Java 8+](https://img.shields.io/badge/java-8+-blue.svg)](http://java.oracle.com)
@@ -20,7 +20,7 @@ Add this dependency to your pom.xml file:
 <dependency>
    <groupId>org.infinispan.protostream</groupId>
    <artifactId>protostream</artifactId>
-   <version>4.4.2.Final</version>
+   <version>4.4.3-SNAPSHOT</version>
 </dependency>
 ```
 
