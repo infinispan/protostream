@@ -199,7 +199,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
    @Override
    public void writeExternal(ObjectOutput out) throws IOException {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
-      TagWriter output = TagWriterImpl.newInstance(null, baos);
+      TagWriter output = TagWriterImpl.newInstanceNoBuffer(null, baos);
       writeTo(output);
       output.flush();
       ByteBuffer buffer = baos.getByteBuffer();

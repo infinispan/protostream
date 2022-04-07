@@ -75,7 +75,7 @@ public final class JsonUtils {
 
    public static byte[] fromCanonicalJSON(ImmutableSerializationContext ctx, Reader reader) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-      TagWriter writer = TagWriterImpl.newInstance(ctx, baos);
+      TagWriter writer = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
 
       JsonParser parser = jsonFactory.createParser(reader);
 
@@ -253,7 +253,7 @@ public final class JsonUtils {
             .collect(Collectors.toCollection(HashSet::new));
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-      TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, baos);
+      TagWriter nestedWriter = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
 
       String currentField = null;
 
