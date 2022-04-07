@@ -57,7 +57,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parent, OutputStream output) {
-      return new TagWriterImpl((TagWriterImpl) parent, new OutputStreamEncoder(output, ProtobufUtil.DEFAULT_STREAM_BUFFER_SIZE));
+      return new TagWriterImpl((TagWriterImpl) parent, new OutputStreamNoBufferEncoder(output));
    }
 
    public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parent, byte[] buf) {
@@ -87,6 +87,10 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx) {
       return new TagWriterImpl((SerializationContextImpl) serCtx, new NoOpEncoder());
+   }
+
+   public static TagWriterImpl newInstanceNoBuffer(ImmutableSerializationContext ctx, OutputStream out) {
+      return new TagWriterImpl((SerializationContextImpl) ctx, new OutputStreamNoBufferEncoder(out));
    }
 
    public int getWrittenBytes() {
@@ -712,6 +716,92 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
    }
 
+   private static class OutputStreamNoBufferEncoder extends Encoder {
+
+      private final OutputStream out;
+
+      private OutputStreamNoBufferEncoder(OutputStream out) {
+         this.out = out;
+      }
+
+      @Override
+      void writeVarint32(int value) throws IOException {
+         while (true) {
+            if ((value & 0xFFFFFF80) == 0) {
+               out.write((byte) value);
+               break;
+            } else {
+               out.write((byte) (value & 0x7F | 0x80));
+               value >>>= 7;
+            }
+         }
+      }
+
+      @Override
+      void writeVarint64(long value) throws IOException {
+         try {
+            while (true) {
+               if ((value & 0xFFFFFFFFFFFFFF80L) == 0) {
+                  out.write((byte) value);
+                  break;
+               } else {
+                  out.write((byte) ((int) value & 0x7F | 0x80));
+                  value >>>= 7;
+               }
+            }
+         } catch (IndexOutOfBoundsException e) {
+            throw log.outOfWriteBufferSpace(e);
+         }
+      }
+
+      @Override
+      void writeFixed32(int value) throws IOException {
+         out.write((byte) (value & 0xFF));
+         out.write((byte) ((value >> 8) & 0xFF));
+         out.write((byte) ((value >> 16) & 0xFF));
+         out.write((byte) ((value >> 24) & 0xFF));
+      }
+
+      @Override
+      void writeFixed64(long value) throws IOException {
+         out.write((byte) (value & 0xFF));
+         out.write((byte) ((value >> 8) & 0xFF));
+         out.write((byte) ((value >> 16) & 0xFF));
+         out.write((byte) ((value >> 24) & 0xFF));
+         out.write((byte) ((int) (value >> 32) & 0xFF));
+         out.write((byte) ((int) (value >> 40) & 0xFF));
+         out.write((byte) ((int) (value >> 48) & 0xFF));
+         out.write((byte) ((int) (value >> 56) & 0xFF));
+      }
+
+      @Override
+      void writeByte(byte value) throws IOException {
+         out.write(value);
+      }
+
+      @Override
+      void writeBytes(byte[] value, int offset, int length) throws IOException {
+         out.write(value, offset, length);
+      }
+
+      @Override
+      void writeBytes(ByteBuffer value) throws IOException {
+         if (value.hasArray()) {
+            out.write(value.array(), value.arrayOffset(), value.remaining());
+         } else {
+            byte[] buffer = new byte[value.remaining()];
+            value.get(buffer, value.position(), value.remaining());
+            out.write(buffer);
+         }
+      }
+
+      @Override
+      void flush() throws IOException {
+         super.flush();
+         out.flush();
+      }
+   }
+
    /**
     * Writes to an {@link OutputStream} and performs internal buffering to minimize the number of stream writes.
     */
@@ -808,6 +898,11 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
       @Override
       void writeBytes(ByteBuffer value) throws IOException {
+         if (value.hasArray()) {
+            buffer.flushToStream(out);
+            out.write(value.array(), value.arrayOffset(), value.remaining());
+            return;
+         }
          while (value.hasRemaining()) {
             if (buffer.remainingSpace() == 0) {
                buffer.flushToStream(out);

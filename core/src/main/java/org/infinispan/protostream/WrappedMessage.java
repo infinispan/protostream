@@ -297,7 +297,7 @@ public final class WrappedMessage {
                ((EnumMarshallerDelegate) marshallerDelegate).encode(WRAPPED_ENUM, (Enum) t, out);
             } else {
                ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
-               TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, buffer);
+               TagWriterImpl nestedCtx = TagWriterImpl.newInstanceNoBuffer(ctx, buffer);
                marshallerDelegate.marshall(nestedCtx, null, t);
                nestedCtx.flush();
                out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
@@ -322,7 +322,7 @@ public final class WrappedMessage {
       out.writeUInt32(WRAPPED_CONTAINER_SIZE, containerSize);
 
       ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
-      TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, buffer);
+      TagWriterImpl nestedCtx = TagWriterImpl.newInstanceNoBuffer(ctx, buffer);
       marshallerDelegate.marshall(nestedCtx, null, container);
       nestedCtx.flush();
       out.writeBytes(WRAPPED_CONTAINER_MESSAGE, buffer.getByteBuffer());

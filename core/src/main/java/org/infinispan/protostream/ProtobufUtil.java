@@ -144,13 +144,13 @@ public final class ProtobufUtil {
 
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t, int bufferSize) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(bufferSize);
-      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, baos), t);
+      WrappedMessage.write(ctx, TagWriterImpl.newInstanceNoBuffer(ctx, baos), t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toWrappedByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(DEFAULT_ARRAY_BUFFER_SIZE);
-      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, baos), t);
+      WrappedMessage.write(ctx, TagWriterImpl.newInstanceNoBuffer(ctx, baos), t);
       return baos.getByteBuffer();
    }
 
