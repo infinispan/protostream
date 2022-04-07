@@ -884,21 +884,21 @@ public abstract class AbstractMarshallerCodeGenerator {
          } else if (clazz.isAssignableTo(Instant.class)) {
             return "java.time.Instant.ofEpochMilli(" + v + ")";
          } else if (clazz == typeFactory.fromClass(Float.class)) {
-            return "new java.lang.Float(" + v + ")";
+            return "java.lang.Float.valueOf(" + v + ")";
          } else if (clazz == typeFactory.fromClass(Double.class)) {
-            return "new java.lang.Double(" + v + ")";
+            return "java.lang.Double.valueOf(" + v + ")";
          } else if (clazz == typeFactory.fromClass(Boolean.class)) {
-            return "new java.lang.Boolean(" + v + ")";
+            return "java.lang.Boolean.valueOf(" + v + ")";
          } else if (clazz == typeFactory.fromClass(Long.class)) {
-            return "new java.lang.Long(" + v + ")";
+            return "java.lang.Long.valueOf(" + v + ")";
          } else if (clazz == typeFactory.fromClass(Integer.class)) {
-            return "new java.lang.Integer(" + v + ")";
+            return "java.lang.Integer.valueOf(" + v + ")";
          } else if (clazz == typeFactory.fromClass(Short.class)) {
-            return "new java.lang.Short(" + v + ")";
+            return "java.lang.Short.valueOf(" + v + ")";
          } else if (clazz == typeFactory.fromClass(Byte.class)) {
-            return "new java.lang.Byte(" + v + ")";
+            return "java.lang.Byte.valueOf(" + v + ")";
          } else if (clazz == typeFactory.fromClass(Character.class)) {
-            return "new java.lang.Character(" + v + ")";
+            return "java.lang.Character.valueOf(" + v + ")";
          }
       }
       return v;
