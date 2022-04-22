@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl.processor.tests.testdomain;
 
+import org.infinispan.custom.annotations.MyCustomAnnotation;
 import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -14,6 +15,7 @@ public class SimpleClass {
 
    @ProtoDoc("Simple is elegant")
    @ProtoField(number = 1111)
+   @MyCustomAnnotation(name = "simpleClassField", someBool = true, someEnum = MyCustomAnnotation.MyEnum.TWO, someLong = -100, someInteger = 100)
    public SimpleClass simpleClass;
 
    @ProtoField(number = 1, required = true, defaultValue = "0.0")
@@ -74,6 +76,7 @@ public class SimpleClass {
    }
 
    @ProtoField(number = 103, required = true, defaultValue = "0.71")
+   @MyCustomAnnotation(name = "setWidthMethod", someBool = true, someEnum = MyCustomAnnotation.MyEnum.TWO, someLong = -100, someInteger = 100)
    public void setWidth(Float width) {
       this.width = width;
    }

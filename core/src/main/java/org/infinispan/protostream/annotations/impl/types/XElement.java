@@ -47,5 +47,5 @@ public interface XElement {
     *
     * @return the documentation or {@code null} if no doc or empty doc present
     */
-   String getProtoDocs();
+   String getDocumentation();
 }

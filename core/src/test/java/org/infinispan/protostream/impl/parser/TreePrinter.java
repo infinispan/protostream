@@ -57,6 +57,11 @@ public class TreePrinter extends AnnotationElement.Visitor {
    @Override
    public void visit(AnnotationElement.Annotation annotation) {
       out.write('@');
+      String packageName = annotation.getPackageName();
+      if (packageName != null) {
+         out.write(packageName);
+         out.write('.');
+      }
       out.write(annotation.getName());
       out.write('(');
       out.write('\n');

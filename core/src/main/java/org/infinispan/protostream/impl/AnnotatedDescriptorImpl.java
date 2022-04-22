@@ -84,7 +84,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
             Map<String, AnnotationElement.Annotation> _annotations = new LinkedHashMap<>();
             Map<String, AnnotationElement.Annotation> _containers = new LinkedHashMap<>();
             for (AnnotationElement.Annotation annotation : parsedAnnotations) {
-               AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation.getName());
+               AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation);
                if (annotationConfig == null) {
                   // unknown annotations are ignored, but we might want to log a warning
                   if (getAnnotationsConfig().logUndefinedAnnotations()) {
@@ -129,7 +129,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
             // create metadata based on the annotations
             processedAnnotations = new LinkedHashMap<>();
             for (AnnotationElement.Annotation annotation : annotations.values()) {
-               AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation.getName());
+               AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation);
                AnnotationMetadataCreator<Object, AnnotatedDescriptor> creator = (AnnotationMetadataCreator<Object, AnnotatedDescriptor>) annotationConfig.metadataCreator();
                if (creator != null) {
                   Object metadataForAnnotation;
@@ -186,7 +186,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                      + "' of annotation '" + annotation.getName()
                      + "' on " + getFullName() + " must be an identifier. Current value is : " + value);
             }
-            if (attributeConfig.allowedValues() != null && !attributeConfig.allowedValues().contains(value.getValue())) {
+            if (!attributeConfig.isAllowed(value)) {
                throw new AnnotationParserException("Annotation attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
                      + "' on " + getFullName() + " should have one of the values : "
@@ -199,7 +199,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                      + "' of annotation '" + annotation.getName()
                      + "' on " + getFullName() + " must be a String. Current value is : " + value);
             }
-            if (attributeConfig.allowedValues() != null && !attributeConfig.allowedValues().contains(value.getValue())) {
+            if (!attributeConfig.isAllowed(value)) {
                throw new AnnotationParserException("Annotation attribute '" + attribute.getName()
                      + "' of annotation '" + annotation.getName()
                      + "' on " + getFullName() + " should have one of the values : "
@@ -296,7 +296,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
     * @return null if the annotation is not found
     * @throws DescriptorParserException is the annotation target is not suitable for this descriptor
     */
-   protected abstract AnnotationConfiguration getAnnotationConfig(String annotationName) throws DescriptorParserException;
+   protected abstract AnnotationConfiguration getAnnotationConfig(AnnotationElement.Annotation annotation) throws DescriptorParserException;
 
    @Override
    public Map<String, AnnotationElement.Annotation> getAnnotations() throws AnnotationParserException {

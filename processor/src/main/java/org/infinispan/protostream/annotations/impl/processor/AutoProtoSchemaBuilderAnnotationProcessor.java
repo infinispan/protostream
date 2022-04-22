@@ -53,15 +53,17 @@ import org.infinispan.protostream.annotations.impl.types.XMethod;
 
 import com.google.auto.service.AutoService;
 
-@SupportedOptions(AutoProtoSchemaBuilderAnnotationProcessor.DEBUG_OPTION)
+@SupportedOptions({AutoProtoSchemaBuilderAnnotationProcessor.DEBUG_OPTION, AutoProtoSchemaBuilderAnnotationProcessor.FULLY_QUALIFIED_ANNOTATIONS})
 @SupportedAnnotationTypes(AutoProtoSchemaBuilderAnnotationProcessor.ANNOTATION_NAME)
 @AutoService(Processor.class)
 public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractProcessor {
 
    /**
-    * The only option we support: activate debug logging.
+    * Activate debug logging.
     */
-   public static final String DEBUG_OPTION = "debug";
+   public static final String DEBUG_OPTION = "protostream.debug";
+
+   public static final String FULLY_QUALIFIED_ANNOTATIONS = "protostream.fullyqualifiedannotations";
 
    /**
     * The FQN of the one and only annotation we claim.
@@ -93,7 +95,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    public synchronized void init(ProcessingEnvironment processingEnv) {
       super.init(processingEnv);
 
-      isDebugEnabled = processingEnv.getOptions().containsKey(DEBUG_OPTION);
+      isDebugEnabled = Boolean.parseBoolean(processingEnv.getOptions().get(DEBUG_OPTION));
       typeFactory = new MirrorTypeFactory(processingEnv);
       types = processingEnv.getTypeUtils();
       elements = processingEnv.getElementUtils();

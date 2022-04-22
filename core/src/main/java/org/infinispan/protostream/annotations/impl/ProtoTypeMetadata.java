@@ -70,7 +70,7 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
    }
 
    public String getProtoDocs() {
-      return getAnnotatedClass().getProtoDocs();
+      return getAnnotatedClass().getDocumentation();
    }
 
    public Integer getProtoTypeId() {

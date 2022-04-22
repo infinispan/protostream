@@ -163,9 +163,12 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
    }
 
    @Override
-   protected AnnotationConfiguration getAnnotationConfig(String annotationName) {
-      AnnotationConfiguration annotationConfiguration = getAnnotationsConfig().annotations().get(annotationName);
+   protected AnnotationConfiguration getAnnotationConfig(AnnotationElement.Annotation annotation) {
+      AnnotationConfiguration annotationConfiguration = getAnnotationsConfig().annotations().get(annotation.getName());
       if (annotationConfiguration == null) {
+         return null;
+      }
+      if (annotation.getPackageName() != null && !annotation.getPackageName().equals(annotationConfiguration.packageName())) {
          return null;
       }
       for (AnnotationElement.AnnotationTarget t : annotationConfiguration.target()) {
@@ -173,7 +176,7 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
             return annotationConfiguration;
          }
       }
-      throw new DescriptorParserException("Annotation '" + annotationName + "' cannot be applied to message types.");
+      throw new DescriptorParserException("Annotation '" + annotation + "' cannot be applied to message types.");
    }
 
    @Override

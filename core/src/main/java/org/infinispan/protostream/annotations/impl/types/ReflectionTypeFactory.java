@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.infinispan.protostream.annotations.ProtoDoc;
-
 //todo [anistor] revisit this and improve handling of generic types based on ideas from
 // https://github.com/XDean/Java-EX/blob/297b21df13ebe25e991ec3741af21b3592e92375/src/main/java/xdean/jex/util/reflect/GenericUtil.java
 
@@ -226,8 +224,8 @@ public final class ReflectionTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
-         return DocumentationExtractor.getDocumentation(clazz.getAnnotationsByType(ProtoDoc.class));
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(clazz, false);
       }
 
       @Override
@@ -437,8 +435,8 @@ public final class ReflectionTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
-         return DocumentationExtractor.getDocumentation(f.getAnnotationsByType(ProtoDoc.class));
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(f, false);
       }
 
       @Override
@@ -554,8 +552,8 @@ public final class ReflectionTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
-         return DocumentationExtractor.getDocumentation(method.getAnnotationsByType(ProtoDoc.class));
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(method, false);
       }
 
       @Override
@@ -651,7 +649,7 @@ public final class ReflectionTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
+      public String getDocumentation() {
          // no @ProtoDoc allowed on constructors
          return null;
       }
@@ -756,8 +754,8 @@ public final class ReflectionTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
-         return DocumentationExtractor.getDocumentation(field.getAnnotationsByType(ProtoDoc.class));
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(field, false);
       }
 
       @Override

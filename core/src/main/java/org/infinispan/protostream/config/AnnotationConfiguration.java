@@ -17,6 +17,8 @@ public interface AnnotationConfiguration {
     */
    String name();
 
+   String packageName();
+
    /**
     * Applicable targets.
     */
@@ -46,8 +48,10 @@ public interface AnnotationConfiguration {
 
       Builder repeatable(String containerAnnotationName);
 
+      Builder packageName(String packageName);
+
       /**
-       * Create a new annotation with the given name and return its builder to continue configure it.
+       * Create a new annotation with the given name and return its builder to continue configuring it.
        */
       Builder annotation(String annotationName, AnnotationElement.AnnotationTarget... target);
 

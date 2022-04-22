@@ -121,6 +121,14 @@ public final class AnnotationParser {
                   return members;
                }
             }
+            case LBRACE: {
+               long pos = lexer.pos;
+               AnnotationElement.Array value = parseArray();
+               expect(AnnotationTokens.RPAREN);
+               AnnotationElement.Attribute attribute = new AnnotationElement.Attribute(pos, AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE, value);
+               members.put(attribute.getName(), attribute);
+               return members;
+            }
             case FALSE:
             case TRUE:
             case INT_LITERAL:
