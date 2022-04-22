@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>36</version>
+        <version>39</version>
     </parent>
 
     <groupId>org.infinispan.protostream</groupId>
@@ -101,17 +101,20 @@
         <jboss.snapshots.repo.id>jboss-snapshots-repository</jboss.snapshots.repo.id>
         <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
 
-        <version.java>1.8</version.java>
-        <version.maven.compiler>3.9.0</version.maven.compiler>
-        <version.maven.jar>3.2.0</version.maven.jar>
-        <version.maven.javadoc>3.3.1</version.maven.javadoc>
-        <version.maven.source>3.2.0</version.maven.source>
-        <version.maven.resources>3.2.0</version.maven.resources>
-        <version.maven.antrun>3.0.0</version.maven.antrun>
+        <!-- overwrite plugins version from jboss-parent -->
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <version.compiler.plugin>3.9.0</version.compiler.plugin>
+        <version.jar.plugin>3.2.0</version.jar.plugin>
+        <version.javadoc.plugin>3.3.1</version.javadoc.plugin>
+        <version.source.plugin>3.2.0</version.source.plugin>
+        <version.antrun.plugin>3.0.0</version.antrun.plugin>
+        <version.surefire.plugin>3.0.0-M5</version.surefire.plugin>
+        <version.shade.plugin>3.2.4</version.shade.plugin>
+
+        <!-- plugins version -->
         <version.maven.nexus-staging>1.6.12</version.maven.nexus-staging>
-        <version.maven.surefire>3.0.0-M5</version.maven.surefire>
         <version.maven.animalsniffer>1.18</version.maven.animalsniffer>
-        <version.maven.shade>3.2.4</version.maven.shade>
 
         <version.protobuf>3.19.4</version.protobuf>
         <version.javax.annotation-api>1.3.2</version.javax.annotation-api>
@@ -349,11 +352,7 @@
             <plugins>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${version.maven.compiler}</version>
-                    <configuration>
-                        <source>${version.java}</source>
-                        <target>${version.java}</target>
-                        <release>8</release>
+                    <configuration combine.self="append">
                         <encoding>UTF-8</encoding>
                         <!-- both maven and javac are buggy regarding handling of APs with incremental compilation -->
                         <useIncrementalCompilation>false</useIncrementalCompilation>
@@ -363,43 +362,15 @@
                 </plugin>
 
                 <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>${version.maven.jar}</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>${version.maven.javadoc}</version>
-                </plugin>
-
-                <plugin>
                     <groupId>org.sonatype.plugins</groupId>
                     <artifactId>nexus-staging-maven-plugin</artifactId>
                     <version>${version.maven.nexus-staging}</version>
                 </plugin>
 
                 <plugin>
-                    <artifactId>maven-antrun-plugin</artifactId>
-                    <version>${version.maven.antrun}</version>
-                </plugin>
-
-                <plugin>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>${version.maven.resources}</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${version.maven.surefire}</version>
-                </plugin>
-
-                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-report-plugin</artifactId>
-                    <version>${version.maven.surefire}</version>
+                    <version>${version.surefire.plugin}</version>
                     <executions>
                         <execution>
                             <phase>verify</phase>
@@ -433,12 +404,6 @@
                         </execution>
                     </executions>
                 </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-shade-plugin</artifactId>
-                    <version>${version.maven.shade}</version>
-                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -467,7 +432,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>[${version.java},)</version>
+                                    <version>[${maven.compiler.source},)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>[3.5.4,)</version>
@@ -492,7 +457,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>${version.maven.source}</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
