@@ -79,16 +79,24 @@ public abstract class AnnotationElement {
 
       private final String name;
 
+      private final String packageName;
+
       private final Map<String, Attribute> attributes;
 
       public Annotation(long pos, String name, Map<String, Attribute> attributes) {
          super(pos);
-         this.name = name;
+         int dot = name.lastIndexOf('.');
+         this.name = dot < 0 ? name : name.substring(dot + 1);
+         this.packageName = dot < 0 ? null : name.substring(0, dot);
          this.attributes = attributes;
       }
 
       public String getName() {
          return name;
+      }
+
+      public String getPackageName() {
+         return packageName;
       }
 
       public Map<String, Attribute> getAttributes() {
@@ -136,16 +144,24 @@ public abstract class AnnotationElement {
 
       private final String name;
 
+      private final String packageName;
+
       private final Value value;
 
       public Attribute(long pos, String name, Value value) {
          super(pos);
-         this.name = name;
+         int dot = name.lastIndexOf('.');
+         this.name = dot < 0 ? name : name.substring(dot + 1);
+         this.packageName = dot < 0 ? null : name.substring(0, dot);
          this.value = value;
       }
 
       public String getName() {
          return name;
+      }
+
+      public String getPackageName() {
+         return packageName;
       }
 
       public Value getValue() {
@@ -164,8 +180,8 @@ public abstract class AnnotationElement {
    }
 
    /**
-    * An identifier is a bit like a string literal but it does not have the quotation marks and it cannot contain
-    * white space.
+    * An identifier is a bit like a string literal but it does not have the quotation marks and it cannot contain white
+    * space.
     */
    public static final class Identifier extends Value {
 

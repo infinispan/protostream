@@ -23,6 +23,8 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
     */
    private final String name;
 
+   private final String packageName;
+
    private final AnnotationElement.AnnotationTarget[] target;
 
    private final Map<String, AnnotationAttributeConfiguration> attributes;
@@ -31,14 +33,15 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
 
    private final String repeatable;
 
-   protected AnnotationConfigurationImpl container;
+   AnnotationConfigurationImpl container;
 
-   private AnnotationConfigurationImpl(String name,
+   private AnnotationConfigurationImpl(String name, String packageName,
                                        AnnotationElement.AnnotationTarget[] target,
                                        Map<String, AnnotationAttributeConfiguration> attributes,
                                        AnnotationMetadataCreator<?, ? extends AnnotatedDescriptor> annotationMetadataCreator,
                                        String repeatable) {
       this.name = name;
+      this.packageName = packageName;
       this.target = target;
       this.attributes = Collections.unmodifiableMap(attributes);
       this.annotationMetadataCreator = annotationMetadataCreator;
@@ -48,6 +51,11 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
    @Override
    public String name() {
       return name;
+   }
+
+   @Override
+   public String packageName() {
+      return packageName;
    }
 
    @Override
@@ -79,6 +87,8 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
        */
       private final String name;
 
+      private String packageName;
+
       private final AnnotationElement.AnnotationTarget[] target;
 
       private final Map<String, AnnotationAttributeConfigurationImpl.BuilderImpl> attributeBuilders = new HashMap<>();
@@ -109,6 +119,12 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
                throw new IllegalArgumentException(str + " is not a valid " + what);
             }
          }
+      }
+
+      @Override
+      public Builder packageName(String packageName) {
+         this.packageName = packageName;
+         return this;
       }
 
       @Override
@@ -189,7 +205,7 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
             AnnotationAttributeConfiguration annotationAttributeConfig = ((AnnotationAttributeConfigurationImpl.BuilderImpl) attributeBuilder).buildAnnotationAttributeConfiguration();
             attributes.put(annotationAttributeConfig.name(), annotationAttributeConfig);
          }
-         return new AnnotationConfigurationImpl(name, target, attributes, annotationMetadataCreator, repeatable);
+         return new AnnotationConfigurationImpl(name, packageName, target, attributes, annotationMetadataCreator, repeatable);
       }
 
       @Override

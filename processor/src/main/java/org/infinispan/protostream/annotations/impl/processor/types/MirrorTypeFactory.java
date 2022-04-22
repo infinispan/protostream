@@ -28,7 +28,7 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.impl.processor.AutoProtoSchemaBuilderAnnotationProcessor;
 import org.infinispan.protostream.annotations.impl.types.DocumentationExtractor;
 import org.infinispan.protostream.annotations.impl.types.ReflectionTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
@@ -73,9 +73,12 @@ public final class MirrorTypeFactory implements XTypeFactory {
 
    private final MirrorPrimitiveType doubleType;
 
+   private final boolean fullyQualifiedAnnotations;
+
    public MirrorTypeFactory(ProcessingEnvironment processingEnv) {
       elements = processingEnv.getElementUtils();
       types = processingEnv.getTypeUtils();
+      fullyQualifiedAnnotations = Boolean.parseBoolean(processingEnv.getOptions().get(AutoProtoSchemaBuilderAnnotationProcessor.FULLY_QUALIFIED_ANNOTATIONS));
       voidType = new MirrorPrimitiveType(void.class, types.getNoType(TypeKind.VOID));
       booleanType = new MirrorPrimitiveType(boolean.class, types.getPrimitiveType(TypeKind.BOOLEAN));
       byteType = new MirrorPrimitiveType(byte.class, types.getPrimitiveType(TypeKind.BYTE));
@@ -399,7 +402,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
+      public String getDocumentation() {
          return null;
       }
 
@@ -659,8 +662,8 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
-         return DocumentationExtractor.getDocumentation(typeElement.getAnnotationsByType(ProtoDoc.class));
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(typeElement, fullyQualifiedAnnotations);
       }
 
       @Override
@@ -794,7 +797,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
    }
 
-   private static final class MirrorEnumConstant implements XEnumConstant {
+   private final class MirrorEnumConstant implements XEnumConstant {
 
       private final XClass declaringClass;
       private final VariableElement e;
@@ -834,8 +837,8 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
-         return DocumentationExtractor.getDocumentation(e.getAnnotationsByType(ProtoDoc.class));
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(e, fullyQualifiedAnnotations);
       }
 
       @Override
@@ -955,7 +958,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
+      public String getDocumentation() {
          return null;
       }
 
@@ -1110,8 +1113,8 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
-         return DocumentationExtractor.getDocumentation(executableElement.getAnnotationsByType(ProtoDoc.class));
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(executableElement, fullyQualifiedAnnotations);
       }
 
       @Override
@@ -1210,7 +1213,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
+      public String getDocumentation() {
          // no @ProtoDoc allowed on constructors
          return null;
       }
@@ -1325,8 +1328,8 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
 
       @Override
-      public String getProtoDocs() {
-         return DocumentationExtractor.getDocumentation(field.getAnnotationsByType(ProtoDoc.class));
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(field, fullyQualifiedAnnotations);
       }
 
       @Override

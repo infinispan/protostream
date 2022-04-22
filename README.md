@@ -14,14 +14,42 @@ website on [https://infinispan.org](https://infinispan.org "The Infinispan proje
 Usage (via Maven)
 -----------------
 
-Add this dependency to your pom.xml file:
+Add this dependency to your `pom.xml` file:
    
 ```xml
 <dependency>
    <groupId>org.infinispan.protostream</groupId>
    <artifactId>protostream</artifactId>
-   <version>4.4.3-SNAPSHOT</version>
+   <version>4.5.0-SNAPSHOT</version>
 </dependency>
+```
+
+Annotation processor
+--------------------
+
+The annotation processor should be automatically discovered by the compiler when
+the `org.infinispan.protostream:protostream-processor` dependency is on the classpath using
+the service loader.
+
+The annotation processor supports some configuration options:
+
+* `protostream.debug` prints out debug information during the processing phase.
+* `protostream.fullyqualifiedannotations` when generating the `.proto` files, the annotation names are stripped of the package name. This flag keeps the fully-qualified annotation names in the generated files.
+
+You can pass these arguments to `javac` using the `-Aoption=value` argument. 
+The following `pom.xml` snippet shows how to do it with Maven:
+
+```xml
+<plugin>
+   <groupId>org.apache.maven.plugins</groupId>
+   <artifactId>maven-compiler-plugin</artifactId>
+   <version>3.9.0</version>
+   <configuration>
+      <compilerArgs>
+         <arg>-Aprotostream-debug=true</arg>
+      </compilerArgs>
+   </configuration>
+</plugin>
 ```
 
 Requirements

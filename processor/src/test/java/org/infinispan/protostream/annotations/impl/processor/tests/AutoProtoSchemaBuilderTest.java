@@ -154,6 +154,9 @@ public class AutoProtoSchemaBuilderTest {
       ProtobufUtil.toWrappedByteArray(ctx, new Note());
 
       assertTrue(ctx.canMarshall(SimpleClass.class));
+
+      String protoFile = serCtxInitializer.getProtoFile();
+      assertTrue(protoFile.contains("@MyCustomAnnotation("));
    }
 
    @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer", autoImportClasses = true,

@@ -18,6 +18,11 @@ public interface AnnotationAttributeConfiguration {
    String name();
 
    /**
+    * The optional package name
+    */
+   String packageName();
+
+   /**
     * The type. Defaults to String if not explicitly set.
     */
    AnnotationElement.AttributeType type();
@@ -37,6 +42,8 @@ public interface AnnotationAttributeConfiguration {
     * ANNOTATION type must have a single allowed value.
     */
    Set<String> allowedValues();
+
+   boolean isAllowed(AnnotationElement.Value value);
 
    interface Builder {
 
@@ -59,6 +66,11 @@ public interface AnnotationAttributeConfiguration {
        * Create a <b>new</b> attribute with the given name and return the builder to configure it.
        */
       Builder attribute(String name);
+
+      /**
+       * Sets the optional package name
+       */
+      Builder packageName(String packageName);
 
       /**
        * @return the parent builder in order to allow defining more annotations

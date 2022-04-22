@@ -25,6 +25,8 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
     */
    private final String name;
 
+   private final String packageName;
+
    private final boolean isMultiple;
 
    private final Object defaultValue;
@@ -33,8 +35,9 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
 
    private final Set<String> allowedValues;
 
-   private AnnotationAttributeConfigurationImpl(String name, boolean isMultiple, Object defaultValue, AnnotationElement.AttributeType type, Set<String> allowedValues) {
+   private AnnotationAttributeConfigurationImpl(String name, String packageName, boolean isMultiple, Object defaultValue, AnnotationElement.AttributeType type, Set<String> allowedValues) {
       this.name = name;
+      this.packageName = packageName;
       this.isMultiple = isMultiple;
       this.defaultValue = defaultValue;
       this.type = type;
@@ -44,6 +47,11 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
    @Override
    public String name() {
       return name;
+   }
+
+   @Override
+   public String packageName() {
+      return packageName;
    }
 
    @Override
@@ -66,6 +74,17 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
       return allowedValues;
    }
 
+   @Override
+   public boolean isAllowed(AnnotationElement.Value value) {
+      if (allowedValues != null) {
+         String v = String.valueOf(value.getValue());
+         return allowedValues.contains(v) ||
+               packageName != null && v.startsWith(packageName) && allowedValues.contains(v.substring(packageName.length() + 1));
+      } else {
+         return true;
+      }
+   }
+
    static final class BuilderImpl implements Builder {
 
       private final AnnotationConfiguration.Builder parentBuilder;
@@ -74,6 +93,11 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
        * The attribute name.
        */
       private final String name;
+
+      /**
+       * The package name.
+       */
+      private String packageName;
 
       /**
        * The type. Defaults to String if not explicitly set.
@@ -138,6 +162,12 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
       @Override
       public Builder repeatable(String containingAnnotationName) {
          parentBuilder.repeatable(containingAnnotationName);
+         return this;
+      }
+
+      @Override
+      public Builder packageName(String packageName) {
+         this.packageName = packageName;
          return this;
       }
 
@@ -218,7 +248,7 @@ final class AnnotationAttributeConfigurationImpl implements AnnotationAttributeC
             }
          }
 
-         return new AnnotationAttributeConfigurationImpl(name, isMultiple, defaultValue, type, allowedValuesSet);
+         return new AnnotationAttributeConfigurationImpl(name, packageName, isMultiple, defaultValue, type, allowedValuesSet);
       }
 
       @Override

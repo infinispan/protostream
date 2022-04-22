@@ -99,7 +99,7 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
                      + " clashes with " + membersByName.get(name).getJavaEnumName());
             }
             ProtoEnumValueMetadata pevm = new ProtoEnumValueMetadata(number, name,
-                  ec.getOrdinal(), getJavaClassName() + '.' + ec.getName(), ec.getProtoDocs());
+                  ec.getOrdinal(), getJavaClassName() + '.' + ec.getName(), ec.getDocumentation());
             membersByNumber.put(number, pevm);
             membersByName.put(pevm.getProtoName(), pevm);
 

@@ -913,7 +913,7 @@ public class DescriptorsTest {
    @Test
    public void testAnnotationTarget() {
       exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Annotation 'Field' cannot be applied to message types.");
+      exception.expectMessage("Annotation '@Field()' cannot be applied to message types.");
 
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)

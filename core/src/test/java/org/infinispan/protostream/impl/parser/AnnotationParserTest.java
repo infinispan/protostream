@@ -114,6 +114,17 @@ public class AnnotationParserTest {
    }
 
    @Test
+   public void testDefaultArrayValue() {
+      testAnnotationParsing("@Abc({\"a\", \"b\"})", true,
+            "@Abc(\n" +
+            "   value={\n" +
+            "      a,\n" +
+            "      b\n" +
+            "   }\n" +
+            ")\n");
+   }
+
+   @Test
    public void testSingleAnnotation() {
       testAnnotationParsing("@Abc()", true, "@Abc(\n)\n");
       testAnnotationParsing("@Abc", true, "@Abc(\n)\n");
