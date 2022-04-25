@@ -9,6 +9,7 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
@@ -24,6 +25,7 @@ import javassist.CtMethod;
 import javassist.CtNewConstructor;
 import javassist.CtNewMethod;
 import javassist.NotFoundException;
+import javassist.bytecode.ClassFile;
 
 // TODO [anistor] detect situations when we generate an identical marshaller class to a previously generated one (and in the same classloader) and reuse it
 // TODO [anistor] check which java classfile limits impose limits on the size of the supported Protobuf schema
@@ -144,10 +146,18 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       ctEncodeMethod.setBody(encodeSrc);
       marshallerImpl.addMethod(ctEncodeMethod);
 
-      Class<EnumMarshaller> generatedMarshallerClass = (Class<EnumMarshaller>) marshallerImpl.toClass(petm.getAnnotatedClass().asClass());
+      Class<EnumMarshaller> generatedMarshallerClass = (Class<EnumMarshaller>) toClass(marshallerImpl, petm.getAnnotatedClass());
       marshallerImpl.detach();
 
       return generatedMarshallerClass;
+   }
+
+   private static Class<?> toClass(CtClass ctClass, XClass metadataClass) throws CannotCompileException {
+      if (ClassFile.MAJOR_VERSION > ClassFile.JAVA_8) {
+         // Can only use this method with Java 9 or newer and is required for Java 17
+         return ctClass.toClass(metadataClass.getClass());
+      }
+      return ctClass.toClass();
    }
 
    /**
@@ -219,7 +229,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       ctWriteMethod.setBody(writeBody);
       marshallerImpl.addMethod(ctWriteMethod);
 
-      Class<ProtobufTagMarshaller> generatedMarshallerClass = (Class<ProtobufTagMarshaller>) marshallerImpl.toClass(pmtm.getAnnotatedClass().asClass());
+      Class<ProtobufTagMarshaller> generatedMarshallerClass = (Class<ProtobufTagMarshaller>) toClass(marshallerImpl, pmtm.getAnnotatedClass());
       marshallerImpl.detach();
 
       return generatedMarshallerClass;
