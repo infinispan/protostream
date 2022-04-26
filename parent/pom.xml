@@ -7,6 +7,7 @@
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
         <version>39</version>
+        <relativePath/>
     </parent>
 
     <groupId>org.infinispan.protostream</groupId>
@@ -435,7 +436,7 @@
                                     <version>[${maven.compiler.source},)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>[3.5.4,)</version>
+                                    <version>[3.6.0,)</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
