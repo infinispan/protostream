@@ -9,6 +9,7 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
@@ -144,10 +145,18 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       ctEncodeMethod.setBody(encodeSrc);
       marshallerImpl.addMethod(ctEncodeMethod);
 
-      Class<EnumMarshaller> generatedMarshallerClass = (Class<EnumMarshaller>) marshallerImpl.toClass(petm.getAnnotatedClass().asClass());
+      Class<EnumMarshaller> generatedMarshallerClass = (Class<EnumMarshaller>) toClass(marshallerImpl, petm.getAnnotatedClass());
       marshallerImpl.detach();
 
       return generatedMarshallerClass;
+   }
+
+   private Class<?> toClass(CtClass marshallerImpl, XClass petm) throws CannotCompileException {
+      if (System.getProperty("java.version").startsWith("1.8")) {
+         return marshallerImpl.toClass();
+      } else {
+         return marshallerImpl.toClass(petm.asClass());
+      }
    }
 
    /**
@@ -219,7 +228,7 @@ final class MarshallerByteCodeGenerator extends AbstractMarshallerCodeGenerator 
       ctWriteMethod.setBody(writeBody);
       marshallerImpl.addMethod(ctWriteMethod);
 
-      Class<ProtobufTagMarshaller> generatedMarshallerClass = (Class<ProtobufTagMarshaller>) marshallerImpl.toClass(pmtm.getAnnotatedClass().asClass());
+      Class<ProtobufTagMarshaller> generatedMarshallerClass = (Class<ProtobufTagMarshaller>) toClass(marshallerImpl, pmtm.getAnnotatedClass());
       marshallerImpl.detach();
 
       return generatedMarshallerClass;

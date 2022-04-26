@@ -208,10 +208,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    }
 
    private void ensureRequiredEnv() {
-      if (getJavaMajorVersion() < 9) {
+      if (getJavaMajorVersion() < 9 && !Boolean.getBoolean("org.infinispan.protostream.skipAnnotationCompilerCheck")) {
          reportWarning(null, "Please ensure you use at least Java ver. 9 for compilation in order to avoid various " +
                "compiler related bugs from older Java versions that impact the AutoProtoSchemaBuilder annotation " +
-               "processor (you can still set the output target to 8 or above).");
+               "processor (you can still set the output target to 8 or above). To hide this warning set the " +
+               "`org.infinispan.protostream.skipAnnotationCompilerCheck` system property");
       }
 
       Version procVersion = Version.getVersion(AutoProtoSchemaBuilder.class);
