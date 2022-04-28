@@ -1,5 +1,25 @@
 package org.infinispan.protostream.impl;
 
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_DOUBLE;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_ENUM;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED32;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED64;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_FLOAT;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_INT32;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_INT64;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_MESSAGE;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_SFIXED32;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_SFIXED64;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_SINT32;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_SINT64;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_STRING;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_TYPE_ID;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_TYPE_NAME;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT32;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT64;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Reader;
@@ -27,26 +47,6 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.Type;
-
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_DOUBLE;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_ENUM;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED32;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED64;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_FLOAT;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_INT32;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_INT64;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_MESSAGE;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_SFIXED32;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_SFIXED64;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_SINT32;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_SINT64;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_STRING;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_TYPE_ID;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_TYPE_NAME;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT32;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT64;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;

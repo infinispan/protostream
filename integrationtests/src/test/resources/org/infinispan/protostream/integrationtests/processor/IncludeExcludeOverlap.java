@@ -1,7 +1,8 @@
 package test_include_exclude_overlap;
 
-import org.infinispan.protostream.*;
-import org.infinispan.protostream.annotations.*;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
 
 // includeClasses and excludeClasses are overlapping and must cause a compilation error
 

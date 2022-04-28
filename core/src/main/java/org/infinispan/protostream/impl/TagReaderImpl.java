@@ -1,5 +1,9 @@
 package org.infinispan.protostream.impl;
 
+import static org.infinispan.protostream.descriptors.WireType.FIXED_32_SIZE;
+import static org.infinispan.protostream.descriptors.WireType.FIXED_64_SIZE;
+import static org.infinispan.protostream.descriptors.WireType.MAX_VARINT_SIZE;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
@@ -18,10 +22,6 @@ import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.descriptors.WireType;
-
-import static org.infinispan.protostream.descriptors.WireType.FIXED_32_SIZE;
-import static org.infinispan.protostream.descriptors.WireType.FIXED_64_SIZE;
-import static org.infinispan.protostream.descriptors.WireType.MAX_VARINT_SIZE;
 
 /**
  * @author anistor@redhat.com

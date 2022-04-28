@@ -1,7 +1,8 @@
 package test_basic_stuff_dependent;
 
-import org.infinispan.protostream.*;
-import org.infinispan.protostream.annotations.*;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
 
 import test_basic_stuff.TestMessage;
 

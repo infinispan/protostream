@@ -1,7 +1,8 @@
 package test_nested_discovery_without_auto_import;
 
-import org.infinispan.protostream.*;
-import org.infinispan.protostream.annotations.*;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
 
 @AutoProtoSchemaBuilder(includeClasses = {OuterMessage2.class, OuterMessage3.class},
       autoImportClasses = false, schemaFilePath = "/")

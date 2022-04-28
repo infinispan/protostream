@@ -1,5 +1,8 @@
 package org.infinispan.protostream.impl;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.Objects;
 
@@ -14,9 +17,6 @@ import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.junit.Test;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Try defining a protobuf type that wraps a primitive or message array and marshall it as top level object,

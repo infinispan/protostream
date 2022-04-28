@@ -1,7 +1,8 @@
 package test_enum_initializer;
 
-import org.infinispan.protostream.*;
-import org.infinispan.protostream.annotations.*;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
 
 @AutoProtoSchemaBuilder
 public interface TestEnumInitializer extends SerializationContextInitializer {

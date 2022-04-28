@@ -1,5 +1,11 @@
 package org.infinispan.protostream.integrationtests.processor;
 
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static javax.tools.StandardLocation.CLASS_OUTPUT;
+import static javax.tools.StandardLocation.SOURCE_OUTPUT;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Optional;
 
 import javax.tools.FileObject;
@@ -8,13 +14,6 @@ import javax.tools.JavaFileObject;
 import org.junit.Test;
 
 import com.google.testing.compile.Compilation;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static javax.tools.StandardLocation.CLASS_OUTPUT;
-import static javax.tools.StandardLocation.SOURCE_OUTPUT;
 
 /**
  * @author anistor@redhat.com

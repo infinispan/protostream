@@ -1,7 +1,7 @@
 package test_depends_on_cycle;
 
-import org.infinispan.protostream.*;
-import org.infinispan.protostream.annotations.*;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 
 // The processor must spot the cyclic dependency and report an error
 
