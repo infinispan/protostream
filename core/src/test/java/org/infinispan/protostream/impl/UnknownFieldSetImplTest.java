@@ -1,5 +1,7 @@
 package org.infinispan.protostream.impl;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,8 +19,6 @@ import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
-
-import static org.junit.Assert.assertArrayEquals;
 
 /**
  * @author anistor@redhat.com

@@ -1,5 +1,7 @@
 package org.infinispan.protostream.integrationtests.processor;
 
+import static com.google.testing.compile.Compiler.javac;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -14,8 +16,6 @@ import org.infinispan.protostream.annotations.impl.processor.AutoProtoSchemaBuil
 import com.google.common.io.Resources;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
-
-import static com.google.testing.compile.Compiler.javac;
 
 /**
  * Some utility functions for working with Compilation objects.

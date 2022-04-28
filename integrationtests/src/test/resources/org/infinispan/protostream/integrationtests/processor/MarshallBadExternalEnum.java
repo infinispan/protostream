@@ -1,7 +1,10 @@
 package test_marshall_bad_external_enum;
 
-import org.infinispan.protostream.*;
-import org.infinispan.protostream.annotations.*;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoAdapter;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoName;
 
 
 @AutoProtoSchemaBuilder(includeClasses = BadColorEnumAdapter.class, schemaFilePath = "/")
