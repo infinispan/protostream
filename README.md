@@ -1,6 +1,6 @@
 # ProtoStream
 [![Build Status](https://ci.infinispan.org/buildStatus/icon?job=Protostream%2Fmain)](https://ci.infinispan.org/job/Protostream/job/main/)
-[![Maven Central](https://img.shields.io/badge/maven/central-4.4.4.Final-green.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|4.4.4.Final|)
+[![Maven Central](https://img.shields.io/badge/maven/central-4.4.3.Final-green.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|4.4.3.Final|)
 [![Javadoc](https://img.shields.io/badge/Javadoc-online-green.svg)](http://www.javadoc.io/doc/org.infinispan.protostream/protostream)
 [![License](https://img.shields.io/github/license/infinispan/infinispan.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Java 8+](https://img.shields.io/badge/java-8+-blue.svg)](http://java.oracle.com)
