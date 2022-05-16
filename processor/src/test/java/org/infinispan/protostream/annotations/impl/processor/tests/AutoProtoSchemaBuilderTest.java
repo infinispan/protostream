@@ -376,6 +376,12 @@ public class AutoProtoSchemaBuilderTest {
       @ProtoField(number = 36, defaultValue = "36")
       Byte[] testField36 = {1, 2, 3};
 
+      @ProtoField(number = 37)
+      Date getTestField37;
+
+      @ProtoField(number = 38)
+      Instant getTestField38;
+
       private char testField51;
 
       @ProtoField(number = 51, defaultValue = "A")
@@ -770,6 +776,28 @@ public class AutoProtoSchemaBuilderTest {
 
       public void setTestField86(Byte[] testField86) {
          this.testField86 = testField86;
+      }
+
+      private Date testField87;
+
+      @ProtoField(number = 87)
+      public Date getTestField87() {
+         return testField87;
+      }
+
+      public void setTestField87(Date testField87) {
+         this.testField87 = testField87;
+      }
+
+      private Instant testField88;
+
+      @ProtoField(number = 88)
+      public Instant getTestField88() {
+         return testField88;
+      }
+
+      public void setTestField88(Instant testField88) {
+         this.testField88 = testField88;
       }
    }
 

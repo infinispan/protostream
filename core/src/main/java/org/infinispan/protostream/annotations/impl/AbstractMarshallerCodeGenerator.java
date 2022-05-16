@@ -267,7 +267,9 @@ public abstract class AbstractMarshallerCodeGenerator {
                      || fieldMetadata.getProtobufType().getJavaType() == JavaType.STRING
                      || fieldMetadata.getProtobufType().getJavaType() == JavaType.BYTE_STRING
                      || fieldMetadata.getProtobufType().getJavaType() == JavaType.ENUM
-                     || fieldMetadata.getProtobufType().getJavaType() == JavaType.MESSAGE) {
+                     || fieldMetadata.getProtobufType().getJavaType() == JavaType.MESSAGE
+                     || fieldMetadata.getJavaType().getCanonicalName().equals(Date.class.getCanonicalName())
+                     || fieldMetadata.getJavaType().getCanonicalName().equals(Instant.class.getCanonicalName())) {
                   iw.append(" = null");
                } else if (fieldMetadata.isPrimitive()) {
                   if (fieldMetadata.getProtobufType() == Type.BOOL) {
