@@ -44,25 +44,6 @@ pipeline {
             }
         }
 
-        stage('JDK 8 Tests') {
-            steps {
-                script {
-                    env.JAVA_HOME = tool('JDK 8')
-                }
-                configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true -Dorg.infinispan.protostream.skipAnnotationCompilerCheck"
-                }
-                junit testResults: '**/target/*-reports*/**/TEST-*.xml', healthScaleFactor: 100, allowEmptyResults: true
-
-                // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
-                script {
-                    if (manager.logContains("org.apache.maven.surefire.booter.SurefireBooterForkException:.*")) {
-                        echo "Fork error found"
-                        manager.buildFailure()
-                    }
-                }
-            }
-        }
         stage('JDK 11 Tests') {
             steps {
                 // cleanup old xml
