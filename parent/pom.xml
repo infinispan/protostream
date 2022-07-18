@@ -411,6 +411,28 @@
 
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>javadoc</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <source>8</source>
+                    <doclint>none</doclint>
+                    <detectLinks>false</detectLinks>
+                    <detectOfflineLinks>false</detectOfflineLinks>
+                    <links>
+                        <link>http://docs.oracle.com/javase/8/docs/api/</link>
+                    </links>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
                 <extensions>true</extensions>
@@ -419,6 +441,7 @@
                     <stagingDescription>Infinispan Protostream ${project.version} release</stagingDescription>
                     <nexusUrl>${maven.releases.nexus.url}</nexusUrl>
                     <serverId>${maven.releases.repo.id}</serverId>
+                    <stagingProfileId>3092739620cdb</stagingProfileId>
                     <stagingRepositoryId>${stagingRepositoryId}</stagingRepositoryId>
                 </configuration>
             </plugin>
