@@ -21,6 +21,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <scm>
+        <connection>scm:git:git@github.com:infinispan/protostream.git</connection>
+        <developerConnection>scm:git:git@github.com:infinispan/protostream.git</developerConnection>
+        <url>https://github.com/infinispan/protostream</url>
+    </scm>
+
     <modules>
         <module>parent</module>
         <module>sample-domain-definition</module>
