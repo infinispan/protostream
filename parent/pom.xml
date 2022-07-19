@@ -520,8 +520,6 @@
                     <stagingDescription>Infinispan Protostream ${project.version} release</stagingDescription>
                     <nexusUrl>${maven.releases.nexus.url}</nexusUrl>
                     <serverId>${maven.releases.repo.id}</serverId>
-                    <stagingProfileId>3092739620cdb</stagingProfileId>
-                    <stagingRepositoryId>${stagingRepositoryId}</stagingRepositoryId>
                 </configuration>
             </plugin>
             <plugin>
