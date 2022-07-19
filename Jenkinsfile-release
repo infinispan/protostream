@@ -45,7 +45,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V -Pcommunity-release -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID"
+                sh "$MAVEN_HOME/bin/mvn -B -V -Pcommunity-release -DskipTests clean deploy"
             }
         }
 

@@ -113,7 +113,7 @@
         <version.maven.shade>3.2.3</version.maven.shade>
 
         <!-- plugins version -->
-        <version.maven.nexus-staging>1.6.12</version.maven.nexus-staging>
+        <version.maven.nexus-staging>1.6.13</version.maven.nexus-staging>
         <version.maven.gpg>3.0.1</version.maven.gpg>
 
         <version.protobuf>3.15.2</version.protobuf>
@@ -484,6 +484,14 @@
                             </configuration>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-scm-plugin</artifactId>
+                    <version>1.13.0</version>
+                    <configuration>
+                        <tag>${project.version}</tag>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
