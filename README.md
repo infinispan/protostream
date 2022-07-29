@@ -55,7 +55,7 @@ The following `pom.xml` snippet shows how to do it with Maven:
 Requirements
 ------------
 
-Target runtime platform is Java 8.
+Target runtime platform is Java 11.
 
 Requires Java 11 or newer to build.
 
