@@ -28,11 +28,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>protostream-processor</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
