@@ -14,9 +14,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Generated;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
+import javax.annotation.processing.Generated;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
@@ -574,7 +574,6 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       return iw.toString();
    }
 
-   //todo [anistor] switch to javax.annotation.processing.Generated after moving away from JDK 8
    static void addGeneratedClassHeader(IndentWriter iw, boolean addPrivateJavadocTag, String... classes) {
       iw.append("/**\n * WARNING: Generated code! Do not edit!\n").append(addPrivateJavadocTag ? " *\n * @private\n" : "").append(" */\n");
       iw.append('@').append(Generated.class.getName()).append("(\n   value = \"").append(AutoProtoSchemaBuilderAnnotationProcessor.class.getName())
