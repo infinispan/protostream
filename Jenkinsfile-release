@@ -42,7 +42,7 @@ pipeline {
             }
             steps {
                 params.nextVersion = sh (
-                    script: '$MAVEN_HOME/bin/mvn -B help:evaluate -Dexpression=project.version -q -DforceStdout'
+                    script: '$MAVEN_HOME/bin/mvn -B help:evaluate -Dexpression=project.version -q -DforceStdout',
                     returnStdout: true
                 ).trim()
                 echo "Current version: ${params.nextVersion}"
