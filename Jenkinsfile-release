@@ -8,7 +8,7 @@ pipeline {
     parameters {
         string(name: 'version', defaultValue: '0.0.0.Qualifier', description: 'Release version')
         string(name: 'nextVersion', defaultValue: '', description: 'Next release (blank to stay on current SNAPSHOT)')
-        gitParameter(name: 'branch', defaultValue: 'main', branchFilter: 'origin/(.*)', type: 'PT_BRANCH', sortMode: 'NONE', description: 'Branch to release from')
+        gitParameter(name: 'branch', defaultValue: 'main', branchFilter: 'origin/(.*)', type: 'PT_BRANCH', sortMode: 'DESCENDING_SMART', description: 'Branch to release from')
     }
 
     options {
