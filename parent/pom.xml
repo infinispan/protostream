@@ -137,8 +137,6 @@
         <maven.releases.repo.url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</maven.releases.repo.url>
         <maven.snapshots.repo.id>ossrh</maven.snapshots.repo.id>
         <maven.snapshots.repo.url>https://s01.oss.sonatype.org/content/repositories/snapshots</maven.snapshots.repo.url>
-
-        <infinispan.gpg.key>9E31AB27445478DB</infinispan.gpg.key>
     </properties>
 
     <repositories>
@@ -392,8 +390,11 @@
                                 <goal>sign</goal>
                             </goals>
                             <configuration>
-                                <keyname>${infinispan.gpg.key}</keyname>
-                                <passphraseServerId>${infinispan.gpg.key}</passphraseServerId>
+                                <passphraseServerId>gpg.passphrase</passphraseServerId>
+                                <gpgArguments>
+                                    <arg>--pinentry-mode</arg>
+                                    <arg>loopback</arg>
+                                </gpgArguments>
                             </configuration>
                         </execution>
                     </executions>
