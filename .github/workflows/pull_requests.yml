@@ -1,0 +1,80 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  jdk11:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: JDK 11 Tests
+        run: mvn -B verify -Dmaven.test.failure.ignore=true -Dansi.strip=true
+
+      - name: Test Results
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: JDK 11 Test Results
+          path: "**/target/*-reports*/**/TEST-*.xml"
+          reporter: java-junit
+
+  jdk17:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: JDK 17 Tests
+        run: mvn -B verify -Dmaven.test.failure.ignore=true -Dansi.strip=true
+
+      - name: Test Results
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: JDK 17 Test Results
+          path: "**/target/*-reports*/**/TEST-*.xml"
+          reporter: java-junit
+          
+  jdk8:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: JDK 8 Tests
+        run: mvn -B verify -Dmaven.test.failure.ignore=true -Dansi.strip=true
+
+      - name: Test Results
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: JDK 8 Test Results
+          path: "**/target/*-reports*/**/TEST-*.xml"
+          reporter: java-junit
+
