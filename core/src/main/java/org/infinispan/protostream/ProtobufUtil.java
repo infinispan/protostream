@@ -172,7 +172,7 @@ public final class ProtobufUtil {
     * @throws IOException if I/O operations fail
     */
    public static String toCanonicalJSON(ImmutableSerializationContext ctx, byte[] bytes) throws IOException {
-      return toCanonicalJSON(ctx, bytes, true);
+      return toCanonicalJSON(ctx, bytes, false);
    }
 
    /**
