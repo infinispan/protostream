@@ -575,7 +575,7 @@ public final class JsonUtils {
                default:
                   if (tagValue instanceof Date) {
                      jsonOut.append('\"').append(formatDate((Date) tagValue)).append('\"');
-                  } else if (fieldNumber == WRAPPED_ENUM) {
+                  } else if (fieldNumber == WRAPPED_ENUM && fieldDescriptor.name.equals("wrappedEnum")) {
                      jsonOut.append('\"').append(tagValue).append('\"');
                   } else {
                      jsonOut.append(tagValue);

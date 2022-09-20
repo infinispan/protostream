@@ -1,9 +1,13 @@
 package org.infinispan.protostream.integrationtests.processor.annotated_package;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Arrays;
 import java.util.ServiceLoader;
 
 import org.infinispan.protostream.GeneratedSchema;
@@ -13,6 +17,8 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.impl.processor.tests.ReusableInitializer;
+import org.infinispan.protostream.domain.User;
+import org.infinispan.protostream.integrationtests.processor.UserSerializationContextInitializer;
 import org.junit.Test;
 
 /**
@@ -40,6 +46,26 @@ public class AnnotationOnPackageIntegrationTest {
       generatedSchema.registerMarshallers(serCtx);
 
       assertTrue(serCtx.canMarshall(TestMessage.class));
+   }
+
+   @Test
+   public void testUserWithLotsOfFields() throws IOException {
+      SerializationContext serCtx = ProtobufUtil.newSerializationContext();
+
+      UserSerializationContextInitializer.INSTANCE.registerSchema(serCtx);
+      UserSerializationContextInitializer.INSTANCE.registerMarshallers(serCtx);
+
+      User user = new User();
+      user.setName("T");
+      user.setSurname("DL");
+      user.setSalutation("Helpful");
+
+      byte[] userBytes = ProtobufUtil.toWrappedByteArray(serCtx, user);
+
+      String json = ProtobufUtil.toCanonicalJSON(serCtx, userBytes, true);
+      byte[] jsonBytes = ProtobufUtil.fromCanonicalJSON(serCtx, new StringReader(json));
+
+      assertArrayEquals(userBytes, jsonBytes);
    }
 
    @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, service = true)

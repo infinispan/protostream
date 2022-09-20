@@ -6,12 +6,14 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -21,7 +23,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 public class User implements Externalizable {   // implement Externalizable just for PerformanceTest
 
    public enum Gender {
-      MALE, FEMALE
+      @ProtoEnumValue MALE, @ProtoEnumValue(value = 1) FEMALE
    }
 
    private int id;
@@ -36,6 +38,14 @@ public class User implements Externalizable {   // implement Externalizable just
    private Instant creationDate;
    private Instant passwordExpirationDate;
    private Long qrCode;
+   private Address primaryAddress;
+   private Date someDate;
+   private float someFloat = 0.1f;
+   private String someString;
+   private double someDouble = 0.2;
+   private boolean someBoolean = true;
+   private long someLong = 34;
+   private boolean someOtherBoolean;
 
    @ProtoField(number = 1, required = true)
    public int getId() {
@@ -145,6 +155,78 @@ public class User implements Externalizable {   // implement Externalizable just
       this.qrCode = qrCode;
    }
 
+   @ProtoField(number = 13)
+   public Address getPrimaryAddress() {
+      return primaryAddress;
+   }
+
+   public void setPrimaryAddress(Address primaryAddress) {
+      this.primaryAddress = primaryAddress;
+   }
+
+   @ProtoField(number = 14)
+   public Date getSomeDate() {
+      return someDate;
+   }
+
+   public void setSomeDate(Date someDate) {
+      this.someDate = someDate;
+   }
+
+   @ProtoField(number = 15, defaultValue = "0.1f")
+   public float getSomeFloat() {
+      return someFloat;
+   }
+
+   public void setSomeFloat(float someFloat) {
+      this.someFloat = someFloat;
+   }
+
+   @ProtoField(number = 16)
+   public String getSomeString() {
+      return someString;
+   }
+
+   public void setSomeString(String someString) {
+      this.someString = someString;
+   }
+
+   @ProtoField(number = 17, defaultValue = "0.2")
+   public double getSomeDouble() {
+      return someDouble;
+   }
+
+   public void setSomeDouble(double someDouble) {
+      this.someDouble = someDouble;
+   }
+
+   @ProtoField(number = 18, defaultValue = "true")
+   public boolean isSomeBoolean() {
+      return someBoolean;
+   }
+
+   public void setSomeBoolean(boolean someBoolean) {
+      this.someBoolean = someBoolean;
+   }
+
+   @ProtoField(number = 19, defaultValue = "34")
+   public long getSomeLong() {
+      return someLong;
+   }
+
+   public void setSomeLong(long someLong) {
+      this.someLong = someLong;
+   }
+
+   @ProtoField(number = 20, defaultValue = "false")
+   public boolean isSomeOtherBoolean() {
+      return someOtherBoolean;
+   }
+
+   public void setSomeOtherBoolean(boolean someOtherBoolean) {
+      this.someOtherBoolean = someOtherBoolean;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -160,6 +242,14 @@ public class User implements Externalizable {   // implement Externalizable just
             ", creationDate='" + creationDate + '\'' +
             ", passwordExpirationDate='" + passwordExpirationDate + '\'' +
             ", qrCode=" + qrCode +
+            ", primaryAddress=" + primaryAddress +
+            ", someDate=" + someDate +
+            ", someFloat=" + someFloat +
+            ", someString=" + someString +
+            ", someDouble=" + someDouble +
+            ", someBoolean=" + someBoolean +
+            ", someLong=" + someLong +
+            ", someOtherBoolean=" + someOtherBoolean +
             '}';
    }
 
@@ -233,6 +323,29 @@ public class User implements Externalizable {   // implement Externalizable just
       } else {
          out.writeBoolean(false);
       }
+      if (primaryAddress != null) {
+         out.writeBoolean(true);
+         out.writeObject(primaryAddress);
+      } else {
+         out.writeBoolean(false);
+      }
+      if (someDate != null) {
+         out.writeBoolean(true);
+         out.writeObject(someDate);
+      } else {
+         out.writeBoolean(false);
+      }
+      out.writeFloat(someFloat);
+      if (someString != null) {
+         out.writeBoolean(true);
+         out.writeObject(someString);
+      } else {
+         out.writeBoolean(false);
+      }
+      out.writeDouble(someDouble);
+      out.writeBoolean(someBoolean);
+      out.writeLong(someLong);
+      out.writeBoolean(someOtherBoolean);
    }
 
    @Override
@@ -281,6 +394,20 @@ public class User implements Externalizable {   // implement Externalizable just
       if (in.readBoolean()) {
          qrCode = in.readLong();
       }
+      if (in.readBoolean()) {
+         primaryAddress = (Address) in.readObject();
+      }
+      if (in.readBoolean()) {
+         someDate = (Date) in.readObject();
+      }
+      someFloat = in.readFloat();
+      if (in.readBoolean()) {
+         someString = (String) in.readObject();
+      }
+      someDouble = in.readDouble();
+      someBoolean = in.readBoolean();
+      someLong = in.readLong();
+      someOtherBoolean = in.readBoolean();
    }
 
    @Override
@@ -299,11 +426,21 @@ public class User implements Externalizable {   // implement Externalizable just
             Objects.equals(notes, user.notes) &&
             Objects.equals(creationDate, user.creationDate) &&
             Objects.equals(passwordExpirationDate, user.passwordExpirationDate) &&
-            Objects.equals(qrCode, user.qrCode);
+            Objects.equals(qrCode, user.qrCode) &&
+            Objects.equals(primaryAddress, user.primaryAddress) &&
+            Objects.equals(someDate, user.someDate) &&
+            someFloat == user.someFloat &&
+            Objects.equals(someString, user.someString) &&
+            someDouble == user.someDouble &&
+            someBoolean == user.someBoolean &&
+            someLong == user.someLong &&
+            someOtherBoolean == user.someOtherBoolean;
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, name, surname, salutation, accountIds, addresses, age, gender, notes, creationDate, passwordExpirationDate, qrCode);
+      return Objects.hash(id, name, surname, salutation, accountIds, addresses, age, gender, notes, creationDate,
+            passwordExpirationDate, qrCode, primaryAddress, someDate, someFloat, someString, someDouble, someBoolean,
+            someLong, someOtherBoolean);
    }
 }
