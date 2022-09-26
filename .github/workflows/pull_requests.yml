@@ -24,13 +24,12 @@ jobs:
       - name: JDK 11 Tests
         run: mvn -B verify -Dmaven.test.failure.ignore=true -Dansi.strip=true
 
-      - name: Test Results
-        uses: dorny/test-reporter@v1
+      - name: Test Logs
+        uses: actions/upload-artifact@v3
         if: success() || failure()
         with:
-          name: JDK 17 Test Results
+          name: jdk11-test-results
           path: "**/target/*-reports*/**/TEST-*.xml"
-          reporter: java-junit
 
   jdk17:
     runs-on: ubuntu-latest
@@ -47,10 +46,9 @@ jobs:
       - name: JDK 17 Tests
         run: mvn -B verify -Dmaven.test.failure.ignore=true -Dansi.strip=true
 
-      - name: Test Results
-        uses: dorny/test-reporter@v1
+      - name: Test Logs
+        uses: actions/upload-artifact@v3
         if: success() || failure()
         with:
-          name: JDK 17 Test Results
+          name: jdk17-test-results
           path: "**/target/*-reports*/**/TEST-*.xml"
-          reporter: java-junit
