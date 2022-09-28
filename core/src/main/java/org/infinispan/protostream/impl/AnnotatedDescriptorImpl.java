@@ -86,9 +86,9 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
             for (AnnotationElement.Annotation annotation : parsedAnnotations) {
                AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation);
                if (annotationConfig == null) {
-                  // unknown annotations are ignored, but we might want to log a warning
+                  // unknown annotations are ignored
                   if (getAnnotationsConfig().logUndefinedAnnotations()) {
-                     log.warnf("Encountered and ignored and unknown annotation \"%s\" on %s", annotation.getName(), fullName);
+                     log.debugf("Ignoring an unknown annotation \"%s\" on %s", annotation.getName(), fullName);
                   }
                } else {
                   validateAttributes(annotation, annotationConfig);
