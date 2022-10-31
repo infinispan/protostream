@@ -356,6 +356,94 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       assertEquals(acc, account);
    }
 
+   @Test
+   public void test32BitsNumberBoundaries() throws IOException {
+      ImmutableSerializationContext ctx = createContext();
+
+      //uint32 / fixed32 are both unsigned integer
+      // negative -> exception
+      expectNumberFormatExceptionWithJson(ctx, "uint32", "-1");
+      expectNumberFormatExceptionWithJson(ctx, "fixed32", "-1");
+      // max uint32 value -> ok
+      assertJsonNumber(ctx, "uint32", "4294967295");
+      assertJsonNumber(ctx, "fixed32", "4294967295");
+      // more than unsigned int value -> exception
+      expectNumberFormatExceptionWithJson(ctx, "uint32", "4294967296");
+      expectNumberFormatExceptionWithJson(ctx, "fixed32", "4294967296");
+
+      // int32, sfixed32, sint32 are signed integers
+      // less than Integer.MIN_VALUE -> exception
+      expectNumberFormatExceptionWithJson(ctx, "int32", "-2147483649");
+      expectNumberFormatExceptionWithJson(ctx, "sfixed32", "-2147483649");
+      expectNumberFormatExceptionWithJson(ctx, "sint32", "-2147483649");
+      // Integer.MIN_VALUE -> ok
+      assertJsonNumber(ctx, "int32", "-2147483648");
+      assertJsonNumber(ctx, "sfixed32", "-2147483648");
+      assertJsonNumber(ctx, "sint32", "-2147483648");
+      // Integer.MAX_VALUE -> ok
+      assertJsonNumber(ctx, "int32", "2147483647");
+      assertJsonNumber(ctx, "sfixed32", "2147483647");
+      assertJsonNumber(ctx, "sint32", "2147483647");
+      // greater than Integer.MAX_VALUE -> exception
+      expectNumberFormatExceptionWithJson(ctx, "int32", "2147483648");
+      expectNumberFormatExceptionWithJson(ctx, "sfixed32", "2147483648");
+      expectNumberFormatExceptionWithJson(ctx, "sint32", "2147483648");
+   }
+
+   @Test
+   public void test64BitsNumberBoundaries() throws IOException {
+      ImmutableSerializationContext ctx = createContext();
+
+      //uint64 / fixed64 are both unsigned longs
+      // negative -> exception
+      expectNumberFormatExceptionWithJson(ctx, "uint64", "-1");
+      expectNumberFormatExceptionWithJson(ctx, "fixed64", "-1");
+      // max uint64 value -> ok
+      assertJsonNumber(ctx, "uint64", "18446744073709551615");
+      assertJsonNumber(ctx, "fixed64", "18446744073709551615");
+      // more than unsigned int value -> exception
+      expectNumberFormatExceptionWithJson(ctx, "uint64", "18446744073709551616");
+      expectNumberFormatExceptionWithJson(ctx, "fixed64", "18446744073709551616");
+
+      // int64, sfixed64, sint64 are signed longs
+      // less than Long.MIN_VALUE -> exception
+      expectNumberFormatExceptionWithJson(ctx, "int64", "-9223372036854775809");
+      expectNumberFormatExceptionWithJson(ctx, "sfixed64", "-9223372036854775809");
+      expectNumberFormatExceptionWithJson(ctx, "sint64", "-9223372036854775809");
+      // Long.MIN_VALUE -> ok
+      assertJsonNumber(ctx, "int64", "-9223372036854775808");
+      assertJsonNumber(ctx, "sfixed64", "-9223372036854775808");
+      assertJsonNumber(ctx, "sint64", "-9223372036854775808");
+      // Long.MAX_VALUE -> ok
+      assertJsonNumber(ctx, "int64", "9223372036854775807");
+      assertJsonNumber(ctx, "sfixed64", "9223372036854775807");
+      assertJsonNumber(ctx, "sint64", "9223372036854775807");
+      // greater than Long.MAX_VALUE -> exception
+      expectNumberFormatExceptionWithJson(ctx, "int64", "9223372036854775808");
+      expectNumberFormatExceptionWithJson(ctx, "sfixed64", "9223372036854775808");
+      expectNumberFormatExceptionWithJson(ctx, "sint64", "9223372036854775808");
+   }
+
+   private static StringReader primitiveNumericJson(String type, String value) {
+      return new StringReader(String.format("{\"_type\": \"%s\", \"_value\": %s}", type, value));
+   }
+
+   private static void assertJsonNumber(ImmutableSerializationContext ctx, String type, String number) throws IOException {
+      byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, primitiveNumericJson(type, number));
+      String json = ProtobufUtil.toCanonicalJSON(ctx, bytes);
+      assertTrue("type " + type + " not in " + json, json.contains(type));
+      assertTrue("value " + number + " not in " + json, json.contains(number));
+   }
+
+   private static void expectNumberFormatExceptionWithJson(ImmutableSerializationContext ctx, String type, String number) {
+      try {
+         ProtobufUtil.fromCanonicalJSON(ctx, primitiveNumericJson(type, number));
+         fail(number + " is not a valid " + type + " numeric value");
+      } catch (Exception e) {
+         assertTrue("Wrong exception " + e.getMessage(), e instanceof NumberFormatException);
+      }
+   }
+
    private Account createAccount() {
       Account account = new Account();
       account.setId(1);
