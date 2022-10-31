@@ -541,11 +541,13 @@ public final class JsonUtils {
                case STRING:
                   escapeJson((String) tagValue, jsonOut, true);
                   break;
-               case INT64:
-               case SINT64:
                case UINT64:
                case FIXED64:
-                  jsonOut.append(tagValue);
+                  jsonOut.append(Long.toUnsignedString((Long) tagValue));
+                  break;
+               case UINT32:
+               case FIXED32:
+                  jsonOut.append(Integer.toUnsignedString((Integer) tagValue));
                   break;
                case FLOAT:
                   Float f = (Float) tagValue;
@@ -767,10 +769,10 @@ public final class JsonUtils {
             writer.writeInt64(fieldNumber, Long.parseLong(parser.getText()));
             break;
          case UINT64:
-            writer.writeUInt64(fieldNumber, Long.parseLong(parser.getText()));
+            writer.writeUInt64(fieldNumber, Long.parseUnsignedLong(parser.getText()));
             break;
          case FIXED64:
-            writer.writeFixed64(fieldNumber, Long.parseLong(parser.getText()));
+            writer.writeFixed64(fieldNumber, Long.parseUnsignedLong(parser.getText()));
             break;
          case SFIXED64:
             writer.writeSFixed64(fieldNumber, Long.parseLong(parser.getText()));
@@ -782,10 +784,10 @@ public final class JsonUtils {
             writer.writeInt32(fieldNumber, Integer.parseInt(parser.getText()));
             break;
          case FIXED32:
-            writer.writeFixed32(fieldNumber, Integer.parseInt(parser.getText()));
+            writer.writeFixed32(fieldNumber, Integer.parseUnsignedInt(parser.getText()));
             break;
          case UINT32:
-            writer.writeUInt32(fieldNumber, Integer.parseInt(parser.getText()));
+            writer.writeUInt32(fieldNumber, Integer.parseUnsignedInt(parser.getText()));
             break;
          case SFIXED32:
             writer.writeSFixed32(fieldNumber, Integer.parseInt(parser.getText()));
