@@ -114,7 +114,7 @@
         <version.maven.nexus-staging>1.6.13</version.maven.nexus-staging>
         <version.maven.gpg>3.0.1</version.maven.gpg>
 
-        <version.protobuf>3.19.4</version.protobuf>
+        <version.protobuf>3.19.6</version.protobuf>
         <version.junit>4.13.2</version.junit>
         <version.compile-testing>0.19</version.compile-testing>
         <version.mockito>4.3.1</version.mockito>
