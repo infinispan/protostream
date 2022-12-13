@@ -14,7 +14,7 @@
     <packaging>pom</packaging>
     <version>4.6.0-SNAPSHOT</version>
 
-    <name>ProtoStream - aggregator</name>
+    <name>ProtoStream</name>
     <description>Aggregator module for the ProtoStream project. Builds the distribution of the project.</description>
 
     <properties>
