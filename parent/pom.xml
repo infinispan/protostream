@@ -125,7 +125,7 @@
         <version.jboss.logging.processor>2.2.1.Final</version.jboss.logging.processor>
         <version.log4j>2.18.0</version.log4j>
         <version.jboss.marshalling>2.1.1.Final</version.jboss.marshalling>
-        <version.javassist>3.28.0-GA</version.javassist>
+        <version.javassist>3.29.1-GA</version.javassist>
         <version.jackson>2.13.3</version.jackson>
         <version.auto-service>1.0.1</version.auto-service>
 
