@@ -5,19 +5,15 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.Properties;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
@@ -33,9 +29,9 @@ import org.infinispan.protostream.impl.Log;
 
 /**
  * Generates a Protocol Buffers schema definition file and the associated marshallers instances based on a set of given
- * {@code @Proto*} annotated classes. The generated schema and marshallers are registered to a {@link
- * SerializationContext} given during creation. The needed types, on which the currently generated types depend on, are
- * also looked up in the same {@link SerializationContext}.
+ * {@code @Proto*} annotated classes. The generated schema and marshallers are registered to a
+ * {@link SerializationContext} given during creation. The needed types, on which the currently generated types depend
+ * on, are also looked up in the same {@link SerializationContext}.
  * <p>
  * See annotations {@link ProtoName}, {@link ProtoMessage}, {@link ProtoField}, {@link ProtoEnum}, {@link ProtoTypeId},
  * {@link ProtoEnumValue}, {@link ProtoDoc}, {@link ProtoDocs}, {@link ProtoUnknownFieldSet}, {@link ProtoFactory},
@@ -44,8 +40,8 @@ import org.infinispan.protostream.impl.Log;
  * <b>NOTE:</b> This builder contains state that cannot be reset making it impossible to reuse properly. Please create
  * separate instances for each schema generation.
  * <p>
- * This class performs run-time generation. For a compile-time equivalent see {@link AutoProtoSchemaBuilder} and {@link
- * SerializationContextInitializer}.
+ * This class performs run-time generation. For a compile-time equivalent see {@link AutoProtoSchemaBuilder} and
+ * {@link SerializationContextInitializer}.
  *
  * @author anistor@redhat.com
  * @since 3.0
@@ -71,6 +67,7 @@ public final class ProtoSchemaBuilder {
 
    /**
     * Set this flag to {@code true} to enable output of debug comments in the generated Protobuf schema.
+    *
     * @deprecated
     */
    @Deprecated
@@ -87,42 +84,66 @@ public final class ProtoSchemaBuilder {
    private boolean autoImportClasses = true;
 
    public static void main(String[] args) throws Exception {
-      CommandLine cmd = parseCommandLine(args);
-      if (cmd == null) {
-         return;
-      }
+      File file = null;
+      String packageName = null;
+      Map<String, String> schemas = new HashMap<>();
+      List<String> marshallers = new ArrayList<>();
+      List<String> classes = new ArrayList<>();
 
-      String packageName = cmd.getOptionValue(PACKAGE_LONG_OPT);
+      for (int i = 0; i < args.length; i++) {
+         switch (args[i]) {
+            case "-h":
+            case "--help":
+               System.out.printf("ProtoStream %s %s%n", Version.getVersion(), ProtoSchemaBuilder.class.getSimpleName());
+               return;
+            case "-f":
+            case "--file":
+               file = new File(args[++i]);
+               break;
+            case "-p":
+            case "--package":
+               packageName = args[++i];
+               break;
+            case "-s":
+            case "--schema":
+               String[] parts = args[++i].split("=");
+               schemas.put(parts[0], parts[1]);
+               break;
+            case "-m":
+            case "--marshaller":
+               marshallers.add(args[++i]);
+               break;
+            default:
+               if (args[i].startsWith("-")) {
+                  System.err.printf("Unknown option '%s'%n", args[i]);
+                  return;
+               } else {
+                  classes.add(args[i]);
+               }
+         }
+      }
 
       Configuration config = Configuration.builder().build();
       SerializationContext ctx = ProtobufUtil.newSerializationContext(config);
 
-      Properties schemas = cmd.getOptionProperties(SCHEMA_LONG_OPT);
-      if (schemas != null) {
-         for (String schema : schemas.stringPropertyNames()) {
-            String file = schemas.getProperty(schema);
-            try (FileInputStream in = new FileInputStream(file)) {
-               ctx.registerProtoFiles(new FileDescriptorSource().addProtoFile(schema, in));
-            }
+      for (Map.Entry<String, String> entry : schemas.entrySet()) {
+         try (FileInputStream in = new FileInputStream(entry.getValue())) {
+            ctx.registerProtoFiles(new FileDescriptorSource().addProtoFile(entry.getKey(), in));
          }
       }
 
-      String[] marshallers = cmd.getOptionValues(MARSHALLER_LONG_OPT);
-      if (marshallers != null) {
-         for (String marshallerClass : marshallers) {
-            BaseMarshaller<?> bm = (BaseMarshaller<?>) Class.forName(marshallerClass).newInstance();
-            ctx.registerMarshaller(bm);
-         }
+      for (String marshallerClass : marshallers) {
+         BaseMarshaller<?> bm = (BaseMarshaller<?>) Class.forName(marshallerClass).newInstance();
+         ctx.registerMarshaller(bm);
       }
 
-      File file = cmd.hasOption(FILE_LONG_OPT) ? new File(cmd.getOptionValue(FILE_LONG_OPT)) : null;
       String fileName = file == null ? DEFAULT_GENERATED_SCHEMA_NAME : file.getName();
 
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder()
             .fileName(fileName)
             .packageName(packageName);
 
-      for (String className : cmd.getArgs()) {
+      for (String className : classes) {
          protoSchemaBuilder.addClass(Class.forName(className));
       }
 
@@ -136,34 +157,6 @@ public final class ProtoSchemaBuilder {
       } else {
          System.out.print(schemaFile);
       }
-   }
-
-   private static CommandLine parseCommandLine(String[] args) throws ParseException {
-      Option h = new Option(HELP_OPT, HELP_LONG_OPT, false, "Print usage information and exit immediately");
-      Option f = new Option(FILE_OPT, FILE_LONG_OPT, true, "Output *.proto schema file name (required)");
-      Option p = new Option(PACKAGE_OPT, PACKAGE_LONG_OPT, true, "The Protobuf package name of the generated schema (optional)");
-      Option m = new Option(MARSHALLER_OPT, MARSHALLER_LONG_OPT, true, "Register an existing marshaller class to be available for 'includes' (optional, multiple)");
-      Option s = new Option(SCHEMA_OPT, SCHEMA_LONG_OPT, true, "Register an existing Protobuf schema to be available for 'includes' (optional, multiple)");
-      s.setArgs(2);
-      s.setValueSeparator('=');
-      Options options = new Options();
-      options.addOption(f);
-      options.addOption(p);
-      options.addOption(h);
-      options.addOption(m);
-      options.addOption(s);
-      CommandLineParser parser = new GnuParser();
-      CommandLine cmd = parser.parse(options, args);
-
-      if (cmd.hasOption(HELP_OPT)) {
-         HelpFormatter formatter = new HelpFormatter();
-         formatter.setSyntaxPrefix("ProtoStream " + Version.getVersion() + " " + ProtoSchemaBuilder.class.getSimpleName());
-         formatter.printHelp(200, " usage: java " + ProtoSchemaBuilder.class.getName() + " [options] <list of fully qualified class names to process>",
-               "Options: ", options, "The list of class names is separated by whitespace.");
-         return null;
-      }
-
-      return cmd;
    }
 
    public ProtoSchemaBuilder() {
@@ -241,8 +234,8 @@ public final class ProtoSchemaBuilder {
     * fields defined by the superclass or superinterfaces will be just included in the schema of the derived class.
     * <p>
     * Inner classes will also be automatically processed if they are referenced by the outer class. If you want to make
-    * sure an inner class is processed regardless if referenced or not you will have to add it explicitly using {@link
-    * #addClass} or {@code #addClasses}.
+    * sure an inner class is processed regardless if referenced or not you will have to add it explicitly using
+    * {@link #addClass} or {@code #addClasses}.
     *
     * @param classes the classes to analyze
     * @return itself, to help chaining calls
