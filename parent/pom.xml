@@ -113,7 +113,6 @@
         <version.maven.nexus-staging>1.6.13</version.maven.nexus-staging>
         <version.maven.gpg>3.0.1</version.maven.gpg>
 
-        <version.protobuf>3.21.10</version.protobuf>
         <version.junit>4.13.2</version.junit>
         <version.compile-testing>0.19</version.compile-testing>
         <version.mockito>4.3.1</version.mockito>
@@ -237,7 +236,6 @@
                 <artifactId>jboss-logging-annotations</artifactId>
                 <version>${version.jboss.logging.annotations}</version>
                 <scope>provided</scope>
-                <optional>true</optional>
             </dependency>
 
             <dependency>
@@ -245,14 +243,6 @@
                 <artifactId>jboss-logging-processor</artifactId>
                 <version>${version.jboss.logging.processor}</version>
                 <scope>provided</scope>
-                <optional>true</optional>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>${version.protobuf}</version>
-                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -265,14 +255,12 @@
                 <groupId>org.javassist</groupId>
                 <artifactId>javassist</artifactId>
                 <version>${version.javassist}</version>
-                <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
                 <version>${version.jackson}</version>
-                <optional>true</optional>
             </dependency>
 
             <dependency>
@@ -280,7 +268,6 @@
                 <artifactId>auto-service</artifactId>
                 <version>${version.auto-service}</version>
                 <scope>provided</scope>
-                <optional>true</optional>
             </dependency>
 
             <dependency>
