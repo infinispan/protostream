@@ -22,6 +22,25 @@ import com.google.testing.compile.Compilation;
 public class AnnotationProcessorCompilationTest {
 
    @Test
+   public void testBigInteger() {
+      Compilation compilation = CompilationUtils.compile(
+            "org/infinispan/protostream/integrationtests/processor/CalculusAuto.java"
+      );
+
+      // TODO IPROTO-260 Support this use case
+      assertThat(compilation).failed();
+   }
+
+   @Test
+   public void testLong() {
+      Compilation compilation = CompilationUtils.compile(
+            "org/infinispan/protostream/integrationtests/processor/LongAuto.java"
+      );
+
+      assertThat(compilation).succeeded();
+   }
+
+   @Test
    public void testBasic() {
       Compilation compilation = CompilationUtils.compile(
             "org/infinispan/protostream/integrationtests/processor/TestMessage.java",

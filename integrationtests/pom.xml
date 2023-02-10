@@ -32,6 +32,12 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>protostream-types</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>protostream</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
