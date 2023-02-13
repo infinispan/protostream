@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl.processor;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
 import org.infinispan.protostream.annotations.impl.ImportedProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoEnumTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
+import org.infinispan.protostream.annotations.impl.processor.dependecy.CompileTimeDependency;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
@@ -26,15 +28,17 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
  */
 final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
 
-   private final Map<XClass, String> dependencies;
+   private final Map<XClass, CompileTimeDependency> dependencies;
 
    private final MarshallerSourceCodeGenerator marshallerSourceCodeGenerator;
 
    private final AnnotatedClassScanner classScanner;
 
+   private final Map<XClass, XClass> adapterMap = new HashMap<>();
+
    CompileTimeProtoSchemaGenerator(XTypeFactory typeFactory, GeneratedFilesWriter generatedFilesWriter,
                                    SerializationContext serializationContext, String generator,
-                                   String fileName, String packageName, Map<XClass, String> dependencies,
+                                   String fileName, String packageName, Map<XClass, CompileTimeDependency> dependencies,
                                    Set<XClass> classes, boolean autoImportClasses, AnnotatedClassScanner classScanner) {
       super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses);
       this.dependencies = dependencies;
@@ -54,7 +58,12 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
 
    @Override
    protected ProtoTypeMetadata makeMessageTypeMetadata(XClass javaType) {
-      return new CompileTimeProtoMessageTypeMetadata(this, javaType, getTargetClass(javaType));
+      XClass targetClass = getTargetClass(javaType);
+      if (!targetClass.equals(javaType)) {
+         adapterMap.put(targetClass, javaType);
+      }
+
+      return new CompileTimeProtoMessageTypeMetadata(this, javaType, targetClass);
    }
 
    @Override
@@ -65,10 +74,11 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
          return new ImportedProtoTypeMetadata(descriptor, marshaller, javaType);
       }
 
-      String fileName = dependencies.get(javaType);
-      if (fileName != null) {
-         String packageName = serializationContext.getFileDescriptors().get(fileName).getPackage();
-         return new CompileTimeImportedProtoTypeMetadata(makeTypeMetadata(javaType), packageName, fileName);
+      CompileTimeDependency dependency = dependencies.get(javaType);
+      if (dependency != null) {
+         String packageName = serializationContext.getFileDescriptors().get(dependency.getFileName()).getPackage();
+         return new CompileTimeImportedProtoTypeMetadata(makeTypeMetadata(dependency.getUseToMakeTypeMetadata()),
+               packageName, dependency.getFileName());
       }
       return null;
    }
@@ -108,6 +118,14 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
          throw new ProtoSchemaBuilderException(annotatedClass.getName() + " has an invalid @ProtoAdapter annotation pointing to self");
       }
       return target;
+   }
+
+   public XClass getOriginalClass(XClass targetClass) {
+      XClass xClass = adapterMap.get(targetClass);
+      if (xClass == null) {
+         return targetClass;
+      }
+      return xClass;
    }
 
    public Set<String> getGeneratedMarshallerClasses() {
