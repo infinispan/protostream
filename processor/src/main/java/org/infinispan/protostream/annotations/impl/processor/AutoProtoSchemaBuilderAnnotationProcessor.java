@@ -46,6 +46,7 @@ import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.IndentWriter;
+import org.infinispan.protostream.annotations.impl.processor.dependecy.CompileTimeDependency;
 import org.infinispan.protostream.annotations.impl.processor.types.HasModelElement;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
@@ -294,7 +295,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
             initializerPackageName, initializerClassName, initializerFQN,
             protobufFileName, protobufPackageName, schemaSrc);
 
-      processorContext.add(classScanner.getInitializerFQClassName(), protobufFileName, protoSchemaGenerator.getMarshalledClasses());
+      processorContext.add(classScanner.getInitializerFQClassName(), protobufFileName, protoSchemaGenerator);
    }
 
    private void processClass(RoundEnvironment roundEnv, SerializationContext serCtx, TypeElement typeElement, AutoProtoSchemaBuilder builderAnnotation,
@@ -339,7 +340,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
             initializerPackageName, initializerClassName, initializerFQN,
             protobufFileName, protobufPackageName, schemaSrc);
 
-      processorContext.add(classScanner.getInitializerFQClassName(), protobufFileName, protoSchemaGenerator.getMarshalledClasses());
+      processorContext.add(classScanner.getInitializerFQClassName(), protobufFileName, protoSchemaGenerator);
    }
 
    private String getProtobufFileName(Element element, AutoProtoSchemaBuilder annotation) {
@@ -359,15 +360,14 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
        */
       final Set<String> initializerClassNames = new LinkedHashSet<>();
 
-      /**
-       * The key is a marshalled class, the value is the name of the protobuf file that contains it.
-       */
-      final Map<XClass, String> marshalledClasses = new HashMap<>();
+      final Map<XClass, CompileTimeDependency> marshalledClasses = new HashMap<>();
 
-      void add(String initializerFQN, String protobufFileName, Set<XClass> classes) {
+      void add(String initializerFQN, String protobufFileName, CompileTimeProtoSchemaGenerator schemaGenerator) {
          initializerClassNames.add(initializerFQN);
-         for (XClass c : classes) {
-            marshalledClasses.put(c, protobufFileName);
+
+         for (XClass marshalledClass : schemaGenerator.getMarshalledClasses()) {
+            XClass adapter = schemaGenerator.getOriginalClass(marshalledClass);
+            marshalledClasses.put(marshalledClass, new CompileTimeDependency(protobufFileName, adapter));
          }
       }
    }
@@ -380,7 +380,9 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       ProcessorContext processorContext = new ProcessorContext();
 
       // register internal known types
-      processorContext.marshalledClasses.put(typeFactory.fromClass(WrappedMessage.class), WrappedMessage.PROTO_FILE);
+      XClass xClass = typeFactory.fromClass(WrappedMessage.class);
+      processorContext.marshalledClasses.put(xClass,
+            new CompileTimeDependency(WrappedMessage.PROTO_FILE, xClass));
 
       for (TypeMirror dependencyType : dependencies) {
          TypeElement dependencyElement = (TypeElement) types.asElement(dependencyType);

@@ -27,8 +27,7 @@ public class AnnotationProcessorCompilationTest {
             "org/infinispan/protostream/integrationtests/processor/CalculusAuto.java"
       );
 
-      // TODO IPROTO-260 Support this use case
-      assertThat(compilation).failed();
+      assertThat(compilation).succeeded();
    }
 
    @Test
