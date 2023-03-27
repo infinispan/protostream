@@ -5,6 +5,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 import java.io.IOException;
 
 import org.infinispan.protostream.MalformedProtobufException;
+import org.infinispan.protostream.exception.ProtoStreamException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -44,6 +45,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Ran out of buffer space", id = 7)
    IOException outOfWriteBufferSpace(@Cause Throwable cause);
+
+   @Message(value = "The nested message depth appears to be larger than the configured limit of '%s'." +
+         "It is possible that the entity to marshall with type '%s' can have some circular dependencies.", id = 8)
+   ProtoStreamException maxNestedMessageDepth(int maxNestedMessageDepth, Class<?> entityType);
 
    class LogFactory {
       public static Log getLog(Class<?> clazz) {

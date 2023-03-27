@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
+import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.impl.TagWriterImpl;
 
 /**
@@ -15,6 +16,8 @@ import org.infinispan.protostream.impl.TagWriterImpl;
  */
 @SuppressWarnings("unused")
 public class GeneratedMarshallerBase {
+
+   private static final Log log = Log.LogFactory.getLog(GeneratedMarshallerBase.class);
 
    /**
     * Invoked by generated code.
@@ -38,6 +41,11 @@ public class GeneratedMarshallerBase {
     * Invoked by generated code.
     */
    protected final <T> void writeNestedMessage(BaseMarshallerDelegate<T> marshallerDelegate, ProtobufTagMarshaller.WriteContext ctx, int fieldNumber, T message) throws IOException {
+      int maxNestedMessageDepth = ctx.getSerializationContext().getConfiguration().maxNestedMessageDepth();
+      if (ctx.depth() >= maxNestedMessageDepth) {
+         throw log.maxNestedMessageDepth(maxNestedMessageDepth, message.getClass());
+      }
+
       ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
       TagWriterImpl nested = TagWriterImpl.newNestedInstance(ctx, baos);
       writeMessage(marshallerDelegate, nested, message);
