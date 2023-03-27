@@ -45,5 +45,7 @@ public interface ProtobufTagMarshaller<T> extends BaseMarshaller<T> {
     */
    interface WriteContext extends OperationContext {
       TagWriter getWriter();
+
+      int depth();
    }
 }

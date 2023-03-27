@@ -34,6 +34,8 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
    private final TagWriterImpl parent;
 
+   private final int depth;
+
    // lazily initialized
    private Map<Object, Object> params = null;
 
@@ -43,12 +45,14 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
    private TagWriterImpl(TagWriterImpl parent, Encoder encoder) {
       this.parent = parent;
+      this.depth = parent.depth + 1;
       this.serCtx = parent.serCtx;
       this.encoder = encoder;
    }
 
    private TagWriterImpl(SerializationContextImpl serCtx, Encoder encoder) {
       this.parent = null;
+      this.depth = 0;
       this.serCtx = serCtx;
       this.encoder = encoder;
    }
@@ -272,6 +276,11 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    @Override
    public TagWriter getWriter() {
       return this;
+   }
+
+   @Override
+   public int depth() {
+      return depth;
    }
 
    /**
