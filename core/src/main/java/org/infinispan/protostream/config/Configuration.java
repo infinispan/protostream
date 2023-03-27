@@ -15,6 +15,8 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
  */
 public interface Configuration {
 
+   int DEFAULT_MAX_NESTED_DEPTH = 100;
+
    /**
     * The name of the TypeId annotation. This optional annotation defines a unique positive integer type identifier for
     * each message or enum type. This can be used alternatively instead of the fully qualified type name during
@@ -34,6 +36,13 @@ public interface Configuration {
     * Flag that indicates in out of sequence writes should be logged as warnings. This is {@code true} by default.
     */
    boolean logOutOfSequenceWrites();
+
+   /**
+    * The max nested message depth to apply to all {@link org.infinispan.protostream.annotations.impl.GeneratedMarshallerBase}s.
+    * This value is used as way to avoid recurring on circular dependencies without the need to maintain the list of already visited entities.
+    * Default to {@link #DEFAULT_MAX_NESTED_DEPTH}
+    */
+   int maxNestedMessageDepth();
 
    WrappingConfig wrappingConfig();
 
@@ -83,6 +92,8 @@ public interface Configuration {
       Builder setLogOutOfSequenceReads(boolean logOutOfSequenceReads);
 
       Builder setLogOutOfSequenceWrites(boolean logOutOfSequenceWrites);
+
+      Builder maxNestedMessageDepth(int maxNestedMessageDepth);
 
       /**
        * Should we log a warning every time we encounter an undefined documentation annotation? This is {@code true} by

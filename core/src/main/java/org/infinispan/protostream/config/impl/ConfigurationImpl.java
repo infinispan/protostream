@@ -23,11 +23,15 @@ public final class ConfigurationImpl implements Configuration {
 
    private final AnnotationsConfigImpl annotationsConfig;
 
+   private final int maxNestedMessageDepth;
+
    private ConfigurationImpl(boolean logOutOfSequenceReads, boolean logOutOfSequenceWrites,
+                             int maxNestedMessageDepth,
                              WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper,
                              Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
       this.logOutOfSequenceReads = logOutOfSequenceReads;
       this.logOutOfSequenceWrites = logOutOfSequenceWrites;
+      this.maxNestedMessageDepth = maxNestedMessageDepth;
       this.wrappingConfig = new WrappingConfigImpl(wrappedMessageTypeIdMapper);
       this.annotationsConfig = new AnnotationsConfigImpl(annotations, logUndefinedAnnotations);
    }
@@ -40,6 +44,11 @@ public final class ConfigurationImpl implements Configuration {
    @Override
    public boolean logOutOfSequenceWrites() {
       return logOutOfSequenceWrites;
+   }
+
+   @Override
+   public int maxNestedMessageDepth() {
+      return maxNestedMessageDepth;
    }
 
    @Override
@@ -114,6 +123,8 @@ public final class ConfigurationImpl implements Configuration {
 
       private boolean logOutOfSequenceWrites = true;
 
+      private int maxNestedMessageDepth = Configuration.DEFAULT_MAX_NESTED_DEPTH;
+
       private WrappingConfigBuilderImpl wrappingConfigBuilder = null;
 
       private AnnotationsConfigBuilderImpl annotationsConfigBuilder = null;
@@ -181,6 +192,12 @@ public final class ConfigurationImpl implements Configuration {
       }
 
       @Override
+      public Builder maxNestedMessageDepth(int maxNestedMessageDepth) {
+         this.maxNestedMessageDepth = maxNestedMessageDepth;
+         return this;
+      }
+
+      @Override
       public WrappingConfigBuilderImpl wrappingConfig() {
          if (wrappingConfigBuilder == null) {
             wrappingConfigBuilder = new WrappingConfigBuilderImpl();
@@ -228,7 +245,7 @@ public final class ConfigurationImpl implements Configuration {
 
          // TypeId is the only predefined annotation. If there are more than one then we know we have at least one user defined.
          boolean logUndefinedAnnotations = annotationsConfig().logUndefinedAnnotations == null ? annotations.size() > 1 : annotationsConfig().logUndefinedAnnotations;
-         return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites,
+         return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites, maxNestedMessageDepth,
                wrappingConfig().wrappedMessageTypeIdMapper,
                annotations, logUndefinedAnnotations);
       }
