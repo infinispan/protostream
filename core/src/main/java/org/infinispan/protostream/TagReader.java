@@ -33,7 +33,9 @@ public interface TagReader extends RawProtoStreamReader {
 
    boolean readBool() throws IOException;
 
-   int readEnum() throws IOException;
+   default int readEnum() throws IOException {
+      return readInt32();
+   }
 
    /**
     * Reads a {@code string} value.
@@ -50,29 +52,48 @@ public interface TagReader extends RawProtoStreamReader {
     */
    ByteBuffer readByteBuffer() throws IOException;
 
-   double readDouble() throws IOException;
+   /**
+    * Similar to {@link #readByteArray()} except that the reader impl may optimize creation of a sub TagReader from
+    * itself, possibly avoiding byte[] allocations
+    * @return a new TagReader
+    */
+   TagReader subReaderFromArray() throws IOException;
 
-   float readFloat() throws IOException;
+   default double readDouble() throws IOException {
+      return Double.longBitsToDouble(readFixed64());
+   }
+
+   default float readFloat() throws IOException {
+      return Float.intBitsToFloat(readFixed32());
+   }
 
    long readInt64() throws IOException;
 
-   long readUInt64() throws IOException;
+   default long readUInt64() throws IOException {
+      return readInt64();
+   }
 
    long readSInt64() throws IOException;
 
    long readFixed64() throws IOException;
 
-   long readSFixed64() throws IOException;
+   default long readSFixed64() throws IOException {
+      return readFixed64();
+   }
 
    int readInt32() throws IOException;
 
-   int readUInt32() throws IOException;
+   default int readUInt32() throws IOException {
+      return readInt32();
+   }
 
    int readSInt32() throws IOException;
 
    int readFixed32() throws IOException;
 
-   int readSFixed32() throws IOException;
+   default int readSFixed32() throws IOException {
+      return readFixed32();
+   }
 
    /**
     * Sets a limit (based on the length of the length delimited value) when entering an embedded message.

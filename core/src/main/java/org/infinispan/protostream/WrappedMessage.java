@@ -296,15 +296,13 @@ public final class WrappedMessage {
             if (t.getClass().isEnum()) {
                ((EnumMarshallerDelegate) marshallerDelegate).encode(WRAPPED_ENUM, (Enum) t, out);
             } else {
-               ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
-               TagWriterImpl nestedCtx = TagWriterImpl.newInstanceNoBuffer(ctx, buffer);
-               marshallerDelegate.marshall(nestedCtx, null, t);
-               nestedCtx.flush();
-               out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
+               TagWriter nestedWriter = out.subWriter(WRAPPED_MESSAGE, false);
+               marshallerDelegate.marshall((ProtobufTagMarshaller.WriteContext) nestedWriter, null, t);
+               nestedWriter.close();
             }
          }
       }
-      out.flush();
+      out.close();
    }
 
    private static void writeContainer(ImmutableSerializationContext ctx, TagWriter out, BaseMarshallerDelegate marshallerDelegate, Object container) throws IOException {
@@ -355,7 +353,7 @@ public final class WrappedMessage {
       String typeName = null;
       Integer typeId = null;
       int enumValue = -1;
-      byte[] messageBytes = null;
+      TagReader messageReader = null;
       Object value = null;
       int fieldCount = 0;
       int expectedFieldCount = 1;
@@ -398,7 +396,7 @@ public final class WrappedMessage {
             }
             case WRAPPED_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
                expectedFieldCount = 2;
-               messageBytes = in.readByteArray();
+               messageReader = in.subReaderFromArray();
                break;
             }
             case WRAPPED_STRING << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
@@ -514,7 +512,7 @@ public final class WrappedMessage {
          }
       }
 
-      if (value == null && typeName == null && typeId == null && messageBytes == null) {
+      if (value == null && typeName == null && typeId == null && messageReader == null) {
          return null;
       }
 
@@ -533,10 +531,9 @@ public final class WrappedMessage {
          typeName = ctx.getDescriptorByTypeId(typeId).getFullName();
       }
       BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(typeName);
-      if (messageBytes != null) {
+      if (messageReader != null) {
          // it's a Message type
-         TagReaderImpl nestedInput = TagReaderImpl.newInstance(ctx, messageBytes);
-         return (T) marshallerDelegate.unmarshall(nestedInput, null);
+         return (T) marshallerDelegate.unmarshall((ProtobufTagMarshaller.ReadContext) messageReader, null);
       } else {
          // it's an Enum
          EnumMarshaller marshaller = (EnumMarshaller) marshallerDelegate.getMarshaller();

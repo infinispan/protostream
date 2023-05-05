@@ -1,17 +1,16 @@
 package org.infinispan.protostream.integrationtests.processor.annotated_package;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Arrays;
 import java.util.ServiceLoader;
 
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.ProtobufUtilTest;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
@@ -65,7 +64,7 @@ public class AnnotationOnPackageIntegrationTest {
       String json = ProtobufUtil.toCanonicalJSON(serCtx, userBytes, true);
       byte[] jsonBytes = ProtobufUtil.fromCanonicalJSON(serCtx, new StringReader(json));
 
-      assertArrayEquals(userBytes, jsonBytes);
+      ProtobufUtilTest.assertWrappedArraysEqual(serCtx, userBytes, jsonBytes);
    }
 
    @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, service = true)
