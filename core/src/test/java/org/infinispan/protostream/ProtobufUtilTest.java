@@ -57,8 +57,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
       messageSize = ProtobufUtil.computeWrappedMessageSize(ctx, user);
 
-      // Actual array is 4 bigger because of fixed Varint
-      assertEquals(expectedMessageSize, messageSize + 4);
+      assertEquals(expectedMessageSize, messageSize);
    }
 
    @Test(expected = MalformedProtobufException.class)
