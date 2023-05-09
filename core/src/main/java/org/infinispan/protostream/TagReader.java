@@ -57,7 +57,7 @@ public interface TagReader extends RawProtoStreamReader {
     * itself, possibly avoiding byte[] allocations
     * @return a new TagReader
     */
-   TagReader subReaderFromArray() throws IOException;
+   ProtobufTagMarshaller.ReadContext subReaderFromArray() throws IOException;
 
    default double readDouble() throws IOException {
       return Double.longBitsToDouble(readFixed64());
