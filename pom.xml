@@ -33,7 +33,6 @@
         <module>core</module>
         <module>processor</module>
         <module>types</module>
-        <module>sample-domain-implementation</module>
         <module>integrationtests</module>
     </modules>
 
