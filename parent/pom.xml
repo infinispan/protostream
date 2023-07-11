@@ -179,12 +179,6 @@
 
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>sample-domain-definition</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${project.groupId}</groupId>
                 <artifactId>protostream-processor</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
