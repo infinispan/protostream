@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public class MarshallingTest {
+public class TypesMarshallingTest {
 
     @Test
     public void testStringArrayList() throws IOException {
