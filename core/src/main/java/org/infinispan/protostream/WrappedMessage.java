@@ -330,7 +330,9 @@ public final class WrappedMessage {
          Iterator elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);
          for (int i = 0; i < containerSize; i++) {
             Object e = elements.next();
-            writeMessage(ctx, out, e, true);
+            TagWriter elementWriter = out.subWriter(WRAPPED_MESSAGE, true).getWriter();
+            writeMessage(ctx, elementWriter, e, true);
+            elementWriter.close();
          }
          if (elements.hasNext()) {
             throw new IllegalStateException("Container number of elements mismatch");
@@ -339,7 +341,9 @@ public final class WrappedMessage {
          IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
          for (int i = 0; i < containerSize; i++) {
             Object e = adapter.getElement(container, i);
-            writeMessage(ctx, out, e, true);
+            TagWriter elementWriter = out.subWriter(WRAPPED_MESSAGE, true).getWriter();
+            writeMessage(ctx, elementWriter, e, true);
+            elementWriter.close();
          }
       } else {
          throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
@@ -611,13 +615,23 @@ public final class WrappedMessage {
       if (containerMarshaller instanceof IterableElementContainerAdapter) {
          IterableElementContainerAdapter adapter = (IterableElementContainerAdapter) containerMarshaller;
          for (int i = 0; i < containerSize; i++) {
-            Object e = readMessage(ctx, in, true);
+            if ((tag = in.readTag()) != (WRAPPED_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED)) {
+               throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : "
+                       + WireType.getTagFieldNumber(tag) + ", Wire type : " + WireType.getTagWireType(tag) + ")");
+            }
+            TagReader elementReader = in.subReaderFromArray().getReader();
+            Object e = readMessage(ctx, elementReader, true);
             adapter.appendElement(container, e);
          }
       } else if (containerMarshaller instanceof IndexedElementContainerAdapter) {
          IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
          for (int i = 0; i < containerSize; i++) {
-            Object e = readMessage(ctx, in, true);
+            if ((tag = in.readTag()) != (WRAPPED_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED)) {
+               throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : "
+                       + WireType.getTagFieldNumber(tag) + ", Wire type : " + WireType.getTagWireType(tag) + ")");
+            }
+            TagReader elementReader = in.subReaderFromArray().getReader();
+            Object e = readMessage(ctx, elementReader, true);
             adapter.setElement(container, i, e);
          }
       } else {
