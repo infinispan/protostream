@@ -151,6 +151,9 @@ final class AnnotationLexer {
                sb.append('\r');
                scanNextChar();
                break;
+            case 'u':
+               scanUnicode();
+               break;
             case '\'':
                sb.append('\'');
                scanNextChar();
@@ -220,6 +223,18 @@ final class AnnotationLexer {
          token = AnnotationTokens.LONG_LITERAL;
       } else {
          token = AnnotationTokens.INT_LITERAL;
+      }
+   }
+
+   private void scanUnicode() {
+      sb.append("\\u");
+      for(int i = 0; i < 4; i++) {
+         scanNextChar();
+         if (ch >= '0' && ch <= '9' || ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f') {
+            sb.append(ch);
+         } else {
+            throw new AnnotationParserException(String.format("Error: %s: malformed unicode escape", AnnotationElement.positionToString(pos)));
+         }
       }
    }
 
