@@ -42,7 +42,7 @@ public class AnnotationParserTest {
          "   y2 = false,\n" +
          "   y3 = null,\n" +
          "\n" +
-         "   b = 45.9,    v ='f',\n" +
+         "   b = 45.9,  u = \"\\u0018\",  v ='f',\n" +
          "\n" +
          "   xx = \"axxxxx\\\\xxxxxxxb\",\n" +
          "   _xx = \"\",\n" +
@@ -92,6 +92,7 @@ public class AnnotationParserTest {
          "   y2=false,\n" +
          "   y3=null,\n" +
          "   b=45.9,\n" +
+         "   u=\\u0018,\n" +
          "   v=f,\n" +
          "   xx=axxxxx\\\\xxxxxxxb,\n" +
          "   _xx=,\n" +
@@ -177,6 +178,14 @@ public class AnnotationParserTest {
                   "      a=1\n" +
                   "   )\n" +
                   ")\n");
+   }
+
+   @Test(expected = AnnotationParserException.class)
+   public void testInvalidUnicodeEscape() {
+      testAnnotationParsing(
+            "\n   @Abc(x=\"\\u000G\")  \n\n",
+            false,
+            "Should not have parsed");
    }
 
    private void testAnnotationParsing(String input, boolean expectDocNoise, String expectedOutput) {
