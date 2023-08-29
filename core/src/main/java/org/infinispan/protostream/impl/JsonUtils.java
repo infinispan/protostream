@@ -74,7 +74,7 @@ public final class JsonUtils {
    }
 
    public static byte[] fromCanonicalJSON(ImmutableSerializationContext ctx, Reader reader) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
+      ByteArrayOutputStream baos = new ByteArrayOutputStreamEx(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
       TagWriter writer = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
 
       JsonParser parser = jsonFactory.createParser(reader);
@@ -252,8 +252,18 @@ public final class JsonUtils {
             .map(FieldDescriptor::getName)
             .collect(Collectors.toCollection(HashSet::new));
 
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-      TagWriter nestedWriter = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
+      TagWriter nestedWriter;
+      if (topLevel) {
+         Integer topLevelTypeId = messageDescriptor.getTypeId();
+         if (topLevelTypeId == null) {
+            writer.writeString(WRAPPED_TYPE_NAME, messageDescriptor.getFullName());
+         } else {
+            writer.writeUInt32(WRAPPED_TYPE_ID, topLevelTypeId);
+         }
+         nestedWriter = writer.subWriter(WRAPPED_MESSAGE, false).getWriter();
+      } else {
+         nestedWriter = writer.subWriter(fieldNumber, true).getWriter();
+      }
 
       String currentField = null;
 
@@ -311,20 +321,7 @@ public final class JsonUtils {
          throw new IllegalStateException("Required field '" + missing + "' missing");
       }
 
-      if (topLevel) {
-         Integer topLevelTypeId = messageDescriptor.getTypeId();
-         if (topLevelTypeId == null) {
-            writer.writeString(WRAPPED_TYPE_NAME, messageDescriptor.getFullName());
-         } else {
-            writer.writeUInt32(WRAPPED_TYPE_ID, topLevelTypeId);
-         }
-         nestedWriter.flush();
-         writer.writeBytes(WRAPPED_MESSAGE, baos.toByteArray());
-      } else {
-         nestedWriter.flush();
-         writer.writeBytes(fieldNumber, baos.toByteArray());
-      }
-
+      nestedWriter.close();
       writer.flush();
    }
 
