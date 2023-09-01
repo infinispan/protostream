@@ -626,14 +626,6 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       array[pos] = (byte) ((length >>> 28) & 0x7F);
    }
 
-   public static void writePositiveFixedVarint(ByteBuffer buf, int pos, int length) {
-      buf.put(pos++, (byte) (length & 0x7F | 0x80));
-      buf.put(pos++, (byte) ((length >>> 7) & 0x7F | 0x80));
-      buf.put(pos++, (byte) ((length >>> 14) & 0x7F | 0x80));
-      buf.put(pos++, (byte) ((length >>> 21) & 0x7F | 0x80));
-      buf.put(pos, (byte) ((length >>> 28) & 0x7F));
-   }
-
    /**
     * Writes directly to the underlying array of a heap {@link ByteBuffer} because is faster than the put() operation.
     * Buffer position is not updated after every write, just on flush.
@@ -757,23 +749,6 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          } catch (BufferOverflowException e) {
             throw log.outOfWriteBufferSpace(e);
          }
-      }
-
-      @Override
-      public boolean supportsFixedVarint() {
-         return true;
-      }
-
-      @Override
-      public int skipFixedVarint() {
-         int pos = buffer.position();
-         buffer.position(pos + 5);
-         return pos;
-      }
-
-      @Override
-      public void writePositiveFixedVarint(int pos) {
-         TagWriterImpl.writePositiveFixedVarint(buffer, pos, buffer.position() - pos - 5);
       }
    }
 
