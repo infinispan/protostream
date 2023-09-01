@@ -2,6 +2,7 @@ package org.infinispan.protostream;
 
 import static org.infinispan.protostream.domain.Account.Currency.BRL;
 import static org.infinispan.protostream.domain.Account.Currency.USD;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -57,8 +58,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
       messageSize = ProtobufUtil.computeWrappedMessageSize(ctx, user);
 
-      // Actual array is 4 bigger because of fixed Varint
-      assertEquals(expectedMessageSize, messageSize + 4);
+      assertEquals(expectedMessageSize, messageSize);
    }
 
    @Test(expected = MalformedProtobufException.class)
@@ -118,13 +118,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       byte[] userBytes2 = ProtobufUtil.toByteArray(ctx, new WrappedMessage(user));
 
       // assert that toWrappedByteArray works correctly as a shorthand for toByteArray on a WrappedMessage
-      assertWrappedArraysEqual(ctx, userBytes1, userBytes2);
-   }
-
-   public static void assertWrappedArraysEqual(ImmutableSerializationContext ctx, byte[] array1, byte[] array2) throws IOException {
-      Object user1 = ProtobufUtil.fromWrappedByteArray(ctx, array1);
-      Object user2 = ProtobufUtil.fromWrappedByteArray(ctx, array2);
-      assertEquals(user1, user2);
+      assertArrayEquals(userBytes1, userBytes2);
    }
 
    @Test
@@ -490,7 +484,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       assertValid(json);
       byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
       assertEquals(object, ProtobufUtil.fromWrappedByteArray(ctx, bytes));
-      assertWrappedArraysEqual(ctx, marshalled, bytes);
+      assertArrayEquals(marshalled, bytes);
    }
 
    private <T> void testJsonConversion(ImmutableSerializationContext ctx, T object) throws IOException {

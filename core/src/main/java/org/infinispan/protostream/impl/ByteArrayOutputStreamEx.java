@@ -21,14 +21,4 @@ public final class ByteArrayOutputStreamEx extends ByteArrayOutputStream {
    public synchronized ByteBuffer getByteBuffer() {
       return ByteBuffer.wrap(buf, 0, count);
    }
-
-   public int skipFixedVarint() {
-      int prev = count;
-      count += 5;
-      return prev;
-   }
-
-   public void writePositiveFixedVarint(int pos) {
-      TagWriterImpl.writePositiveFixedVarint(buf, pos, count - pos - 5);
-   }
 }
