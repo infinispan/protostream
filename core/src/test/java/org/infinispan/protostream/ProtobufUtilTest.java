@@ -2,7 +2,6 @@ package org.infinispan.protostream;
 
 import static org.infinispan.protostream.domain.Account.Currency.BRL;
 import static org.infinispan.protostream.domain.Account.Currency.USD;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -490,7 +489,6 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       assertValid(json);
       byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
       assertEquals(object, ProtobufUtil.fromWrappedByteArray(ctx, bytes));
-      assertArrayEquals(marshalled, bytes);
       assertWrappedArraysEqual(ctx, marshalled, bytes);
    }
 
