@@ -80,7 +80,7 @@ public final class ProtobufUtil {
    }
 
    public static byte[] toByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStreamEx(DEFAULT_ARRAY_BUFFER_SIZE);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(DEFAULT_ARRAY_BUFFER_SIZE);
       writeTo(ctx, baos, t);
       return baos.toByteArray();
    }
