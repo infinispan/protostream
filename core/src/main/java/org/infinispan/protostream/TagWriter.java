@@ -1,6 +1,5 @@
 package org.infinispan.protostream;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -10,14 +9,14 @@ import org.infinispan.protostream.descriptors.WireType;
  * @author anistor@redhat.com
  * @since 4.4
  */
-public interface TagWriter extends RawProtoStreamWriter, Closeable {
+public interface TagWriter extends RawProtoStreamWriter {
 
    // start low level ops
    void flush() throws IOException;
 
    /**
     * Invoke after done with writer, this implies a flush if necessary
-    * It is necessary to invoke this on a writer returned from {@link #subWriter(int, boolean)} to actually push the data
+    * It is necessary to invoke this on a writer returned from {@link #subWriter(int)} to actually push the data
     */
    void close() throws IOException;
 
@@ -100,12 +99,9 @@ public interface TagWriter extends RawProtoStreamWriter, Closeable {
 
    /**
     * Used to write a sub message that can be optimized by implementation. When the sub writer is complete, flush
-    * should be invoked to ensure bytes are written and close should be invoked to free any resources related to the
-    * context (note close will flush as well)
-    * @param number the message number of the sub message
-    * @param nested whether this is a nested message or a new one
-    * @return a write context for a sub message
-    * @throws IOException exception if there is an issue
+    * should be invoked to ensure
+    * @return
+    * @throws IOException
     */
-   ProtobufTagMarshaller.WriteContext subWriter(int number, boolean nested) throws IOException;
+   TagWriter subWriter(int number, boolean nested) throws IOException;
 }

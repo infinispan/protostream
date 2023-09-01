@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.protostream.Decoder;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MalformedProtobufException;
 import org.infinispan.protostream.ProtobufTagMarshaller;
@@ -70,26 +69,22 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    }
 
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, InputStream input) {
-      return newInstance(serCtx, new InputStreamDecoder(input));
+      return new TagReaderImpl((SerializationContextImpl) serCtx, new InputStreamDecoder(input));
    }
 
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, ByteBuffer buf) {
       Decoder decoder = buf.hasArray()
             ? new ByteArrayDecoder(buf.array(), buf.arrayOffset() + buf.position(), buf.remaining())
             : new ByteBufferDecoder(buf);
-      return newInstance(serCtx, decoder);
+      return new TagReaderImpl((SerializationContextImpl) serCtx, decoder);
    }
 
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf) {
-      return newInstance(serCtx, new ByteArrayDecoder(buf, 0, buf.length));
+      return new TagReaderImpl((SerializationContextImpl) serCtx, new ByteArrayDecoder(buf, 0, buf.length));
    }
 
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf, int offset, int length) {
-      return newInstance(serCtx, new ByteArrayDecoder(buf, offset, length));
-   }
-
-   public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, Decoder decoder) {
-      return new TagReaderImpl((SerializationContextImpl) serCtx, decoder);
+      return new TagReaderImpl((SerializationContextImpl) serCtx, new ByteArrayDecoder(buf, offset, length));
    }
 
    @Override
@@ -155,7 +150,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    }
 
    @Override
-   public ProtobufTagMarshaller.ReadContext subReaderFromArray() throws IOException {
+   public TagReader subReaderFromArray() throws IOException {
       int length = decoder.readVarint32();
       return new TagReaderImpl(serCtx, decoder.decoderFromLength(length));
    }
@@ -262,14 +257,21 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    }
 
    //todo [anistor] need to provide a safety mechanism to limit message size in bytes and message nesting depth on read ops
-   public static abstract class DecoderImpl implements Decoder {
+   private static abstract class Decoder {
 
       protected int globalLimit = Integer.MAX_VALUE;
 
       protected int lastTag;
 
-      @Override
-      public final int readTag() throws IOException {
+      abstract int getEnd();
+
+      abstract int getPos();
+
+      abstract byte[] getBufferArray() throws IOException;
+
+      abstract boolean isAtEnd() throws IOException;
+
+      final int readTag() throws IOException {
          if (isAtEnd()) {
             lastTag = 0;
             return 0;
@@ -289,8 +291,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          throw new MalformedProtobufException("Found an invalid protobuf tag (" + lastTag + ") having a field number smaller than 1");
       }
 
-      @Override
-      public final void checkLastTagWas(int expectedTag) throws IOException {
+      final void checkLastTagWas(int expectedTag) throws IOException {
          if (lastTag == expectedTag || expectedTag == 0 && isAtEnd()) {
             return;
          }
@@ -300,8 +301,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          throw new MalformedProtobufException("Protobuf message end group tag expected but found " + lastTag);
       }
 
-      @Override
-      public final boolean skipField(int tag) throws IOException {
+      final boolean skipField(int tag) throws IOException {
          switch (WireType.getTagWireType(tag)) {
             case WireType.WIRETYPE_VARINT:
                skipVarint();
@@ -338,17 +338,48 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          }
       }
 
+      abstract void skipVarint() throws IOException;
+
+      abstract void skipRawBytes(int length) throws IOException;
+
+      abstract String readString() throws IOException;
+
+      abstract byte readRawByte() throws IOException;
+
+      abstract byte[] readRawByteArray(int length) throws IOException;
+
+      abstract ByteBuffer readRawByteBuffer(int length) throws IOException;
+
       /**
        * Reads a Varint (possibly 64 bits wide) and silently discards the upper bits if larger than 32 bits.
        */
-      @Override
-      public final int readVarint32() throws IOException {
+      final int readVarint32() throws IOException {
          return (int) readVarint64();
       }
 
+      abstract long readVarint64() throws IOException;
+
+      abstract int readFixed32() throws IOException;
+
+      abstract long readFixed64() throws IOException;
+
+      abstract int pushLimit(int newLimit) throws IOException;
+
+      abstract void popLimit(int oldLimit);
+
+      abstract Decoder decoderFromLength(int length) throws IOException;
+
+      /**
+       * Sets a hard limit on how many bytes we can continue to read while parsing a message from current position. This is
+       * useful to prevent corrupted or malicious messages with wrong length values to abuse memory allocation. Initially
+       * this limit is set to {@code Integer.MAX_INT}, which means the protection mechanism is disabled by default.
+       * The limit is only useful when processing streams. Setting a limit for a decoder backed by a byte array is useless
+       * because the memory allocation already happened.
+       */
+      abstract int setGlobalLimit(int globalLimit);
    }
 
-   private static final class ByteArrayDecoder extends DecoderImpl {
+   private static final class ByteArrayDecoder extends Decoder {
 
       private final byte[] array;
 
@@ -379,7 +410,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public int pushLimit(int limit) throws IOException {
+      int pushLimit(int limit) throws IOException {
          if (limit < 0) {
             throw log.negativeLength();
          }
@@ -394,22 +425,22 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public void popLimit(int oldLimit) {
+      void popLimit(int oldLimit) {
          limit = oldLimit;
       }
 
       @Override
-      public int getEnd() {
+      int getEnd() {
          return limit;
       }
 
       @Override
-      public int getPos() {
+      int getPos() {
          return pos - start;
       }
 
       @Override
-      public byte[] getBufferArray() throws IOException {
+      byte[] getBufferArray() throws IOException {
          if (pos == 0 && limit == array.length) {
             return array;
          } else {
@@ -418,12 +449,12 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public boolean isAtEnd() {
+      boolean isAtEnd() {
          return pos == limit;
       }
 
       @Override
-      public String readString() throws IOException {
+      String readString() throws IOException {
          int length = readVarint32();
          if (length > 0 && length <= limit - pos) {
             String value = new String(array, pos, length, UTF8);
@@ -440,7 +471,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public ByteBuffer readRawByteBuffer(int length) throws IOException {
+      ByteBuffer readRawByteBuffer(int length) throws IOException {
          if (length > 0 && length <= limit - pos) {
             int from = pos;
             pos += length;
@@ -456,7 +487,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public void skipVarint() throws IOException {
+      protected void skipVarint() throws IOException {
          if (limit - pos >= MAX_VARINT_SIZE) {
             for (int i = 0; i < MAX_VARINT_SIZE; i++) {
                if (array[pos++] >= 0) {
@@ -474,7 +505,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public long readVarint64() throws IOException {
+      long readVarint64() throws IOException {
          long value = 0;
          if (limit - pos >= MAX_VARINT_SIZE) {
             for (int i = 0; i < 64; i += 7) {
@@ -497,7 +528,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public int readFixed32() throws IOException {
+      int readFixed32() throws IOException {
          try {
             int value = (array[pos] & 0xFF)
                   | ((array[pos + 1] & 0xFF) << 8)
@@ -511,7 +542,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public long readFixed64() throws IOException {
+      long readFixed64() throws IOException {
          try {
             long value = (array[pos] & 0xFFL)
                   | ((array[pos + 1] & 0xFFL) << 8)
@@ -529,7 +560,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public byte readRawByte() throws IOException {
+      byte readRawByte() throws IOException {
          try {
             return array[pos++];
          } catch (ArrayIndexOutOfBoundsException e) {
@@ -538,7 +569,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public byte[] readRawByteArray(int length) throws IOException {
+      byte[] readRawByteArray(int length) throws IOException {
          if (length > 0 && length <= limit - pos) {
             int from = pos;
             pos += length;
@@ -554,7 +585,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public void skipRawBytes(int length) throws IOException {
+      protected void skipRawBytes(int length) throws IOException {
          if (length < 0) {
             throw log.negativeLength();
          }
@@ -566,7 +597,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public Decoder decoderFromLength(int length) throws IOException {
+      Decoder decoderFromLength(int length) throws IOException {
          int currentPos = pos;
          if (length + currentPos > limit) {
             throw log.messageTruncated();
@@ -576,12 +607,12 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public int setGlobalLimit(int globalLimit) {
+      int setGlobalLimit(int globalLimit) {
          return Integer.MAX_VALUE;
       }
    }
 
-   private static final class ByteBufferDecoder extends DecoderImpl {
+   private static final class ByteBufferDecoder extends Decoder {
 
       private final ByteBuffer buf;
 
@@ -601,7 +632,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public int pushLimit(int limit) throws IOException {
+      int pushLimit(int limit) throws IOException {
          if (limit < 0) {
             throw log.negativeLength();
          }
@@ -617,7 +648,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public void popLimit(int oldLimit) {
+      void popLimit(int oldLimit) {
          limit = oldLimit;
          adjustEnd();
       }
@@ -627,17 +658,17 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public int getEnd() {
+      int getEnd() {
          return end;
       }
 
       @Override
-      public int getPos() {
+      int getPos() {
          return buf.position() - start;
       }
 
       @Override
-      public byte[] getBufferArray() throws IOException {
+      byte[] getBufferArray() throws IOException {
          if (end < limit) {
             throw log.messageTruncated();
          }
@@ -654,12 +685,12 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       
 
       @Override
-      public boolean isAtEnd() {
+      boolean isAtEnd() {
          return buf.position() == end;
       }
 
       @Override
-      public String readString() throws IOException {
+      String readString() throws IOException {
          int length = readVarint32();
          if (length > 0 && length <= end - buf.position()) {
             byte[] bytes = new byte[length];
@@ -676,7 +707,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public ByteBuffer readRawByteBuffer(int length) throws IOException {
+      ByteBuffer readRawByteBuffer(int length) throws IOException {
          if (length > 0 && length <= end - buf.position()) {
             // apparently redundant cast, needed just for Java 8 binary compat, not needed for 9+
             ByteBuffer byteBuffer = (ByteBuffer) buf.slice().limit(length);
@@ -693,7 +724,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public void skipVarint() throws IOException {
+      protected void skipVarint() throws IOException {
          if (end - buf.position() >= MAX_VARINT_SIZE) {
             for (int i = 0; i < MAX_VARINT_SIZE; i++) {
                if (buf.get() >= 0) {
@@ -711,7 +742,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public long readVarint64() throws IOException {
+      long readVarint64() throws IOException {
          long value = 0;
          if (end - buf.position() >= MAX_VARINT_SIZE) {
             for (int i = 0; i < 64; i += 7) {
@@ -734,7 +765,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public int readFixed32() throws IOException {
+      int readFixed32() throws IOException {
          try {
             return buf.getInt();  //todo [anistor] should we worry about byte order?
          } catch (BufferUnderflowException e) {
@@ -743,7 +774,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public long readFixed64() throws IOException {
+      long readFixed64() throws IOException {
          try {
             return buf.getLong();  //todo [anistor] should we worry about byte order?
          } catch (BufferUnderflowException e) {
@@ -752,7 +783,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public byte readRawByte() throws IOException {
+      byte readRawByte() throws IOException {
          try {
             return buf.get();
          } catch (BufferUnderflowException e) {
@@ -761,7 +792,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public byte[] readRawByteArray(int length) throws IOException {
+      byte[] readRawByteArray(int length) throws IOException {
          if (length > 0 && length <= end - buf.position()) {
             byte[] bytes = new byte[length];
             buf.get(bytes);
@@ -777,7 +808,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public void skipRawBytes(int length) throws IOException {
+      protected void skipRawBytes(int length) throws IOException {
          if (length < 0) {
             throw log.negativeLength();
          }
@@ -789,22 +820,19 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public Decoder decoderFromLength(int length) throws IOException {
-         if (buf.remaining() < length) {
-            throw log.messageTruncated();
-         }
+      Decoder decoderFromLength(int length) throws IOException {
          ByteBuffer buffer = buf.slice().limit(length);
          buf.position(buffer.position() + length);
          return new ByteBufferDecoder(buffer);
       }
 
       @Override
-      public int setGlobalLimit(int globalLimit) {
+      int setGlobalLimit(int globalLimit) {
          return Integer.MAX_VALUE;
       }
    }
 
-   private static final class InputStreamDecoder extends DecoderImpl {
+   private static final class InputStreamDecoder extends Decoder {
 
       private final InputStream in;
 
@@ -830,7 +858,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public String readString() throws IOException {
+      String readString() throws IOException {
          int length = readVarint32();
          if (length > 0 && length <= limit - pos) {
             byte[] bytes = readRawByteArray(length);
@@ -846,7 +874,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public ByteBuffer readRawByteBuffer(int length) throws IOException {
+      ByteBuffer readRawByteBuffer(int length) throws IOException {
          if (length == 0) {
             return EMPTY_BUFFER;
          }
@@ -855,7 +883,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public void skipVarint() throws IOException {
+      protected void skipVarint() throws IOException {
          for (int i = 0; i < MAX_VARINT_SIZE; i++) {
             if (readRawByte() >= 0) {
                return;
@@ -865,7 +893,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public long readVarint64() throws IOException {
+      long readVarint64() throws IOException {
          long value = 0;
          for (int i = 0; i < 64; i += 7) {
             byte b = readRawByte();
@@ -878,7 +906,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public int readFixed32() throws IOException {
+      int readFixed32() throws IOException {
          if (limit - pos < FIXED_32_SIZE) {
             throw log.messageTruncated();
          }
@@ -889,7 +917,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public long readFixed64() throws IOException {
+      long readFixed64() throws IOException {
          if (limit - pos < FIXED_64_SIZE) {
             throw log.messageTruncated();
          }
@@ -904,7 +932,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public int setGlobalLimit(int globalLimit) {
+      int setGlobalLimit(int globalLimit) {
          if (globalLimit < 0) {
             throw new IllegalArgumentException("Global limit cannot be negative: " + globalLimit);
          }
@@ -914,7 +942,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public int pushLimit(int limit) throws IOException {
+      int pushLimit(int limit) throws IOException {
          if (limit < 0) {
             throw log.negativeLength();
          }
@@ -929,22 +957,22 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public void popLimit(int oldLimit) {
+      void popLimit(int oldLimit) {
          limit = oldLimit;
       }
 
       @Override
-      public int getEnd() {
+      int getEnd() {
          return limit;
       }
 
       @Override
-      public int getPos() {
+      int getPos() {
          return pos;
       }
 
       @Override
-      public byte[] getBufferArray() throws IOException {
+      byte[] getBufferArray() throws IOException {
          int readLimit = Math.min(limit, globalLimit);
          if (readLimit == Integer.MAX_VALUE) {
             pos = Integer.MAX_VALUE;
@@ -960,7 +988,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public boolean isAtEnd() throws IOException {
+      boolean isAtEnd() throws IOException {
          if (pos == limit) {
             return true;
          }
@@ -993,7 +1021,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
 
       @Override
-      public byte readRawByte() throws IOException {
+      byte readRawByte() throws IOException {
          if (pos == limit) {
             throw log.messageTruncated();
          }
@@ -1006,7 +1034,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public byte[] readRawByteArray(int length) throws IOException {
+      byte[] readRawByteArray(int length) throws IOException {
          if (length > 0 && length <= limit - pos) {
             pos += length;
             if (pos > globalLimit) {
@@ -1036,7 +1064,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public void skipRawBytes(int length) throws IOException {
+      protected void skipRawBytes(int length) throws IOException {
          if (length <= limit - pos && length >= 0) {
             pos += length;
             skipNBytes(length);
@@ -1069,9 +1097,10 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      public Decoder decoderFromLength(int length) throws IOException {
+      Decoder decoderFromLength(int length) throws IOException {
          byte[] bytes = readRawByteArray(length);
          return new ByteArrayDecoder(bytes, 0, length);
       }
    }
+
 }

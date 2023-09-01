@@ -75,10 +75,6 @@ public final class ProtobufUtil {
       write(ctx, TagWriterImpl.newInstance(ctx, out), t);
    }
 
-   public static void writeTo(ImmutableSerializationContext ctx, Encoder encoder, Object t) throws IOException {
-      write(ctx, TagWriterImpl.newInstance(ctx, encoder), t);
-   }
-
    public static byte[] toByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(DEFAULT_ARRAY_BUFFER_SIZE);
       writeTo(ctx, baos, t);
@@ -116,10 +112,6 @@ public final class ProtobufUtil {
       return readFrom(TagReaderImpl.newInstance(ctx, byteBuffer), clazz);
    }
 
-   public static <A> A fromDecoder(ImmutableSerializationContext ctx, Decoder decoder, Class<A> clazz) throws IOException {
-      return readFrom(TagReaderImpl.newInstance(ctx, decoder), clazz);
-   }
-
    /**
     * Parses a top-level message that was wrapped according to the org.infinispan.protostream.WrappedMessage proto
     * definition.
@@ -145,10 +137,6 @@ public final class ProtobufUtil {
       return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, in));
    }
 
-   public static <A> A fromWrappedDecoder(ImmutableSerializationContext ctx, Decoder decoder) throws IOException {
-      return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, decoder));
-   }
-
    //todo [anistor] should make it possible to plug in a custom wrapping strategy instead of the default one
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
       return toWrappedByteArray(ctx, t, DEFAULT_ARRAY_BUFFER_SIZE);
@@ -172,10 +160,6 @@ public final class ProtobufUtil {
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t, int bufferSize) throws IOException {
       WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, out, bufferSize), t);
-   }
-
-   public static void toWrappedEncoder(ImmutableSerializationContext ctx, Encoder encoder, Object t) throws IOException {
-      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, encoder), t);
    }
 
    /**

@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.protostream.Encoder;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagWriter;
@@ -68,7 +67,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output) {
-      return newInstance(serCtx, new OutputStreamNoBufferEncoder(output));
+      return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamNoBufferEncoder(output));
    }
 
    /**
@@ -76,32 +75,28 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
     */
    @Deprecated
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output, int bufferSize) {
-      return newInstance(serCtx, new OutputStreamEncoder(output, bufferSize));
+      return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamEncoder(output, bufferSize));
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf) {
-      return newInstance(serCtx, new ByteArrayEncoder(buf, 0, buf.length));
+      return new TagWriterImpl((SerializationContextImpl) serCtx, new ByteArrayEncoder(buf, 0, buf.length));
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, byte[] buf, int offset, int length) {
-      return newInstance(serCtx, new ByteArrayEncoder(buf, offset, length));
+      return new TagWriterImpl((SerializationContextImpl) serCtx, new ByteArrayEncoder(buf, offset, length));
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, ByteBuffer byteBuffer) {
       Encoder encoder = byteBuffer.hasArray() ? new HeapByteBufferEncoder(byteBuffer) : new ByteBufferEncoder(byteBuffer);
-      return newInstance(serCtx, encoder);
+      return new TagWriterImpl((SerializationContextImpl) serCtx, encoder);
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx) {
-      return newInstance(serCtx, new NoOpEncoder());
+      return new TagWriterImpl((SerializationContextImpl) serCtx, new NoOpEncoder());
    }
 
    public static TagWriterImpl newInstanceNoBuffer(ImmutableSerializationContext ctx, OutputStream out) {
-      return newInstance(ctx, new OutputStreamNoBufferEncoder(out));
-   }
-
-   public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, Encoder encoder) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, encoder);
+      return new TagWriterImpl((SerializationContextImpl) ctx, new OutputStreamNoBufferEncoder(out));
    }
 
    public int getWrittenBytes() {
@@ -184,11 +179,11 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    @Override
-   public ProtobufTagMarshaller.WriteContext subWriter(int number, boolean nested) throws IOException {
+   public TagWriter subWriter(int number, boolean nested) throws IOException {
       if (encoder.supportsFixedVarint()) {
          writeVarint32(WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
-         return nested ? new TagWriterImpl(this, new FixedVarintWrappedEncoder(encoder)) :
-               new TagWriterImpl(serCtx, new FixedVarintWrappedEncoder(encoder));
+         return nested ? new TagWriterImpl(this, new FixedVarintWrappedEncoder((FixedVarintEncoder) encoder)) :
+               new TagWriterImpl(serCtx, new FixedVarintWrappedEncoder((FixedVarintEncoder) encoder));
       }
       // This ensures we aren't allocating a byte[] larger than we actually need
       int space = bytesAvailableForVariableEncoding(encoder.remainingSpace());
@@ -198,7 +193,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
    // Returns how many bytes are usable for data from a given range of bytes when inserting a variable int before
    // the actual data
-   private static int bytesAvailableForVariableEncoding(int spaceAllowed) {
+   private int bytesAvailableForVariableEncoding(int spaceAllowed) {
       if (spaceAllowed < 128) {
          return spaceAllowed - 1;
       } else if (spaceAllowed < 16384) {
@@ -278,68 +273,82 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    //todo [anistor] need to provide a safety mechanism to limit message size in bytes and message nesting depth on write ops
-   public abstract static class EncoderImpl implements Encoder {
+   private abstract static class Encoder {
 
       /**
        * Commits the witten bytes after several write operations were performed. Updates counters, positions, whatever.
        */
-      @Override
-      public void flush() throws IOException {
+      void flush() throws IOException {
       }
 
-      @Override
-      public void close() throws IOException {
+      void close() throws IOException {
          flush();
       }
 
-      @Override
-      public int remainingSpace() {
+      int remainingSpace() {
          return Integer.MAX_VALUE;
       }
 
       // high level ops, writing fields
 
-      @Override
-      public void writeUInt32Field(int fieldNumber, int value) throws IOException {
+      void writeUInt32Field(int fieldNumber, int value) throws IOException {
          writeVarint32(WireType.makeTag(fieldNumber, WireType.WIRETYPE_VARINT));
          writeVarint32(value);
       }
 
-      @Override
-      public void writeUInt64Field(int fieldNumber, long value) throws IOException {
+      void writeUInt64Field(int fieldNumber, long value) throws IOException {
          writeVarint32(WireType.makeTag(fieldNumber, WireType.WIRETYPE_VARINT));
          writeVarint64(value);
       }
 
-      @Override
-      public void writeFixed32Field(int fieldNumber, int value) throws IOException {
+      void writeFixed32Field(int fieldNumber, int value) throws IOException {
          writeVarint32(WireType.makeTag(fieldNumber, WireType.WIRETYPE_FIXED32));
          writeFixed32(value);
       }
 
-      @Override
-      public void writeFixed64Field(int fieldNumber, long value) throws IOException {
+      void writeFixed64Field(int fieldNumber, long value) throws IOException {
          writeVarint32(WireType.makeTag(fieldNumber, WireType.WIRETYPE_FIXED64));
          writeFixed64(value);
       }
 
-      @Override
-      public void writeBoolField(int fieldNumber, boolean value) throws IOException {
+      void writeBoolField(int fieldNumber, boolean value) throws IOException {
          writeVarint32(WireType.makeTag(fieldNumber, WireType.WIRETYPE_VARINT));
          writeByte((byte) (value ? 1 : 0));
       }
 
-      @Override
-      public void writeLengthDelimitedField(int fieldNumber, int length) throws IOException {
+      void writeLengthDelimitedField(int fieldNumber, int length) throws IOException {
          writeVarint32(WireType.makeTag(fieldNumber, WireType.WIRETYPE_LENGTH_DELIMITED));
          writeVarint32(length);
       }
 
       // low level ops, writing values without tag
 
-      @Override
-      public boolean supportsFixedVarint() {
+      abstract void writeVarint32(int value) throws IOException;
+
+      abstract void writeVarint64(long value) throws IOException;
+
+      abstract void writeFixed32(int value) throws IOException;
+
+      abstract void writeFixed64(long value) throws IOException;
+
+      abstract void writeByte(byte value) throws IOException;
+
+      abstract void writeBytes(byte[] value, int offset, int length) throws IOException;
+
+      abstract void writeBytes(ByteBuffer value) throws IOException;
+
+      boolean supportsFixedVarint() {
          return false;
+      }
+   }
+
+   abstract static class FixedVarintEncoder extends Encoder {
+      abstract int skipFixedVarint();
+
+      abstract void writePositiveFixedVarint(int pos);
+      @Override
+      boolean supportsFixedVarint() {
+         return true;
       }
    }
 
@@ -347,7 +356,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
     * An encoder that just counts the bytes and does not write anything and does not allocate buffers.
     * Useful for computing message size.
     */
-   private static final class NoOpEncoder extends EncoderImpl {
+   private static final class NoOpEncoder extends Encoder {
 
       private int count = 0;
 
@@ -363,22 +372,22 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeByte(byte value) {
+      void writeByte(byte value) {
          count++;
       }
 
       @Override
-      public void writeBytes(byte[] value, int offset, int length) {
+      void writeBytes(byte[] value, int offset, int length) {
          count += length;
       }
 
       @Override
-      public void writeBytes(ByteBuffer value) {
+      void writeBytes(ByteBuffer value) {
          count += value.remaining();
       }
 
       @Override
-      public void writeVarint32(int value) {
+      void writeVarint32(int value) {
          while (true) {
             count++;
             if ((value & 0xFFFFFF80) == 0) {
@@ -389,7 +398,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeVarint64(long value) {
+      void writeVarint64(long value) {
          while (true) {
             count++;
             if ((value & 0xFFFFFFFFFFFFFF80L) == 0) {
@@ -400,36 +409,20 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeFixed32(int value) {
+      void writeFixed32(int value) {
          count += FIXED_32_SIZE;
       }
 
       @Override
-      public void writeFixed64(long value) {
+      void writeFixed64(long value) {
          count += FIXED_64_SIZE;
-      }
-
-      @Override
-      public int skipFixedVarint() {
-         count += 5;
-         return -1;
-      }
-
-      @Override
-      public void writePositiveFixedVarint(int pos) {
-         // Do nothing
-      }
-
-      @Override
-      public boolean supportsFixedVarint() {
-         return true;
       }
    }
 
    /**
     * Writes to a user provided byte array.
     */
-   private static class ByteArrayEncoder extends EncoderImpl {
+   private static class ByteArrayEncoder extends FixedVarintEncoder {
 
       private final byte[] array;
 
@@ -437,7 +430,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
       protected final int limit;
 
-      public int pos;
+      protected int pos;
 
       private ByteArrayEncoder(byte[] array, int offset, int length) {
          if (array == null) {
@@ -462,14 +455,14 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public final int remainingSpace() {
+      protected final int remainingSpace() {
          return limit - pos;
       }
 
       /**
        * Make room for the required space by flushing the entire buffer to stream if the available space is not enough.
        */
-      public final void flushToStream(OutputStream out, int requiredSpace) throws IOException {
+      protected final void flushToStream(OutputStream out, int requiredSpace) throws IOException {
          if (requiredSpace > limit - pos) {
             out.write(array, 0, pos);
             pos = 0;
@@ -479,7 +472,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       /**
        * Flush the entire buffer to an output stream.
        */
-      public final void flushToStream(OutputStream out) throws IOException {
+      protected final void flushToStream(OutputStream out) throws IOException {
          if (pos > 0) {
             out.write(array, 0, pos);
             pos = 0;
@@ -504,7 +497,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public final void writeByte(byte value) throws IOException {
+      final void writeByte(byte value) throws IOException {
          try {
             array[pos++] = value;
          } catch (IndexOutOfBoundsException e) {
@@ -513,7 +506,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public final void writeBytes(byte[] value, int offset, int length) throws IOException {
+      final void writeBytes(byte[] value, int offset, int length) throws IOException {
          try {
             System.arraycopy(value, offset, array, pos, length);
             pos += length;
@@ -523,7 +516,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public final void writeBytes(ByteBuffer value) throws IOException {
+      final void writeBytes(ByteBuffer value) throws IOException {
          int length = value.remaining();
          if (value.hasArray()) {
             writeBytes(value.array(), value.arrayOffset() + value.position(), length);
@@ -539,7 +532,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public final void writeVarint32(int value) throws IOException {
+      final void writeVarint32(int value) throws IOException {
          try {
             while (true) {
                if ((value & 0xFFFFFF80) == 0) {
@@ -556,7 +549,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public final void writeVarint64(long value) throws IOException {
+      final void writeVarint64(long value) throws IOException {
          try {
             while (true) {
                if ((value & 0xFFFFFFFFFFFFFF80L) == 0) {
@@ -573,7 +566,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public final void writeFixed32(int value) throws IOException {
+      final void writeFixed32(int value) throws IOException {
          try {
             array[pos++] = (byte) (value & 0xFF);
             array[pos++] = (byte) ((value >> 8) & 0xFF);
@@ -585,7 +578,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public final void writeFixed64(long value) throws IOException {
+      final void writeFixed64(long value) throws IOException {
          try {
             array[pos++] = (byte) (value & 0xFF);
             array[pos++] = (byte) ((value >> 8) & 0xFF);
@@ -601,20 +594,15 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public int skipFixedVarint() {
+      int skipFixedVarint() {
          int prev = pos;
          pos += 5;
          return prev;
       }
 
       @Override
-      public void writePositiveFixedVarint(int pos) {
+      void writePositiveFixedVarint(int pos) {
          TagWriterImpl.writePositiveFixedVarint(array, pos, this.pos - pos - 5);
-      }
-
-      @Override
-      public boolean supportsFixedVarint() {
-         return true;
       }
    }
 
@@ -643,7 +631,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void flush() {
+      void flush() {
          buffer.position(startPos + pos - offset);
       }
    }
@@ -651,7 +639,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    /**
     * Writes to a {@link ByteBuffer} using put() operations. Only used for off-heap buffers.
     */
-   private static final class ByteBufferEncoder extends EncoderImpl {
+   private static final class ByteBufferEncoder extends Encoder {
 
       private final ByteBuffer buffer;
 
@@ -667,7 +655,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeByte(byte value) throws IOException {
+      void writeByte(byte value) throws IOException {
          try {
             buffer.put(value);
          } catch (BufferOverflowException e) {
@@ -676,7 +664,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeBytes(byte[] value, int offset, int length) throws IOException {
+      void writeBytes(byte[] value, int offset, int length) throws IOException {
          try {
             buffer.put(value, offset, length);
          } catch (IndexOutOfBoundsException | BufferOverflowException e) {
@@ -685,7 +673,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeBytes(ByteBuffer value) throws IOException {
+      void writeBytes(ByteBuffer value) throws IOException {
          try {
             buffer.put(value);
          } catch (BufferOverflowException e) {
@@ -694,7 +682,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeVarint32(int value) throws IOException {
+      void writeVarint32(int value) throws IOException {
          try {
             while (true) {
                if ((value & 0xFFFFFF80) == 0) {
@@ -711,7 +699,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeVarint64(long value) throws IOException {
+      void writeVarint64(long value) throws IOException {
          try {
             while (true) {
                if ((value & 0xFFFFFFFFFFFFFF80L) == 0) {
@@ -728,7 +716,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeFixed32(int value) throws IOException {
+      void writeFixed32(int value) throws IOException {
          if (reverse) {
             value = Integer.reverseBytes(value);
          }
@@ -740,7 +728,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeFixed64(long value) throws IOException {
+      void writeFixed64(long value) throws IOException {
          if (reverse) {
             value = Long.reverseBytes(value);
          }
@@ -752,7 +740,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
    }
 
-   private static class OutputStreamNoBufferEncoder extends EncoderImpl {
+   private static class OutputStreamNoBufferEncoder extends FixedVarintEncoder {
 
       private final OutputStream out;
 
@@ -761,7 +749,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeVarint32(int value) throws IOException {
+      void writeVarint32(int value) throws IOException {
          while (true) {
             if ((value & 0xFFFFFF80) == 0) {
                out.write((byte) value);
@@ -774,7 +762,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeVarint64(long value) throws IOException {
+      void writeVarint64(long value) throws IOException {
          try {
             while (true) {
                if ((value & 0xFFFFFFFFFFFFFF80L) == 0) {
@@ -791,7 +779,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeFixed32(int value) throws IOException {
+      void writeFixed32(int value) throws IOException {
          out.write((byte) (value & 0xFF));
          out.write((byte) ((value >> 8) & 0xFF));
          out.write((byte) ((value >> 16) & 0xFF));
@@ -799,7 +787,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeFixed64(long value) throws IOException {
+      void writeFixed64(long value) throws IOException {
          out.write((byte) (value & 0xFF));
          out.write((byte) ((value >> 8) & 0xFF));
          out.write((byte) ((value >> 16) & 0xFF));
@@ -811,17 +799,17 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeByte(byte value) throws IOException {
+      void writeByte(byte value) throws IOException {
          out.write(value);
       }
 
       @Override
-      public void writeBytes(byte[] value, int offset, int length) throws IOException {
+      void writeBytes(byte[] value, int offset, int length) throws IOException {
          out.write(value, offset, length);
       }
 
       @Override
-      public void writeBytes(ByteBuffer value) throws IOException {
+      void writeBytes(ByteBuffer value) throws IOException {
          if (value.hasArray()) {
             out.write(value.array(), value.arrayOffset(), value.remaining());
          } else {
@@ -832,23 +820,23 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void flush() throws IOException {
+      void flush() throws IOException {
          super.flush();
          out.flush();
       }
 
       @Override
-      public int skipFixedVarint() {
+      int skipFixedVarint() {
          return ((ByteArrayOutputStreamEx) out).skipFixedVarint();
       }
 
       @Override
-      public void writePositiveFixedVarint(int pos) {
+      void writePositiveFixedVarint(int pos) {
          ((ByteArrayOutputStreamEx) out).writePositiveFixedVarint(pos);
       }
 
       @Override
-      public boolean supportsFixedVarint() {
+      boolean supportsFixedVarint() {
          return out instanceof ByteArrayOutputStreamEx;
       }
    }
@@ -858,7 +846,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
     * @Deprecated this is to be removed in next major
     */
    @Deprecated
-   private static final class OutputStreamEncoder extends EncoderImpl {
+   private static final class OutputStreamEncoder extends Encoder {
 
       private final ByteArrayEncoder buffer;
 
@@ -874,73 +862,73 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeUInt32Field(int fieldNumber, int value) throws IOException {
+      void writeUInt32Field(int fieldNumber, int value) throws IOException {
          buffer.flushToStream(out, MAX_VARINT_SIZE * 2);
          buffer.writeUInt32Field(fieldNumber, value);
       }
 
       @Override
-      public void writeUInt64Field(int fieldNumber, long value) throws IOException {
+      void writeUInt64Field(int fieldNumber, long value) throws IOException {
          buffer.flushToStream(out, MAX_VARINT_SIZE * 2);
          buffer.writeUInt64Field(fieldNumber, value);
       }
 
       @Override
-      public void writeFixed32Field(int fieldNumber, int value) throws IOException {
+      void writeFixed32Field(int fieldNumber, int value) throws IOException {
          buffer.flushToStream(out, MAX_VARINT_SIZE + FIXED_32_SIZE);
          buffer.writeFixed32Field(fieldNumber, value);
       }
 
       @Override
-      public void writeFixed64Field(int fieldNumber, long value) throws IOException {
+      void writeFixed64Field(int fieldNumber, long value) throws IOException {
          buffer.flushToStream(out, MAX_VARINT_SIZE + FIXED_64_SIZE);
          buffer.writeFixed64Field(fieldNumber, value);
       }
 
       @Override
-      public void writeBoolField(int fieldNumber, boolean value) throws IOException {
+      void writeBoolField(int fieldNumber, boolean value) throws IOException {
          buffer.flushToStream(out, MAX_VARINT_SIZE + 1);
          buffer.writeBoolField(fieldNumber, value);
       }
 
       @Override
-      public void writeLengthDelimitedField(int fieldNumber, int length) throws IOException {
+      void writeLengthDelimitedField(int fieldNumber, int length) throws IOException {
          buffer.flushToStream(out, MAX_VARINT_SIZE * 2);
          buffer.writeLengthDelimitedField(fieldNumber, length);
       }
 
       @Override
-      public void writeVarint32(int value) throws IOException {
+      void writeVarint32(int value) throws IOException {
          buffer.flushToStream(out, MAX_VARINT_SIZE);
          buffer.writeVarint32(value);
       }
 
       @Override
-      public void writeVarint64(long value) throws IOException {
+      void writeVarint64(long value) throws IOException {
          buffer.flushToStream(out, MAX_VARINT_SIZE);
          buffer.writeVarint64(value);
       }
 
       @Override
-      public void writeFixed32(int value) throws IOException {
+      void writeFixed32(int value) throws IOException {
          buffer.flushToStream(out, FIXED_32_SIZE);
          buffer.writeFixed32(value);
       }
 
       @Override
-      public void writeFixed64(long value) throws IOException {
+      void writeFixed64(long value) throws IOException {
          buffer.flushToStream(out, FIXED_64_SIZE);
          buffer.writeFixed64(value);
       }
 
       @Override
-      public void writeByte(byte value) throws IOException {
+      void writeByte(byte value) throws IOException {
          buffer.flushToStream(out, 1);
          buffer.writeByte(value);
       }
 
       @Override
-      public void writeBytes(byte[] value, int offset, int length) throws IOException {
+      void writeBytes(byte[] value, int offset, int length) throws IOException {
          if (buffer.remainingSpace() >= length) {
             buffer.writeBytes(value, offset, length);
          } else {
@@ -950,7 +938,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeBytes(ByteBuffer value) throws IOException {
+      void writeBytes(ByteBuffer value) throws IOException {
          if (value.hasArray()) {
             buffer.flushToStream(out);
             out.write(value.array(), value.arrayOffset(), value.remaining());
@@ -965,58 +953,58 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void flush() throws IOException {
+      void flush() throws IOException {
          buffer.flushToStream(out);
       }
    }
 
-   private static class FixedVarintWrappedEncoder extends EncoderImpl {
-      private final Encoder parentEncoder;
+   private static class FixedVarintWrappedEncoder extends Encoder {
+      private final FixedVarintEncoder parentEncoder;
       private final int originalPos;
       private boolean closed;
 
-      private FixedVarintWrappedEncoder(Encoder parentEncoder) {
+      private FixedVarintWrappedEncoder(FixedVarintEncoder parentEncoder) {
          this.parentEncoder = parentEncoder;
          this.originalPos = parentEncoder.skipFixedVarint();
       }
 
       @Override
-      public void writeVarint32(int value) throws IOException {
+      void writeVarint32(int value) throws IOException {
          parentEncoder.writeVarint32(value);
       }
 
       @Override
-      public void writeVarint64(long value) throws IOException {
+      void writeVarint64(long value) throws IOException {
          parentEncoder.writeVarint64(value);
       }
 
       @Override
-      public void writeFixed32(int value) throws IOException {
+      void writeFixed32(int value) throws IOException {
          parentEncoder.writeFixed32(value);
       }
 
       @Override
-      public void writeFixed64(long value) throws IOException {
+      void writeFixed64(long value) throws IOException {
          parentEncoder.writeFixed64(value);
       }
 
       @Override
-      public void writeByte(byte value) throws IOException {
+      void writeByte(byte value) throws IOException {
          parentEncoder.writeByte(value);
       }
 
       @Override
-      public void writeBytes(byte[] value, int offset, int length) throws IOException {
+      void writeBytes(byte[] value, int offset, int length) throws IOException {
          parentEncoder.writeBytes(value, offset, length);
       }
 
       @Override
-      public void writeBytes(ByteBuffer value) throws IOException {
+      void writeBytes(ByteBuffer value) throws IOException {
          parentEncoder.writeBytes(value);
       }
 
       @Override
-      public void close() throws IOException {
+      void close() throws IOException {
          if (!closed) {
             closed = true;
             parentEncoder.writePositiveFixedVarint(originalPos);
@@ -1024,7 +1012,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
    }
 
-   private static class ArrayBasedWrappedEncoder extends EncoderImpl {
+   private static class ArrayBasedWrappedEncoder extends Encoder {
       private final int maxSize;
       private final Encoder parentEncoder;
       private final int number;
@@ -1040,7 +1028,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeVarint32(int value) throws IOException {
+      void writeVarint32(int value) throws IOException {
          ensureSize(5);
          try {
             while (true) {
@@ -1058,7 +1046,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeVarint64(long value) throws IOException {
+      void writeVarint64(long value) throws IOException {
          ensureSize(10);
          try {
             while (true) {
@@ -1076,7 +1064,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeFixed32(int value) throws IOException {
+      void writeFixed32(int value) throws IOException {
          ensureSize(4);
          try {
             bytes[pos++] = (byte) (value & 0xFF);
@@ -1089,7 +1077,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeFixed64(long value) throws IOException {
+      void writeFixed64(long value) throws IOException {
          ensureSize(8);
          try {
             bytes[pos++] = (byte) (value & 0xFF);
@@ -1106,7 +1094,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeByte(byte value) throws IOException {
+      void writeByte(byte value) throws IOException {
          ensureSize(1);
          try {
             bytes[pos++] = value;
@@ -1116,7 +1104,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeBytes(byte[] value, int offset, int length) throws IOException {
+      void writeBytes(byte[] value, int offset, int length) throws IOException {
          ensureSize(length);
          try {
             System.arraycopy(value, offset, bytes, pos, length);
@@ -1127,7 +1115,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void writeBytes(ByteBuffer value) throws IOException {
+      void writeBytes(ByteBuffer value) throws IOException {
          int length = value.remaining();
          ensureSize(length);
          if (value.hasArray()) {
@@ -1144,29 +1132,12 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       @Override
-      public void close() throws IOException {
+      void close() throws IOException {
          if (!closed) {
             closed = true;
             parentEncoder.writeLengthDelimitedField(number, pos);
             parentEncoder.writeBytes(bytes, 0, pos);
          }
-      }
-
-      @Override
-      public int skipFixedVarint() {
-         int prev = pos;
-         pos += 5;
-         return prev;
-      }
-
-      @Override
-      public void writePositiveFixedVarint(int pos) {
-         TagWriterImpl.writePositiveFixedVarint(bytes, pos, this.pos - pos - 5);
-      }
-
-      @Override
-      public boolean supportsFixedVarint() {
-         return true;
       }
 
       private void ensureSize(int possibleLength) {

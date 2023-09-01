@@ -1,6 +1,5 @@
 package org.infinispan.protostream;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
@@ -297,9 +296,9 @@ public final class WrappedMessage {
             if (t.getClass().isEnum()) {
                ((EnumMarshallerDelegate) marshallerDelegate).encode(WRAPPED_ENUM, (Enum) t, out);
             } else {
-               ProtobufTagMarshaller.WriteContext nestedWriter = out.subWriter(WRAPPED_MESSAGE, false);
-               marshallerDelegate.marshall(nestedWriter, null, t);
-               nestedWriter.getWriter().close();
+               TagWriter nestedWriter = out.subWriter(WRAPPED_MESSAGE, false);
+               marshallerDelegate.marshall((ProtobufTagMarshaller.WriteContext) nestedWriter, null, t);
+               nestedWriter.close();
             }
          }
       }
@@ -354,7 +353,7 @@ public final class WrappedMessage {
       String typeName = null;
       Integer typeId = null;
       int enumValue = -1;
-      ProtobufTagMarshaller.ReadContext readContext = null;
+      TagReader messageReader = null;
       Object value = null;
       int fieldCount = 0;
       int expectedFieldCount = 1;
@@ -397,7 +396,7 @@ public final class WrappedMessage {
             }
             case WRAPPED_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
                expectedFieldCount = 2;
-               readContext = in.subReaderFromArray();
+               messageReader = in.subReaderFromArray();
                break;
             }
             case WRAPPED_STRING << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
@@ -513,7 +512,7 @@ public final class WrappedMessage {
          }
       }
 
-      if (value == null && typeName == null && typeId == null && readContext == null) {
+      if (value == null && typeName == null && typeId == null && messageReader == null) {
          return null;
       }
 
@@ -532,9 +531,9 @@ public final class WrappedMessage {
          typeName = ctx.getDescriptorByTypeId(typeId).getFullName();
       }
       BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(typeName);
-      if (readContext != null) {
+      if (messageReader != null) {
          // it's a Message type
-         return (T) marshallerDelegate.unmarshall(readContext, null);
+         return (T) marshallerDelegate.unmarshall((ProtobufTagMarshaller.ReadContext) messageReader, null);
       } else {
          // it's an Enum
          EnumMarshaller marshaller = (EnumMarshaller) marshallerDelegate.getMarshaller();
