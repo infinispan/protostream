@@ -143,7 +143,7 @@ public final class ProtobufUtil {
    }
 
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t, int bufferSize) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStreamEx(bufferSize);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(bufferSize);
       WrappedMessage.write(ctx, TagWriterImpl.newInstanceNoBuffer(ctx, baos), t);
       return baos.toByteArray();
    }
@@ -155,7 +155,7 @@ public final class ProtobufUtil {
    }
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
-      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, out), t);
+      toWrappedStream(ctx, out, t, DEFAULT_STREAM_BUFFER_SIZE);
    }
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t, int bufferSize) throws IOException {
