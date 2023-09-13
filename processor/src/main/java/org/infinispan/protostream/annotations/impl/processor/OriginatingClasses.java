@@ -12,7 +12,10 @@ import java.lang.annotation.Target;
  *
  * @author anistor@redhat.com
  * @since 4.3.5
+ * @deprecated this was replaced by org.infinispan.protostream.annotations.impl.OriginatingClasses
+ *  * and it was not removed yet to prevent binary compat issues but will be removed in 4.8
  */
+@Deprecated
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
 public @interface OriginatingClasses {
