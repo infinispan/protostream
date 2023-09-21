@@ -102,30 +102,34 @@
         <!-- overwrite plugins version from jboss-parent -->
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.source>11</maven.compiler.source>
-        <version.compiler.plugin>3.10.1</version.compiler.plugin>
+        <version.buildnumber.plugin>3.1.0</version.buildnumber.plugin>
+        <version.compiler.plugin>3.11.0</version.compiler.plugin>
+        <version.enforcer.plugin>3.4.1</version.enforcer.plugin>
+        <version.install.plugin>3.1.1</version.install.plugin>
         <version.jar.plugin>3.3.0</version.jar.plugin>
-        <version.javadoc.plugin>3.4.1</version.javadoc.plugin>
-        <version.source.plugin>3.2.1</version.source.plugin>
+        <version.javadoc.plugin>3.6.0</version.javadoc.plugin>
+        <version.scm.plugin>2.0.1</version.scm.plugin>
+        <version.source.plugin>3.3.0</version.source.plugin>
         <version.antrun.plugin>3.1.0</version.antrun.plugin>
-        <version.surefire.plugin>3.0.0-M6</version.surefire.plugin>
+        <version.surefire.plugin>3.1.2</version.surefire.plugin>
 
         <!-- plugins version -->
         <version.maven.nexus-staging>1.6.13</version.maven.nexus-staging>
-        <version.maven.gpg>3.0.1</version.maven.gpg>
+        <version.maven.gpg>3.1.0</version.maven.gpg>
 
         <version.junit>4.13.2</version.junit>
-        <version.compile-testing>0.19</version.compile-testing>
-        <version.mockito>4.3.1</version.mockito>
+        <version.compile-testing>0.21</version.compile-testing>
+        <version.mockito>5.5.0</version.mockito>
         <version.jcipannotations>1.0</version.jcipannotations>
         <version.fest.assertions>2.0M10</version.fest.assertions>
         <version.protoparser>4.0.3</version.protoparser>
         <version.jboss.logging>3.5.0.Final</version.jboss.logging>
         <version.jboss.logging.annotations>2.2.1.Final</version.jboss.logging.annotations>
         <version.jboss.logging.processor>2.2.1.Final</version.jboss.logging.processor>
-        <version.log4j>2.18.0</version.log4j>
-        <version.jboss.marshalling>2.1.1.Final</version.jboss.marshalling>
+        <version.log4j>2.20.0</version.log4j>
+        <version.jboss.marshalling>2.1.2.Final</version.jboss.marshalling>
         <version.javassist>3.29.1-GA</version.javassist>
-        <version.jackson>2.14.1</version.jackson>
+        <version.jackson>2.15.2</version.jackson>
         <version.auto-service>1.0.1</version.auto-service>
         <version.assertj>3.24.2</version.assertj>
 
@@ -329,7 +333,7 @@
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
-                        <release>11</release>
+                        <release>${maven.compiler.target}</release>
                         <encoding>UTF-8</encoding>
                         <!-- both maven and javac are buggy regarding handling of APs with incremental compilation -->
                         <useIncrementalCompilation>false</useIncrementalCompilation>
@@ -380,38 +384,26 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${version.install.plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-scm-plugin</artifactId>
-                    <version>1.13.0</version>
+                    <version>${version.scm.plugin}</version>
                     <configuration>
                         <tag>${project.version}</tag>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>buildnumber-maven-plugin</artifactId>
+                    <version>${version.buildnumber.plugin}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
 
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>javadoc</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <source>8</source>
-                    <doclint>none</doclint>
-                    <detectLinks>false</detectLinks>
-                    <detectOfflineLinks>false</detectOfflineLinks>
-                    <links>
-                        <link>http://docs.oracle.com/javase/8/docs/api/</link>
-                    </links>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
@@ -426,6 +418,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${version.enforcer.plugin}</version>
                 <executions>
                     <execution>
                         <id>enforce-java</id>
@@ -435,7 +428,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>[${maven.compiler.source},)</version>
+                                    <version>[${maven.compiler.target},)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>[3.6.0,)</version>
@@ -464,7 +457,6 @@
                             <execution>
                                 <id>attach-sources</id>
                                 <goals>
-                                    <goal>jar</goal>
                                     <goal>test-jar</goal>
                                 </goals>
                             </execution>
@@ -481,6 +473,28 @@
             </activation>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>javadoc</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <source>11</source>
+                            <doclint>none</doclint>
+                            <detectLinks>false</detectLinks>
+                            <detectOfflineLinks>false</detectOfflineLinks>
+                            <links>
+                                <link>http://docs.oracle.com/javase/11/docs/api/</link>
+                            </links>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>

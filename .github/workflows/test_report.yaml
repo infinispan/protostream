@@ -21,3 +21,10 @@ jobs:
           name: JDK 17 Tests
           path: '**/*.xml'
           reporter: java-junit
+
+      - uses: dorny/test-reporter@v1
+        with:
+          artifact: jdk21-test-results
+          name: JDK 21 Tests
+          path: '**/*.xml'
+          reporter: java-junit
