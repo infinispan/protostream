@@ -20,7 +20,7 @@ Add this dependency to your `pom.xml` file:
 <dependency>
    <groupId>org.infinispan.protostream</groupId>
    <artifactId>protostream</artifactId>
-   <version>4.5.0-SNAPSHOT</version>
+   <version>5.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -43,7 +43,7 @@ The following `pom.xml` snippet shows how to do it with Maven:
 <plugin>
    <groupId>org.apache.maven.plugins</groupId>
    <artifactId>maven-compiler-plugin</artifactId>
-   <version>3.9.0</version>
+   <version>3.11.0</version>
    <configuration>
       <compilerArgs>
          <arg>-Aprotostream-debug=true</arg>

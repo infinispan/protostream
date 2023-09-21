@@ -52,3 +52,26 @@ jobs:
         with:
           name: jdk17-test-results
           path: "**/target/*-reports*/**/TEST-*.xml"
+
+  jdk21:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: JDK 21 Tests
+        run: mvn -B verify -Dmaven.test.failure.ignore=true -Dansi.strip=true
+
+      - name: Test Logs
+        uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: jdk21-test-results
+          path: "**/target/*-reports*/**/TEST-*.xml"
+
