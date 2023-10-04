@@ -9,8 +9,7 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
 
 /**
  * A {@link ProtoTypeMetadata} for a message or enum type that is defined in an external protobuf schema and its
- * definition was not created based on annotations during the current execution of a {@link
- * org.infinispan.protostream.annotations.ProtoSchemaBuilder}.
+ * definition was not created based on annotations.
  *
  * @author anistor@redhat.com
  * @since 4.3

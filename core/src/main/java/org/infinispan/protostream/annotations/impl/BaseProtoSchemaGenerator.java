@@ -19,8 +19,7 @@ import org.infinispan.protostream.impl.Log;
 /**
  * Generates a protobuf schema (proto file) based on annotations and also generates marshallers for the types.
  * <p>
- * This class is not to be directly invoked by users. See {@link org.infinispan.protostream.annotations.ProtoSchemaBuilder}
- * instead.
+ * This class is not to be directly invoked by users.
  * <p>
  * Generators are not expected to be stateless, so reuse must be done taking this into account.
  *

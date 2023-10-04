@@ -16,8 +16,7 @@ import org.infinispan.protostream.containers.ElementContainerAdapter;
 import org.infinispan.protostream.impl.Log;
 
 /**
- * A {@link ProtoTypeMetadata} for an enum type created based on annotations during the current execution of {@link
- * org.infinispan.protostream.annotations.ProtoSchemaBuilder}.
+ * A {@link ProtoTypeMetadata} for an enum type created based on annotations.
  *
  * @author anistor@redhat.com
  * @since 3.0

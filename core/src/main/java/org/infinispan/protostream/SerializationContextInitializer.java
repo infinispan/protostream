@@ -15,9 +15,6 @@ import java.io.UncheckedIOException;
  * Manually written implementations of these interfaces are allowed, but are of no special use with regard to
  * ProtoStream library.
  * <p>
- * This mechanism is very similar to {@link org.infinispan.protostream.annotations.ProtoSchemaBuilder} which works using
- * bytecode generation at runtime instead of compile time.
- * <p>
  * <em>NOTE:</em> Methods {@link #getProtoFileName()} and {@link #getProtoFile()} will be removed from this interface in
  * ver. 5 but will continue to exist in {@link GeneratedSchema}, which extends this interface.
  *

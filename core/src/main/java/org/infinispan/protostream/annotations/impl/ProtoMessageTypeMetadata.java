@@ -40,8 +40,7 @@ import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.Log;
 
 /**
- * A {@link ProtoTypeMetadata} for a message type created based on annotations during the current execution of {@link
- * org.infinispan.protostream.annotations.ProtoSchemaBuilder}.
+ * A {@link ProtoTypeMetadata} for a message type created based on annotations.
  *
  * @author anistor@redhat.com
  * @since 3.0
