@@ -26,10 +26,6 @@ import java.lang.annotation.Target;
  * <p>This annotation is not mandatory, but classes that do not have a constructor or static method annotated with this
  * annotation are expected to have an accessible no-argument constructor instead to be used for instantiating the class.
  *
- * <p><b>NOTE:</b>
- * This annotation can be processed at <em>runtime</em> (see {@link ProtoSchemaBuilder }) only if method parameter name
- * debug information was emitted into the class file by the compiler, ie. the compiler was invoked with the
- * <i>-parameters</i> flag. Usage of this annotation at <em>compile time</em> is possible regardless of that.
  *
  * @author anistor@redhat.com
  * @since 4.3

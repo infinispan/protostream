@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
@@ -63,10 +64,8 @@ public final class ProtobufUtil {
    }
 
    private static <A> void write(ImmutableSerializationContext ctx, TagWriterImpl out, A t) throws IOException {
-      if (t == null) {
-         throw new IllegalArgumentException("Object to marshall cannot be null");
-      }
-      BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t);
+      Objects.requireNonNull(t, "Object to marshall cannot be null");
+      BaseMarshallerDelegate<A> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t);
       marshallerDelegate.marshall(out, null, t);
       out.flush();
    }

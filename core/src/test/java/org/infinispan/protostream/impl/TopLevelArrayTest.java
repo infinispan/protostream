@@ -14,7 +14,6 @@ import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.junit.Test;
 
@@ -89,27 +88,6 @@ public class TopLevelArrayTest {
       public int[] getValue(int[] value) {
          return value;
       }
-   }
-
-   @Test
-   public void testCustomIntArrayMarshallingWithAdapter() throws Exception {
-      SerializationContext ctx = ProtobufUtil.newSerializationContext();
-
-      String schema = new ProtoSchemaBuilder()
-            .fileName("test_array_wrapper.proto")
-            .addClass(IntegerArrayAdapter.class)
-            .build(ctx);
-
-      assertTrue(schema.contains("\nmessage MyIntegerArray {\n   \n   repeated int32 value = 1;\n}\n"));
-      assertTrue(ctx.canMarshall(int[].class));
-
-      int[] dataIn = {3, 1, 4, 1, 5};
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, dataIn);
-
-      Object dataOut = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-
-      assertTrue(dataOut instanceof int[]);
-      assertArrayEquals(dataIn, (int[]) dataOut);
    }
 
    @ProtoTypeId(75001)
@@ -228,27 +206,5 @@ public class TopLevelArrayTest {
       public MyMessage[] getValue(MyMessage[] value) {
          return value;
       }
-   }
-
-   @Test
-   public void testCustomMessageArrayMarshallingWithAdapter() throws Exception {
-      SerializationContext ctx = ProtobufUtil.newSerializationContext();
-
-      String schema = new ProtoSchemaBuilder()
-            .fileName("test_array_wrapper.proto")
-            .addClass(MyMessage.class)
-            .addClass(MyMessageArrayAdapter.class)
-            .build(ctx);
-
-      assertTrue(schema.contains("\nmessage MyMessage {\n   \n   optional string field1 = 1;\n}\n"));
-      assertTrue(schema.contains("\nmessage MyMessageArray {\n   \n   repeated MyMessage value = 1;\n}\n"));
-
-      MyMessage[] dataIn = {new MyMessage("1"), new MyMessage("2"), new MyMessage("3")};
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, dataIn);
-
-      Object dataOut = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-
-      assertTrue(dataOut instanceof MyMessage[]);
-      assertArrayEquals(dataIn, (MyMessage[]) dataOut);
    }
 }

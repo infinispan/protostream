@@ -1,4 +1,4 @@
-package org.infinispan.protostream.test;
+package org.infinispan.protostream.integrationtests.performance;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -11,9 +11,10 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.Note;
@@ -21,6 +22,7 @@ import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.domain.marshallers.NoteMarshaller;
 import org.infinispan.protostream.domain.marshallers.UserMarshaller;
 import org.infinispan.protostream.impl.Log;
+import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -137,15 +139,20 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
             .setLogOutOfSequenceWrites(false)
             .setLogOutOfSequenceReads(false);
       SerializationContext ctx = createContext(cfgBuilder);
-
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      protoSchemaBuilder
-            .fileName("note.proto")
-            .packageName("sample_bank_account2")
-            .addClass(User.class)
-            .addClass(Note.class)
-            .build(ctx);
-
+      NoteSchemaImpl schema = new NoteSchemaImpl();
+      schema.registerSchema(ctx);
+      schema.registerMarshallers(ctx);
       return ctx;
+   }
+
+   @AutoProtoSchemaBuilder(schemaFileName = "note.proto", schemaFilePath = "org/infinispan/protostream/generated_schemas", schemaPackageName = "sample_bank_account2",
+         service = false,
+         includeClasses = {
+               Address.class,
+               Note.class,
+               User.class
+         }
+   )
+   interface NoteSchema extends GeneratedSchema {
    }
 }
