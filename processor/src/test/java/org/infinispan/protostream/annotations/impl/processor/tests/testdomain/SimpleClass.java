@@ -1,8 +1,9 @@
 package org.infinispan.protostream.annotations.impl.processor.tests.testdomain;
 
 import org.infinispan.custom.annotations.MyCustomAnnotation;
+import org.infinispan.custom.annotations.TypeId;
 import org.infinispan.protostream.UnknownFieldSet;
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
 
@@ -10,10 +11,10 @@ import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
  * @author anistor@redhat.com
  * @since 4.3
  */
-@ProtoDoc("@TypeId(100010)")
+@TypeId(100010)
 public class SimpleClass {
 
-   @ProtoDoc("Simple is elegant")
+   @ProtoComment("Simple is elegant")
    @ProtoField(number = 1111)
    @MyCustomAnnotation(name = "simpleClassField", someBool = true, someEnum = MyCustomAnnotation.MyEnum.TWO, someLong = -100, someInteger = 100)
    public SimpleClass simpleClass;

@@ -7,18 +7,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Aggregates repeated {@link ProtoDoc} annotations.
+ * Aggregates repeated {@link ProtoComment} annotations.
  *
- * @author anistor@redhat.com
- * @since 4.0
- * @deprecated For ProtoStream documentation comment annotations, annotate directly the {@link ProtoField}s with the annotations to add.
- *  *          For the general text case, there is no replacement.
+ * @since 5.0
  */
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Deprecated
-public @interface ProtoDocs {
-
-   ProtoDoc[] value();
+public @interface ProtoComments {
+   ProtoComment[] value();
 }

@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.custom.annotations.Indexed;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author anistor@redhat.com
  */
-@ProtoDoc("@Indexed")
+@Indexed
 public class User implements Externalizable {   // implement Externalizable just for PerformanceTest
 
    public enum Gender {

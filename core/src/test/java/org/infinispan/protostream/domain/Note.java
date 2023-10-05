@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.custom.annotations.Field;
+import org.infinispan.custom.annotations.Indexed;
+import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
 
@@ -14,7 +16,7 @@ import org.infinispan.protostream.descriptors.Type;
  * @author anistor@redhat.com
  * @since 3.0
  */
-@ProtoDoc("@Indexed")
+@Indexed
 public class Note {
 
    private String text;
@@ -27,12 +29,12 @@ public class Note {
 
    private byte[] blurb;
 
-   @ProtoDoc("First line of documentation.")
-   @ProtoDoc("some foo bar\nand some more\n @Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO)")
+   @ProtoComment("First line of documentation.")
+   @ProtoComment("some foo bar\nand some more\n @Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO)")
    @ProtoField(3)
    public Note note;
 
-   @ProtoDoc("@Field")
+   @Field
    @ProtoField(4)
    public List<Note> notes;
 
@@ -45,7 +47,7 @@ public class Note {
       this.text = text;
    }
 
-   @ProtoDoc("@Field")
+   @Field
    @ProtoField(2)
    public User getAuthor() {
       return author;
@@ -55,7 +57,7 @@ public class Note {
       this.author = author;
    }
 
-   @ProtoDoc("@Field")
+   @Field
    @ProtoField(number = 5, type = Type.UINT64, defaultValue = "0")
    public Date getCreationDate() {
       return creationDate;
@@ -65,7 +67,7 @@ public class Note {
       this.creationDate = creationDate;
    }
 
-   @ProtoDoc("@Field")
+   @Field
    @ProtoField(6)
    public byte[] getDigest() {
       return digest;
@@ -75,7 +77,7 @@ public class Note {
       this.digest = digest;
    }
 
-   @ProtoDoc("@Field")
+   @Field
    @ProtoField(number = 7, required = true)
    public byte[] getBlurb() {
       return blurb;

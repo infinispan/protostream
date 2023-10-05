@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoMessage;
@@ -1136,7 +1136,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    private void checkForbiddenAnnotations(XMethod m1, XMethod m2) {
-      if (m1.getAnnotation(ProtoDoc.class) != null
+      if (m1.getAnnotation(ProtoComment.class) != null
             || m1.getAnnotation(ProtoField.class) != null
             || m1.getAnnotation(ProtoUnknownFieldSet.class) != null) {
          throw new ProtoSchemaBuilderException("No @ProtoDoc, @ProtoField or @ProtoUnknownFieldSet annotations allowed on method " + m1 + ". They should have been added to " + m2);
