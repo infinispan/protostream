@@ -230,18 +230,8 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    @Override
-   public void writeRawByte(byte value) throws IOException {
-      encoder.writeByte(value);
-   }
-
-   @Override
    public void writeRawBytes(byte[] value, int offset, int length) throws IOException {
       encoder.writeBytes(value, offset, length);
-   }
-
-   @Override
-   public void writeRawBytes(ByteBuffer value) throws IOException {
-      encoder.writeBytes(value);
    }
 
    @Override

@@ -9,7 +9,7 @@ import org.infinispan.protostream.descriptors.WireType;
  * @author anistor@redhat.com
  * @since 4.4
  */
-public interface TagWriter extends RawProtoStreamWriter {
+public interface TagWriter {
 
    // start low level ops
    void flush() throws IOException;

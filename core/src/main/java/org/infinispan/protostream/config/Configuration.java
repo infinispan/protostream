@@ -2,7 +2,6 @@ package org.infinispan.protostream.config;
 
 import java.util.Map;
 
-import org.infinispan.protostream.WrappedMessageTypeIdMapper;
 import org.infinispan.protostream.config.impl.ConfigurationImpl;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
@@ -44,20 +43,6 @@ public interface Configuration {
     */
    int maxNestedMessageDepth();
 
-   WrappingConfig wrappingConfig();
-
-   interface WrappingConfig {
-
-      WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper();
-
-      interface Builder {
-
-         Builder wrappedMessageTypeIdMapper(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper);
-
-         Configuration build();
-      }
-   }
-
    AnnotationsConfig annotationsConfig();
 
    interface AnnotationsConfig {
@@ -94,20 +79,6 @@ public interface Configuration {
       Builder setLogOutOfSequenceWrites(boolean logOutOfSequenceWrites);
 
       Builder maxNestedMessageDepth(int maxNestedMessageDepth);
-
-      /**
-       * Should we log a warning every time we encounter an undefined documentation annotation? This is {@code true} by
-       * default.
-       *
-       * @deprecated use {@link AnnotationsConfig.Builder#setLogUndefinedAnnotations}
-       */
-      @Deprecated
-      default Builder setLogUndefinedAnnotations(boolean logUndefinedAnnotations) {
-         annotationsConfig().setLogUndefinedAnnotations(logUndefinedAnnotations);
-         return this;
-      }
-
-      WrappingConfig.Builder wrappingConfig();
 
       AnnotationsConfig.Builder annotationsConfig();
 

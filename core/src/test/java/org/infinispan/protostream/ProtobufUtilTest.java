@@ -20,9 +20,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.domain.Account;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.Numerics;
@@ -122,51 +119,6 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
       // assert that toWrappedByteArray works correctly as a shorthand for toByteArray on a WrappedMessage
       assertArrayEquals(userBytes1, userBytes2);
-   }
-
-   @Test
-   public void testWrappedMessageTypeIdMapper() throws Exception {
-      WrappedMessageTypeIdMapper mapper = new WrappedMessageTypeIdMapper() {
-         @Override
-         public int mapTypeIdOut(int typeId, ImmutableSerializationContext ctx) {
-            if (typeId == 100042) { // change typeId ouf User
-               return 100021;
-            }
-            return typeId;
-         }
-      };
-
-      Configuration cfg = Configuration.builder()
-            .wrappingConfig()
-            .wrappedMessageTypeIdMapper(mapper)
-            .build();
-
-      ImmutableSerializationContext ctx = createContext(cfg);
-
-      // this has TypeId 100042
-      User user = new User();
-      user.setId(1);
-      user.setName("John");
-      user.setSurname("Batman");
-      user.setGender(User.Gender.MALE);
-
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, user);
-
-      int[] seenTypeId = new int[]{-1};
-
-      TagHandler tagHandler = new TagHandler() {
-         @Override
-         public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
-            if (fieldNumber == WrappedMessage.WRAPPED_TYPE_ID) {
-               seenTypeId[0] = (Integer) tagValue;
-            }
-         }
-      };
-
-      Descriptor wrappedMessageDescriptor = ctx.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
-      ProtobufParser.INSTANCE.parse(tagHandler, wrappedMessageDescriptor, bytes);
-
-      assertEquals(100021, seenTypeId[0]);
    }
 
    @Test

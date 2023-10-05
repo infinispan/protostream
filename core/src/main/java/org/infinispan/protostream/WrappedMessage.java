@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Objects;
 
 import org.infinispan.protostream.containers.ElementContainerAdapter;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
@@ -607,8 +608,6 @@ public final class WrappedMessage {
       if (container == null) {
          throw new IllegalStateException("The unmarshalled container must not be null");
       }
-      containerMessage = null;
-      nestedInput = null;
 
       if (containerMarshaller instanceof IterableElementContainerAdapter) {
          IterableElementContainerAdapter adapter = (IterableElementContainerAdapter) containerMarshaller;
@@ -633,8 +632,7 @@ public final class WrappedMessage {
     * Map type id to new value during reading, to support schema evolution.
     */
    private static int mapTypeIdIn(int typeId, ImmutableSerializationContext ctx) {
-      WrappedMessageTypeIdMapper mapper = ctx.getConfiguration().wrappingConfig().wrappedMessageTypeIdMapper();
-      return mapper == null ? typeId : mapper.mapTypeIdIn(typeId, ctx);
+      return typeId;
    }
 
    /**
@@ -645,8 +643,7 @@ public final class WrappedMessage {
       if (typeId == null) {
          return -1;
       }
-      WrappedMessageTypeIdMapper mapper = ctx.getConfiguration().wrappingConfig().wrappedMessageTypeIdMapper();
-      return mapper == null ? typeId : mapper.mapTypeIdOut(typeId, ctx);
+      return typeId;
    }
 
    @Override
@@ -655,7 +652,7 @@ public final class WrappedMessage {
       if (o == null || getClass() != o.getClass()) return false;
 
       WrappedMessage other = (WrappedMessage) o;
-      return value != null ? value.equals(other.value) : other.value == null;
+      return Objects.equals(value, other.value);
    }
 
    @Override

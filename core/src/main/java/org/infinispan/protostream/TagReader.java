@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * @author anistor@redhat.com
  * @since 4.4
  */
-public interface TagReader extends RawProtoStreamReader {
+public interface TagReader {
 
    /**
     * Returns true if we have reached the end of input or the limit set with pushLimit.
