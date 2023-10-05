@@ -20,7 +20,6 @@ import java.util.TreeMap;
 import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
@@ -91,14 +90,11 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private static String getProtoName(XClass annotatedClass, XClass javaClass) {
       ProtoName annotation = annotatedClass.getAnnotation(ProtoName.class);
-      ProtoMessage protoMessageAnnotation = annotatedClass.getAnnotation(ProtoMessage.class);
       if (annotation != null) {
-         if (protoMessageAnnotation != null) {
-            throw new ProtoSchemaBuilderException("@ProtoMessage annotation cannot be used together with @ProtoName: " + annotatedClass.getName());
-         }
          return annotation.value().isEmpty() ? javaClass.getSimpleName() : annotation.value();
+      } else {
+         return javaClass.getSimpleName();
       }
-      return protoMessageAnnotation == null || protoMessageAnnotation.name().isEmpty() ? javaClass.getSimpleName() : protoMessageAnnotation.name();
    }
 
    @Override

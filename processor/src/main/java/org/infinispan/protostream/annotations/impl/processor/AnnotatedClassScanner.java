@@ -31,11 +31,9 @@ import javax.tools.Diagnostic;
 
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoAdapter;
-import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
@@ -153,14 +151,6 @@ final class AnnotatedClassScanner {
             visitProtoEnumValue(e);
          }
 
-         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoEnum.class)) {
-            visitProtoEnum(e);
-         }
-
-         for (Element e : roundEnv.getElementsAnnotatedWith(ProtoMessage.class)) {
-            visitProtoMessage(e);
-         }
-
          for (Element e : roundEnv.getElementsAnnotatedWith(ProtoName.class)) {
             visitProtoName(e);
          }
@@ -192,12 +182,6 @@ final class AnnotatedClassScanner {
       }
       if (e.getAnnotation(ProtoName.class) != null) {
          visitProtoName(e);
-      }
-      if (e.getAnnotation(ProtoMessage.class) != null) {
-         visitProtoMessage(e);
-      }
-      if (e.getAnnotation(ProtoEnum.class) != null) {
-         visitProtoEnum(e);
       }
 
       for (Element member : e.getEnclosedElements()) {
