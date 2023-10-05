@@ -3,9 +3,9 @@ package org.infinispan.protostream.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
@@ -449,7 +449,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
 
       int len = 0;
-      List<byte[]> chunks = new LinkedList<>();
+      List<byte[]> chunks = new ArrayList<>();
       int bufLen;
       byte[] buffer = new byte[CHUNK_SIZE];
       while ((bufLen = input.read(buffer)) != -1) {

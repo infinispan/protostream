@@ -1,7 +1,7 @@
 package org.infinispan.protostream.impl.parser;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +38,7 @@ public final class AnnotationParser {
     * @throws AnnotationParserException if syntax errors are encountered
     */
    public List<AnnotationElement.Annotation> parse() throws AnnotationParserException {
-      List<AnnotationElement.Annotation> annotations = new LinkedList<>();
+      List<AnnotationElement.Annotation> annotations = new ArrayList<>();
       while (lexer.token != AnnotationTokens.EOF) {
          AnnotationElement.Annotation annotation = parseAnnotation();
          annotations.add(annotation);
@@ -245,7 +245,7 @@ public final class AnnotationParser {
       int start = lexer.getBufferPos();
       long pos = lexer.pos;
       expect(AnnotationTokens.LBRACE);
-      List<AnnotationElement.Value> values = new LinkedList<>();
+      List<AnnotationElement.Value> values = new ArrayList<>();
       while (lexer.token != AnnotationTokens.RBRACE && lexer.token != AnnotationTokens.EOF) {
          values.add(parseValue(start));
          start = lexer.getBufferPos();
