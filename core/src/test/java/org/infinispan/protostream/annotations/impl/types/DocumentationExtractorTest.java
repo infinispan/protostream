@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.infinispan.custom.annotations.MyCustomAnnotation;
-import org.infinispan.protostream.annotations.ProtoDoc;
-import org.infinispan.protostream.annotations.ProtoDocs;
+import org.infinispan.protostream.annotations.ProtoComment;
+import org.infinispan.protostream.annotations.ProtoComments;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.junit.Test;
 
@@ -17,31 +17,31 @@ public class DocumentationExtractorTest {
 
    public static class TestDocs {
 
-      @ProtoDoc("1")
+      @ProtoComment("1")
       public String field1;
 
-      @ProtoDoc("1")
+      @ProtoComment("1")
       public void method1() {
       }
 
-      @ProtoDoc("1")
+      @ProtoComment("1")
       @ProtoField(1)
-      @ProtoDoc("2")
+      @ProtoComment("2")
       public String field2;
 
-      @ProtoDocs({@ProtoDoc("1"), @ProtoDoc("2")})
+      @ProtoComments({@ProtoComment("1"), @ProtoComment("2")})
       public String field3;
 
-      @ProtoDocs(@ProtoDoc("1"))
+      @ProtoComments(@ProtoComment("1"))
       public String field4;
 
-      @ProtoDoc("")
-      @ProtoDoc("1")
-      @ProtoDoc("")
-      @ProtoDoc("2")
-      @ProtoDoc("3")
-      @ProtoDoc("")
-      @ProtoDoc("")
+      @ProtoComment("")
+      @ProtoComment("1")
+      @ProtoComment("")
+      @ProtoComment("2")
+      @ProtoComment("3")
+      @ProtoComment("")
+      @ProtoComment("")
       public String field5;
 
       @MyCustomAnnotation(name = "field6", someBool = true, someEnum = MyCustomAnnotation.MyEnum.TWO, someLong = -100, someInteger = 100)
@@ -51,14 +51,14 @@ public class DocumentationExtractorTest {
       public void method2() {
       }
 
-      @ProtoDoc("1")
+      @ProtoComment("1")
       @MyCustomAnnotation(name = "field7", someBool = true, someEnum = MyCustomAnnotation.MyEnum.TWO, someLong = -100, someInteger = 100)
-      @ProtoDoc("1")
+      @ProtoComment("1")
       public String field7;
 
-      @ProtoDoc("1")
+      @ProtoComment("1")
       @MyCustomAnnotation(name = "method3", someBool = true, someEnum = MyCustomAnnotation.MyEnum.TWO, someLong = -100, someInteger = 100)
-      @ProtoDoc("1")
+      @ProtoComment("1")
       public void method3() {
       }
 

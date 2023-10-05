@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoComment;
 
 /**
  * @author anistor@redhat.com
@@ -23,7 +23,7 @@ public final class DocumentationExtractor {
     * put on a separate line. The beginning and trailing empty lines are trimmed off. If the resulting documentation
     * text does not have any line then {@code null} is returned.
     */
-   private static StringBuilder getDocumentation(ProtoDoc[] annotations) {
+   private static StringBuilder getDocumentation(ProtoComment[] annotations) {
       int start = 0;
       while (start < annotations.length && annotations[start].value().isEmpty()) {
          start++;
@@ -53,7 +53,7 @@ public final class DocumentationExtractor {
     * off. If the resulting documentation text does not have any line then {@code null} is returned.
     */
    public static String getDocumentation(Element element, boolean fullyQualified) {
-      StringBuilder docs = getDocumentation(element.getAnnotationsByType(ProtoDoc.class));
+      StringBuilder docs = getDocumentation(element.getAnnotationsByType(ProtoComment.class));
       // Copy other annotations as-is
       for (AnnotationMirror mirror : element.getAnnotationMirrors()) {
          String s = mirror.toString();
@@ -63,17 +63,17 @@ public final class DocumentationExtractor {
    }
 
    public static String getDocumentation(Field f, boolean fullyQualified) {
-      StringBuilder docs = getDocumentation(f.getAnnotationsByType(ProtoDoc.class));
+      StringBuilder docs = getDocumentation(f.getAnnotationsByType(ProtoComment.class));
       return getDocumentation(docs, f.getAnnotations(), fullyQualified);
    }
 
    public static String getDocumentation(Class<?> clazz, boolean fullyQualified) {
-      StringBuilder docs = getDocumentation(clazz.getAnnotationsByType(ProtoDoc.class));
+      StringBuilder docs = getDocumentation(clazz.getAnnotationsByType(ProtoComment.class));
       return getDocumentation(docs, clazz.getAnnotations(), fullyQualified);
    }
 
    public static String getDocumentation(Method method, boolean fullyQualified) {
-      StringBuilder docs = getDocumentation(method.getAnnotationsByType(ProtoDoc.class));
+      StringBuilder docs = getDocumentation(method.getAnnotationsByType(ProtoComment.class));
       return getDocumentation(docs, method.getAnnotations(), fullyQualified);
    }
 

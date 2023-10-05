@@ -22,7 +22,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
@@ -34,7 +34,7 @@ import org.junit.Test;
 
 public class AutoProtoSchemaBuilderTest {
 
-   @ProtoDoc("This is the documentation")
+   @ProtoComment("This is the documentation")
    @ProtoName("NoteMsg")
    public static class Note {
 

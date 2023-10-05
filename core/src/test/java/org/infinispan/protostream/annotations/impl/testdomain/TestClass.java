@@ -1,7 +1,8 @@
 package org.infinispan.protostream.annotations.impl.testdomain;
 
+import org.infinispan.custom.annotations.Indexed;
 import org.infinispan.protostream.WrappedMessage;
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoReserved.Range;
@@ -11,7 +12,8 @@ import org.infinispan.protostream.annotations.impl.testdomain.subpackage.TestCla
  * @author anistor@redhat.com
  * @since 3.0
  */
-@ProtoDoc("@Indexed()\nbla bla bla\nand some more bla")
+@Indexed
+@ProtoComment("\nbla bla bla\nand some more bla")
 @ProtoReserved(numbers = {17, 42, 13}, ranges = @Range(from = 7777))
 @ProtoReserved(names = {"XX", "XY"})
 public class TestClass extends TestBaseClass implements TestBaseInterface /*, TestBaseInterface2 */, TestBaseInterface3 {
@@ -24,7 +26,7 @@ public class TestClass extends TestBaseClass implements TestBaseInterface /*, Te
    private Integer height;
 
    @ProtoField(number = 4, required = true)
-   @ProtoDoc("The surname, of course")
+   @ProtoComment("The surname, of course")
    public String surname;
 
    @ProtoField(number = 66)
@@ -69,10 +71,10 @@ public class TestClass extends TestBaseClass implements TestBaseInterface /*, Te
       this.height = height;
    }
 
-   @ProtoDoc("InnerClass documentation")
+   @ProtoComment("InnerClass documentation")
    public static class InnerClass {
 
-      @ProtoDoc("some field documentation")
+      @ProtoComment("some field documentation")
       @ProtoField(number = 42, required = true)
       public int innerAttribute;
    }

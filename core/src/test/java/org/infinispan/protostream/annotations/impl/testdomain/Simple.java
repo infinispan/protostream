@@ -1,7 +1,8 @@
 package org.infinispan.protostream.annotations.impl.testdomain;
 
+import org.infinispan.custom.annotations.TypeId;
 import org.infinispan.protostream.UnknownFieldSet;
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
 
@@ -9,11 +10,11 @@ import org.infinispan.protostream.annotations.ProtoUnknownFieldSet;
  * @author anistor@redhat.com
  * @since 3.0
  */
-@ProtoDoc("@TypeId(100010)")
+@TypeId(100010)
 //todo [anistor] test with multiple type ids, in doc or direct annotation
 public class Simple {
 
-   @ProtoDoc("Simple is elegant")
+   @ProtoComment("Simple is elegant")
    @ProtoField(number = 1111)
    public Simple simple;
 
