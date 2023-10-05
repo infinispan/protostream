@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.protostream.WrappedMessageTypeIdMapper;
 import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
@@ -19,20 +18,16 @@ public final class ConfigurationImpl implements Configuration {
 
    private final boolean logOutOfSequenceWrites;
 
-   private final WrappingConfigImpl wrappingConfig;
-
    private final AnnotationsConfigImpl annotationsConfig;
 
    private final int maxNestedMessageDepth;
 
    private ConfigurationImpl(boolean logOutOfSequenceReads, boolean logOutOfSequenceWrites,
                              int maxNestedMessageDepth,
-                             WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper,
                              Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
       this.logOutOfSequenceReads = logOutOfSequenceReads;
       this.logOutOfSequenceWrites = logOutOfSequenceWrites;
       this.maxNestedMessageDepth = maxNestedMessageDepth;
-      this.wrappingConfig = new WrappingConfigImpl(wrappedMessageTypeIdMapper);
       this.annotationsConfig = new AnnotationsConfigImpl(annotations, logUndefinedAnnotations);
    }
 
@@ -52,11 +47,6 @@ public final class ConfigurationImpl implements Configuration {
    }
 
    @Override
-   public WrappingConfig wrappingConfig() {
-      return wrappingConfig;
-   }
-
-   @Override
    public AnnotationsConfig annotationsConfig() {
       return annotationsConfig;
    }
@@ -66,28 +56,8 @@ public final class ConfigurationImpl implements Configuration {
       return "Configuration{" +
             "logOutOfSequenceReads=" + logOutOfSequenceReads +
             ", logOutOfSequenceWrites=" + logOutOfSequenceWrites +
-            ", wrappingConfig=" + wrappingConfig +
             ", annotationsConfig=" + annotationsConfig +
             '}';
-   }
-
-   private static final class WrappingConfigImpl implements WrappingConfig {
-
-      private final WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper;
-
-      private WrappingConfigImpl(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper) {
-         this.wrappedMessageTypeIdMapper = wrappedMessageTypeIdMapper;
-      }
-
-      @Override
-      public WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper() {
-         return wrappedMessageTypeIdMapper;
-      }
-
-      @Override
-      public String toString() {
-         return "WrappingConfigImpl{wrappedMessageTypeIdMapper=" + wrappedMessageTypeIdMapper + '}';
-      }
    }
 
    private static final class AnnotationsConfigImpl implements AnnotationsConfig {
@@ -125,25 +95,7 @@ public final class ConfigurationImpl implements Configuration {
 
       private int maxNestedMessageDepth = Configuration.DEFAULT_MAX_NESTED_DEPTH;
 
-      private WrappingConfigBuilderImpl wrappingConfigBuilder = null;
-
       private AnnotationsConfigBuilderImpl annotationsConfigBuilder = null;
-
-      final class WrappingConfigBuilderImpl implements WrappingConfig.Builder {
-
-         private WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper;
-
-         @Override
-         public WrappingConfig.Builder wrappedMessageTypeIdMapper(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper) {
-            this.wrappedMessageTypeIdMapper = wrappedMessageTypeIdMapper;
-            return this;
-         }
-
-         @Override
-         public Configuration build() {
-            return BuilderImpl.this.build();
-         }
-      }
 
       final class AnnotationsConfigBuilderImpl implements AnnotationsConfig.Builder {
 
@@ -198,15 +150,7 @@ public final class ConfigurationImpl implements Configuration {
       }
 
       @Override
-      public WrappingConfigBuilderImpl wrappingConfig() {
-         if (wrappingConfigBuilder == null) {
-            wrappingConfigBuilder = new WrappingConfigBuilderImpl();
-         }
-         return wrappingConfigBuilder;
-      }
-
-      @Override
-      public AnnotationsConfigBuilderImpl annotationsConfig() {
+      public AnnotationsConfig.Builder annotationsConfig() {
          if (annotationsConfigBuilder == null) {
             annotationsConfigBuilder = new AnnotationsConfigBuilderImpl();
          }
@@ -222,10 +166,10 @@ public final class ConfigurationImpl implements Configuration {
                .type(AnnotationElement.AttributeType.INT)
                .metadataCreator((annotatedDescriptor, annotation) -> annotation.getDefaultAttributeValue().getValue());
 
-         AnnotationsConfigBuilderImpl annotationsConfig = annotationsConfig();
+         AnnotationsConfigBuilderImpl annotationsConfig = (AnnotationsConfigBuilderImpl) annotationsConfig();
          Map<String, AnnotationConfigurationImpl> annotations = new HashMap<>(annotationsConfig.annotationBuilders.size());
-         for (AnnotationConfiguration.Builder annotationBuilder : annotationsConfig.annotationBuilders.values()) {
-            AnnotationConfigurationImpl annotationConfig = ((AnnotationConfigurationImpl.BuilderImpl) annotationBuilder).buildAnnotationConfiguration();
+         for (AnnotationConfigurationImpl.BuilderImpl annotationBuilder : annotationsConfig.annotationBuilders.values()) {
+            AnnotationConfigurationImpl annotationConfig = annotationBuilder.buildAnnotationConfiguration();
             annotations.put(annotationConfig.name(), annotationConfig);
          }
 
@@ -244,9 +188,9 @@ public final class ConfigurationImpl implements Configuration {
          }
 
          // TypeId is the only predefined annotation. If there are more than one then we know we have at least one user defined.
-         boolean logUndefinedAnnotations = annotationsConfig().logUndefinedAnnotations == null ? annotations.size() > 1 : annotationsConfig().logUndefinedAnnotations;
+         Boolean logUndefinedAnnotations = ((AnnotationsConfigBuilderImpl) annotationsConfig()).logUndefinedAnnotations;
+         if (logUndefinedAnnotations == null) logUndefinedAnnotations = annotations.size() > 1;
          return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites, maxNestedMessageDepth,
-               wrappingConfig().wrappedMessageTypeIdMapper,
                annotations, logUndefinedAnnotations);
       }
    }
