@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.infinispan.protostream.annotations.ProtoEnum;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
@@ -54,14 +53,11 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
    private static String getProtoName(XClass annotatedEnumClass, XClass enumClass) {
       ProtoName annotation = annotatedEnumClass.getAnnotation(ProtoName.class);
-      ProtoEnum protoEnumAnnotation = annotatedEnumClass.getAnnotation(ProtoEnum.class);
       if (annotation != null) {
-         if (protoEnumAnnotation != null) {
-            throw new ProtoSchemaBuilderException("@ProtoEnum annotation cannot be used together with @ProtoName: " + annotatedEnumClass.getName());
-         }
          return annotation.value().isEmpty() ? enumClass.getSimpleName() : annotation.value();
+      } else {
+         return enumClass.getSimpleName();
       }
-      return protoEnumAnnotation == null || protoEnumAnnotation.name().isEmpty() ? enumClass.getSimpleName() : protoEnumAnnotation.name();
    }
 
    @Override
