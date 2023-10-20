@@ -37,6 +37,7 @@ import org.infinispan.protostream.annotations.impl.types.XEnumConstant;
 import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
+import org.infinispan.protostream.impl.Log;
 
 /**
  * Implementation relying primarily on {@link javax.lang.model.type.TypeMirror}, but also capable to use reflection
@@ -46,6 +47,8 @@ import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
  * @since 4.3
  */
 public final class MirrorTypeFactory implements XTypeFactory {
+
+   private static final Log log = Log.LogFactory.getLog(MirrorTypeFactory.class);
 
    private static final XClass[] EMPTY_XCLASS_ARRAY = new XClass[0];
 
@@ -1057,7 +1060,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
                return fromTypeMirror(arg);
             }
          }
-         throw new IllegalStateException("Not a repeatable field");
+         throw log.notRepeatableField(declaringClass.getName(), executableElement.getSimpleName().toString());
       }
 
       @Override
@@ -1286,7 +1289,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
                return fromTypeMirror(arg);
             }
          }
-         throw new IllegalStateException("Not a repeatable field");
+         throw log.notRepeatableField(c.getName(), field.getSimpleName().toString());
       }
 
       @Override
