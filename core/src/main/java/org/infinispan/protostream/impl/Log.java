@@ -4,6 +4,8 @@ import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
 
+import javax.lang.model.element.Name;
+
 import org.infinispan.protostream.MalformedProtobufException;
 import org.infinispan.protostream.exception.ProtoStreamException;
 import org.jboss.logging.BasicLogger;
@@ -49,6 +51,9 @@ public interface Log extends BasicLogger {
    @Message(value = "The nested message depth appears to be larger than the configured limit of '%s'." +
          "It is possible that the entity to marshall with type '%s' can have some circular dependencies.", id = 8)
    ProtoStreamException maxNestedMessageDepth(int maxNestedMessageDepth, Class<?> entityType);
+
+   @Message(value = "Not a repeatable field: %s#%s")
+   IllegalStateException notRepeatableField(String clazz, String fieldOrMethod);
 
    class LogFactory {
       public static Log getLog(Class<?> clazz) {
