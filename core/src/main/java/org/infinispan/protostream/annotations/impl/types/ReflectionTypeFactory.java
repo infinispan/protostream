@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.infinispan.protostream.impl.Log;
+
 //todo [anistor] revisit this and improve handling of generic types based on ideas from
 // https://github.com/XDean/Java-EX/blob/297b21df13ebe25e991ec3741af21b3592e92375/src/main/java/xdean/jex/util/reflect/GenericUtil.java
 
@@ -26,6 +28,8 @@ import java.util.Optional;
  * @since 4.3
  */
 public final class ReflectionTypeFactory implements XTypeFactory {
+
+   private static final Log log = Log.LogFactory.getLog(ReflectionTypeFactory.class);
 
    private final Map<Class<?>, XClass> classCache = new HashMap<>();
 
@@ -474,7 +478,7 @@ public final class ReflectionTypeFactory implements XTypeFactory {
             }
             return fromClass(c);
          }
-         throw new IllegalStateException("Not a repeatable field");
+         throw log.notRepeatableField(declaringClass.getName(), method.getName());
       }
 
       @Override
@@ -712,7 +716,7 @@ public final class ReflectionTypeFactory implements XTypeFactory {
             }
             return fromClass(c);
          }
-         throw new IllegalStateException("Not a repeatable field");
+         throw log.notRepeatableField(declaringClass.getName(), field.getName());
       }
 
       @Override
