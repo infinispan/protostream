@@ -220,6 +220,39 @@ message Transaction {
    required bool isValid = 9;
 }
 
+message Numerics {
+
+   /**
+    * @Field(store = Store.YES)
+    */
+   optional int32 simpleByte = 1;
+
+   /**
+    * @Field(store = Store.YES)
+    */
+   optional int32 simpleShort = 2;
+
+   /**
+    * @Field(store = Store.YES)
+    */
+   optional int32 simpleInt = 3;
+
+   /**
+    * @Field(store = Store.YES)
+    */
+   optional int64 simpleLong = 4;
+
+   /**
+    * @Field(store = Store.YES)
+    */
+   optional float simpleFloat = 5;
+
+   /**
+    * @Field(store = Store.YES)
+    */
+   optional double simpleDouble = 6;
+}
+
 /**
  * An array of int.
  */
