@@ -700,6 +700,8 @@ public final class JsonUtils {
                case WRAPPED_ENUM:
                   wrappedEnum = (Integer) tagValue;
                   break;
+               case WrappedMessage.WRAPPED_BYTE:
+               case WrappedMessage.WRAPPED_SHORT:
                case WrappedMessage.WRAPPED_DOUBLE:
                case WrappedMessage.WRAPPED_FLOAT:
                case WrappedMessage.WRAPPED_INT64:

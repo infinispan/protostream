@@ -18,12 +18,14 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Function;
 
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.domain.Account;
 import org.infinispan.protostream.domain.Address;
+import org.infinispan.protostream.domain.Numerics;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
@@ -320,6 +322,21 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    @Test
+   public void testNumericPrimitives() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Numerics numerics = new Numerics(Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE);
+
+      testJsonConversion(ctx, numerics);
+
+      testJsonConversion(ctx, 1);
+      testJsonConversion(ctx, (byte) 1, false, Integer::byteValue);
+      testJsonConversion(ctx, (short) 1, false, Integer::shortValue);
+      testJsonConversion(ctx, (long) 1);
+      testJsonConversion(ctx, (float) 1);
+      testJsonConversion(ctx, (double) 1);
+   }
+
+   @Test
    public void testJsonLong() throws IOException {
       ImmutableSerializationContext ctx = createContext();
 
@@ -479,12 +496,22 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    private <T> void testJsonConversion(ImmutableSerializationContext ctx, T object, boolean prettyPrint) throws IOException {
+      testJsonConversion(ctx, object, prettyPrint, Function.identity());
+   }
+
+   private <T, C> void testJsonConversion(ImmutableSerializationContext ctx, T object, boolean prettyPrint, Function<C, T> mapper) throws IOException {
       byte[] marshalled = ProtobufUtil.toWrappedByteArray(ctx, object);
       String json = ProtobufUtil.toCanonicalJSON(ctx, marshalled, prettyPrint);
       assertValid(json);
       byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
-      assertEquals(object, ProtobufUtil.fromWrappedByteArray(ctx, bytes));
-      assertArrayEquals(marshalled, bytes);
+
+      C c = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      T t = mapper.apply(c);
+      assertEquals(object, t);
+
+      // No mapping was needed between the types.
+      // For example, we can serialize a byte but that is transformed into an int. This check would fail.
+      if (t == c) assertArrayEquals(marshalled, bytes);
    }
 
    private <T> void testJsonConversion(ImmutableSerializationContext ctx, T object) throws IOException {
