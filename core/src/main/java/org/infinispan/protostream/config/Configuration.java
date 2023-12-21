@@ -49,6 +49,8 @@ public interface Configuration {
     */
    SchemaValidation schemaValidation();
 
+   boolean wrapCollectionElements();
+
    AnnotationsConfig annotationsConfig();
 
    interface AnnotationsConfig {
@@ -89,6 +91,20 @@ public interface Configuration {
       Builder maxNestedMessageDepth(int maxNestedMessageDepth);
 
       Builder schemaValidation(SchemaValidation schemaValidation);
+
+      /**
+       * Wraps all the elements in a collection or array into a wrapped message.
+       * <p>
+       * WARNING: enabling this option will change the binary format in an incompatible way. All readers/writers must
+       * have this option enabled or disabled in order to be able to parse the messages. Use with caution.
+       * <p>
+       * This option is required to fix a bug (IPROTO-273) where collections (or arrays) of non-primitive classes are
+       * unable to be read.
+       *
+       * @param wrapCollectionElements {@code true} to enable wrap the elements, {@code false} otherwise.
+       * @return This instance.
+       */
+      Builder wrapCollectionElements(boolean wrapCollectionElements);
 
       AnnotationsConfig.Builder annotationsConfig();
 

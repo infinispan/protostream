@@ -18,6 +18,7 @@ public final class ConfigurationImpl implements Configuration {
    private final AnnotationsConfigImpl annotationsConfig;
    private final int maxNestedMessageDepth;
    private final SchemaValidation schemaValidation;
+   private final boolean wrapCollectionElements;
 
    private ConfigurationImpl(BuilderImpl builder, Map<String, AnnotationConfigurationImpl> annotations) {
       this.logOutOfSequenceReads = builder.logOutOfSequenceReads;
@@ -25,6 +26,7 @@ public final class ConfigurationImpl implements Configuration {
       this.lenient = builder.lenient;
       this.maxNestedMessageDepth = builder.maxNestedMessageDepth;
       this.schemaValidation = builder.schemaValidation;
+      this.wrapCollectionElements = builder.wrapCollectionElements;
       this.annotationsConfig = new AnnotationsConfigImpl(annotations, builder.logUndefinedAnnotations);
    }
 
@@ -46,6 +48,11 @@ public final class ConfigurationImpl implements Configuration {
    @Override
    public SchemaValidation schemaValidation() {
       return schemaValidation;
+   }
+
+   @Override
+   public boolean wrapCollectionElements() {
+      return wrapCollectionElements;
    }
 
    @Override
@@ -100,6 +107,7 @@ public final class ConfigurationImpl implements Configuration {
       private AnnotationsConfigBuilderImpl annotationsConfigBuilder = null;
       private Boolean logUndefinedAnnotations;
       private SchemaValidation schemaValidation = SchemaValidation.DEFAULT;
+      private boolean wrapCollectionElements;
 
       final class AnnotationsConfigBuilderImpl implements AnnotationsConfig.Builder {
 
@@ -162,6 +170,12 @@ public final class ConfigurationImpl implements Configuration {
       @Override
       public Builder schemaValidation(SchemaValidation schemaValidation) {
          this.schemaValidation = schemaValidation;
+         return this;
+      }
+
+      @Override
+      public Builder wrapCollectionElements(boolean wrapCollectionElements) {
+         this.wrapCollectionElements = wrapCollectionElements;
          return this;
       }
 
