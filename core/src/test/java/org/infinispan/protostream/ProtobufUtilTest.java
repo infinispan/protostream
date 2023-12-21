@@ -24,6 +24,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.domain.Account;
 import org.infinispan.protostream.domain.Address;
+import org.infinispan.protostream.domain.Item;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
@@ -222,6 +223,28 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       Account account = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
       assertEquals(createAccount(), account);
+   }
+
+   @Test
+   public void testJsonBytesWithIntArray() throws Exception {
+      SerializationContext context = createContext();
+      Item.ItemSchema.INSTANCE.registerSchema(context);
+      Item.ItemSchema.INSTANCE.registerMarshallers(context);
+
+      Item java = new Item("c7", new byte[]{7, 7, 7}, new float[]{1.1f, 1.1f, 1.1f}, new int[]{7, 7, 7}, "bla bla bla");
+      byte[] proto = ProtobufUtil.toWrappedByteArray(context, java);
+      String json = ProtobufUtil.toCanonicalJSON(context, proto);
+
+      // Covert back JSON -> Proto -> Java
+      byte[] proto2 = ProtobufUtil.fromCanonicalJSON(context, new StringReader(json));
+      Item java2 = ProtobufUtil.fromWrappedByteArray(context, proto2);
+      assertEquals(java, java2);
+
+      // Moreover, we want to parse also Java byte[] / Proto bytes fields in the JSON format `[7,7,7]`
+      String alternativeJson = "{\"_type\":\"Item\",\"code\":\"c7\",\"byteVector\":[7,7,7],\"floatVector\":[1.1,1.1,1.1],\"integerVector\":[7,7,7],\"buggy\":\"bla bla bla\"}";
+      byte[] proto3 = ProtobufUtil.fromCanonicalJSON(context, new StringReader(alternativeJson));
+      Item java3 = ProtobufUtil.fromWrappedByteArray(context, proto3);
+      assertEquals(java, java3);
    }
 
    @Test
