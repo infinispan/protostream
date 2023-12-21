@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -420,6 +421,26 @@ public final class JsonUtils {
                Descriptor d = (Descriptor) ctx.getDescriptorByName(type);
                FieldDescriptor fd = d.findFieldByName(field);
                if (!fd.isRepeated()) {
+                  if (token == JsonToken.VALUE_NUMBER_INT && Type.BYTES.equals(fd.getType())) {
+                     // We want to parse a byte[] not only as Base64 but also from the JSON form: [7,7,7]
+                     ArrayList<Byte> result = new ArrayList<>();
+                     byte value;
+                     while (token == JsonToken.VALUE_NUMBER_INT) {
+                        value = parser.getByteValue();
+                        result.add(value);
+                        token = parser.nextToken();
+                     }
+
+                     byte[] binary = new byte[result.size()];
+                     for (int i = 0; i < result.size(); i++) {
+                        binary[i] = result.get(i);
+                     }
+                     writer.writeBytes(fd.getNumber(), binary);
+
+                     if (token == JsonToken.END_ARRAY) {
+                        return;
+                     }
+                  }
                   throw new IllegalStateException("Field '" + fd.getName() + "' is not an array");
                }
                if (fd.getType() == Type.ENUM) {
