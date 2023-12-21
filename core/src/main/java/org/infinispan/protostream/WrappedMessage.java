@@ -1,11 +1,5 @@
 package org.infinispan.protostream;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Objects;
-
 import org.infinispan.protostream.containers.ElementContainerAdapter;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
@@ -16,6 +10,12 @@ import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.TagReaderImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * A wrapper for messages, enums or primitive types that encodes the type of the inner object/value and also helps keep
@@ -244,27 +244,32 @@ public final class WrappedMessage {
    }
 
    private static void writeMessage(ImmutableSerializationContext ctx, TagWriter out, Object t, boolean nulls) throws IOException {
+      if (tryWritePrimitive(out, t, nulls)) {
+         return;
+      }
+      writeCustomObject(ctx, out, t);
+   }
+
+   private static boolean tryWritePrimitive(TagWriter out, Object t, boolean nulls) throws IOException {
+      // primitives or single tag objects (Date) are written by this method.
       if (t == null) {
          if (nulls) {
             out.writeBool(WRAPPED_EMPTY, true);
+            out.flush();
          }
-         return;
+         return true;
       }
 
       if (t instanceof String) {
          out.writeString(WRAPPED_STRING, (String) t);
       } else if (t instanceof Character) {
-         out.writeInt32(WRAPPED_CHAR, ((Character) t).charValue());
+         out.writeInt32(WRAPPED_CHAR, (Character) t);
       } else if (t instanceof Byte) {
-         out.writeInt32(WRAPPED_BYTE, ((Byte) t).byteValue());
+         out.writeInt32(WRAPPED_BYTE, (Byte) t);
       } else if (t instanceof Short) {
-         out.writeInt32(WRAPPED_SHORT, ((Short) t).shortValue());
+         out.writeInt32(WRAPPED_SHORT, (Short) t);
       } else if (t instanceof Date) {
          out.writeInt64(WRAPPED_DATE_MILLIS, ((Date) t).getTime());
-      } else if (t instanceof Instant) {
-         Instant instant = (Instant) t;
-         out.writeInt64(WRAPPED_INSTANT_SECONDS, instant.getEpochSecond());
-         out.writeInt32(WRAPPED_INSTANT_NANOS, instant.getNano());
       } else if (t instanceof Long) {
          out.writeInt64(WRAPPED_INT64, (Long) t);
       } else if (t instanceof Integer) {
@@ -278,31 +283,43 @@ public final class WrappedMessage {
       } else if (t instanceof byte[]) {
          out.writeBytes(WRAPPED_BYTES, (byte[]) t);
       } else {
-         // This is either a message type or an enum. Try to lookup a marshaller.
-         BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t);
-         BaseMarshaller marshaller = marshallerDelegate.getMarshaller();
+         return false;
+      }
+      out.flush();
+      return true;
+   }
 
-         if (marshaller instanceof ElementContainerAdapter) {
-            writeContainer(ctx, out, marshallerDelegate, t);
+   private static <T> void writeCustomObject(ImmutableSerializationContext ctx, TagWriter out, T t) throws IOException {
+      if (t instanceof Instant instant) {
+         out.writeInt64(WRAPPED_INSTANT_SECONDS, instant.getEpochSecond());
+         out.writeInt32(WRAPPED_INSTANT_NANOS, instant.getNano());
+         out.flush();
+         return;
+      }
+      // This is either a message type or an enum. Try to lookup a marshaller.
+      BaseMarshallerDelegate<T> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t);
+      BaseMarshaller<T> marshaller = marshallerDelegate.getMarshaller();
+
+      if (marshaller instanceof ElementContainerAdapter) {
+         writeContainer(ctx, out, marshallerDelegate, t);
+      } else {
+         // Write the type discriminator, either the fully qualified name or a numeric type id.
+         String typeName = marshaller.getTypeName();
+         int typeId = mapTypeIdOut(typeName, ctx);
+         if (typeId < 0) {
+            out.writeString(WRAPPED_TYPE_NAME, typeName);
          } else {
-            // Write the type discriminator, either the fully qualified name or a numeric type id.
-            String typeName = marshaller.getTypeName();
-            int typeId = mapTypeIdOut(typeName, ctx);
-            if (typeId < 0) {
-               out.writeString(WRAPPED_TYPE_NAME, typeName);
-            } else {
-               out.writeUInt32(WRAPPED_TYPE_ID, typeId);
-            }
+            out.writeUInt32(WRAPPED_TYPE_ID, typeId);
+         }
 
-            if (t.getClass().isEnum()) {
-               ((EnumMarshallerDelegate) marshallerDelegate).encode(WRAPPED_ENUM, (Enum) t, out);
-            } else {
-               ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
-               TagWriterImpl nestedCtx = TagWriterImpl.newInstanceNoBuffer(ctx, buffer);
-               marshallerDelegate.marshall(nestedCtx, null, t);
-               nestedCtx.flush();
-               out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
-            }
+         if (t.getClass().isEnum()) {
+            ((EnumMarshallerDelegate) marshallerDelegate).encode(WRAPPED_ENUM, (Enum<?>) t, out);
+         } else {
+            ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
+            TagWriterImpl nestedCtx = TagWriterImpl.newInstanceNoBuffer(ctx, buffer);
+            marshallerDelegate.marshall(nestedCtx, null, t);
+            nestedCtx.flush();
+            out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
          }
       }
       out.flush();
@@ -328,11 +345,19 @@ public final class WrappedMessage {
       nestedCtx.flush();
       out.writeBytes(WRAPPED_CONTAINER_MESSAGE, buffer.getByteBuffer());
 
+      if (ctx.getConfiguration().wrapCollectionElements()) {
+         writeContainerWrappingElements(containerMarshaller, containerSize, container, ctx, out, buffer);
+      } else {
+         writeContainerWithoutWrappingElements(containerMarshaller, containerSize, container, ctx, out);
+      }
+   }
+
+   private static void writeContainerWrappingElements(BaseMarshaller containerMarshaller, int containerSize, Object container,
+                                                      ImmutableSerializationContext ctx, TagWriter out, ByteArrayOutputStreamEx buffer) throws IOException {
       if (containerMarshaller instanceof IterableElementContainerAdapter) {
-         Iterator elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);
+         Iterator<?> elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);
          for (int i = 0; i < containerSize; i++) {
-            Object e = elements.next();
-            writeMessage(ctx, out, e, true);
+            writeContainerElementWrapped(ctx, out, buffer, elements.next());
          }
          if (elements.hasNext()) {
             throw new IllegalStateException("Container number of elements mismatch");
@@ -340,12 +365,42 @@ public final class WrappedMessage {
       } else if (containerMarshaller instanceof IndexedElementContainerAdapter) {
          IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
          for (int i = 0; i < containerSize; i++) {
-            Object e = adapter.getElement(container, i);
-            writeMessage(ctx, out, e, true);
+            writeContainerElementWrapped(ctx, out, buffer, adapter.getElement(container, i));
          }
       } else {
          throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
       }
+   }
+
+   private static void writeContainerWithoutWrappingElements(BaseMarshaller containerMarshaller, int containerSize, Object container,
+                                                             ImmutableSerializationContext ctx, TagWriter out) throws IOException {
+      if (containerMarshaller instanceof IterableElementContainerAdapter) {
+         Iterator elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);
+         for (int i = 0; i < containerSize; i++) {
+            writeMessage(ctx, out, elements.next(), true);
+         }
+         if (elements.hasNext()) {
+            throw new IllegalStateException("Container number of elements mismatch");
+         }
+      } else if (containerMarshaller instanceof IndexedElementContainerAdapter) {
+         IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
+         for (int i = 0; i < containerSize; i++) {
+            writeMessage(ctx, out, adapter.getElement(container, i), true);
+         }
+      } else {
+         throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
+      }
+   }
+
+   private static void writeContainerElementWrapped(ImmutableSerializationContext ctx, TagWriter out, ByteArrayOutputStreamEx buffer, Object e) throws IOException {
+      if (tryWritePrimitive(out, e, true)) {
+         return;
+      }
+      buffer.reset();
+      TagWriterImpl elementWriter = TagWriterImpl.newInstanceNoBuffer(ctx, buffer);
+      writeMessage(ctx, elementWriter, e, true);
+      elementWriter.flush();
+      out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
    }
 
    static <T> T read(ImmutableSerializationContext ctx, TagReader in) throws IOException {
@@ -353,17 +408,119 @@ public final class WrappedMessage {
    }
 
    private static <T> T readMessage(ImmutableSerializationContext ctx, TagReader in, boolean nulls) throws IOException {
+      ValueOrTag<T> primitiveValue = tryReadPrimitive(in, nulls);
+      if (primitiveValue.hasValue()) {
+         return primitiveValue.getValue();
+      }
+
+      assert primitiveValue.hasTag();
+      return readCustomObject(primitiveValue.getTag(), ctx, in);
+   }
+
+   private static <T> ValueOrTag<T> tryReadPrimitive(TagReader in, boolean nulls) throws IOException {
+      var tag = in.readTag();
+      Object value = null;
+      switch (tag) {
+         case WRAPPED_EMPTY << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            if (!nulls) {
+               throw new IllegalStateException("Encountered a null message but nulls are not accepted");
+            }
+            in.readBool(); // We ignore the actual boolean value! Will be returning null anyway.
+            break;
+         }
+         case WRAPPED_STRING << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
+            value = in.readString();
+            break;
+         }
+         case WRAPPED_CHAR << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = (char) in.readInt32();
+            break;
+         }
+         case WRAPPED_SHORT << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = (short) in.readInt32();
+            break;
+         }
+         case WRAPPED_BYTE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = (byte) in.readInt32();
+            break;
+         }
+         case WRAPPED_DATE_MILLIS << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = new Date(in.readInt64());
+            break;
+         }
+         case WRAPPED_BYTES << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
+            value = in.readByteArray();
+            break;
+         }
+         case WRAPPED_BOOL << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = in.readBool();
+            break;
+         }
+         case WRAPPED_DOUBLE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED64: {
+            value = in.readDouble();
+            break;
+         }
+         case WRAPPED_FLOAT << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED32: {
+            value = in.readFloat();
+            break;
+         }
+         case WRAPPED_FIXED32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED32: {
+            value = in.readFixed32();
+            break;
+         }
+         case WRAPPED_SFIXED32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED32: {
+            value = in.readSFixed32();
+            break;
+         }
+         case WRAPPED_FIXED64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED64: {
+            value = in.readFixed64();
+            break;
+         }
+         case WRAPPED_SFIXED64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED64: {
+            value = in.readSFixed64();
+            break;
+         }
+         case WRAPPED_INT64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = in.readInt64();
+            break;
+         }
+         case WRAPPED_UINT64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = in.readUInt64();
+            break;
+         }
+         case WRAPPED_SINT64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = in.readSInt64();
+            break;
+         }
+         case WRAPPED_INT32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = in.readInt32();
+            break;
+         }
+         case WRAPPED_UINT32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = in.readUInt32();
+            break;
+         }
+         case WRAPPED_SINT32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
+            value = in.readSInt32();
+            break;
+         }
+         case 0:
+            return new Value<>(null);
+         default:
+            return new Tag<>(tag);
+      }
+      return new Value<>((T) value);
+   }
+
+   private static <T> T readCustomObject(int tag, ImmutableSerializationContext ctx, TagReader in) throws IOException {
       String typeName = null;
       Integer typeId = null;
       int enumValue = -1;
       byte[] messageBytes = null;
       Object value = null;
       int fieldCount = 0;
-      int expectedFieldCount = 1;
-
-      int tag;
-      out:
-      while ((tag = in.readTag()) != 0) {
+      int expectedFieldCount;
+      do {
          fieldCount++;
          switch (tag) {
             case WRAPPED_CONTAINER_SIZE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT:
@@ -372,15 +529,7 @@ public final class WrappedMessage {
             case WRAPPED_CONTAINER_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
                expectedFieldCount = 1;
                value = readContainer(ctx, in, tag);
-               break out;
-            }
-            case WRAPPED_EMPTY << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               if (!nulls) {
-                  throw new IllegalStateException("Encountered a null message but nulls are not accepted");
-               }
-               expectedFieldCount = 1;
-               in.readBool(); // We ignore the actual boolean value! Will be returning null anyway.
-               break out;
+               break;
             }
             case WRAPPED_TYPE_NAME << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
                expectedFieldCount = 2;
@@ -402,31 +551,6 @@ public final class WrappedMessage {
                messageBytes = in.readByteArray();
                break;
             }
-            case WRAPPED_STRING << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
-               expectedFieldCount = 1;
-               value = in.readString();
-               break out;
-            }
-            case WRAPPED_CHAR << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = (char) in.readInt32();
-               break out;
-            }
-            case WRAPPED_SHORT << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = (short) in.readInt32();
-               break out;
-            }
-            case WRAPPED_BYTE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = (byte) in.readInt32();
-               break out;
-            }
-            case WRAPPED_DATE_MILLIS << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = new Date(in.readInt64());
-               break out;
-            }
             case WRAPPED_INSTANT_SECONDS << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
                expectedFieldCount = 2;
                long seconds = in.readInt64();
@@ -439,81 +563,11 @@ public final class WrappedMessage {
                value = value == null ? Instant.ofEpochSecond(0, nanos) : Instant.ofEpochSecond(((Instant) value).getEpochSecond(), nanos);
                break;
             }
-            case WRAPPED_BYTES << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
-               expectedFieldCount = 1;
-               value = in.readByteArray();
-               break out;
-            }
-            case WRAPPED_BOOL << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = in.readBool();
-               break out;
-            }
-            case WRAPPED_DOUBLE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED64: {
-               expectedFieldCount = 1;
-               value = in.readDouble();
-               break out;
-            }
-            case WRAPPED_FLOAT << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED32: {
-               expectedFieldCount = 1;
-               value = in.readFloat();
-               break out;
-            }
-            case WRAPPED_FIXED32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED32: {
-               expectedFieldCount = 1;
-               value = in.readFixed32();
-               break out;
-            }
-            case WRAPPED_SFIXED32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED32: {
-               expectedFieldCount = 1;
-               value = in.readSFixed32();
-               break out;
-            }
-            case WRAPPED_FIXED64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED64: {
-               expectedFieldCount = 1;
-               value = in.readFixed64();
-               break out;
-            }
-            case WRAPPED_SFIXED64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_FIXED64: {
-               expectedFieldCount = 1;
-               value = in.readSFixed64();
-               break out;
-            }
-            case WRAPPED_INT64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = in.readInt64();
-               break out;
-            }
-            case WRAPPED_UINT64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = in.readUInt64();
-               break out;
-            }
-            case WRAPPED_SINT64 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = in.readSInt64();
-               break out;
-            }
-            case WRAPPED_INT32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = in.readInt32();
-               break out;
-            }
-            case WRAPPED_UINT32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = in.readUInt32();
-               break out;
-            }
-            case WRAPPED_SINT32 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
-               expectedFieldCount = 1;
-               value = in.readSInt32();
-               break out;
-            }
             default:
                throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : "
-                     + WireType.getTagFieldNumber(tag) + ", Wire type : " + WireType.getTagWireType(tag) + ")");
+                       + WireType.getTagFieldNumber(tag) + ", Wire type : " + WireType.getTagWireType(tag) + ")");
          }
-      }
+      } while ((tag = in.readTag()) != 0);
 
       if (value == null && typeName == null && typeId == null && messageBytes == null) {
          return null;
@@ -533,14 +587,14 @@ public final class WrappedMessage {
       if (typeId != null) {
          typeName = ctx.getDescriptorByTypeId(typeId).getFullName();
       }
-      BaseMarshallerDelegate marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(typeName);
+      BaseMarshallerDelegate<T> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(typeName);
       if (messageBytes != null) {
          // it's a Message type
          TagReaderImpl nestedInput = TagReaderImpl.newInstance(ctx, messageBytes);
-         return (T) marshallerDelegate.unmarshall(nestedInput, null);
+         return marshallerDelegate.unmarshall(nestedInput, null);
       } else {
          // it's an Enum
-         EnumMarshaller marshaller = (EnumMarshaller) marshallerDelegate.getMarshaller();
+         EnumMarshaller<?> marshaller = (EnumMarshaller<?>) marshallerDelegate.getMarshaller();
          T e = (T) marshaller.decode(enumValue);
          if (e == null) {
             // Unknown enum value cause by schema evolution. We cannot handle data loss here so we throw!
@@ -609,23 +663,58 @@ public final class WrappedMessage {
          throw new IllegalStateException("The unmarshalled container must not be null");
       }
 
-      if (containerMarshaller instanceof IterableElementContainerAdapter) {
-         IterableElementContainerAdapter adapter = (IterableElementContainerAdapter) containerMarshaller;
-         for (int i = 0; i < containerSize; i++) {
-            Object e = readMessage(ctx, in, true);
-            adapter.appendElement(container, e);
+      if (ctx.getConfiguration().wrapCollectionElements()) {
+         readContainerWithWrappedElements(containerMarshaller, containerSize, container, ctx, in);
+      } else {
+         readContainerWithoutWrappedElements(containerMarshaller, containerSize, container, ctx, in);
+      }
+
+      return container;
+   }
+
+   private static void readContainerWithWrappedElements(BaseMarshaller<?> containerMarshaller, int containerSize,
+                                                        Object container, ImmutableSerializationContext ctx, TagReader in) throws IOException {
+      if (containerMarshaller instanceof IterableElementContainerAdapter adapter) {
+          for (int i = 0; i < containerSize; i++) {
+            adapter.appendElement(container, readContainerElementWrapped(ctx, in));
          }
-      } else if (containerMarshaller instanceof IndexedElementContainerAdapter) {
-         IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
-         for (int i = 0; i < containerSize; i++) {
-            Object e = readMessage(ctx, in, true);
-            adapter.setElement(container, i, e);
+      } else if (containerMarshaller instanceof IndexedElementContainerAdapter adapter) {
+          for (int i = 0; i < containerSize; i++) {
+            adapter.setElement(container, i, readContainerElementWrapped(ctx, in));
          }
       } else {
          throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
       }
+   }
 
-      return container;
+   private static void readContainerWithoutWrappedElements(BaseMarshaller<?> containerMarshaller, int containerSize,
+                                                        Object container, ImmutableSerializationContext ctx, TagReader in) throws IOException {
+      if (containerMarshaller instanceof IterableElementContainerAdapter adapter) {
+          for (int i = 0; i < containerSize; i++) {
+            adapter.appendElement(container, readMessage(ctx, in, true));
+         }
+      } else if (containerMarshaller instanceof IndexedElementContainerAdapter adapter) {
+          for (int i = 0; i < containerSize; i++) {
+            adapter.setElement(container, i, readMessage(ctx, in, true));
+         }
+      } else {
+         throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
+      }
+   }
+
+   private static <E> E readContainerElementWrapped(ImmutableSerializationContext ctx, TagReader in) throws IOException {
+      ValueOrTag<E> primitiveValue = tryReadPrimitive(in, true);
+      if (primitiveValue.hasValue()) {
+         return primitiveValue.getValue();
+      }
+      assert primitiveValue.hasTag();
+      var tag = primitiveValue.getTag();
+      if (tag != (WRAPPED_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED)) {
+         throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : "
+                 + WireType.getTagFieldNumber(tag) + ", Wire type : " + WireType.getTagWireType(tag) + ")");
+      }
+      var elementReader = TagReaderImpl.newInstance(ctx, in.readByteArray());
+      return readMessage(ctx, elementReader, true);
    }
 
    /**
@@ -691,4 +780,47 @@ public final class WrappedMessage {
          writeMessage(ctx.getSerializationContext(), ctx.getWriter(), wrappedMessage.value, false);
       }
    };
+
+   private interface ValueOrTag<T> {
+      default boolean hasValue() {
+         return false;
+      }
+
+      default boolean hasTag() {
+         return false;
+      }
+
+      default T getValue() {
+         throw new UnsupportedOperationException();
+      }
+
+      default int getTag() {
+         throw new UnsupportedOperationException();
+      }
+   }
+
+   private record Value<T>(T value) implements ValueOrTag<T> {
+
+      @Override
+      public T getValue() {
+         return value;
+      }
+
+      @Override
+      public boolean hasValue() {
+         return true;
+      }
+   }
+
+   private record Tag<T>(int tag) implements ValueOrTag<T> {
+      @Override
+      public boolean hasTag() {
+         return true;
+      }
+
+      @Override
+      public int getTag() {
+         return tag;
+      }
+   }
 }
