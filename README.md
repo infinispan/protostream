@@ -55,9 +55,9 @@ The following `pom.xml` snippet shows how to do it with Maven:
 Requirements
 ------------
 
-Target runtime platform is Java 11.
+Target runtime platform is Java 17.
 
-Requires Java 11 or newer to build.
+Requires Java 17 or newer to build.
 
 Maven 3.6.0 or newer.
 
