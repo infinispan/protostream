@@ -28,11 +28,12 @@ public final class ConfigurationImpl implements Configuration {
    private ConfigurationImpl(boolean logOutOfSequenceReads, boolean logOutOfSequenceWrites,
                              int maxNestedMessageDepth,
                              WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper,
-                             Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
+                             Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations,
+                             boolean wrapCollectionElements) {
       this.logOutOfSequenceReads = logOutOfSequenceReads;
       this.logOutOfSequenceWrites = logOutOfSequenceWrites;
       this.maxNestedMessageDepth = maxNestedMessageDepth;
-      this.wrappingConfig = new WrappingConfigImpl(wrappedMessageTypeIdMapper);
+      this.wrappingConfig = new WrappingConfigImpl(wrappedMessageTypeIdMapper, wrapCollectionElements);
       this.annotationsConfig = new AnnotationsConfigImpl(annotations, logUndefinedAnnotations);
    }
 
@@ -74,9 +75,11 @@ public final class ConfigurationImpl implements Configuration {
    private static final class WrappingConfigImpl implements WrappingConfig {
 
       private final WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper;
+      private final boolean wrapCollectionElements;
 
-      private WrappingConfigImpl(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper) {
+      private WrappingConfigImpl(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper, boolean wrapCollectionElements) {
          this.wrappedMessageTypeIdMapper = wrappedMessageTypeIdMapper;
+          this.wrapCollectionElements = wrapCollectionElements;
       }
 
       @Override
@@ -85,8 +88,16 @@ public final class ConfigurationImpl implements Configuration {
       }
 
       @Override
+      public boolean wrapCollectionElements() {
+         return wrapCollectionElements;
+      }
+
+      @Override
       public String toString() {
-         return "WrappingConfigImpl{wrappedMessageTypeIdMapper=" + wrappedMessageTypeIdMapper + '}';
+         return "WrappingConfigImpl{" +
+                 "wrappedMessageTypeIdMapper=" + wrappedMessageTypeIdMapper +
+                 ", wrapCollectionElements=" + wrapCollectionElements +
+                 '}';
       }
    }
 
@@ -132,10 +143,17 @@ public final class ConfigurationImpl implements Configuration {
       final class WrappingConfigBuilderImpl implements WrappingConfig.Builder {
 
          private WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper;
+         private boolean wrapCollectionElements;
 
          @Override
          public WrappingConfig.Builder wrappedMessageTypeIdMapper(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper) {
             this.wrappedMessageTypeIdMapper = wrappedMessageTypeIdMapper;
+            return this;
+         }
+
+         @Override
+         public WrappingConfig.Builder wrapCollectionElements(boolean wrapCollectionElements) {
+            this.wrapCollectionElements = wrapCollectionElements;
             return this;
          }
 
@@ -247,7 +265,7 @@ public final class ConfigurationImpl implements Configuration {
          boolean logUndefinedAnnotations = annotationsConfig().logUndefinedAnnotations == null ? annotations.size() > 1 : annotationsConfig().logUndefinedAnnotations;
          return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites, maxNestedMessageDepth,
                wrappingConfig().wrappedMessageTypeIdMapper,
-               annotations, logUndefinedAnnotations);
+               annotations, logUndefinedAnnotations, wrappingConfig().wrapCollectionElements);
       }
    }
 }

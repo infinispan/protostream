@@ -1,10 +1,10 @@
 package org.infinispan.protostream.config;
 
-import java.util.Map;
-
 import org.infinispan.protostream.WrappedMessageTypeIdMapper;
 import org.infinispan.protostream.config.impl.ConfigurationImpl;
 import org.infinispan.protostream.descriptors.AnnotationElement;
+
+import java.util.Map;
 
 /**
  * Configuration interface for the ProtoStream library. This object is not mutable once built. Use the {@link Builder}
@@ -50,9 +50,25 @@ public interface Configuration {
 
       WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper();
 
+      boolean wrapCollectionElements();
+
       interface Builder {
 
          Builder wrappedMessageTypeIdMapper(WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper);
+
+         /**
+          * Wraps all the elements in a collection or array into a wrapped message.
+          * <p>
+          * WARNING: enabling this option will change the binary format in an incompatible way. All readers/writers must
+          * have this option enabled or disabled in order to be able to parse the messages. Use with caution.
+          * <p>
+          * This option is required to fix a bug (IPROTO-273) where collections (or arrays) of non-primitive classes are
+          * unable to be read.
+          *
+          * @param wrapCollectionElements {@code true} to enable wrap the elements, {@code false} otherwise.
+          * @return This instance.
+          */
+         Builder wrapCollectionElements(boolean wrapCollectionElements);
 
          Configuration build();
       }

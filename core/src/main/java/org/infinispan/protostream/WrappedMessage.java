@@ -1,10 +1,5 @@
 package org.infinispan.protostream;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.Date;
-import java.util.Iterator;
-
 import org.infinispan.protostream.containers.ElementContainerAdapter;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
@@ -15,6 +10,11 @@ import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.TagReaderImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Iterator;
 
 /**
  * A wrapper for messages, enums or primitive types that encodes the type of the inner object/value and also helps keep
@@ -327,11 +327,19 @@ public final class WrappedMessage {
       nestedCtx.flush();
       out.writeBytes(WRAPPED_CONTAINER_MESSAGE, buffer.getByteBuffer());
 
+      if (ctx.getConfiguration().wrappingConfig().wrapCollectionElements()) {
+         writeContainerWrappingElements(containerMarshaller, containerSize, container, ctx, out, buffer);
+      } else {
+         writeContainerWithoutWrappingElements(containerMarshaller, containerSize, container, ctx, out);
+      }
+   }
+
+   private static void writeContainerWrappingElements(BaseMarshaller containerMarshaller, int containerSize, Object container,
+                                                      ImmutableSerializationContext ctx, TagWriter out, ByteArrayOutputStreamEx buffer) throws IOException {
       if (containerMarshaller instanceof IterableElementContainerAdapter) {
-         Iterator elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);
+         Iterator<?> elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);
          for (int i = 0; i < containerSize; i++) {
-            Object e = elements.next();
-            writeMessage(ctx, out, e, true);
+            writeWrappedElement(ctx, out, buffer, elements.next());
          }
          if (elements.hasNext()) {
             throw new IllegalStateException("Container number of elements mismatch");
@@ -339,12 +347,39 @@ public final class WrappedMessage {
       } else if (containerMarshaller instanceof IndexedElementContainerAdapter) {
          IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
          for (int i = 0; i < containerSize; i++) {
-            Object e = adapter.getElement(container, i);
-            writeMessage(ctx, out, e, true);
+            writeWrappedElement(ctx, out, buffer, adapter.getElement(container, i));
          }
       } else {
          throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
       }
+   }
+
+   private static void writeContainerWithoutWrappingElements(BaseMarshaller containerMarshaller, int containerSize, Object container,
+                                                             ImmutableSerializationContext ctx, TagWriter out) throws IOException {
+      if (containerMarshaller instanceof IterableElementContainerAdapter) {
+         Iterator elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);
+         for (int i = 0; i < containerSize; i++) {
+            writeMessage(ctx, out, elements.next(), true);
+         }
+         if (elements.hasNext()) {
+            throw new IllegalStateException("Container number of elements mismatch");
+         }
+      } else if (containerMarshaller instanceof IndexedElementContainerAdapter) {
+         IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
+         for (int i = 0; i < containerSize; i++) {
+            writeMessage(ctx, out, adapter.getElement(container, i), true);
+         }
+      } else {
+         throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
+      }
+   }
+
+   private static void writeWrappedElement(ImmutableSerializationContext ctx, TagWriter out, ByteArrayOutputStreamEx buffer, Object e) throws IOException {
+      buffer.reset();
+      TagWriterImpl elementWriter = TagWriterImpl.newInstanceNoBuffer(ctx, buffer);
+      writeMessage(ctx, elementWriter, e, true);
+      elementWriter.flush();
+      out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
    }
 
    static <T> T read(ImmutableSerializationContext ctx, TagReader in) throws IOException {
@@ -610,23 +645,58 @@ public final class WrappedMessage {
       containerMessage = null;
       nestedInput = null;
 
+      if (ctx.getConfiguration().wrappingConfig().wrapCollectionElements()) {
+         readContainerWithWrappedElements(containerMarshaller, containerSize, container, ctx, in);
+      } else {
+         readContainerWithoutWrappedElements(containerMarshaller, containerSize, container, ctx, in);
+      }
+
+      return container;
+   }
+
+   private static void readContainerWithWrappedElements(BaseMarshaller<?> containerMarshaller, int containerSize,
+                                                        Object container, ImmutableSerializationContext ctx, TagReader in) throws IOException {
       if (containerMarshaller instanceof IterableElementContainerAdapter) {
          IterableElementContainerAdapter adapter = (IterableElementContainerAdapter) containerMarshaller;
          for (int i = 0; i < containerSize; i++) {
-            Object e = readMessage(ctx, in, true);
-            adapter.appendElement(container, e);
+            adapter.appendElement(container, readWrappedElement(ctx, in));
          }
       } else if (containerMarshaller instanceof IndexedElementContainerAdapter) {
          IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
          for (int i = 0; i < containerSize; i++) {
-            Object e = readMessage(ctx, in, true);
-            adapter.setElement(container, i, e);
+            adapter.setElement(container, i, readWrappedElement(ctx, in));
          }
       } else {
          throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
       }
+   }
 
-      return container;
+   private static void readContainerWithoutWrappedElements(BaseMarshaller<?> containerMarshaller, int containerSize,
+                                                        Object container, ImmutableSerializationContext ctx, TagReader in) throws IOException {
+      if (containerMarshaller instanceof IterableElementContainerAdapter) {
+         IterableElementContainerAdapter adapter = (IterableElementContainerAdapter) containerMarshaller;
+         for (int i = 0; i < containerSize; i++) {
+            adapter.appendElement(container, readMessage(ctx, in, true));
+         }
+      } else if (containerMarshaller instanceof IndexedElementContainerAdapter) {
+         IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
+         for (int i = 0; i < containerSize; i++) {
+            adapter.setElement(container, i, readMessage(ctx, in, true));
+         }
+      } else {
+         throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
+      }
+   }
+
+
+   private static Object readWrappedElement(ImmutableSerializationContext ctx, TagReader in) throws IOException {
+      int tag;
+      if ((tag = in.readTag()) != (WRAPPED_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED)) {
+         throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : "
+                 + WireType.getTagFieldNumber(tag) + ", Wire type : " + WireType.getTagWireType(tag) + ")");
+      }
+      var elementReader = TagReaderImpl.newInstance(ctx, in.readByteArray());
+      return readMessage(ctx, elementReader, true);
    }
 
    /**
