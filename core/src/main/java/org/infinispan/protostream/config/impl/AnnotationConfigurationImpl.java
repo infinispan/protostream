@@ -3,6 +3,7 @@ package org.infinispan.protostream.config.impl;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import org.infinispan.protostream.AnnotationMetadataCreator;
@@ -157,7 +158,7 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
 
          AnnotationConfigurationImpl.BuilderImpl containingAnnotationBuilder = parentBuilder.annotationBuilders.get(containingAnnotationName);
          if (containingAnnotationBuilder != null) {
-            if (!Arrays.asList(containingAnnotationBuilder.target).containsAll(Arrays.asList(target))) {
+            if (!new HashSet<>(Arrays.asList(containingAnnotationBuilder.target)).containsAll(Arrays.asList(target))) {
                throw new IllegalArgumentException("The containing annotation '" + containingAnnotationName
                      + "' has a target that does not include the target of the repeatable annotation '" + name + "'");
             }

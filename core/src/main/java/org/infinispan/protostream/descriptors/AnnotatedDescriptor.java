@@ -1,7 +1,5 @@
 package org.infinispan.protostream.descriptors;
 
-import java.util.Map;
-
 import org.infinispan.protostream.AnnotationParserException;
 
 /**
@@ -40,17 +38,6 @@ public interface AnnotatedDescriptor {
     * @return the documentation text or {@code null} if not present
     */
    String getDocumentation();
-
-   /**
-    * Get the documentation annotations in the form of a map of abstract syntax trees of {@link AnnotationElement} nodes.
-    * Only the configured annotations are returned. The unconfigured ones are discarded immediately after parsing.
-    * <p>
-    * The parsing of annotations is performed lazily on first invocation.
-    *
-    * @return the map of annotations
-    * @throws AnnotationParserException if parsing of annotations fails
-    */
-   Map<String, AnnotationElement.Annotation> getAnnotations() throws AnnotationParserException;
 
    /**
     * Get the 'processed' annotation object created by the registered {@link org.infinispan.protostream.AnnotationMetadataCreator}

@@ -1,8 +1,8 @@
 package org.infinispan.protostream.impl;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,15 +34,10 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
    protected final String documentation;
 
    /**
-    * The annotations found in the documentation.
-    */
-   protected Map<String, AnnotationElement.Annotation> annotations = null;
-
-   /**
     * The annotation metadata objects created by the {@link org.infinispan.protostream.AnnotationMetadataCreator} based
     * on the annotations found in the documentation text.
     */
-   protected Map<String, Object> processedAnnotations = null;
+   protected Map<String, Object> processedAnnotations;
 
    protected AnnotatedDescriptorImpl(String name, String fullName, String documentation) {
       if (name.indexOf('.') != -1) {
@@ -77,7 +72,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
     */
    private void processAnnotations() throws AnnotationParserException {
       // we are lazily processing the annotations, if there is a documentation text attached to this element
-      if (annotations == null) {
+      if (processedAnnotations == null) {
          if (documentation != null) {
             AnnotationParser parser = new AnnotationParser(documentation, true);
             List<AnnotationElement.Annotation> parsedAnnotations = parser.parse();
@@ -101,7 +96,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                      if (annotationConfig.repeatable() != null) {
                         AnnotationElement.Annotation container = _containers.get(annotation.getName());
                         if (container == null) {
-                           List<AnnotationElement.Value> values = new LinkedList<>();
+                           List<AnnotationElement.Value> values = new ArrayList<>();
                            values.add(_annotations.remove(annotation.getName()));
                            values.add(annotation);
                            AnnotationElement.Attribute value = new AnnotationElement.Attribute(annotation.position, AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE, new AnnotationElement.Array(annotation.position, values));
@@ -123,12 +118,9 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                }
             }
 
-            // annotations are now completely parsed and validated
-            annotations = _annotations.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(_annotations);
-
-            // create metadata based on the annotations
+            // annotations are now completely parsed and validated: create metadata based on the annotations
             processedAnnotations = new LinkedHashMap<>();
-            for (AnnotationElement.Annotation annotation : annotations.values()) {
+            for (AnnotationElement.Annotation annotation : _annotations.values()) {
                AnnotationConfiguration annotationConfig = getAnnotationConfig(annotation);
                AnnotationMetadataCreator<Object, AnnotatedDescriptor> creator = (AnnotationMetadataCreator<Object, AnnotatedDescriptor>) annotationConfig.metadataCreator();
                if (creator != null) {
@@ -143,7 +135,6 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                }
             }
          } else {
-            annotations = Collections.emptyMap();
             processedAnnotations = Collections.emptyMap();
          }
       }
@@ -297,12 +288,6 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
     * @throws DescriptorParserException is the annotation target is not suitable for this descriptor
     */
    protected abstract AnnotationConfiguration getAnnotationConfig(AnnotationElement.Annotation annotation) throws DescriptorParserException;
-
-   @Override
-   public Map<String, AnnotationElement.Annotation> getAnnotations() throws AnnotationParserException {
-      processAnnotations();
-      return annotations;
-   }
 
    @Override
    public <T> T getProcessedAnnotation(String annotationName) throws AnnotationParserException {

@@ -2,21 +2,23 @@ package org.infinispan.protostream.impl.parser;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
@@ -31,9 +33,11 @@ import org.infinispan.protostream.descriptors.Type;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.openjdk.jol.info.GraphLayout;
 
 public class DescriptorsTest {
 
+   public static final AnnotationMetadataCreator<Object, AnnotatedDescriptor> DEFAULT_CREATOR = (descriptor, annotation) -> annotation.getDefaultAttributeValue().getValue();
    private final Configuration config = Configuration.builder().build();
 
    @org.junit.Rule
@@ -709,11 +713,11 @@ public class DescriptorsTest {
             .annotation("Foo", AnnotationElement.AnnotationTarget.MESSAGE)
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
             .type(AnnotationElement.AttributeType.IDENTIFIER)
-            .metadataCreator((descriptor, annotation) -> annotation.getDefaultAttributeValue().getValue())
+            .metadataCreator(DEFAULT_CREATOR)
             .annotation("Bar", AnnotationElement.AnnotationTarget.FIELD)
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
             .type(AnnotationElement.AttributeType.IDENTIFIER)
-            .metadataCreator((fieldDescriptor, annotation) -> annotation.getDefaultAttributeValue().getValue())
+            .metadataCreator(DEFAULT_CREATOR)
             .build();
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
@@ -728,12 +732,7 @@ public class DescriptorsTest {
       assertEquals(1, typeX.getFields().size());
       FieldDescriptor field1 = typeX.getFields().get(0);
       assertEquals("@Foo(fooValue) \n   some more doc text", typeX.getDocumentation());
-      Map<String, AnnotationElement.Annotation> typeAnnotations = typeX.getAnnotations();
-      assertEquals("fooValue", typeAnnotations.get("Foo").getDefaultAttributeValue().getValue());
       assertEquals("fooValue", typeX.getProcessedAnnotation("Foo"));
-      assertEquals("@Bar(barValue)", field1.getDocumentation());
-      Map<String, AnnotationElement.Annotation> fieldAnnotations = field1.getAnnotations();
-      assertEquals("barValue", fieldAnnotations.get("Bar").getDefaultAttributeValue().getValue());
       assertEquals("barValue", field1.getProcessedAnnotation("Bar"));
    }
 
@@ -744,7 +743,7 @@ public class DescriptorsTest {
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
-            .metadataCreator((descriptor, annotation) -> annotation.getDefaultAttributeValue().getValue())
+            .metadataCreator(DEFAULT_CREATOR)
             .build();
 
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromResources("sample_bank_account/bank.proto");
@@ -803,7 +802,7 @@ public class DescriptorsTest {
       Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
 
       //todo [anistor] this is waaay too lazy
-      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getProcessedAnnotation("");
    }
 
    @Test
@@ -811,6 +810,7 @@ public class DescriptorsTest {
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .metadataCreator(DEFAULT_CREATOR)
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .build();
@@ -824,12 +824,11 @@ public class DescriptorsTest {
       Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
 
       //todo [anistor] The processing of annotations is waaay too lazy
-      AnnotationElement.Annotation someAnnotation = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations().get("SomeAnnotation");
+      FieldDescriptor fieldDescriptor = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0);
+      AnnotationElement.Annotation someAnnotation = fieldDescriptor.getProcessedAnnotation("SomeAnnotation");
       assertNull(someAnnotation);
 
-      AnnotationElement.Annotation fieldAnnotation = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations().get("Field");
-      assertNotNull(fieldAnnotation);
-      assertEquals("Field", fieldAnnotation.getName());
+      assertNotNull(fieldDescriptor.getProcessedAnnotation("Field"));
    }
 
    @Test
@@ -837,6 +836,7 @@ public class DescriptorsTest {
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .metadataCreator(DEFAULT_CREATOR)
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .build();
@@ -850,14 +850,10 @@ public class DescriptorsTest {
       Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
 
       //todo [anistor] The processing of annotations is waaay too lazy
-      AnnotationElement.Annotation someAnnotation = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations().get("SomeAnnotation");
-
+      FieldDescriptor fieldDescriptor = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0);
       // 'SomeAnnotation' annotation is not defined, but we accept it silently
-      assertNull(someAnnotation);
-
-      AnnotationElement.Annotation fieldAnnotation = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations().get("Field");
-      assertNotNull(fieldAnnotation);
-      assertEquals("Field", fieldAnnotation.getName());
+      assertNull(fieldDescriptor.getProcessedAnnotation("SomeAnnotation"));
+      assertNotNull(fieldDescriptor.getProcessedAnnotation("Field"));
    }
 
    @Test
@@ -880,17 +876,22 @@ public class DescriptorsTest {
 
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
       Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
-
-      //todo [anistor] The processing of annotations is waaay too lazy
-      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getProcessedAnnotation("");
    }
 
    @Test
    public void testRepeatedAnnotation() {
       Configuration config = Configuration.builder().annotationsConfig()
+            .annotation("Fields", AnnotationElement.AnnotationTarget.FIELD)
+            .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .type(AnnotationElement.AttributeType.ANNOTATION)
+            .allowedValues("Field")
+            .multiple(true)
+            .metadataCreator(DEFAULT_CREATOR)
             .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
             .repeatable("Fields")
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
+            .metadataCreator(DEFAULT_CREATOR)
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .build();
@@ -903,11 +904,14 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
       Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
 
-      Map<String, AnnotationElement.Annotation> annotations = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
-      assertFalse(annotations.containsKey("Field"));
-      assertTrue(annotations.containsKey("Fields"));
-      List<AnnotationElement.Annotation> innerAnnotations = (List<AnnotationElement.Annotation>) annotations.get("Fields").getDefaultAttributeValue().getValue();
-      assertEquals(2, innerAnnotations.size());
+      FieldDescriptor fieldDescriptor = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0);
+      assertNull(fieldDescriptor.getProcessedAnnotation("Field"));
+      List<AnnotationElement.Annotation> fields = fieldDescriptor.getProcessedAnnotation("Fields");
+      assertThat(fields.size()).isEqualTo(2);
+      for(int i = 0; i < 2; i++) {
+         assertThat(fields.get(i).getName()).isEqualTo("Field");
+         assertThat(fields.get(i).getDefaultAttributeValue().getValue()).isEqualTo(true);
+      }
    }
 
    @Test
@@ -936,6 +940,7 @@ public class DescriptorsTest {
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
             .attribute("elem1")
+            .metadataCreator((descriptor, annotation) -> annotation.getAttributeValue("elem1").getValue())
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .multiple(true)
@@ -954,12 +959,7 @@ public class DescriptorsTest {
 
       Descriptor messageType = messageTypes.get(0);
       assertEquals("M", messageType.getFullName());
-      AnnotationElement.Annotation annotation = messageType.getAnnotations().get("Xyz");
-      assertNotNull(annotation);
-      AnnotationElement.Value attr = annotation.getAttributeValue("elem1");
-      assertTrue(attr instanceof AnnotationElement.Array);
-      assertTrue(attr.getValue() instanceof List);
-      List values = (List) attr.getValue();
+      ArrayList<Boolean> values = messageType.getProcessedAnnotation("Xyz");
       assertEquals(3, values.size());
       assertEquals(true, values.get(0));
       assertEquals(false, values.get(1));
@@ -971,6 +971,7 @@ public class DescriptorsTest {
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
             .attribute("elem1")
+            .metadataCreator((descriptor, annotation) -> annotation.getAttributeValue("elem1").getValue())
             .type(AnnotationElement.AttributeType.BOOLEAN)
             .defaultValue(true)
             .multiple(true)
@@ -989,14 +990,9 @@ public class DescriptorsTest {
 
       Descriptor messageType = messageTypes.get(0);
       assertEquals("M", messageType.getFullName());
-      AnnotationElement.Annotation annotation = messageType.getAnnotations().get("Xyz");
-      assertNotNull(annotation);
-      AnnotationElement.Value attr = annotation.getAttributeValue("elem1");
-      assertTrue(attr instanceof AnnotationElement.Array);
-      assertTrue(attr.getValue() instanceof List);
-      List values = (List) attr.getValue();
-      assertEquals(1, values.size());
-      assertEquals(true, values.get(0));
+      ArrayList<Boolean> xyz = messageType.getProcessedAnnotation("Xyz");
+      assertThat(xyz.size()).isEqualTo(1);
+      assertThat(xyz.get(0)).isTrue();
    }
 
    @Test
@@ -1023,6 +1019,9 @@ public class DescriptorsTest {
       ResolutionContext resolutionContext = new ResolutionContext(null, fileDescriptorMap,
             new HashMap<>(), new HashMap<>(), new HashMap<>());
       resolutionContext.resolve();
+
+      // Uncomment to show descriptor size in bytes
+      // calculateSize(fileDescriptorMap);
 
       return fileDescriptorMap;
    }
@@ -1153,5 +1152,11 @@ public class DescriptorsTest {
          return new File(resource.getPath());
       }
       return null;
+   }
+
+   private void calculateSize(Map<String, FileDescriptor> descriptors) {
+      for (Map.Entry<String, FileDescriptor> descriptor : descriptors.entrySet()) {
+         System.out.println("Total Size = " + GraphLayout.parseInstance(descriptor.getValue()).totalSize());
+      }
    }
 }

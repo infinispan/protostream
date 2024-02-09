@@ -105,6 +105,13 @@
             <artifactId>jboss-marshalling-river</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.openjdk.jol</groupId>
+            <artifactId>jol-core</artifactId>
+            <version>${version.jol}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
