@@ -151,8 +151,6 @@ final class ReservedProcessor {
 
    void generate(IndentWriter iw) {
       if (!reservedNumbers.isEmpty()) {
-         iw.append("//"); //TODO [anistor] temporarily commented out because the parser does not recognize 'reserved' keyword
-
          iw.append("reserved ");
          boolean first = true;
          ReservedInterval r = null;
@@ -184,8 +182,6 @@ final class ReservedProcessor {
       }
 
       if (!reservedNames.isEmpty()) {
-         iw.append("//"); //TODO [anistor] temporarily commented out because the parser does not recognize 'reserved' keyword
-
          iw.append("reserved ");
          boolean first = true;
          for (String name : reservedNames.keySet()) {

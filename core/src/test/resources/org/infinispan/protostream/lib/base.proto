@@ -1,3 +1,5 @@
+syntax = "proto3";
+
 package org.infinispan.protostream.lib;
 
 message Base {

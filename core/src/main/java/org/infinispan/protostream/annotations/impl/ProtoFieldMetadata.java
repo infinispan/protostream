@@ -3,6 +3,7 @@ package org.infinispan.protostream.annotations.impl;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XExecutable;
 import org.infinispan.protostream.annotations.impl.types.XField;
@@ -16,13 +17,13 @@ import org.infinispan.protostream.descriptors.Type;
  * @author anistor@redhat.com
  * @since 3.0
  */
-public final class ProtoFieldMetadata implements HasProtoSchema {
+public class ProtoFieldMetadata implements HasProtoSchema {
 
    private final int number;
    private final String name;
    private final String oneof;
    private final XClass javaType;
-   private final XClass collectionImplementation;
+   private final XClass repeatedImplementation;
    private final Type protobufType;
    private final String documentation;
    private final ProtoTypeMetadata protoTypeMetadata; // todo [anistor] it's unclear what this type actually is...
@@ -30,7 +31,6 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    private final boolean isRepeated;
    private final boolean isArray;
    private final Object defaultValue;
-
    private final String propertyName;
    private final XMember declaringMember;
    private final XField field;    // field or getter required (exclusively)
@@ -38,14 +38,14 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    private final XMethod setter;  // setter is optional
 
    ProtoFieldMetadata(int number, String name, String oneof, XClass javaType,
-                      XClass collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
+                      XClass repeatedImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
                       boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
                       XField field) {
       this.number = number;
       this.name = name;
       this.oneof = oneof;
       this.javaType = javaType;
-      this.collectionImplementation = collectionImplementation;
+      this.repeatedImplementation = repeatedImplementation;
       this.protoTypeMetadata = protoTypeMetadata;
       this.isRequired = isRequired;
       this.isRepeated = isRepeated;
@@ -61,14 +61,14 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    }
 
    ProtoFieldMetadata(int number, String name, String oneof, XClass javaType,
-                      XClass collectionImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
+                      XClass repeatedImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
                       boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
                       String propertyName, XMethod definingMethod, XMethod getter, XMethod setter) {
       this.number = number;
       this.name = name;
       this.oneof = oneof;
       this.javaType = javaType;
-      this.collectionImplementation = collectionImplementation;
+      this.repeatedImplementation = repeatedImplementation;
       this.protoTypeMetadata = protoTypeMetadata;
       this.isRequired = isRequired;
       this.isRepeated = isRepeated;
@@ -111,16 +111,12 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
       return canonicalName != null ? canonicalName : javaType.getName();
    }
 
-   public XClass getCollectionImplementation() {
-      return collectionImplementation;
+   public XClass getRepeatedImplementation() {
+      return repeatedImplementation;
    }
 
    public Type getProtobufType() {
       return protobufType;
-   }
-
-   public ProtoTypeMetadata getProtoTypeMetadata() {
-      return protoTypeMetadata;
    }
 
    public String getDocumentation() {
@@ -137,6 +133,10 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
 
    public boolean isArray() {
       return isArray;
+   }
+
+   public boolean isMap() {
+      return false;
    }
 
    public Object getDefaultValue() {
@@ -160,89 +160,41 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
    }
 
    @Override
-   public void generateProto(IndentWriter iw) {
+   public void generateProto(IndentWriter iw, ProtoSyntax syntax) {
       iw.append('\n');
       ProtoTypeMetadata.appendDocumentation(iw, documentation);
       if (oneof == null) {
          if (isRepeated) {
             iw.append("repeated ");
          } else {
-            iw.append(isRequired ? "required " : "optional ");
+            if (syntax == ProtoSyntax.PROTO2) {
+               iw.append(isRequired ? "required " : "optional ");
+            }
          }
       }
-      String typeName;
-      if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
-         typeName = protoTypeMetadata.getFullName();
-      } else {
-         switch (protobufType) {
-            case DOUBLE:
-               typeName = "double";
-               break;
-            case FLOAT:
-               typeName = "float";
-               break;
-            case INT32:
-               typeName = "int32";
-               break;
-            case INT64:
-               typeName = "int64";
-               break;
-            case FIXED32:
-               typeName = "fixed32";
-               break;
-            case FIXED64:
-               typeName = "fixed64";
-               break;
-            case BOOL:
-               typeName = "bool";
-               break;
-            case STRING:
-               typeName = "string";
-               break;
-            case BYTES:
-               typeName = "bytes";
-               break;
-            case UINT32:
-               typeName = "uint32";
-               break;
-            case UINT64:
-               typeName = "uint64";
-               break;
-            case SFIXED32:
-               typeName = "sfixed32";
-               break;
-            case SFIXED64:
-               typeName = "sfixed64";
-               break;
-            case SINT32:
-               typeName = "sint32";
-               break;
-            case SINT64:
-               typeName = "sint64";
-               break;
-            default:
-               throw new IllegalStateException("Unknown field type " + protobufType);
-         }
-      }
+      String typeName = getTypeName();
       iw.append(typeName);
       iw.append(' ').append(name).append(" = ").append(String.valueOf(number));
-      Object defaultValue = getDefaultValue();
-      if (defaultValue != null) {
-         String v;
-         if (defaultValue instanceof ProtoEnumValueMetadata) {
-            v = ((ProtoEnumValueMetadata) defaultValue).getProtoName();
-         } else if (defaultValue instanceof Date) {
-            v = Long.toString(((Date) defaultValue).getTime());
-         } else if (defaultValue instanceof Character) {
-            v = Integer.toString(((Character) defaultValue));
-         } else if (defaultValue instanceof byte[]) {
-            v = "\"" + new String(ProtoMessageTypeMetadata.cescape((byte[]) defaultValue), StandardCharsets.ISO_8859_1) + "\"";
-         } else if (defaultValue instanceof String) {
-            v = "\"" + defaultValue + "\"";
-         } else {
-            v = defaultValue.toString();
+
+      if (syntax == ProtoSyntax.PROTO2) {
+         Object defaultValue = getDefaultValue();
+         if (defaultValue != null) {
+            String v;
+            if (defaultValue instanceof ProtoEnumValueMetadata) {
+               v = ((ProtoEnumValueMetadata) defaultValue).getProtoName();
+            } else if (defaultValue instanceof Date) {
+               v = Long.toString(((Date) defaultValue).getTime());
+            } else if (defaultValue instanceof Character) {
+               v = Integer.toString(((Character) defaultValue));
+            } else if (defaultValue instanceof byte[]) {
+               v = "\"" + new String(ProtoMessageTypeMetadata.cescape((byte[]) defaultValue), StandardCharsets.ISO_8859_1) + "\"";
+            } else if (defaultValue instanceof String) {
+               v = "\"" + defaultValue + "\"";
+            } else {
+               v = defaultValue.toString();
+            }
+            iw.append(" [default = ").append(v).append(']');
          }
-         iw.append(" [default = ").append(v).append(']');
       }
 
       if (BaseProtoSchemaGenerator.generateSchemaDebugComments) {
@@ -259,6 +211,33 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
       }
 
       iw.append(";\n");
+   }
+
+   protected String getTypeName() {
+      String typeName;
+      if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
+         typeName = protoTypeMetadata.getFullName();
+      } else {
+         typeName = switch (protobufType) {
+            case DOUBLE -> "double";
+            case FLOAT -> "float";
+            case INT32 -> "int32";
+            case INT64 -> "int64";
+            case FIXED32 -> "fixed32";
+            case FIXED64 -> "fixed64";
+            case BOOL -> "bool";
+            case STRING -> "string";
+            case BYTES -> "bytes";
+            case UINT32 -> "uint32";
+            case UINT64 -> "uint64";
+            case SFIXED32 -> "sfixed32";
+            case SFIXED64 -> "sfixed64";
+            case SINT32 -> "sint32";
+            case SINT64 -> "sint64";
+            default -> throw new IllegalStateException("Unknown field type " + protobufType);
+         };
+      }
+      return typeName;
    }
 
    public boolean isPrimitive() {
@@ -284,7 +263,7 @@ public final class ProtoFieldMetadata implements HasProtoSchema {
             ", name='" + name + '\'' +
             ", protobufType=" + protobufType +
             ", javaType=" + javaType +
-            ", collectionImplementation=" + collectionImplementation +
+            ", collectionImplementation=" + repeatedImplementation +
             ", oneof=" + oneof +
             ", documentation='" + documentation + '\'' +
             ", protoTypeMetadata=" + (protoTypeMetadata != null ? protoTypeMetadata.getName() : null) +

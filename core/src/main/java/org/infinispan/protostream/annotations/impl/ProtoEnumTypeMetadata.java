@@ -8,6 +8,7 @@ import java.util.TreeMap;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XEnumConstant;
 import org.infinispan.protostream.containers.ElementContainer;
@@ -146,7 +147,13 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
-   public void generateProto(IndentWriter iw) {
+   public ProtoEnumValueMetadata getEnumMemberByNumber(int number) {
+      scanMemberAnnotations();
+      return membersByNumber.get(number);
+   }
+
+   @Override
+   public void generateProto(IndentWriter iw, ProtoSyntax syntax) {
       scanMemberAnnotations();
 
       iw.append("\n\n");
@@ -180,7 +187,7 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
       reserved.generate(iw);
 
       for (ProtoEnumValueMetadata m : membersByNumber.values()) {
-         m.generateProto(iw);
+         m.generateProto(iw, syntax);
       }
 
       iw.dec();

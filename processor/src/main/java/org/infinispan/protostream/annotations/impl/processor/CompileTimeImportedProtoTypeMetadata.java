@@ -53,6 +53,11 @@ final class CompileTimeImportedProtoTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
+   public ProtoEnumValueMetadata getEnumMemberByNumber(int number) {
+      return protoTypeMetadata.getEnumMemberByNumber(number);
+   }
+
+   @Override
    public String getFileName() {
       return fileName;
    }

@@ -1,7 +1,6 @@
 package org.infinispan.protostream.config.impl;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,7 +42,7 @@ final class AnnotationConfigurationImpl implements AnnotationConfiguration {
       this.name = name;
       this.packageName = packageName;
       this.target = target;
-      this.attributes = Collections.unmodifiableMap(attributes);
+      this.attributes = Map.copyOf(attributes);
       this.annotationMetadataCreator = annotationMetadataCreator;
       this.repeatable = repeatable;
    }

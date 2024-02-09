@@ -102,12 +102,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
       if (c == byte[].class) {
          XClass componentType = byteType;
          String fqn = "[" + componentType.getName();
-         XClass xclass = classCache.get(fqn);
-         if (xclass == null) {
-            xclass = new MirrorArray(componentType);
-            classCache.put(fqn, xclass);
-         }
-         return xclass;
+         return classCache.computeIfAbsent(fqn, k -> new MirrorArray(componentType));
       }
       if (c == void.class) {
          return voidType;
@@ -185,22 +180,12 @@ public final class MirrorTypeFactory implements XTypeFactory {
          case DECLARED: {
             DeclaredType declaredType = (DeclaredType) typeMirror;
             String fqn = ((TypeElement) declaredType.asElement()).getQualifiedName().toString();
-            XClass xclass = classCache.get(fqn);
-            if (xclass == null) {
-               xclass = new MirrorClass(declaredType);
-               classCache.put(fqn, xclass);
-            }
-            return xclass;
+            return classCache.computeIfAbsent(fqn, k -> new MirrorClass(declaredType));
          }
          case ARRAY: {
             XClass componentType = fromTypeMirror(((ArrayType) typeMirror).getComponentType());
             String fqn = "[" + componentType.getName();
-            XClass xclass = classCache.get(fqn);
-            if (xclass == null) {
-               xclass = new MirrorArray(componentType);
-               classCache.put(fqn, xclass);
-            }
-            return xclass;
+            return classCache.computeIfAbsent(fqn, k -> new MirrorArray(componentType));
          }
          default:
             throw new IllegalStateException("Unexpected type kind : " + typeMirror.getKind());
@@ -449,10 +434,9 @@ public final class MirrorTypeFactory implements XTypeFactory {
          if (obj == this) {
             return true;
          }
-         if (!(obj instanceof MirrorPrimitiveType)) {
+         if (!(obj instanceof MirrorPrimitiveType other)) {
             return false;
          }
-         MirrorPrimitiveType other = (MirrorPrimitiveType) obj;
          return clazz == other.clazz;
       }
 
@@ -782,10 +766,9 @@ public final class MirrorTypeFactory implements XTypeFactory {
          if (obj == this) {
             return true;
          }
-         if (!(obj instanceof XClass)) {
+         if (!(obj instanceof XClass other)) {
             return false;
          }
-         XClass other = (XClass) obj;
          return getName().equals(other.getName());
       }
 
@@ -1005,10 +988,9 @@ public final class MirrorTypeFactory implements XTypeFactory {
          if (obj == this) {
             return true;
          }
-         if (!(obj instanceof XClass)) {
+         if (!(obj instanceof XClass other)) {
             return false;
          }
-         XClass other = (XClass) obj;
          return other.isArray() && getName().equals(other.getName());
       }
 
@@ -1060,7 +1042,19 @@ public final class MirrorTypeFactory implements XTypeFactory {
                return fromTypeMirror(arg);
             }
          }
+         if (returnType.isAssignableTo(Map.class)) {
+            List<? extends TypeMirror> typeArguments = ((DeclaredType) unwrapOptionalReturnType()).getTypeArguments();
+            if (typeArguments.size() == 2) {
+               return fromTypeMirror(typeArguments.get(1));
+            }
+         }
          throw log.notRepeatableField(declaringClass.getName(), executableElement.getSimpleName().toString());
+      }
+
+      @Override
+      public XClass getTypeArgument(int i) {
+         List<? extends TypeMirror> typeArguments = ((DeclaredType) unwrapOptionalReturnType()).getTypeArguments();
+         return fromTypeMirror(typeArguments.get(i));
       }
 
       @Override
@@ -1289,7 +1283,19 @@ public final class MirrorTypeFactory implements XTypeFactory {
                return fromTypeMirror(arg);
             }
          }
+         if (getType().isAssignableTo(Map.class)) {
+            List<? extends TypeMirror> typeArguments = ((DeclaredType) field.asType()).getTypeArguments();
+            if (typeArguments.size() == 2) {
+               return fromTypeMirror(typeArguments.get(1));
+            }
+         }
          throw log.notRepeatableField(c.getName(), field.getSimpleName().toString());
+      }
+
+      @Override
+      public XClass getTypeArgument(int i) {
+         List<? extends TypeMirror> typeArguments = ((DeclaredType) field.asType()).getTypeArguments();
+         return fromTypeMirror(typeArguments.get(i));
       }
 
       @Override

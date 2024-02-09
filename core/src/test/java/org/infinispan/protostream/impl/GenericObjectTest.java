@@ -172,12 +172,12 @@ final class GenericObject {
    String toSchema() {
       StringBuilder sb = new StringBuilder();
       sb.append("message ").append(typeName).append(" {\n");
-      sb.append("\trequired string typeName = 1;\n");
+      sb.append("\tstring typeName = 1;\n");
       // the child properties are actual fields in this message instead of being nested messages
       int n = 2;
       for (ObjectProperty<?> p : props) {
          // only int32 and string supported; enough for demonstration purposes
-         sb.append("\toptional ").append(p.value instanceof Integer ? "int32" : "string")
+         sb.append("\t").append(p.value instanceof Integer ? "int32" : "string")
                .append(' ').append(p.name).append('=').append(n++).append(";\n");
       }
       return sb.append("}\n\n").toString();

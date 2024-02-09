@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Arrays;
 import java.util.ServiceLoader;
 
 import org.infinispan.protostream.GeneratedSchema;
@@ -16,6 +15,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.impl.processor.tests.ReusableInitializer;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.integrationtests.processor.UserSerializationContextInitializer;
@@ -68,10 +68,10 @@ public class AnnotationOnPackageIntegrationTest {
       assertArrayEquals(userBytes, jsonBytes);
    }
 
-   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, service = true)
+   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, syntax = ProtoSyntax.PROTO3)
    interface DependentInitializer extends SerializationContextInitializer {
       class C {
-         @ProtoField(number = 1, required = true)
+         @ProtoField(number = 1)
          boolean flag;
       }
    }

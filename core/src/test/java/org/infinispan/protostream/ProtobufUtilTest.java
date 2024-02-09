@@ -22,8 +22,8 @@ import java.util.function.Function;
 
 import org.infinispan.protostream.domain.Account;
 import org.infinispan.protostream.domain.Address;
-import org.infinispan.protostream.domain.Numerics;
 import org.infinispan.protostream.domain.Item;
+import org.infinispan.protostream.domain.Numerics;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
 import org.junit.Test;
@@ -159,13 +159,6 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User\",\"id\":1,\"accountIds\":[12,24],\"name\":[1,2,3],\"surname\":\"Batman\",\"gender\":\"MALE\"}");
       assertTrue(error instanceof IllegalStateException);
       assertTrue(error.getMessage().contains("Field 'name' is not an array"));
-   }
-
-   @Test
-   public void testMissingRequiredField() throws Exception {
-      Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User.Address\",\"street\":\"Abbey Rd\",\"postCode\":\"NW89AY\",\"number\": 12}");
-      assertTrue(error instanceof IllegalStateException);
-      assertTrue(error.getMessage().contains("Required field 'isCommercial' missing"));
    }
 
    @Test

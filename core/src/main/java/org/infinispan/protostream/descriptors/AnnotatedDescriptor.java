@@ -41,15 +41,6 @@ public interface AnnotatedDescriptor {
     */
    String getDocumentation();
 
-   /**
-    * Get the documentation annotations in the form of a map of abstract syntax trees of {@link AnnotationElement} nodes.
-    * Only the configured annotations are returned. The unconfigured ones are discarded immediately after parsing.
-    * <p>
-    * The parsing of annotations is performed lazily on first invocation.
-    *
-    * @return the map of annotations
-    * @throws AnnotationParserException if parsing of annotations fails
-    */
    Map<String, AnnotationElement.Annotation> getAnnotations() throws AnnotationParserException;
 
    /**

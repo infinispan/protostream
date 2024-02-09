@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.impl.Log;
@@ -80,9 +82,10 @@ public abstract class BaseProtoSchemaGenerator {
    private final Map<XClass, ProtoTypeMetadata> metadataByClass = new HashMap<>();
 
    private final Map<String, ProtoTypeMetadata> metadataByTypeName = new HashMap<>();
+   private final ProtoSyntax syntax;
 
    protected BaseProtoSchemaGenerator(XTypeFactory typeFactory, SerializationContext serializationContext,
-                                      String generator, String fileName, String packageName, Set<XClass> classes, boolean autoImportClasses) {
+                                      String generator, String fileName, String packageName, Set<XClass> classes, boolean autoImportClasses, ProtoSyntax syntax) {
       if (fileName == null) {
          throw new ProtoSchemaBuilderException("fileName cannot be null");
       }
@@ -94,6 +97,11 @@ public abstract class BaseProtoSchemaGenerator {
       this.packageName = packageName;
       this.classes = classes;
       this.autoImportClasses = autoImportClasses;
+      this.syntax = syntax;
+   }
+
+   public ProtoSyntax syntax() {
+      return syntax;
    }
 
    public String generateAndRegister() {
@@ -130,14 +138,14 @@ public abstract class BaseProtoSchemaGenerator {
             }
          }
       }
-
-      IndentWriter iw = new IndentWriter();
-      iw.append("// File name: ").append(fileName).append('\n');
+      StringWriter sw = new StringWriter();
+      IndentWriter iw = new IndentWriter(sw);
+      iw.printf("// File name: %s\n", fileName);
       if (generator != null) {
-         iw.append("// Generated from : ").append(generator).append('\n');
+         iw.printf("// Generated from : %s\n", fileName);
       }
       if (generateSchemaDebugComments) {
-         iw.append("// Scanned classes:\n");
+         iw.println("// Scanned classes:");
          //todo [anistor] this list of scanned classes should include all interfaces and base classes not just the ones for which a proto definition was generated
          for (ProtoTypeMetadata ptm : metadataByClass.values()) {
             if (!ptm.isImported()) {
@@ -145,7 +153,9 @@ public abstract class BaseProtoSchemaGenerator {
             }
          }
       }
-      iw.append("\nsyntax = \"proto2\";\n\n");
+
+      iw.printf("syntax = \"%s\";\n", syntax);
+
       if (packageName != null) {
          iw.append("package ").append(packageName).append(";\n\n");
       }
@@ -157,11 +167,11 @@ public abstract class BaseProtoSchemaGenerator {
       for (XClass c : metadataByClass.keySet()) {
          ProtoTypeMetadata m = metadataByClass.get(c);
          if (m.getOuterType() == null && !m.isImported()) {
-            m.generateProto(iw);
+            m.generateProto(iw, syntax);
          }
       }
 
-      String protoFile = iw.toString();
+      String protoFile = sw.toString();
 
       if (log.isTraceEnabled()) {
          log.tracef("Generated proto file:\n%s", protoFile);
@@ -256,7 +266,7 @@ public abstract class BaseProtoSchemaGenerator {
       return new ProtoMessageTypeMetadata(this, javaType, getTargetClass(javaType));
    }
 
-   private void collectMetadata(ProtoTypeMetadata protoTypeMetadata) {
+   void collectMetadata(ProtoTypeMetadata protoTypeMetadata) {
       boolean isUnknownClass = isUnknownClass(protoTypeMetadata.getJavaClass());
 
       if (isUnknownClass && !autoImportClasses && !protoTypeMetadata.isImported()) {

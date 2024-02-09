@@ -176,6 +176,30 @@ public class AnnotationProcessorCompilationTest {
       assertFileContains(schemaFile, "\nmessage HashSet {\n}\n");
    }
 
+   @Test
+   public void testReservedFieldName() {
+      Compilation compilation = CompilationUtils.compile("org/infinispan/protostream/integrationtests/processor/ReservedFieldName.java");
+      assertThat(compilation).hadErrorContaining("Protobuf field \"txt\" with number 1 conflicts with 'reserved' statement in test_basic_stuff.TestMessage");
+   }
+
+   @Test
+   public void testReservedFieldNumber() {
+      Compilation compilation = CompilationUtils.compile("org/infinispan/protostream/integrationtests/processor/ReservedFieldNumber.java");
+      assertThat(compilation).hadErrorContaining("Protobuf field \"txt\" with number 1 conflicts with 'reserved' statement in test_basic_stuff.TestMessage");
+   }
+
+   @Test
+   public void testReservedEnumNumber() {
+      Compilation compilation = CompilationUtils.compile("org/infinispan/protostream/integrationtests/processor/ReservedEnumNumber.java");
+      assertThat(compilation).hadErrorContaining("enum number 2 of enum constant test_marshall_externals.ColorEnum.BLUE conflicts with 'reserved' statement in test_marshall_externals.ColorEnumAdapter");
+   }
+
+   @Test
+   public void testReservedEnumName() {
+      Compilation compilation = CompilationUtils.compile("org/infinispan/protostream/integrationtests/processor/ReservedEnumName.java");
+      assertThat(compilation).hadErrorContaining("IPROTO000010: Name 'green' is reserved on `Color`");
+   }
+
    /**
     * Asserts that the file contains a given expected string.
     */

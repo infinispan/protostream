@@ -4,9 +4,10 @@ import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
 
-import javax.lang.model.element.Name;
-
+import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.MalformedProtobufException;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.exception.ProtoStreamException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -20,6 +21,7 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "IPROTO")
 public interface Log extends BasicLogger {
+   Log LOG = Logger.getMessageLogger(Log.class, "org.infinispan.PROTOSTREAM");
 
    @LogMessage(level = WARN)
    @Message(value = "Field %s was read out of sequence leading to sub-optimal performance", id = 1)
@@ -52,8 +54,41 @@ public interface Log extends BasicLogger {
          "It is possible that the entity to marshall with type '%s' can have some circular dependencies.", id = 8)
    ProtoStreamException maxNestedMessageDepth(int maxNestedMessageDepth, Class<?> entityType);
 
-   @Message(value = "Not a repeatable field: %s#%s")
+   @Message(value = "Not a repeatable field: %s#%s", id = 9)
    IllegalStateException notRepeatableField(String clazz, String fieldOrMethod);
+
+   @Message(value = "Name '%s' is reserved on `%s`", id = 10)
+   IllegalArgumentException reservedName(String name, String owner);
+
+   @Message(value = "Number %d used by '%s' is reserved on '%s'", id = 11)
+   IllegalArgumentException reservedNumber(int number, String name, String owner);
+
+   @Message(value = "Unsupported protocol buffers syntax '%s'", id = 12)
+   IllegalArgumentException unsupportedSyntax(FileDescriptor.Syntax s);
+
+   @Message(value = "Error while parsing '%s': %s", id = 13)
+   DescriptorParserException parserException(String filename, String message);
+
+   @Message(value = "The type %s of field %s of %s should not be abstract.", id = 14)
+   ProtoSchemaBuilderException abstractType(String canonicalName, String fieldName, String canonicalName1);
+
+   @Message(value = "The field named '%s' of %s is a member of the '%s' oneof which collides with an existing field or oneof.", id = 15)
+   ProtoSchemaBuilderException oneofCollision(String fieldName, String name, String oneof);
+
+   @Message(value = "The field named '%s' of %s cannot be marked repeated or required since it is member of the '%s' oneof.", id = 16)
+   ProtoSchemaBuilderException oneofRepeatedOrRequired(String fieldName, String name, String oneof);
+
+   @Message(value = "Abstract classes are not allowed: '%s'", id = 17)
+   ProtoSchemaBuilderException abstractClassNotAllowed(String annotatedClassName);
+
+   @Message(value = "Local or anonymous classes are not allowed. The class '%s' must be instantiable using an accessible no-argument constructor.", id = 18)
+   ProtoSchemaBuilderException localOrAnonymousClass(String annotatedClassName);
+
+   @Message(value = "Non-static inner classes are not allowed. The class '%s' must be instantiable using an accessible no-argument constructor.", id = 19)
+   ProtoSchemaBuilderException nonStaticInnerClass(String annotatedClassName);
+
+   @Message(value = "Invalid default value for field '%s' of Java type %s from class %s: the %s enum must have a 0 value", id = 20)
+   ProtoSchemaBuilderException noDefaultEnum(String fieldName, String canonicalName, String canonicalName1, String fullName);
 
    class LogFactory {
       public static Log getLog(Class<?> clazz) {

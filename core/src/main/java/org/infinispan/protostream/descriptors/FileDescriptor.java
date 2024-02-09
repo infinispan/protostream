@@ -1,7 +1,6 @@
 package org.infinispan.protostream.descriptors;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,31 +23,17 @@ import org.infinispan.protostream.impl.Log;
 public final class FileDescriptor {
 
    public enum Syntax {
-      PROTO2("proto2"),
-      PROTO3("proto3");
-
-      private final String syntax;
-
-      Syntax(String syntax) {
-         this.syntax = syntax;
-      }
+      PROTO2,
+      PROTO3;
 
       public static Syntax fromString(String syntax) {
-         if (syntax == null) {
-            throw new IllegalArgumentException("argument cannot be null");
-         }
-         for (Syntax s : values()) {
-            if (s.syntax.equals(syntax)) {
-               return s;
-            }
-         }
-         throw new IllegalArgumentException("Illegal syntax : '" + syntax + "'");
+         return Syntax.valueOf(syntax.toUpperCase());
       }
 
 
       @Override
       public String toString() {
-         return syntax;
+         return name().toLowerCase();
       }
    }
 
@@ -56,7 +41,7 @@ public final class FileDescriptor {
 
    private final Syntax syntax;
 
-   protected Configuration configuration;
+   private Configuration configuration;
 
    private final String name;
    private final String packageName;
@@ -74,9 +59,6 @@ public final class FileDescriptor {
    private final List<Option> options;
    private final List<Descriptor> messageTypes;
    private final List<EnumDescriptor> enumTypes;
-   private final List<ExtendDescriptor> extendTypes;
-
-   private final Map<String, ExtendDescriptor> extendDescriptors = new HashMap<>();
 
    /**
     * Files that directly depend on this one.
@@ -128,19 +110,18 @@ public final class FileDescriptor {
    /**
     * When {@link #status} is equal to {@link Status#PARSING_ERROR}, this exception provides the cause.
     */
-   private DescriptorParserException parsingException;
+   private final DescriptorParserException parsingException;
 
    private FileDescriptor(Builder builder) {
       // Default to proto2 if no syntax was specified
       syntax = builder.syntax == null ? Syntax.PROTO2 : builder.syntax;
       name = builder.name;
       packageName = builder.packageName;
-      dependencies = Collections.unmodifiableList(builder.dependencies);
-      publicDependencies = Collections.unmodifiableList(builder.publicDependencies);
-      options = Collections.unmodifiableList(builder.options);
-      enumTypes = Collections.unmodifiableList(builder.enumTypes);
-      messageTypes = Collections.unmodifiableList(builder.messageTypes);
-      extendTypes = Collections.unmodifiableList(builder.extendDescriptors);
+      dependencies = List.copyOf(builder.dependencies);
+      publicDependencies = List.copyOf(builder.publicDependencies);
+      options = List.copyOf(builder.options);
+      enumTypes = List.copyOf(builder.enumTypes);
+      messageTypes = List.copyOf(builder.messageTypes);
 
       parsingException = builder.parsingException;
       status = parsingException != null ? Status.PARSING_ERROR : Status.UNRESOLVED;
@@ -185,7 +166,6 @@ public final class FileDescriptor {
       if (status != Status.RESOLVED && status != Status.PARSING_ERROR) {
          markUnresolved();
          fileNamespace = null;
-         extendDescriptors.clear();
 
          for (FileDescriptor fd : dependants.values()) {
             fd.clearErrors();
@@ -247,14 +227,8 @@ public final class FileDescriptor {
          for (EnumDescriptor enumDesc : enumTypes) {
             collectEnumDescriptors(enumDesc, resolutionContext);
          }
-         for (ExtendDescriptor extendDescriptor : extendTypes) {
-            collectExtensions(extendDescriptor);
-         }
          for (Descriptor descriptor : messageTypes) {
             resolveFieldTypes(descriptor);
-         }
-         for (ExtendDescriptor extendDescriptor : extendTypes) {
-            resolveExtension(extendDescriptor);
          }
 
          status = Status.RESOLVED;
@@ -326,11 +300,6 @@ public final class FileDescriptor {
       resolutionContext.addGenericDescriptor(enumDescriptor);
    }
 
-   private void collectExtensions(ExtendDescriptor extendDescriptor) {
-      extendDescriptor.setFileDescriptor(this);
-      extendDescriptors.put(extendDescriptor.getFullName(), extendDescriptor);
-   }
-
    private void resolveFieldTypes(Descriptor descriptor) {
       for (FieldDescriptor fieldDescriptor : descriptor.getFields()) {
          if (fieldDescriptor.getType() == null ||
@@ -344,7 +313,7 @@ public final class FileDescriptor {
                fieldDescriptor.setMessageType((Descriptor) res);
             } else {
                throw new DescriptorParserException("Failed to resolve type of field \"" + fieldDescriptor.getFullName()
-                     + "\". Type not found : " + fieldDescriptor.getTypeName());
+                     + "\" in \"" + name + "\". Type not found : " + fieldDescriptor.getTypeName());
             }
          }
       }
@@ -352,17 +321,6 @@ public final class FileDescriptor {
       for (Descriptor nested : descriptor.getNestedTypes()) {
          resolveFieldTypes(nested);
       }
-   }
-
-   private void resolveExtension(ExtendDescriptor extendDescriptor) {
-      GenericDescriptor res = searchType(extendDescriptor.getName(), null);
-      if (res == null) {
-         throw new DescriptorParserException("Extension error: type " + extendDescriptor.getName() + " not found");
-      }
-      if (res instanceof EnumDescriptor) {
-         throw new DescriptorParserException("Enumerations cannot be extended: " + extendDescriptor.getFullName());
-      }
-      extendDescriptor.setExtendedMessage((Descriptor) res);
    }
 
    private String getScopedName(String name) {
@@ -434,10 +392,6 @@ public final class FileDescriptor {
       return messageTypes;
    }
 
-   public List<ExtendDescriptor> getExtensionsTypes() {
-      return extendTypes;
-   }
-
    /**
     * All types defined in this file (both message and enum).
     */
@@ -457,22 +411,21 @@ public final class FileDescriptor {
             '}';
    }
 
-   public static final class Builder {
+   public static String fullName(String parent, String name) {
+      return parent == null ? name : parent + '.' + name;
+   }
+
+   public static final class Builder implements MessageContainer<Builder>, OptionContainer<Builder>, EnumContainer<Builder> {
 
       private Syntax syntax = Syntax.PROTO2;
       private String name;
       private String packageName;
-      private List<String> dependencies = Collections.emptyList();
-      private List<String> publicDependencies = Collections.emptyList();
-      private List<Option> options = Collections.emptyList();
-      private List<EnumDescriptor> enumTypes = Collections.emptyList();
-      private List<Descriptor> messageTypes = Collections.emptyList();
-      private List<ExtendDescriptor> extendDescriptors = Collections.emptyList();
+      private List<String> dependencies = new ArrayList<>();
+      private List<String> publicDependencies = new ArrayList<>();
+      private List<Option> options = new ArrayList<>();
+      private List<EnumDescriptor> enumTypes = new ArrayList<>();
+      private List<Descriptor> messageTypes = new ArrayList<>();
       private DescriptorParserException parsingException;
-
-      public Builder withSyntax(String syntax) {
-         return withSyntax(Syntax.fromString(syntax));
-      }
 
       public Builder withSyntax(Syntax syntax) {
          this.syntax = syntax;
@@ -489,8 +442,18 @@ public final class FileDescriptor {
          return this;
       }
 
+      @Override
+      public String getFullName() {
+         return packageName;
+      }
+
       public Builder withDependencies(List<String> dependencies) {
          this.dependencies = dependencies;
+         return this;
+      }
+
+      public Builder addDependency(String dependency) {
+         this.dependencies.add(dependency);
          return this;
       }
 
@@ -499,8 +462,8 @@ public final class FileDescriptor {
          return this;
       }
 
-      public Builder withExtendDescriptors(List<ExtendDescriptor> extendDescriptors) {
-         this.extendDescriptors = extendDescriptors;
+      public Builder addPublicDependency(String dependency) {
+         this.publicDependencies.add(dependency);
          return this;
       }
 
@@ -509,13 +472,31 @@ public final class FileDescriptor {
          return this;
       }
 
+      @Override
+      public Builder addOption(Option option) {
+         this.options.add(option);
+         return this;
+      }
+
       public Builder withEnumTypes(List<EnumDescriptor> enumTypes) {
          this.enumTypes = enumTypes;
          return this;
       }
 
+      @Override
+      public Builder addEnum(EnumDescriptor.Builder enumDescriptor) {
+         this.enumTypes.add(enumDescriptor.withFullName(fullName(packageName, enumDescriptor.getName())).build());
+         return this;
+      }
+
       public Builder withMessageTypes(List<Descriptor> messageTypes) {
          this.messageTypes = messageTypes;
+         return this;
+      }
+
+      @Override
+      public Builder addMessage(Descriptor.Builder message) {
+         this.messageTypes.add(message.withFullName(fullName(packageName, message.getName())).build());
          return this;
       }
 
@@ -525,6 +506,12 @@ public final class FileDescriptor {
       }
 
       public FileDescriptor build() {
+         Set<String> optionNames = new HashSet<>(options.size());
+         for (Option option : options) {
+            if (!optionNames.add(option.getName())) {
+               throw new DescriptorParserException(name + ": Option \"" + option.getName() + "\" was already set.");
+            }
+         }
          return new FileDescriptor(this);
       }
    }

@@ -1,21 +1,14 @@
 package org.infinispan.protostream.impl.parser;
 
-import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
-import org.infinispan.protostream.impl.parser.mappers.ProtofileMapper;
-
-import com.squareup.protoparser.OptionElement;
-import com.squareup.protoparser.ProtoFile;
-import com.squareup.protoparser.ProtoParser;
+import org.infinispan.protostream.impl.Log;
 
 /**
  * Parser for .proto files based on the Protoparser.
@@ -24,13 +17,12 @@ import com.squareup.protoparser.ProtoParser;
  * @author anistor@redhat.com
  * @since 2.0
  */
-public final class SquareProtoParser {
-
-   private static final ProtofileMapper PROTOFILE_MAPPER = new ProtofileMapper();
+public final class ProtostreamProtoParser {
+   static ThreadLocal<StringBuilder> comments = ThreadLocal.withInitial(StringBuilder::new);
 
    private final Configuration configuration;
 
-   public SquareProtoParser(Configuration configuration) {
+   public ProtostreamProtoParser(Configuration configuration) {
       this.configuration = configuration;
    }
 
@@ -51,27 +43,20 @@ public final class SquareProtoParser {
       for (Map.Entry<String, String> entry : input.entrySet()) {
          String fileName = entry.getKey();
          try {
-            ProtoFile protoFile = ProtoParser.parse(fileName, new StringReader(entry.getValue()));
-            checkUniqueFileOptions(protoFile);
-            FileDescriptor fileDescriptor = PROTOFILE_MAPPER.map(protoFile);
+            FileDescriptor fileDescriptor = ProtoParser.parse(fileName, new StringReader(entry.getValue()), configuration);
             fileDescriptor.setConfiguration(configuration);
             fileDescriptorMap.put(fileName, fileDescriptor);
          } catch (DescriptorParserException e) {
             reportParsingError(fileDescriptorSource, fileDescriptorMap, fileName, e);
-         } catch (IOException | RuntimeException e) {
-            reportParsingError(fileDescriptorSource, fileDescriptorMap, fileName, new DescriptorParserException(e));
+         } catch (RuntimeException | TokenMgrError e) {
+            reportParsingError(fileDescriptorSource, fileDescriptorMap, fileName, Log.LOG.parserException(fileName, e.getMessage()));
+         } catch (ParseException e) {
+            Token next = e.currentToken.next;
+            String s = String.format("Syntax error in %s at %d:%d: unexpected label: %s", fileName, next.beginLine, next.endColumn, next.image);
+            reportParsingError(fileDescriptorSource, fileDescriptorMap, fileName, new DescriptorParserException(s, e));
          }
       }
       return fileDescriptorMap;
-   }
-
-   private void checkUniqueFileOptions(ProtoFile protoFile) {
-      Set<String> optionNames = new HashSet<>(protoFile.options().size());
-      for (OptionElement optionElement : protoFile.options()) {
-         if (!optionNames.add(optionElement.name())) {
-            throw new DescriptorParserException(protoFile.filePath() + ": Option \"" + optionElement.name() + "\" was already set.");
-         }
-      }
    }
 
    /**

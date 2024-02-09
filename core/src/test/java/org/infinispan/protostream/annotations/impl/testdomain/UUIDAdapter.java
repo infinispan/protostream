@@ -17,12 +17,12 @@ public class UUIDAdapter {
       return new UUID(mostSigBits, leastSigBits);
    }
 
-   @ProtoField(number = 1, type = Type.UINT64, defaultValue = "0")
+   @ProtoField(number = 1, type = Type.UINT64)
    long getMostSigBits(UUID uuid) {
       return uuid.getMostSignificantBits();
    }
 
-   @ProtoField(number = 2, type = Type.UINT64, defaultValue = "0")
+   @ProtoField(number = 2, type = Type.UINT64)
    long getLeastSigBits(UUID uuid) {
       return uuid.getLeastSignificantBits();
    }

@@ -115,50 +115,30 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
             break;
          }
          if (tag == expectedTag) {
-            switch (type) {
-               case DOUBLE:
-                  return in.readDouble();
-               case FLOAT:
-                  return in.readFloat();
-               case BOOL:
-                  return in.readBool();
-               case STRING:
-                  return in.readString();
-               case BYTES:
-                  return in.readByteArray();
-               case INT32:
-                  return in.readInt32();
-               case SFIXED32:
-                  return in.readSFixed32();
-               case FIXED32:
-                  return in.readFixed32();
-               case UINT32:
-                  return in.readUInt32();
-               case SINT32:
-                  return in.readSInt32();
-               case INT64:
-                  return in.readInt64();
-               case UINT64:
-                  return in.readUInt64();
-               case FIXED64:
-                  return in.readFixed64();
-               case SFIXED64:
-                  return in.readSFixed64();
-               case SINT64:
-                  return in.readSInt64();
-               default:
-                  throw new IOException("Unexpected field type : " + type);
-            }
+            return switch (type) {
+               case DOUBLE -> in.readDouble();
+               case FLOAT -> in.readFloat();
+               case BOOL -> in.readBool();
+               case STRING -> in.readString();
+               case BYTES -> in.readByteArray();
+               case INT32 -> in.readInt32();
+               case SFIXED32 -> in.readSFixed32();
+               case FIXED32 -> in.readFixed32();
+               case UINT32 -> in.readUInt32();
+               case SINT32 -> in.readSInt32();
+               case INT64 -> in.readInt64();
+               case UINT64 -> in.readUInt64();
+               case FIXED64 -> in.readFixed64();
+               case SFIXED64 -> in.readSFixed64();
+               case SINT64 -> in.readSInt64();
+               default -> throw new IOException("Unexpected field type : " + type);
+            };
          }
          messageContext.unknownFieldSet.readSingleField(tag, in);
       }
 
       if (fd.hasDefaultValue()) {
          return fd.getDefaultValue();
-      }
-
-      if (fd.isRequired()) {
-         throw new IOException("Field " + fd.getFullName() + " is required but is not present in the stream");
       }
 
       return null;

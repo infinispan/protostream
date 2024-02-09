@@ -1,28 +1,27 @@
 package org.infinispan.protostream.annotations.impl;
 
+import java.io.PrintWriter;
 import java.io.Writer;
 
 /**
- * A Writer capable of appending Strings in a similar manner to StringWriter but with indentation capabilities to
- * support more readable code generation. No IOExceptions are ever thrown. Closing has no effect.
+ * A Writer with indentation capabilities to support more readable code generation.
  *
  * @author anistor@redhat.com
  * @since 3.0
  */
-public final class IndentWriter extends Writer {
-
-   private final StringBuilder sb = new StringBuilder(256);
-
+public final class IndentWriter extends PrintWriter {
    /**
     * The 'equivalent' of one TAB character, because we do not use TABs.
     */
    private static final int TAB_SIZE = 3;
+   private static final String LOTS_OF_SPACES = " ".repeat(200); // Should be more than enough
 
    private int indent = 0;
 
    private boolean indentNeeded = false;
 
-   public IndentWriter() {
+   public IndentWriter(Writer out) {
+      super(out);
    }
 
    /**
@@ -47,34 +46,22 @@ public final class IndentWriter extends Writer {
    @Override
    public void write(int c) {
       if (indentNeeded) {
-         for (int i = indent * TAB_SIZE; i > 0; i--) {
-            sb.append(' ');
-         }
+         super.write(LOTS_OF_SPACES, 0, indent * TAB_SIZE);
       }
-      sb.append((char) c);
+      super.write(c);
       indentNeeded = c == '\n';
    }
 
    @Override
-   public void write(char[] buf, int off, int len) {
-      for (int i = off; i < off + len; i++) {
-         write(buf[i]);
-      }
-   }
-
-   @Override
    public void write(String s) {
+      if (indentNeeded) {
+         super.write(LOTS_OF_SPACES, 0, indent * TAB_SIZE);
+      }
       if (s == null) {
          s = "null";
       }
-      write(s, 0, s.length());
-   }
-
-   @Override
-   public void write(String s, int off, int len) {
-      for (int i = off; i < off + len; i++) {
-         write(s.charAt(i));
-      }
+      super.write(s, 0, s.length());
+      indentNeeded = s.endsWith("\n");
    }
 
    @Override
@@ -99,15 +86,13 @@ public final class IndentWriter extends Writer {
    }
 
    @Override
-   public String toString() {
-      return sb.toString();
+   public void println() {
+      super.println();
+      indentNeeded = true;
    }
 
    @Override
-   public void flush() {
-   }
-
-   @Override
-   public void close() {
+   public PrintWriter printf(String format, Object... args) {
+      return super.printf(format, args);
    }
 }

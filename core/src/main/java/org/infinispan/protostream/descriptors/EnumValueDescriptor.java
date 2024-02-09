@@ -1,7 +1,8 @@
 package org.infinispan.protostream.descriptors;
 
-import static java.util.Collections.unmodifiableList;
+import static org.infinispan.protostream.descriptors.FileDescriptor.fullName;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ public final class EnumValueDescriptor {
       this.name = builder.name;
       this.number = builder.number;
       this.documentation = builder.documentation;
-      this.options = unmodifiableList(builder.options);
+      this.options = List.copyOf(builder.options);
    }
 
    public String getName() {
@@ -68,7 +69,7 @@ public final class EnumValueDescriptor {
 
    void setContainingEnum(EnumDescriptor enumDescriptor) {
       this.enumDescriptor = enumDescriptor;
-      fullName = enumDescriptor.getFullName() + '.' + name;
+      fullName = fullName(enumDescriptor.getFullName(), name);
       scopedName = enumDescriptor.getFullName().substring(0, enumDescriptor.getFullName().length()
             - enumDescriptor.getName().length()) + name;
    }
@@ -86,11 +87,11 @@ public final class EnumValueDescriptor {
       return "EnumValueDescriptor{fullName=" + fullName + '}';
    }
 
-   public static final class Builder {
+   public static final class Builder implements OptionContainer<Builder> {
       private String name;
       private int number;
       private String documentation;
-      private List<Option> options;
+      private List<Option> options = new ArrayList<>();
 
       public Builder withName(String name) {
          this.name = name;
@@ -109,6 +110,12 @@ public final class EnumValueDescriptor {
 
       public Builder withOptions(List<Option> options) {
          this.options = options;
+         return this;
+      }
+
+      @Override
+      public Builder addOption(Option option) {
+         this.options.add(option);
          return this;
       }
 

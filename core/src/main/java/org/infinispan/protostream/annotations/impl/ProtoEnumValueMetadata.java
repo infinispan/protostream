@@ -1,5 +1,7 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.annotations.ProtoSyntax;
+
 /**
  * @author anistor@redhat.com
  * @since 3.0
@@ -60,7 +62,7 @@ public final class ProtoEnumValueMetadata implements HasProtoSchema {
    }
 
    @Override
-   public void generateProto(IndentWriter iw) {
+   public void generateProto(IndentWriter iw, ProtoSyntax syntax) {
       iw.append("\n");
       ProtoTypeMetadata.appendDocumentation(iw, documentation);
       iw.append(protoName).append(" = ").append(String.valueOf(number));

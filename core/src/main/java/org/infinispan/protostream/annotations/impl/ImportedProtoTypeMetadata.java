@@ -61,6 +61,16 @@ public final class ImportedProtoTypeMetadata extends ProtoTypeMetadata {
    }
 
    @Override
+   public ProtoEnumValueMetadata getEnumMemberByNumber(int number) {
+      if (!isEnum()) {
+         throw new IllegalStateException(getFullName() + " is not an enum");
+      }
+      Enum<?> enumConstant = ((EnumMarshaller) marshaller).decode(number);
+      return new ProtoEnumValueMetadata(number, name,
+            enumConstant.ordinal(), enumConstant.getDeclaringClass().getCanonicalName() + '.' + enumConstant.name(), null);
+   }
+
+   @Override
    public String toString() {
       return "ImportedProtoTypeMetadata{" +
             "name='" + name + '\'' +

@@ -41,6 +41,10 @@ public interface XElement {
 
    <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass);
 
+   default XClass getTypeArgument(int i) {
+      return null;
+   }
+
    /**
     * Collect and concatenate the description text from the (possibly multiple) {@code @ProtoDoc.value} annotations
     * found on the element, in order of occurrence.

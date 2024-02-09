@@ -1,10 +1,9 @@
 package org.infinispan.protostream.descriptors;
 
-import static java.util.Collections.unmodifiableList;
+import static org.infinispan.protostream.descriptors.FileDescriptor.fullName;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.config.AnnotationConfiguration;
@@ -17,34 +16,24 @@ import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
  * @author anistor@redhat.com
  * @since 2.0
  */
-public final class FieldDescriptor extends AnnotatedDescriptorImpl implements AnnotatedDescriptor {
+public class FieldDescriptor extends AnnotatedDescriptorImpl implements AnnotatedDescriptor {
+   protected final int number;
+   protected final Label label;
+   protected final String typeName;
+   protected final List<Option> options;
+   protected Type type;
+   protected FileDescriptor fileDescriptor;
+   protected Descriptor containingMessage;
+   protected Descriptor messageType;
+   protected EnumDescriptor enumType;
 
-   private static final String PACKED = "packed";
-   private final int number;
-   private final Label label;
-   private final String typeName;
-   private final String defaultValue;
-   private final List<Option> options;
-   private final Map<String, Object> optionByName = new HashMap<>();
-   private final boolean isExtension;
-   private Type type;
-   private FileDescriptor fileDescriptor;
-   private Descriptor containingMessage;
-   private Descriptor messageType;
-   private EnumDescriptor enumType;
-
-   private FieldDescriptor(Builder builder) {
+   protected FieldDescriptor(Builder builder) {
       super(builder.name, null, builder.documentation);
       number = builder.number;
       label = builder.label;
-      options = unmodifiableList(builder.options);
-      for (Option opt : options) {
-         optionByName.put(opt.getName(), opt.getValue());
-      }
+      options = List.copyOf(builder.options);
       typeName = builder.typeName;
       type = Type.primitiveFromString(typeName);
-      defaultValue = builder.defaultValue;
-      isExtension = builder.isExtension;
    }
 
    public int getNumber() {
@@ -67,51 +56,16 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
       return label;
    }
 
-   public Object getOptionByName(String name) {
-      return optionByName.get(name);
+   public Option getOptionByName(String name) {
+      return options.stream().filter(o -> name.equals(o.getName())).findFirst().orElse(null);
    }
 
    public List<Option> getOptions() {
       return options;
    }
 
-   public Option getOption(String name) {
-      for (Option o : options) {
-         if (o.getName().equals(name)) {
-            return o;
-         }
-      }
-      return null;
-   }
-
-   public boolean isRequired() {
-      return label == Label.REQUIRED;
-   }
-
    public boolean isRepeated() {
       return label == Label.REPEATED;
-   }
-
-   public boolean isPacked() {
-      return optionByName.containsKey(PACKED);
-   }
-
-   public Object getDefaultValue() {
-      if (getJavaType() == JavaType.MESSAGE) {
-         throw new UnsupportedOperationException("FieldDescriptor.getDefaultValue() called on an embedded message field (only scalars can have a default value).");
-      }
-      if (!hasDefaultValue()) {
-         return null;
-      }
-      return getJavaType().fromString(defaultValue);
-   }
-
-   public boolean isExtension() {
-      return isExtension;
-   }
-
-   public boolean hasDefaultValue() {
-      return defaultValue != null;
    }
 
    public JavaType getJavaType() {
@@ -136,7 +90,7 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
 
    void setContainingMessage(Descriptor containingMessage) {
       this.containingMessage = containingMessage;
-      this.fullName = containingMessage.getFullName() + '.' + name;
+      this.fullName = fullName(containingMessage.getFullName(),  name);
    }
 
    void setMessageType(Descriptor descriptor) {
@@ -177,19 +131,26 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
             ", typeName='" + typeName + '\'' +
             ", name='" + name + '\'' +
             ", number='" + number + '\'' +
-            ", defaultValue=" + defaultValue +
             '}';
    }
 
-   public static final class Builder {
-      private String typeName;
-      private int number;
-      private String name;
-      private Label label;
-      private List<Option> options;
-      private String defaultValue;
-      private boolean isExtension;
-      private String documentation;
+   public boolean hasDefaultValue() {
+      // Fields no longer have a default value since Protobuf 3
+      return false;
+   }
+
+   public Object getDefaultValue() {
+      // Fields no longer have a default value since Protobuf 3
+      return null;
+   }
+
+   public static class Builder implements OptionContainer<Builder> {
+      String typeName;
+      int number;
+      String name;
+      Label label = Label.OPTIONAL;
+      List<Option> options = new ArrayList<>();
+      String documentation;
 
       public Builder withNumber(int number) {
          this.number = number;
@@ -216,18 +177,14 @@ public final class FieldDescriptor extends AnnotatedDescriptorImpl implements An
          return this;
       }
 
-      public Builder withDefaultValue(String defaultValue) {
-         this.defaultValue = defaultValue;
-         return this;
-      }
-
-      public Builder withIsExtension(boolean isExtension) {
-         this.isExtension = isExtension;
-         return this;
-      }
-
       public Builder withDocumentation(String documentation) {
          this.documentation = documentation;
+         return this;
+      }
+
+      @Override
+      public Builder addOption(Option option) {
+         this.options.add(option);
          return this;
       }
 

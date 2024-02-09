@@ -1,5 +1,7 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.annotations.ProtoSyntax;
+
 /**
  * Dumps proto schema to writer.
  *
@@ -8,14 +10,5 @@ package org.infinispan.protostream.annotations.impl;
  */
 public interface HasProtoSchema {
 
-   void generateProto(IndentWriter writer);
-
-   /**
-    * Get the schema as String, mainly as an aid for debugging.
-    */
-   default String toProtoSchema() {
-      IndentWriter iw = new IndentWriter();
-      generateProto(iw);
-      return iw.toString();
-   }
+   void generateProto(IndentWriter writer, ProtoSyntax syntax);
 }

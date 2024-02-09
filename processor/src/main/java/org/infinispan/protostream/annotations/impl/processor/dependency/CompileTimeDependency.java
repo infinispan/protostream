@@ -1,4 +1,4 @@
-package org.infinispan.protostream.annotations.impl.processor.dependecy;
+package org.infinispan.protostream.annotations.impl.processor.dependency;
 
 import org.infinispan.protostream.annotations.impl.types.XClass;
 

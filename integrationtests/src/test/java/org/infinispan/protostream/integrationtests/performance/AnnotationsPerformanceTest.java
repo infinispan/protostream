@@ -41,7 +41,6 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
    public void testReadWrite() throws Exception {
       SerializationContext ctx1 = createCtxWithHandWrittenMarshaller();
       SerializationContext ctx2 = createCtxWithGeneratedMarshaller();
-
       User user = new User();
       user.setId(1);
       user.setName("John");

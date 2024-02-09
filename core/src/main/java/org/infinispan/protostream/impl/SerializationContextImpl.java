@@ -23,7 +23,7 @@ import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.ResolutionContext;
-import org.infinispan.protostream.impl.parser.SquareProtoParser;
+import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -42,7 +42,7 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private final Configuration configuration;
 
-   private final SquareProtoParser parser;
+   private final ProtostreamProtoParser parser;
 
    private final Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<>();
 
@@ -68,7 +68,7 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("configuration argument cannot be null");
       }
       this.configuration = configuration;
-      parser = new SquareProtoParser(configuration);
+      parser = new ProtostreamProtoParser(configuration);
    }
 
    @Override

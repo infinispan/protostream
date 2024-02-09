@@ -39,7 +39,7 @@ public class AddressAdapter {
       a.setPostCode(postCode);
    }
 
-   @ProtoField(number = 3, required = true)
+   @ProtoField(number = 3)
    public Integer getNumber(Address a) {
       return a.getNumber();
    }
@@ -85,12 +85,12 @@ public class AddressAdapter {
          return a.postCode;
       }
 
-      @ProtoField(number = 3, required = true)
+      @ProtoField(number = 3)
       public int getNumber(Address2 a) {
          return a.number;
       }
 
-      @ProtoField(number = 4, required = true)
+      @ProtoField(number = 4)
       public Character getHouseLetter(Address2 a) {
          return a.houseLetter;
       }

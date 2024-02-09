@@ -2,6 +2,8 @@ package org.infinispan.protostream.annotations.impl;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.StringWriter;
+
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.ReflectionTypeFactory;
@@ -36,10 +38,11 @@ public class ReservedProcessorTest {
       ReservedProcessor rp = new ReservedProcessor();
       rp.scan(classToTest);
 
-      IndentWriter iw = new IndentWriter();
+      StringWriter sw = new StringWriter();
+      IndentWriter iw = new IndentWriter(sw);
       rp.generate(iw);
 
-      assertEquals("", iw.toString());
+      assertEquals("", sw.toString());
    }
 
    @ProtoReserved(numbers = {1, 2}, ranges = @ProtoReserved.Range(from = 3, to = 7), names = {"a", "b"})
@@ -53,10 +56,11 @@ public class ReservedProcessorTest {
       ReservedProcessor rp = new ReservedProcessor();
       rp.scan(classToTest);
 
-      IndentWriter iw = new IndentWriter();
+      StringWriter sw = new StringWriter();
+      IndentWriter iw = new IndentWriter(sw);
       rp.generate(iw);
 
-      assertEquals("//reserved 1 to 7;\n//reserved \"a\", \"b\";\n", iw.toString());
+      assertEquals("reserved 1 to 7;\nreserved \"a\", \"b\";\n", sw.toString());
    }
 
    @ProtoReserved({1, 2, 1})

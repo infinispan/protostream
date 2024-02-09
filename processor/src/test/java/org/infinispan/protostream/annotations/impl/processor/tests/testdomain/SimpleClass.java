@@ -19,7 +19,7 @@ public class SimpleClass {
    @MyCustomAnnotation(name = "simpleClassField", someBool = true, someEnum = MyCustomAnnotation.MyEnum.TWO, someLong = -100, someInteger = 100)
    public SimpleClass simpleClass;
 
-   @ProtoField(number = 1, required = true, defaultValue = "0.0")
+   @ProtoField(number = 1, defaultValue = "0.0")
    public float afloat;
 
    @ProtoField(number = 2)
@@ -39,7 +39,7 @@ public class SimpleClass {
    }
 
    @ProtoDoc("X is unknown")
-   @ProtoField(number = 100, required = true, defaultValue = "0")
+   @ProtoField(number = 100)
    public void setX(int x) {
       this.x = x;
    }
@@ -52,7 +52,7 @@ public class SimpleClass {
    }
 
    //todo test boxing type mismatch between getter, setter and field
-   @ProtoField(number = 101, required = true, defaultValue = "0")
+   @ProtoField(number = 101)
    public void setY(Integer y) {
       this.y = y;
    }
@@ -64,7 +64,7 @@ public class SimpleClass {
       return z;
    }
 
-   @ProtoField(number = 102, required = true, defaultValue = "0")
+   @ProtoField(number = 102)
    public void setZ(String z) {
       this.z = z;
    }
@@ -76,7 +76,7 @@ public class SimpleClass {
       return width;
    }
 
-   @ProtoField(number = 103, required = true, defaultValue = "0.71")
+   @ProtoField(number = 103, defaultValue = "0.71")
    @MyCustomAnnotation(name = "setWidthMethod", someBool = true, someEnum = MyCustomAnnotation.MyEnum.TWO, someLong = -100, someInteger = 100)
    public void setWidth(Float width) {
       this.width = width;
