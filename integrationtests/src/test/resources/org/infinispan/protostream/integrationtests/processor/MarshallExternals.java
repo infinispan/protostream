@@ -10,6 +10,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoReserved;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.descriptors.Type;
 
 
@@ -18,7 +19,8 @@ import org.infinispan.protostream.descriptors.Type;
       UUIDAdapter.class,
       ColorEnumAdapter.class
    },
-   schemaFilePath = "/"
+   schemaFilePath = "/",
+   syntax = ProtoSyntax.PROTO3
 )
 interface MarshallExternals extends SerializationContextInitializer {
 }
@@ -50,12 +52,12 @@ class UUIDAdapter {
       return new UUID(mostSigBits, leastSigBits);
    }
 
-   @ProtoField(number = 1, type = Type.UINT64, defaultValue = "0")
+   @ProtoField(number = 1, type = Type.UINT64)
    long getMostSigBits(UUID uuid) {
       return uuid.getMostSignificantBits();
    }
 
-   @ProtoField(number = 2, type = Type.UINT64, defaultValue = "0")
+   @ProtoField(number = 2, type = Type.UINT64)
    long getLeastSigBits(UUID uuid) {
       return uuid.getLeastSignificantBits();
    }
@@ -126,7 +128,7 @@ class AddressAdapter {
       a.setPostCode_(postCode);
    }
 
-   @ProtoField(number = 3, required = true)
+   @ProtoField(number = 3)
    public Integer getNumber(Address a) {
       return a.getNumber_();
    }

@@ -23,6 +23,12 @@ class CompileTimeProtoMessageTypeMetadata extends ProtoMessageTypeMetadata {
    }
 
    @Override
+   protected XClass getMapImplementationFromAnnotation(ProtoField annotation) {
+      TypeMirror typeMirror = DangerousActions.getTypeMirror(annotation, ProtoField::mapImplementation);
+      return ((MirrorTypeFactory) typeFactory).fromTypeMirror(typeMirror);
+   }
+
+   @Override
    protected XClass getJavaTypeFromAnnotation(ProtoField annotation) {
       TypeMirror typeMirror = DangerousActions.getTypeMirror(annotation, ProtoField::javaType);
       return ((MirrorTypeFactory) typeFactory).fromTypeMirror(typeMirror);

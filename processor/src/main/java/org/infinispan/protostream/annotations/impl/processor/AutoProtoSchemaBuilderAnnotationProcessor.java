@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -46,7 +44,7 @@ import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.IndentWriter;
-import org.infinispan.protostream.annotations.impl.processor.dependecy.CompileTimeDependency;
+import org.infinispan.protostream.annotations.impl.processor.dependency.CompileTimeDependency;
 import org.infinispan.protostream.annotations.impl.processor.types.HasModelElement;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
@@ -211,33 +209,12 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    }
 
    private void ensureRequiredEnv() {
-      if (getJavaMajorVersion() < 9 && !Boolean.getBoolean("org.infinispan.protostream.skipAnnotationCompilerCheck")) {
-         reportWarning(null, "Please ensure you use at least Java ver. 9 for compilation in order to avoid various " +
-               "compiler related bugs from older Java versions that impact the AutoProtoSchemaBuilder annotation " +
-               "processor (you can still set the output target to 8 or above). To hide this warning set the " +
-               "`org.infinispan.protostream.skipAnnotationCompilerCheck` system property");
-      }
-
       Version procVersion = Version.getVersion(AutoProtoSchemaBuilder.class);
       if (Version.getVersion().compareTo(procVersion) != 0) {
          // protostream core and processor versions must be identical to ensure compatibility
          reportWarning(null, "Version mismatch! protostream (%s) and protostream-processor (%s) are expected to be the same version. " +
                "Mixing different versions is unsupported and can lead to unintended consequences.", Version.getVersion(), procVersion);
       }
-   }
-
-   private static int getJavaMajorVersion() {
-      String[] version = System.getProperty("java.version").split("[.]");
-      int major = parseVersionPart(version[0]);
-      if (major == 1) {
-         major = parseVersionPart(version[1]);
-      }
-      return major;
-   }
-
-   private static int parseVersionPart(String s) {
-      Matcher m = Pattern.compile("(\\d+)\\D*").matcher(s);
-      return m.find() ? Integer.parseInt(m.group(1)) : 0;
    }
 
    private static String getStackTraceAsString(Throwable throwable) {
@@ -287,7 +264,9 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       Set<XClass> xclasses = classScanner.getXClasses();
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
-            initializerPackageName, protobufFileName, protobufPackageName, dependencies.marshalledClasses, xclasses, builderAnnotation.autoImportClasses(), classScanner);
+            initializerPackageName, protobufFileName, protobufPackageName, dependencies.marshalledClasses, xclasses, builderAnnotation.autoImportClasses(),
+            builderAnnotation.syntax(),
+            classScanner);
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializer(packageElement, packageElement.getQualifiedName().toString(), builderAnnotation,
@@ -331,7 +310,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       Set<XClass> xclasses = classScanner.getXClasses();
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
-            typeElement.getQualifiedName().toString(), protobufFileName, protobufPackageName, dependencies.marshalledClasses, xclasses, builderAnnotation.autoImportClasses(), classScanner);
+            typeElement.getQualifiedName().toString(), protobufFileName, protobufPackageName, dependencies.marshalledClasses, xclasses, builderAnnotation.autoImportClasses(), builderAnnotation.syntax(), classScanner);
 
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
@@ -487,7 +466,8 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
                                                           String packageName, String initializerClassName,
                                                           String fileName, String protobufPackageName,
                                                           String schemaSrc, String schemaResource) {
-      IndentWriter iw = new IndentWriter();
+      StringWriter sw = new StringWriter();
+      IndentWriter iw = new IndentWriter(sw);
       iw.append("/*\n");
       iw.append(" Generated by ").append(getClass().getName()).append("\n");
       iw.append(annotatedElement.getKind() == ElementKind.PACKAGE ? " for package " : " for class ").append(annotatedElementFQN).append("\n");
@@ -573,7 +553,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       iw.dec();
       iw.append("}\n");
-      return iw.toString();
+      return sw.toString();
    }
 
    static void addGeneratedClassHeader(IndentWriter iw, boolean addPrivateJavadocTag, String... classes) {

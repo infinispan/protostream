@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
+import java.io.StringWriter;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
@@ -40,7 +41,7 @@ public abstract class AbstractMarshallerCodeGenerator {
     * Do nullable fields that do not have a user defined default value get a default type specific value if missing
     * instead of just null? This is currently implemented just for arrays/collections. TODO Maybe numbers should also
     * receive a 0 default value and booleans a false value. But what about strings? Empty string does not sound like a
-    * good fit. See the spec we do not fully implement here: https://developers.google.com/protocol-buffers/docs/proto#optional
+    * good fit. See the spec we do not fully implement here: <a href="https://developers.google.com/protocol-buffers/docs/proto#optional">Optional</a>
     */
    private final boolean noDefaults = false;
 
@@ -58,20 +59,21 @@ public abstract class AbstractMarshallerCodeGenerator {
     * </code>
     */
    protected String generateEnumDecodeMethodBody(ProtoEnumTypeMetadata enumTypeMetadata) {
-      IndentWriter iw = new IndentWriter();
-      iw.append("{\n");
+      StringWriter sw = new StringWriter();
+      IndentWriter iw = new IndentWriter(sw);
+      iw.println("{");
       iw.inc();
-      iw.append("switch ($1) {\n");
+      iw.println("switch ($1) {");
       iw.inc();
       for (ProtoEnumValueMetadata value : enumTypeMetadata.getMembers().values()) {
-         iw.append("case ").append(String.valueOf(value.getNumber())).append(": return ").append(value.getJavaEnumName()).append(";\n");
+         iw.printf("case %d: return %s;\n", value.getNumber(), value.getJavaEnumName());
       }
-      iw.append("default: return null;\n");
+      iw.println("default: return null;");
       iw.dec();
-      iw.append("}\n");
+      iw.println("}");
       iw.dec();
-      iw.append("}\n");
-      return iw.toString();
+      iw.println("}");
+      return sw.toString();
    }
 
    /**
@@ -81,20 +83,21 @@ public abstract class AbstractMarshallerCodeGenerator {
     * </code>
     */
    protected String generateEnumEncodeMethodBody(ProtoEnumTypeMetadata enumTypeMetadata) {
-      IndentWriter iw = new IndentWriter();
-      iw.append("{\n");
+      StringWriter sw = new StringWriter();
+      IndentWriter iw = new IndentWriter(sw);
+      iw.println("{");
       iw.inc();
-      iw.append("switch ($1.ordinal()) {\n"); // use ordinal rather than enum constant because Javassist does not support enum syntax at all
+      iw.println("switch ($1.ordinal()) {");
       iw.inc();
       for (ProtoEnumValueMetadata value : enumTypeMetadata.getMembers().values()) {
-         iw.append("case ").append(String.valueOf(value.getJavaEnumOrdinal())).append(": return ").append(String.valueOf(value.getNumber())).append(";\n");
+         iw.printf("case %d: return %d;\n", value.getJavaEnumOrdinal(), value.getNumber());
       }
-      iw.append("default: throw new IllegalArgumentException(\"Unexpected ").append(enumTypeMetadata.getJavaClassName()).append(" enum value : \" + $1.name());\n");
+      iw.printf("default: throw new IllegalArgumentException(\"Unexpected %s enum value : \" + $1.name());\n", enumTypeMetadata.getJavaClassName());
       iw.dec();
-      iw.append("}\n");
+      iw.println("}");
       iw.dec();
-      iw.append("}\n");
-      return iw.toString();
+      iw.println("}");
+      return sw.toString();
    }
 
    /**
@@ -178,7 +181,7 @@ public abstract class AbstractMarshallerCodeGenerator {
     * java.lang.Object $2) throws java.io.IOException
     * </code>
     */
-   protected String generateReadMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
+   protected void generateReadMethodBody(IndentWriter iw, ProtoMessageTypeMetadata messageTypeMetadata) {
       //todo [anistor] handle unknown fields for adapters also
       String getUnknownFieldSetFieldStatement = null;
       String setUnknownFieldSetFieldStatement = null;
@@ -192,22 +195,16 @@ public abstract class AbstractMarshallerCodeGenerator {
          getUnknownFieldSetFieldStatement = "o.getUnknownFieldSet()";
          setUnknownFieldSetFieldStatement = "o.setUnknownFieldSet(u)";
       }
-
-      IndentWriter iw = new IndentWriter();
-      iw.append("{\n");
-      iw.inc();
-      iw.append("final ").append(TagReader.class.getName()).append(" $in = $1.getReader();\n");
-
+      iw.printf("final %s $in = $1.getReader();\n", TagReader.class.getName());
       if (messageTypeMetadata.isContainer()) {
-         iw.append("Object __v$sizeParam = $1.getParam(\"" + WrappedMessage.CONTAINER_SIZE_CONTEXT_PARAM + "\");\n");
-         iw.append("int __v$size = ((java.lang.Integer) __v$sizeParam).intValue();\n");
+         iw.printf("Object __v$sizeParam = $1.getParam(\"%s\");\n", WrappedMessage.CONTAINER_SIZE_CONTEXT_PARAM);
+         iw.println("int __v$size = ((java.lang.Integer) __v$sizeParam).intValue();");
       }
 
       // if there is no factory then the class must have setters or the fields should be directly accessible and not be final
       final boolean noFactory = messageTypeMetadata.getFactory() == null;
       if (noFactory) {
-         iw.append("final ").append(messageTypeMetadata.getJavaClassName())
-               .append(" o = new ").append(messageTypeMetadata.getJavaClassName()).append("();\n");
+         iw.printf("final %s o = new %s();\n", messageTypeMetadata.getJavaClassName(), messageTypeMetadata.getJavaClassName());
       }
 
       // number of fields that are required and do not have a default value
@@ -227,7 +224,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             int trackedFieldsSize = trackedFields.size();
             if (trackedFieldsSize % 64 == 0) {
                // declare a long variable to emulate a bitset in multiple long variables
-               iw.append("long __bits$").append(String.valueOf(trackedFieldsSize >> 6)).append(" = 0;\n");
+               iw.printf("long __bits$%s = 0;\n", trackedFieldsSize >> 6);
             }
             trackedFields.put(fieldMetadata.getName(), trackedFieldsSize);
          }
@@ -236,31 +233,35 @@ public abstract class AbstractMarshallerCodeGenerator {
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          if (fieldMetadata.isRepeated()) {
             // a collection local variable
-            iw.append(fieldMetadata.getCollectionImplementation().getCanonicalName()).append(' ').append(makeCollectionLocalVar(fieldMetadata)).append(" = ");
+            iw.printf("%s %s = ", fieldMetadata.getRepeatedImplementation().getCanonicalName(), makeCollectionLocalVar(fieldMetadata));
             if (noDefaults || fieldMetadata.isArray()) {
-               iw.append("null");
+               iw.print("null");
+            } else if (fieldMetadata.isMap()) {
+               iw.printf("new %s()",
+                     fieldMetadata.getRepeatedImplementation().getCanonicalName()
+               );
             } else {
-               iw.append("new ").append(fieldMetadata.getCollectionImplementation().getCanonicalName()).append("()");
+               iw.printf("new %s()", fieldMetadata.getRepeatedImplementation().getCanonicalName());
             }
-            iw.append(";\n");
+            iw.println(";");
             if (!noFactory && fieldMetadata.isArray()) {
                // an array local variable
-               iw.append(fieldMetadata.getJavaTypeName()).append("[] ").append(makeArrayLocalVar(fieldMetadata)).append(" = ");
+               iw.printf("%s[] %s = ", fieldMetadata.getJavaTypeName(), makeArrayLocalVar(fieldMetadata));
                if (noDefaults) {
-                  iw.append("null");
+                  iw.print("null");
                } else {
-                  iw.append("new ").append(fieldMetadata.getJavaTypeName()).append("[0]");
+                  iw.printf("new %s[0]", fieldMetadata.getJavaTypeName());
                }
-               iw.append(";\n");
+               iw.println(";");
             }
          } else if (!noFactory) {
             // immutable messages need a per-field local variable initialized to default value if any
-            iw.append(fieldMetadata.getJavaTypeName()).append(' ').append(makeFieldLocalVar(fieldMetadata));
+            iw.printf("%s %s", fieldMetadata.getJavaTypeName(), makeFieldLocalVar(fieldMetadata));
             Object defaultValue = fieldMetadata.getDefaultValue();
             if (defaultValue != null && fieldMetadata.getProtobufType() != Type.BYTES) {
                // fields of type bytes get assigned default values only at the end to avoid a possibly useless byte[] allocation
                String val = toJavaLiteral(defaultValue, fieldMetadata.getJavaType());
-               iw.append(" = ").append(box(val, fieldMetadata.getJavaType()));
+               iw.printf(" = %s", box(val, fieldMetadata.getJavaType()));
             } else {
                if (fieldMetadata.isBoxedPrimitive()
                      || fieldMetadata.getProtobufType() == Type.BYTES
@@ -270,149 +271,74 @@ public abstract class AbstractMarshallerCodeGenerator {
                      || fieldMetadata.getProtobufType().getJavaType() == JavaType.MESSAGE
                      || fieldMetadata.getJavaType().getCanonicalName().equals(Date.class.getCanonicalName())
                      || fieldMetadata.getJavaType().getCanonicalName().equals(Instant.class.getCanonicalName())) {
-                  iw.append(" = null");
+                  iw.print(" = null");
                } else if (fieldMetadata.isPrimitive()) {
                   if (fieldMetadata.getProtobufType() == Type.BOOL) {
-                     iw.append(" = false");
+                     iw.print(" = false");
                   } else {
-                     iw.append(" = 0");
+                     iw.print(" = 0");
                   }
                }
             }
-            iw.append(";\n");
+            iw.println(";");
          }
       }
-
-      iw.append("boolean done = false;\n");
-      iw.append("while (!done) {\n");
+      iw.println("boolean done = false;");
+      iw.println("while (!done) {");
       iw.inc();
-      iw.append("final int tag = $in.readTag();\n");
-      iw.append("switch (tag) {\n");
+      iw.println("final int tag = $in.readTag();");
+      iw.println("switch (tag) {");
       iw.inc();
-      iw.append("case 0: {\n");
+      iw.println("case 0: {");
       iw.inc();
-      iw.append("done = true;\nbreak;\n");
+      iw.println("done = true;");
+      iw.println("break;");
       iw.dec();
-      iw.append("}\n");
+      iw.println("}");
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
-         final String v = makeFieldLocalVar(fieldMetadata);
-         iw.append("case ").append(makeFieldTag(fieldMetadata.getNumber(), fieldMetadata.getProtobufType().getWireType())).append(": {\n");
-         iw.inc();
-         if (BaseProtoSchemaGenerator.generateMarshallerDebugComments) {
-            iw.append("// type = ").append(fieldMetadata.getProtobufType().toString()).append(", name = ").append(fieldMetadata.getName()).append('\n');
-         }
-         switch (fieldMetadata.getProtobufType()) {
-            case DOUBLE:
-            case FLOAT:
-            case INT64:
-            case UINT64:
-            case INT32:
-            case FIXED64:
-            case FIXED32:
-            case BOOL:
-            case STRING:
-            case BYTES:
-            case UINT32:
-            case SFIXED32:
-            case SFIXED64:
-            case SINT32:
-            case SINT64: {
-               if (noFactory || fieldMetadata.isRepeated()) {
-                  iw.append(fieldMetadata.getJavaTypeName()).append(' ');
-               }
-               iw.append(v).append(" = ").append(box(convert("$in." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata), fieldMetadata.getJavaType())).append(";\n");
-               genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
-               break;
-            }
-            case GROUP: {
-               String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-               if (noFactory || fieldMetadata.isRepeated()) {
-                  iw.append(fieldMetadata.getJavaTypeName()).append(' ');
-               }
-               iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(mdField).append(", $1);\n");
-               iw.append("$in.checkLastTagWas(").append(makeFieldTag(fieldMetadata.getNumber(), WireType.END_GROUP)).append(");\n");
-               genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
-               break;
-            }
-            case MESSAGE: {
-               String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-               iw.append("int length = $in.readUInt32();\n");
-               iw.append("int oldLimit = $in.pushLimit(length);\n");
-               if (noFactory || fieldMetadata.isRepeated()) {
-                  iw.append(fieldMetadata.getJavaTypeName()).append(' ');
-               }
-               iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") readMessage(").append(mdField).append(", $1);\n");
-               iw.append("$in.checkLastTagWas(0);\n");
-               iw.append("$in.popLimit(oldLimit);\n");
-               genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
-               break;
-            }
-            case ENUM: {
-               String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-               iw.append("int enumVal = $in.readEnum();\n");
-               if (noFactory || fieldMetadata.isRepeated()) {
-                  iw.append(fieldMetadata.getJavaTypeName()).append(' ');
-               }
-               iw.append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") ").append(mdField).append(".getMarshaller().decode(enumVal);\n");
-               iw.append("if (").append(v).append(" == null) {\n");
-               if (getUnknownFieldSetFieldStatement != null) {
-                  iw.inc();
-                  iw.append(PROTOSTREAM_PACKAGE).append(".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\n");
-                  iw.append("if (u == null) { u = new ").append(PROTOSTREAM_PACKAGE).append(".impl.UnknownFieldSetImpl(); ").append(setUnknownFieldSetFieldStatement).append("; }\n");
-                  iw.append("u.putVarintField(").append(String.valueOf(fieldMetadata.getNumber())).append(", enumVal);\n");
-                  iw.dec();
-               }
-               iw.append("} else {\n").inc();
-               genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
-               iw.dec().append("}\n");
-               break;
-            }
-            default:
-               throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
-         }
-         iw.append("break;\n");
-         iw.dec();
-         iw.append("}\n");
+         generateFieldReadMethod(messageTypeMetadata, fieldMetadata, iw, noFactory, trackedFields, getUnknownFieldSetFieldStatement, setUnknownFieldSetFieldStatement);
       }
-      iw.append("default: {\n");
+      iw.println("default: {");
       iw.inc();
       if (getUnknownFieldSetFieldStatement != null) {
-         iw.append(PROTOSTREAM_PACKAGE).append(".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\n");
-         iw.append("if (u == null) u = new ").append(PROTOSTREAM_PACKAGE).append(".impl.UnknownFieldSetImpl();\n");
-         iw.append("if (!u.readSingleField(tag, $in)) done = true;\n");
-         iw.append("if (!u.isEmpty()) ").append(setUnknownFieldSetFieldStatement).append(";\n");
+         iw.printf("%s.UnknownFieldSet u = %s;\n", PROTOSTREAM_PACKAGE, getUnknownFieldSetFieldStatement);
+         iw.printf("if (u == null) u = new %s.impl.UnknownFieldSetImpl();\n", PROTOSTREAM_PACKAGE);
+         iw.println("if (!u.readSingleField(tag, $in)) done = true;");
+         iw.printf("if (!u.isEmpty()) %s;\n", setUnknownFieldSetFieldStatement);
       } else {
-         iw.append("if (!$in.skipField(tag)) done = true;\n");
+         iw.println("if (!$in.skipField(tag)) done = true;");
       }
-      iw.dec().append("}\n");
-      iw.dec().append("}\n");
-      iw.dec().append("}\n");
+      iw.dec().println("}");
+      iw.dec().println("}");
+      iw.dec().println("}");
 
       // assign defaults to missing fields
       if (BaseProtoSchemaGenerator.generateMarshallerDebugComments) {
-         iw.append("\n// default values\n\n");
+         iw.println();
+         iw.println("// default values");
+         iw.println();
       }
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          Object defaultValue = fieldMetadata.getDefaultValue();
          if (defaultValue != null && (noFactory || fieldMetadata.isRepeated() || fieldMetadata.getProtobufType() == Type.BYTES)) {
-            iw.append("if ").append(makeTestFieldWasNotSet(fieldMetadata, trackedFields)).append(" {\n");
+            iw.printf("if %s {\n", makeTestFieldWasNotSet(fieldMetadata, trackedFields));
             iw.inc();
             String val = toJavaLiteral(defaultValue, fieldMetadata.getJavaType());
             if (fieldMetadata.isRepeated()) {
                String c = makeCollectionLocalVar(fieldMetadata);
                if (noDefaults || fieldMetadata.isArray()) {
-                  iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(fieldMetadata.getCollectionImplementation().getCanonicalName()).append("();\n");
+                  iw.printf("if (%s == null) %s = new %s();\n", c, c, fieldMetadata.getRepeatedImplementation().getCanonicalName());
                }
-               iw.append(c).append(".add(").append(box(val, typeFactory.fromClass(defaultValue.getClass()))).append(");\n");
+               iw.printf("%s.add(%s);\n", c, box(val, typeFactory.fromClass(defaultValue.getClass())));
             } else {
                if (noFactory) {
-                  iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", box(val, fieldMetadata.getJavaType()))).append(";\n");
+                  iw.printf("%s;\n", createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", box(val, fieldMetadata.getJavaType())));
                } else {
-                  iw.append(makeFieldLocalVar(fieldMetadata)).append(" = ").append(box(val, fieldMetadata.getJavaType())).append(";\n");
+                  iw.printf("%s = %s;\n", makeFieldLocalVar(fieldMetadata), box(val, fieldMetadata.getJavaType()));
                }
             }
             iw.dec();
-            iw.append("}\n");
+            iw.println("}");
          }
       }
 
@@ -421,17 +347,19 @@ public abstract class AbstractMarshallerCodeGenerator {
             String c = makeCollectionLocalVar(fieldMetadata);
             if (fieldMetadata.isArray()) {
                if (fieldMetadata.getDefaultValue() == null) {
-                  iw.append("if (").append(c).append(" != null) ");
+                  iw.printf("if (%s != null)", c);
                }
-               iw.append("{\n").inc();
+               iw.println("{");
+               iw.inc();
                String a = makeArrayLocalVar(fieldMetadata);
                if (fieldMetadata.getJavaType().isPrimitive()) {
                   if (noFactory) {
-                     iw.append(fieldMetadata.getJavaTypeName()).append("[] ");
+                     iw.printf("%s[] ", fieldMetadata.getJavaTypeName());
                   }
-                  iw.append(a).append(" = new ").append(fieldMetadata.getJavaTypeName()).append("[").append(c).append(".size()];\n");
+                  iw.printf("%s = new %s[%s.size()];\n", a, fieldMetadata.getJavaTypeName(), c);
                   XClass boxedType = box(fieldMetadata.getJavaType());
-                  iw.append("int _j = 0;\nfor (java.util.Iterator _it = ").append(c).append(".iterator(); _it.hasNext();) ").append(a).append("[_j++] = ").append(unbox("((" + boxedType.getName() + ") _it.next())", boxedType)).append(";\n");
+                  iw.println("int _j =0;");
+                  iw.printf("for (java.util.Iterator _it = %s.iterator(); _it.hasNext();) %s[_j++] = %s;\n", c, a, unbox("((" + boxedType.getName() + ") _it.next())", boxedType));
                   c = a;
                } else {
                   c = "(" + fieldMetadata.getJavaTypeName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaTypeName() + "[0])";
@@ -446,16 +374,17 @@ public abstract class AbstractMarshallerCodeGenerator {
                iw.dec().append('}');
                if (!noDefaults && fieldMetadata.getDefaultValue() == null) {
                   c = "new " + fieldMetadata.getJavaTypeName() + "[0]";
-                  iw.append(" else {\n").inc();
+                  iw.println(" else {");
+                  iw.inc();
                   if (noFactory) {
-                     iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", c)).append(";\n");
+                     iw.printf("%s;\n", createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", c));
                   } else {
-                     iw.append(makeArrayLocalVar(fieldMetadata)).append(" = ").append(c).append(";\n");
+                     iw.printf("%s = %s;\n", makeArrayLocalVar(fieldMetadata), c);
                   }
-                  iw.dec().append("}\n");
+                  iw.dec().println("}");
                }
             }
-            iw.append('\n');
+            iw.println();
          }
       }
 
@@ -484,34 +413,34 @@ public abstract class AbstractMarshallerCodeGenerator {
                iw.append("}\n");
             }
          }
-         iw.append("throw new java.io.IOException(\"Required field(s) missing from input stream : \" + missing);\n");
+         iw.println("throw new java.io.IOException(\"Required field(s) missing from input stream : \" + missing);");
          iw.dec();
-         iw.append("}\n");
+         iw.println("}");
       }
 
       if (noFactory) {
          // return the instance
-         iw.append("return o;\n");
+         iw.println("return o;");
       } else {
          // create and return the instance
-         iw.append("return ");
+         iw.print("return ");
          XExecutable factory = messageTypeMetadata.getFactory();
          if (factory instanceof XConstructor) {
-            iw.append("new ").append(messageTypeMetadata.getJavaClassName());
+            iw.printf("new %s", messageTypeMetadata.getJavaClassName());
          } else {
             if (factory.isStatic()) {
-               iw.append(messageTypeMetadata.getAnnotatedClassName()).append('.').append(factory.getName());
+               iw.printf("%s.%s", messageTypeMetadata.getAnnotatedClassName(), factory.getName());
             } else {
-               iw.append(ADAPTER_FIELD_NAME).append('.').append(factory.getName());
+               iw.printf("%s.%s", ADAPTER_FIELD_NAME, factory.getName());
             }
          }
-         iw.append('(');
+         iw.print('(');
          boolean first = true;
          for (String paramName : factory.getParameterNames()) {
             if (first) {
                first = false;
                if (messageTypeMetadata.isContainer()) {
-                  iw.append("__v$size");
+                  iw.print("__v$size");
                   continue;
                }
             } else {
@@ -533,11 +462,156 @@ public abstract class AbstractMarshallerCodeGenerator {
                throw new ProtoSchemaBuilderException("Parameter '" + paramName + "' of factory " + factory + " does not map to any Protobuf field");
             }
          }
-         iw.append(");\n");
+         iw.println(");");
       }
+   }
 
-      iw.dec().append("}\n");
-      return iw.toString();
+   private void generateFieldReadMethod(ProtoMessageTypeMetadata messageTypeMetadata, ProtoFieldMetadata fieldMetadata, IndentWriter iw, boolean noFactory, Map<String, Integer> trackedFields, String getUnknownFieldSetFieldStatement, String setUnknownFieldSetFieldStatement) {
+      final String v = makeFieldLocalVar(fieldMetadata);
+      iw.printf("case %s: {\n", makeFieldTag(fieldMetadata.getNumber(), fieldMetadata.getProtobufType().getWireType()));
+      iw.inc();
+      if (BaseProtoSchemaGenerator.generateMarshallerDebugComments) {
+         iw.printf("// type = %s, name = %s\n", fieldMetadata.getProtobufType(), fieldMetadata.getName());
+      }
+      switch (fieldMetadata.getProtobufType()) {
+         case DOUBLE:
+         case FLOAT:
+         case INT64:
+         case UINT64:
+         case INT32:
+         case FIXED64:
+         case FIXED32:
+         case BOOL:
+         case STRING:
+         case BYTES:
+         case UINT32:
+         case SFIXED32:
+         case SFIXED64:
+         case SINT32:
+         case SINT64: {
+            if (noFactory || fieldMetadata.isRepeated()) {
+               iw.printf("%s ", fieldMetadata.getJavaTypeName());
+            }
+            iw.printf("%s = %s;\n", v, box(convert("$in." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata), fieldMetadata.getJavaType()));
+            genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
+            break;
+         }
+         case GROUP: {
+            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            if (noFactory || fieldMetadata.isRepeated()) {
+               iw.printf("%s ", fieldMetadata.getJavaTypeName());
+            }
+            iw.printf("%s = (%s) readMessage(%s, $1);\n", v, fieldMetadata.getJavaTypeName(), mdField);
+            iw.printf("$in.checkLastTagWas(%s);\n", makeFieldTag(fieldMetadata.getNumber(), WireType.END_GROUP));
+            genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
+            break;
+         }
+         case MESSAGE: {
+            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            iw.println("int length = $in.readUInt32();");
+            iw.println("int oldLimit = $in.pushLimit(length);");
+            if (noFactory || fieldMetadata.isRepeated()) {
+               iw.printf("%s ", fieldMetadata.getJavaTypeName());
+            }
+            iw.printf("%s = (%s) readMessage(%s, $1);\n", v, fieldMetadata.getJavaTypeName(), mdField);
+            iw.println("$in.checkLastTagWas(0);");
+            iw.println("$in.popLimit(oldLimit);");
+            genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
+            break;
+         }
+         case ENUM: {
+            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            iw.println("int enumVal = $in.readEnum();");
+            if (noFactory || fieldMetadata.isRepeated()) {
+               iw.printf("%s ", fieldMetadata.getJavaTypeName());
+            }
+            iw.printf("%s = (%s) %s.getMarshaller().decode(enumVal);\n", v, fieldMetadata.getJavaTypeName(), mdField);
+            iw.printf("if (%s == null) {\n", v);
+            if (getUnknownFieldSetFieldStatement != null) {
+               iw.inc();
+               iw.printf("%s.UnknownFieldSet u = %s;\n", PROTOSTREAM_PACKAGE, getUnknownFieldSetFieldStatement);
+               iw.printf("if (u == null) { u = new %s.impl.UnknownFieldSetImpl(); %s; }\n", PROTOSTREAM_PACKAGE, setUnknownFieldSetFieldStatement);
+               iw.printf("u.putVarintField(%d, enumVal);\n", fieldMetadata.getNumber());
+               iw.dec();
+            }
+            iw.println("} else {");
+            iw.inc();
+            genSetField(iw, fieldMetadata, trackedFields, messageTypeMetadata);
+            iw.dec().println("}");
+            break;
+         }
+         case MAP: {
+            ProtoMapMetadata mapMetadata = (ProtoMapMetadata) fieldMetadata;
+            iw.println("int $len = $in.readUInt32();");
+            iw.println("int $limit = $in.pushLimit($len);");
+            iw.println("int $t = $in.readTag();");
+            String key = generateMapFieldReadMethod(mapMetadata.getKey(), iw, noFactory, true);
+            String value = generateMapFieldReadMethod(mapMetadata.getValue(), iw, noFactory, false);
+            iw.printf("%s.put(%s, %s);\n", makeCollectionLocalVar(mapMetadata), key, value);
+            iw.println("$in.checkLastTagWas(0);");
+            iw.println("$in.popLimit($limit);");
+            break;
+         }
+         default:
+            throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
+      }
+      iw.println("break;");
+      iw.dec().println("}");
+   }
+
+   private String generateMapFieldReadMethod(ProtoFieldMetadata fieldMetadata, IndentWriter iw, boolean noFactory, boolean readNext) {
+      final String v = makeFieldLocalVar(fieldMetadata);
+      if (noFactory || fieldMetadata.isRepeated()) {
+         iw.printf("%s %s = %s;\n", fieldMetadata.getJavaTypeName(), v, fieldMetadata.getProtobufType().getJavaType().defaultValueAsString());
+      }
+      iw.printf("if ($t == %s) {\n", makeFieldTag(fieldMetadata.getNumber(), fieldMetadata.getProtobufType().getWireType()));
+      iw.inc();
+      if (BaseProtoSchemaGenerator.generateMarshallerDebugComments) {
+         iw.printf("// type = %s, name = %s\n", fieldMetadata.getProtobufType(), fieldMetadata.getName());
+      }
+      switch (fieldMetadata.getProtobufType()) {
+         case DOUBLE:
+         case FLOAT:
+         case INT64:
+         case UINT64:
+         case INT32:
+         case FIXED64:
+         case FIXED32:
+         case BOOL:
+         case STRING:
+         case BYTES:
+         case UINT32:
+         case SFIXED32:
+         case SFIXED64:
+         case SINT32:
+         case SINT64: {
+            iw.printf("%s = %s;\n", v, box(convert("$in." + makeStreamIOMethodName(fieldMetadata, false) + "()", fieldMetadata), fieldMetadata.getJavaType()));
+            break;
+         }
+         case MESSAGE: {
+            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            iw.println("int length = $in.readUInt32();");
+            iw.println("int oldLimit = $in.pushLimit(length);");
+            iw.printf("%s = (%s) readMessage(%s, $1);\n", v, fieldMetadata.getJavaTypeName(), mdField);
+            iw.println("$in.checkLastTagWas(0);");
+            iw.println("$in.popLimit(oldLimit);");
+            break;
+         }
+         case ENUM: {
+            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            iw.println("int enumVal = $in.readEnum();");
+            iw.printf("%s = (%s) %s.getMarshaller().decode(enumVal);\n", v, fieldMetadata.getJavaTypeName(), mdField);
+            iw.println("}");
+            break;
+         }
+         default:
+            throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
+      }
+      if (readNext) {
+         iw.println("$t = $in.readTag();");
+      }
+      iw.dec().println("}");
+      return v;
    }
 
    private static String makeFieldTag(int fieldNumber, WireType wireType) {
@@ -572,10 +646,9 @@ public abstract class AbstractMarshallerCodeGenerator {
          v = "(short) " + value;
       } else if (value instanceof Byte) {
          v = "(byte) " + value;
-      } else if (value instanceof byte[]) {
+      } else if (value instanceof byte[] bytes) {
          StringBuilder sb = new StringBuilder();
          sb.append("new byte[] {");
-         byte[] bytes = (byte[]) value;
          for (int i = 0; i < bytes.length; i++) {
             if (i > 0) {
                sb.append(", ");
@@ -593,11 +666,13 @@ public abstract class AbstractMarshallerCodeGenerator {
    private void genSetField(IndentWriter iw, ProtoFieldMetadata fieldMetadata, Map<String, Integer> trackedFields, ProtoMessageTypeMetadata messageTypeMetadata) {
       final String v = makeFieldLocalVar(fieldMetadata);
       if (fieldMetadata.isRepeated()) {
-         String c = makeCollectionLocalVar(fieldMetadata);
-         if (noDefaults || fieldMetadata.isArray()) {
-            iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(fieldMetadata.getCollectionImplementation().getCanonicalName()).append("();\n");
+         if (!fieldMetadata.isMap()) {
+            String c = makeCollectionLocalVar(fieldMetadata);
+            if (noDefaults || fieldMetadata.isArray()) {
+               iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(fieldMetadata.getRepeatedImplementation().getCanonicalName()).append("();\n");
+            }
+            iw.append(c).append(".add(").append(box(v, box(fieldMetadata.getJavaType()))).append(");\n");
          }
-         iw.append(c).append(".add(").append(box(v, box(fieldMetadata.getJavaType()))).append(");\n");
       } else {
          if (messageTypeMetadata.getFactory() == null) {
             iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", v)).append(";\n");
@@ -615,7 +690,7 @@ public abstract class AbstractMarshallerCodeGenerator {
     * java.lang.Object $2) throws java.io.IOException
     * </code>
     */
-   protected String generateWriteMethodBody(ProtoMessageTypeMetadata messageTypeMetadata) {
+   protected void generateWriteMethodBody(IndentWriter iw, ProtoMessageTypeMetadata messageTypeMetadata) {
       //todo [anistor] handle unknown fields for adapters also
       String getUnknownFieldSetFieldStatement = null;
       if (messageTypeMetadata.getUnknownFieldSetField() != null) {
@@ -625,32 +700,35 @@ public abstract class AbstractMarshallerCodeGenerator {
       } else if (messageTypeMetadata.getJavaClass().isAssignableTo(Message.class)) {
          getUnknownFieldSetFieldStatement = "o.getUnknownFieldSet()";
       }
-
-      IndentWriter iw = new IndentWriter();
-      iw.append("{\n");
       if (!messageTypeMetadata.getFields().isEmpty() || getUnknownFieldSetFieldStatement != null) {
-         iw.inc();
-         iw.append("final ").append(TagWriter.class.getName()).append(" $out = $1.getWriter();\n");
-         iw.append("final ").append(messageTypeMetadata.getJavaClassName()).append(" o = (").append(messageTypeMetadata.getJavaClassName()).append(") $2;\n");
+         iw.printf("final %s $out = $1.getWriter();\n", TagWriter.class.getName());
+         iw.printf("final %s o = (%s) $2;\n", messageTypeMetadata.getJavaClassName(), messageTypeMetadata.getJavaClassName());
          for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
-            iw.append("{\n");
+            iw.println("{");
             iw.inc();
             if (BaseProtoSchemaGenerator.generateMarshallerDebugComments) {
-               iw.append("// type = ").append(fieldMetadata.getProtobufType().toString()).append(", name = ").append(fieldMetadata.getName()).append('\n');
+               iw.printf("// type = %s, name = %s\n", fieldMetadata.getProtobufType(), fieldMetadata.getName());
             }
             final String v = makeFieldLocalVar(fieldMetadata);
             final String f = fieldMetadata.isRepeated() ? (fieldMetadata.isArray() ? makeArrayLocalVar(fieldMetadata) : makeCollectionLocalVar(fieldMetadata)) : v;
-            iw.append("final ");
+            iw.print("final ");
             if (fieldMetadata.isRepeated()) {
                if (fieldMetadata.isArray()) {
-                  iw.append(fieldMetadata.getJavaTypeName()).append("[]");
+                  iw.printf("%s[]", fieldMetadata.getJavaTypeName());
+               } else if (fieldMetadata.isMap()) {
+                  ProtoMapMetadata mapFieldMetadata = (ProtoMapMetadata) fieldMetadata;
+                  iw.printf("java.util.Map<%s, %s>",
+                        mapFieldMetadata.getKey().getJavaTypeName(),
+                        mapFieldMetadata.getValue().getJavaTypeName()
+                  );
                } else {
-                  iw.append("java.util.Collection");
+                  iw.printf("java.util.Collection<%s>", fieldMetadata.getJavaTypeName());
                }
             } else {
-               iw.append(fieldMetadata.getJavaTypeName());
+               iw.print(fieldMetadata.getJavaTypeName());
             }
-            iw.append(' ').append(f).append(" = ").append(createGetPropExpr(messageTypeMetadata, fieldMetadata, "o")).append(";\n");
+            iw.printf(" %s = %s;\n", f, createGetPropExpr(messageTypeMetadata, fieldMetadata, "o"));
+
             if (fieldMetadata.isRequired()) {
                boolean couldBeNull = fieldMetadata.isRepeated()
                      || fieldMetadata.isBoxedPrimitive()
@@ -662,176 +740,157 @@ public abstract class AbstractMarshallerCodeGenerator {
                if (couldBeNull) {
                   iw.append("if (").append(f).append(" == null) throw new IllegalStateException(\"Required field must not be null : ").append(fieldMetadata.getName()).append("\");\n");
                }
-            } else {
-               if (!fieldMetadata.getJavaType().isPrimitive() || fieldMetadata.isRepeated()) {
-                  iw.append("if (").append(f).append(" != null) ");
-               }
+            } else if (fieldMetadata.isRepeated() || !fieldMetadata.getJavaType().isPrimitive()) {
+               iw.append("if (").append(f).append(" != null) ");
             }
+
             if (fieldMetadata.isRepeated()) {
                iw.append('\n');
                iw.inc();
                if (fieldMetadata.isArray()) {
-                  iw.append("for (int i = 0; i < ").append(f).append(".length; i++) {\n");
+                  iw.printf("for (int i = 0; i < %s.length; i++) {\n", f);
                   iw.inc();
-                  iw.append("final ").append(fieldMetadata.getJavaTypeName()).append(' ').append(v).append(" = ").append(f).append("[i];\n");
+                  iw.printf("final %s %s = %s[i];\n", fieldMetadata.getJavaTypeName(), v, f);
+               } else if (fieldMetadata.isMap()) {
+                  ProtoMapMetadata mapFieldMetadata = (ProtoMapMetadata) fieldMetadata;
+                  iw.printf("for (java.util.Iterator<java.util.Map.Entry<%s, %s>> it = %s.entrySet().iterator(); it.hasNext(); ) {\n",
+                        mapFieldMetadata.getKey().getJavaTypeName(),
+                        mapFieldMetadata.getValue().getJavaTypeName(),
+                        f);
+                  iw.inc();
+                  iw.printf("final java.util.Map.Entry<%s, %s> %s = it.next();\n",
+                        mapFieldMetadata.getKey().getJavaTypeName(),
+                        mapFieldMetadata.getValue().getJavaTypeName(),
+                        v
+                  );
+                  iw.printf("try (NestedWriter $n = new NestedWriter($1, %d)) {\n", fieldMetadata.getNumber());
+                  iw.inc();
+                  writeFieldValue(mapFieldMetadata.getKey(), iw, v + ".getKey()", "$n.getWriter()");
+                  writeFieldValue(mapFieldMetadata.getValue(), iw, v + ".getValue()", "$n.getWriter()");
+                  iw.dec();
+                  iw.println("}");
                } else {
-                  iw.append("for (java.util.Iterator it = ").append(f).append(".iterator(); it.hasNext(); ) {\n");
+                  iw.printf("for (java.util.Iterator<%s> it = %s.iterator(); it.hasNext(); ) {\n", fieldMetadata.getJavaTypeName(), f);
                   iw.inc();
-                  iw.append("final ").append(fieldMetadata.getJavaTypeName()).append(' ').append(v).append(" = (").append(fieldMetadata.getJavaTypeName()).append(") it.next();\n");
+                  iw.printf("final %s %s = it.next();\n", fieldMetadata.getJavaTypeName(), v);
                }
             }
-            switch (fieldMetadata.getProtobufType()) {
-               case DOUBLE:
-               case FLOAT:
-               case INT64:
-               case UINT64:
-               case INT32:
-               case FIXED64:
-               case FIXED32:
-               case BOOL:
-               case STRING:
-               case BYTES:
-               case UINT32:
-               case SFIXED32:
-               case SFIXED64:
-               case SINT32:
-               case SINT64: {
-                  iw.append("$out.").append(makeStreamIOMethodName(fieldMetadata, true)).append("(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(unbox(v, fieldMetadata.getJavaType())).append(");\n");
-                  break;
-               }
-               case GROUP: {
-                  iw.append("{\n");
-                  iw.inc();
-                  String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-                  iw.append("$out.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_START_GROUP);\n");
-                  iw.append("writeMessage(").append(mdField).append(", $1, ").append(v).append(");\n");
-                  iw.append("$out.writeTag(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(PROTOSTREAM_PACKAGE).append(".impl.WireFormat.WIRETYPE_END_GROUP);\n");
-                  iw.dec();
-                  iw.append("}\n");
-                  break;
-               }
-               case MESSAGE: {
-                  iw.append("{\n");
-                  iw.inc();
-                  String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-                  iw.append("writeNestedMessage(").append(mdField).append(", $1, ").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(v).append(");\n");
-                  iw.dec();
-                  iw.append("}\n");
-                  break;
-               }
-               case ENUM: {
-                  iw.append("{\n");
-                  iw.inc();
-                  String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-                  iw.append("$out.writeEnum(").append(String.valueOf(fieldMetadata.getNumber())).append(", ").append(mdField).append(".getMarshaller().encode(").append(v).append("));\n");
-                  iw.dec();
-                  iw.append("}\n");
-                  break;
-               }
-               default:
-                  throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
+            if (!fieldMetadata.isMap()) {
+               writeFieldValue(fieldMetadata, iw, v);
             }
             if (fieldMetadata.isRepeated()) {
-               iw.dec();
-               iw.append("}\n");
+               iw.dec().println("}");
                iw.dec();
             }
-            iw.dec();
-            iw.append("}\n");
+            iw.dec().println("}");
          }
 
          if (getUnknownFieldSetFieldStatement != null) {
-            iw.append("{\n").inc();
-            iw.append(PROTOSTREAM_PACKAGE).append(".UnknownFieldSet u = ").append(getUnknownFieldSetFieldStatement).append(";\n");
-            iw.append("if (u != null && !u.isEmpty()) u.writeTo($out);\n");
-            iw.dec().append("}\n");
+            iw.println("{");
+            iw.inc();
+            iw.printf("%s.UnknownFieldSet u = %s;\n", PROTOSTREAM_PACKAGE, getUnknownFieldSetFieldStatement);
+            iw.println("if (u != null && !u.isEmpty()) u.writeTo($out);");
+            iw.dec().println("}");
          }
-
-         iw.dec();
       }
+   }
 
-      iw.append("}\n");
-      return iw.toString();
+   private void writeFieldValue(ProtoFieldMetadata fieldMetadata, IndentWriter iw, String v) {
+      writeFieldValue(fieldMetadata, iw, v, "$out");
+   }
+
+   private void writeFieldValue(ProtoFieldMetadata fieldMetadata, IndentWriter iw, String v, String out) {
+      switch (fieldMetadata.getProtobufType()) {
+         case DOUBLE:
+         case FLOAT:
+         case INT64:
+         case UINT64:
+         case INT32:
+         case FIXED64:
+         case FIXED32:
+         case BOOL:
+         case STRING:
+         case BYTES:
+         case UINT32:
+         case SFIXED32:
+         case SFIXED64:
+         case SINT32:
+         case SINT64: {
+            iw.printf("%s.%s(%d, %s);\n", out, makeStreamIOMethodName(fieldMetadata, true), fieldMetadata.getNumber(), unbox(v, fieldMetadata.getJavaType()));
+            break;
+         }
+         case GROUP: {
+            iw.println("{");
+            iw.inc();
+            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            iw.printf("%s.writeTag(%d, %s.impl.WireFormat.WIRETYPE_START_GROUP);\n", out, fieldMetadata.getNumber(), PROTOSTREAM_PACKAGE);
+            iw.printf("writeMessage(%s, $1, %s);\n", mdField, v);
+            iw.printf("%s.writeTag(%d, %s.impl.WireFormat.WIRETYPE_END_GROUP);\n", out, fieldMetadata.getNumber(), PROTOSTREAM_PACKAGE);
+            iw.dec();
+            iw.println("}");
+            break;
+         }
+         case MESSAGE: {
+            iw.println("{");
+            iw.inc();
+            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            iw.printf("writeNestedMessage(%s, $1, %d, %s);\n", mdField, fieldMetadata.getNumber(), v);
+            iw.dec();
+            iw.println("}");
+            break;
+         }
+         case ENUM: {
+            iw.println("{");
+            iw.inc();
+            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            iw.printf("%s.writeEnum(%d, %s.getMarshaller().encode(%s));\n", out, fieldMetadata.getNumber(), mdField, v);
+            iw.dec();
+            iw.println("}");
+            break;
+         }
+         default:
+            throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
+      }
    }
 
    private String initMarshallerDelegateField(IndentWriter iw, ProtoFieldMetadata fieldMetadata) {
       String fieldName = makeMarshallerDelegateFieldName(fieldMetadata);
-      iw.append("if (").append(fieldName).append(" == null) ").append(fieldName).append(" = ");
+      iw.printf("if (%s == null) %s = ", fieldName, fieldName);
       if (fieldMetadata.getJavaType().isEnum()) {
-         iw.append("(").append(PROTOSTREAM_PACKAGE).append(".impl.EnumMarshallerDelegate) ");
+         iw.printf("(%s.impl.EnumMarshallerDelegate)", PROTOSTREAM_PACKAGE);
       }
-      iw.append("((").append(PROTOSTREAM_PACKAGE)
-            .append(".impl.SerializationContextImpl) $1.getSerializationContext()).getMarshallerDelegate(")
-            .append(fieldMetadata.getJavaTypeName()).append(".class);\n");
+      iw.printf("((%s.impl.SerializationContextImpl) $1.getSerializationContext()).getMarshallerDelegate(%s.class);\n", PROTOSTREAM_PACKAGE, fieldMetadata.getJavaTypeName());
       return fieldName;
    }
 
    private String makeStreamIOMethodName(ProtoFieldMetadata fieldMetadata, boolean isWrite) {
-      String suffix;
-      switch (fieldMetadata.getProtobufType()) {
-         case DOUBLE:
-            suffix = "Double";
-            break;
-         case FLOAT:
-            suffix = "Float";
-            break;
-         case INT64:
-            suffix = "Int64";
-            break;
-         case UINT64:
-            suffix = "UInt64";
-            break;
-         case INT32:
-            suffix = "Int32";
-            break;
-         case FIXED64:
-            suffix = "Fixed64";
-            break;
-         case FIXED32:
-            suffix = "Fixed32";
-            break;
-         case BOOL:
-            suffix = "Bool";
-            break;
-         case STRING:
-            suffix = "String";
-            break;
-         case GROUP:
-            suffix = "Group";
-            break;
-         case MESSAGE:
-            suffix = "Message";
-            break;
-         case BYTES:
-            suffix = isWrite ? "Bytes" : "ByteArray";
-            break;
-         case UINT32:
-            suffix = "UInt32";
-            break;
-         case ENUM:
-            suffix = "Enum";
-            break;
-         case SFIXED32:
-            suffix = "SFixed32";
-            break;
-         case SFIXED64:
-            suffix = "SFixed64";
-            break;
-         case SINT32:
-            suffix = "SInt32";
-            break;
-         case SINT64:
-            suffix = "SInt64";
-            break;
-         default:
-            throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
-      }
+      String suffix = switch (fieldMetadata.getProtobufType()) {
+         case DOUBLE -> "Double";
+         case FLOAT -> "Float";
+         case INT64 -> "Int64";
+         case UINT64 -> "UInt64";
+         case INT32 -> "Int32";
+         case FIXED64 -> "Fixed64";
+         case FIXED32 -> "Fixed32";
+         case BOOL -> "Bool";
+         case STRING -> "String";
+         case GROUP -> "Group";
+         case MESSAGE -> "Message";
+         case MAP -> "Map";
+         case BYTES -> isWrite ? "Bytes" : "ByteArray";
+         case UINT32 -> "UInt32";
+         case ENUM -> "Enum";
+         case SFIXED32 -> "SFixed32";
+         case SFIXED64 -> "SFixed64";
+         case SINT32 -> "SInt32";
+         case SINT64 -> "SInt64";
+      };
 
       return (isWrite ? "write" : "read") + suffix;
    }
 
    /**
-    * Cast the given value if necessary. This is usually needed for the types that we are forced to represent as 32 bit
+    * Cast the given value if necessary. This is usually needed for the types that we are forced to represent as 32-bit
     * integers because of Protobuf's lack of support for integral types of 8 and 16 bits.
     */
    private String convert(String v, ProtoFieldMetadata fieldMetadata) {
@@ -977,12 +1036,14 @@ public abstract class AbstractMarshallerCodeGenerator {
       if (fieldMetadata.getField() != null) {
          // TODO [anistor] complain if fieldMetadata.getProtoTypeMetadata().isAdapter() !
          setPropExpr.append(fieldMetadata.getField().getName()).append(" = ").append(value);
-      } else {
+      } else if (fieldMetadata.getSetter() != null) {
          setPropExpr.append(fieldMetadata.getSetter().getName()).append('(');
          if (messageTypeMetadata.isAdapter()) {
             setPropExpr.append(obj).append(", ");
          }
          setPropExpr.append(value).append(')');
+      } else {
+         setPropExpr.append("FIXME"); //Map
       }
       return setPropExpr.toString();
    }

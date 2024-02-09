@@ -47,7 +47,7 @@ public class User implements Externalizable {   // implement Externalizable just
    private long someLong = 34;
    private boolean someOtherBoolean;
 
-   @ProtoField(number = 1, required = true)
+   @ProtoField(number = 1, defaultValue = "0")
    public int getId() {
       return id;
    }
@@ -65,7 +65,7 @@ public class User implements Externalizable {   // implement Externalizable just
       this.accountIds = accountIds;
    }
 
-   @ProtoField(number = 3, required = true)
+   @ProtoField(number = 3)
    public String getName() {
       return name;
    }
@@ -74,7 +74,7 @@ public class User implements Externalizable {   // implement Externalizable just
       this.name = name;
    }
 
-   @ProtoField(number = 4, required = true)
+   @ProtoField(number = 4)
    public String getSurname() {
       return surname;
    }
@@ -83,7 +83,7 @@ public class User implements Externalizable {   // implement Externalizable just
       this.surname = surname;
    }
 
-   @ProtoField(number = 5, required = true)
+   @ProtoField(number = 5)
    public String getSalutation() {
       return salutation;
    }

@@ -42,17 +42,20 @@ public class SerializationContextImplTest {
    public void testRegisterProtoFiles() {
       SerializationContext ctx = createContext();
 
-      String file1 = "syntax = \"proto3\";\n" +
-            "package p;\n" +
-            "message A {\n" +
-            "   optional int32 f1 = 1;\n" +
-            "}";
+      String file1 = """
+            syntax = "proto3";
+            package p;
+            message A {
+               optional int32 f1 = 1;
+            }""";
 
-      String file2 = "package org.infinispan;\n" +
-            "import \"file1.proto\";\n" +
-            "message B {\n" +
-            "   required b.A ma = 1;\n" +
-            "}";
+      String file2 = """
+            syntax = "proto3";
+            package org.infinispan;
+            import "file1.proto";
+            message B {
+               required b.A ma = 1;
+            }""";
 
       Map<String, DescriptorParserException> failed = new HashMap<>();
       List<String> successful = new ArrayList<>();
@@ -76,7 +79,7 @@ public class SerializationContextImplTest {
       assertEquals(1, successful.size());
       DescriptorParserException exception = failed.get("file2.proto");
       assertNotNull(exception);
-      assertEquals("Failed to resolve type of field \"org.infinispan.B.ma\". Type not found : b.A", exception.getMessage());
+      assertEquals("IPROTO000013: Error while parsing 'file2.proto': 'required' fields are not allowed with syntax proto3", exception.getMessage());
       assertTrue(successful.contains("file1.proto"));
 
       Map<String, FileDescriptor> fileDescriptors = ctx.getFileDescriptors();
@@ -110,10 +113,12 @@ public class SerializationContextImplTest {
 
       SerializationContext ctx = createContext();
 
-      String file = "package test;\n" +
-            "message Color {\n" +
-            "   optional int32 color = 1;\n" +
-            "}";
+      String file = """
+            syntax = "proto3";
+            package test;
+            message Color {
+               optional int32 color = 1;
+            }""";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
       ctx.registerProtoFiles(fileDescriptorSource);
@@ -154,11 +159,13 @@ public class SerializationContextImplTest {
 
       SerializationContext ctx = createContext();
 
-      String file = "package test;\n" +
-            "enum Color {\n" +
-            "   GREEN = 1;\n" +
-            "   RED = 2;\n" +
-            "}";
+      String file = """
+            syntax = "proto3";
+            package test;
+            enum Color {
+               GREEN = 1;
+               RED = 2;
+            }""";
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
       ctx.registerProtoFiles(fileDescriptorSource);
@@ -191,10 +198,12 @@ public class SerializationContextImplTest {
    public void testMarshallerProvider() throws Exception {
       SerializationContext ctx = createContext();
 
-      String file = "package test;\n" +
-            "message X {\n" +
-            "   optional int32 f = 1;\n" +
-            "}";
+      String file = """
+            syntax = "proto3";
+            package test;
+            message X {
+               optional int32 f = 1;
+            }""";
 
       class X {
 
@@ -288,8 +297,8 @@ public class SerializationContextImplTest {
       assertEquals(2, errors.size());
       assertTrue(errors.containsKey("test1.proto"));
       assertTrue(errors.containsKey("test2.proto"));
-      assertEquals("java.lang.IllegalStateException: Syntax error in test1.proto at 1:9: unexpected label: kabooom1", errors.get("test1.proto").getMessage());
-      assertEquals("java.lang.IllegalStateException: Syntax error in test2.proto at 1:9: unexpected label: kabooom2", errors.get("test2.proto").getMessage());
+      assertEquals("Syntax error in test1.proto at 1:8: unexpected label: kabooom1", errors.get("test1.proto").getMessage());
+      assertEquals("Syntax error in test2.proto at 1:8: unexpected label: kabooom2", errors.get("test2.proto").getMessage());
       assertTrue(ctx.getFileDescriptors().containsKey("test1.proto"));
       assertTrue(ctx.getFileDescriptors().containsKey("test2.proto"));
       assertFalse(ctx.getFileDescriptors().get("test1.proto").isResolved());
@@ -339,9 +348,9 @@ public class SerializationContextImplTest {
       assertTrue(errors1.containsKey("test1.proto"));
       assertTrue(errors2.containsKey("test1.proto"));
       assertTrue(errors2.containsKey("test2.proto"));
-      assertEquals("java.lang.IllegalStateException: Syntax error in test1.proto at 1:9: unexpected label: kabooom1", errors1.get("test1.proto").getMessage());
-      assertEquals("java.lang.IllegalStateException: Syntax error in test1.proto at 1:9: unexpected label: kabooom1", errors2.get("test1.proto").getMessage());
-      assertEquals("java.lang.IllegalStateException: Syntax error in test2.proto at 1:9: unexpected label: kabooom2", errors2.get("test2.proto").getMessage());
+      assertEquals("Syntax error in test1.proto at 1:8: unexpected label: kabooom1", errors1.get("test1.proto").getMessage());
+      assertEquals("Syntax error in test1.proto at 1:8: unexpected label: kabooom1", errors2.get("test1.proto").getMessage());
+      assertEquals("Syntax error in test2.proto at 1:8: unexpected label: kabooom2", errors2.get("test2.proto").getMessage());
       assertTrue(ctx.getFileDescriptors().containsKey("test1.proto"));
       assertTrue(ctx.getFileDescriptors().containsKey("test2.proto"));
       assertFalse(ctx.getFileDescriptors().get("test1.proto").isResolved());
@@ -379,7 +388,7 @@ public class SerializationContextImplTest {
       assertTrue(successful.isEmpty());
       assertEquals(1, errors.size());
       assertTrue(errors.containsKey("test.proto"));
-      assertEquals("java.lang.IllegalStateException: Syntax error in test.proto at 1:8: unexpected label: kabooom", errors.get("test.proto").getMessage());
+      assertEquals("Syntax error in test.proto at 1:7: unexpected label: kabooom", errors.get("test.proto").getMessage());
       assertTrue(ctx.getFileDescriptors().containsKey("test.proto"));
       assertFalse(ctx.getFileDescriptors().get("test.proto").isResolved());
       ctx.unregisterProtoFile("test.proto");
@@ -416,7 +425,7 @@ public class SerializationContextImplTest {
          ctx.registerProtoFiles(source);
          fail("DescriptorParserException expected");
       } catch (DescriptorParserException e) {
-         assertEquals("java.lang.IllegalStateException: Syntax error in file1.proto at 1:5: unexpected label: this", e.getMessage());
+         assertEquals("Syntax error in file1.proto at 1:4: unexpected label: this", e.getMessage());
       }
 
       FileDescriptor fileDescriptor = ctx.getFileDescriptors().get("file1.proto");
@@ -443,16 +452,20 @@ public class SerializationContextImplTest {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate type id 100010 for type test2.M2. Already used by test1.M1");
 
-      String file1 = "package test1;\n" +
-            "/**@TypeId(100010)*/\n" +
-            "message M1 {\n" +
-            "   optional string a = 1;\n" +
-            "}";
-      String file2 = "package test2;\n" +
-            "/**@TypeId(100010)*/\n" +
-            "message M2 {\n" +
-            "   optional string b = 1;\n" +
-            "}";
+      String file1 = """
+            syntax = "proto3";
+            package test1;
+            /**@TypeId(100010)*/
+            message M1 {
+               string a = 1;
+            }""";
+      String file2 = """
+            syntax = "proto3";
+            package test2;
+            /**@TypeId(100010)*/
+            message M2 {
+               string b = 1;
+            }""";
 
       FileDescriptorSource source = new FileDescriptorSource()
             .addProtoFile("test1.proto", file1)
@@ -467,15 +480,16 @@ public class SerializationContextImplTest {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Duplicate type id 100010 for type test1.M2. Already used by test1.M1");
 
-      String file1 = "package test1;\n" +
-            "/**@TypeId(100010)*/\n" +
-            "message M1 {\n" +
-            "   optional string a = 1;\n" +
-            "}" +
-            "/**@TypeId(100010)*/\n" +
-            "message M2 {\n" +
-            "   optional string b = 1;\n" +
-            "}";
+      String file1 = """
+            syntax = "proto3";
+            package test1;
+            /**@TypeId(100010)*/
+            message M1 {
+               string a = 1;
+            }/**@TypeId(100010)*/
+            message M2 {
+               string b = 1;
+            }""";
 
       SerializationContext ctx = createContext();
       ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
@@ -486,13 +500,15 @@ public class SerializationContextImplTest {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
 
-      String file1 = "package test1;\n" +
-            "message M1 {\n" +
-            "  required string a = 1;\n" +
-            "}\n" +
-            "enum E1 {\n" +
-            "  M1 = 1;\n" +
-            "}";
+      String file1 = """
+            syntax = "proto3";
+            package test1;
+            message M1 {
+              string a = 1;
+            }
+            enum E1 {
+              M1 = 1;
+            }""";
 
       SerializationContext ctx = createContext();
       ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
@@ -503,10 +519,12 @@ public class SerializationContextImplTest {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
 
-      String file1 = "package test1;\n" +
-            "message M1 {\n" +
-            "  required string a = 1;\n" +
-            "}";
+      String file1 = """
+            syntax = "proto3";
+            package test1;
+            message M1 {
+              string a = 1;
+            }""";
 
       String file2 = "package test1;\n" +
             "enum E1 {\n" +
@@ -526,15 +544,19 @@ public class SerializationContextImplTest {
       exception.expect(DescriptorParserException.class);
       exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
 
-      String file1 = "package test1;\n" +
-            "message M1 {\n" +
-            "  required string a = 1;\n" +
-            "}";
+      String file1 = """
+            syntax = "proto3";
+            package test1;
+            message M1 {
+              string a = 1;
+            }""";
 
-      String file2 = "package test1;\n" +
-            "enum E1 {\n" +
-            "  M1 = 1;\n" +
-            "}";
+      String file2 = """
+            syntax = "proto3";
+            package test1;
+            enum E1 {
+              M1 = 1;
+            }""";
 
       SerializationContext ctx = createContext();
       ctx.registerProtoFiles(FileDescriptorSource.fromString("test_proto_path/file1.proto", file1));

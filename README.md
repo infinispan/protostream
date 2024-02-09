@@ -43,7 +43,7 @@ The following `pom.xml` snippet shows how to do it with Maven:
 <plugin>
    <groupId>org.apache.maven.plugins</groupId>
    <artifactId>maven-compiler-plugin</artifactId>
-   <version>3.11.0</version>
+   <version>3.12.1</version>
    <configuration>
       <compilerArgs>
          <arg>-Aprotostream-debug=true</arg>

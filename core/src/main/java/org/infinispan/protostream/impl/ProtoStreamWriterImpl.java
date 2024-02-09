@@ -14,6 +14,7 @@ import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
 import org.jboss.logging.Logger;
@@ -30,8 +31,6 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
     */
    private static final int CHUNK_SIZE = 4096;
 
-   private final TagWriterImpl ctx;
-
    private final SerializationContextImpl serCtx;
 
    private WriteMessageContext messageContext;
@@ -46,8 +45,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
    }
 
-   ProtoStreamWriterImpl(TagWriterImpl ctx, SerializationContextImpl serCtx) {
-      this.ctx = ctx;
+   ProtoStreamWriterImpl(SerializationContextImpl serCtx) {
       this.serCtx = serCtx;
    }
 
@@ -95,7 +93,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (value == null) {
-         if (fd.isRequired()) {
+         if (fd.getLabel() == Label.REQUIRED) {
             throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
@@ -192,7 +190,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (value == null) {
-         if (fd.isRequired()) {
+         if (fd.getLabel() == Label.REQUIRED) {
             throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
@@ -291,7 +289,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
       checkFieldWrite(fd);
       if (value == null) {
-         if (fd.isRequired()) {
+         if (fd.getLabel() == Label.REQUIRED) {
             throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
@@ -335,7 +333,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
       checkFieldWrite(fd);
       if (value == null) {
-         if (fd.isRequired()) {
+         if (fd.getLabel() == Label.REQUIRED) {
             throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
@@ -379,7 +377,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
       checkFieldWrite(fd);
       if (value == null) {
-         if (fd.isRequired()) {
+         if (fd.getLabel() == Label.REQUIRED) {
             throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
@@ -413,7 +411,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          throw new IllegalArgumentException("Declared field type is not of type string : " + fd.getFullName());
       }
       if (value == null) {
-         if (fd.isRequired()) {
+         if (fd.getLabel() == Label.REQUIRED) {
             throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
@@ -429,7 +427,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
          throw new IllegalArgumentException("Declared field type is not of type bytes : " + fd.getFullName());
       }
       if (value == null) {
-         if (fd.isRequired()) {
+         if (fd.getLabel() == Label.REQUIRED) {
             throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
@@ -472,7 +470,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       checkFieldWrite(fd);
       if (value == null) {
-         if (fd.isRequired()) {
+         if (fd.getLabel() == Label.REQUIRED) {
             throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;
@@ -501,7 +499,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       }
       checkFieldWrite(fd);
       if (value == null) {
-         if (fd.isRequired()) {
+         if (fd.getLabel() == Label.REQUIRED) {
             throw new IllegalArgumentException("A required field cannot be null : " + fd.getFullName());
          }
          return;

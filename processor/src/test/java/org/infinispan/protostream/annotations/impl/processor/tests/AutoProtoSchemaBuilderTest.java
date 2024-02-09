@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
@@ -28,6 +29,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoReserved.Range;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleEnum;
 import org.junit.Test;
@@ -38,7 +40,7 @@ public class AutoProtoSchemaBuilderTest {
    @ProtoName("NoteMsg")
    public static class Note {
 
-      @ProtoField(number = 1, required = true)
+      @ProtoField(number = 1, defaultValue = "false")
       boolean flag;
 
       private String text;
@@ -125,7 +127,6 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    @AutoProtoSchemaBuilder(schemaFileName = "TestFile.proto", schemaFilePath = "org/infinispan/protostream/generated_schemas", schemaPackageName = "firstTestPackage",
-         service = true,
          includeClasses = {
                Note.class,
                SimpleClass.class,
@@ -160,7 +161,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer", autoImportClasses = true,
-         basePackages = "org.infinispan.protostream.annotations.impl.processor", service = true)
+         basePackages = "org.infinispan.protostream.annotations.impl.processor", syntax = ProtoSyntax.PROTO3)
    abstract static class SecondInitializer implements GeneratedSchema {
       SecondInitializer() {
       }
@@ -198,7 +199,7 @@ public class AutoProtoSchemaBuilderTest {
 
    // Using a fully implemented initializer as a base is not the usual use case but some users might need this and we do support it.
    @AutoProtoSchemaBuilder(className = "NonAbstractInitializerImpl", autoImportClasses = true,
-         basePackages = "org.infinispan.protostream.annotations.impl.processor", service = true)
+         basePackages = "org.infinispan.protostream.annotations.impl.processor", syntax = ProtoSyntax.PROTO3)
    static class NonAbstractInitializer implements GeneratedSchema {
 
       @Override
@@ -234,10 +235,10 @@ public class AutoProtoSchemaBuilderTest {
       assertNotNull(found.getProtoFile());
    }
 
-   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, service = true)
+   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, syntax = ProtoSyntax.PROTO3)
    public interface DependentInitializer extends SerializationContextInitializer {
       class C {
-         @ProtoField(number = 1, required = true)
+         @ProtoField(number = 1)
          public boolean flag;
 
          @ProtoField(number = 2)
@@ -801,7 +802,7 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = MessageWithAllFieldTypes.class)
+   @AutoProtoSchemaBuilder(includeClasses = MessageWithAllFieldTypes.class, syntax = ProtoSyntax.PROTO3)
    interface AllFieldTypesInitializer extends SerializationContextInitializer {
    }
 
@@ -835,7 +836,7 @@ public class AutoProtoSchemaBuilderTest {
       @ProtoField(2)
       Integer[] testField2;
 
-      static class MyArrayList extends ArrayList {
+      static class MyArrayList extends ArrayList<Integer> {
       }
 
       @ProtoField(number = 3, collectionImplementation = MyArrayList.class)
@@ -856,6 +857,14 @@ public class AutoProtoSchemaBuilderTest {
       Inner[] testField9;
 
       List<Inner> testField10;
+
+      @ProtoField(number = 11)
+      Map<String, String> testField11;
+
+      Map<String, String> testField12;
+
+      @ProtoField(number = 13)
+      Map<String, Inner> testField13;
 
       @ProtoField(6)
       public int[] getTestField6() {
@@ -902,14 +911,23 @@ public class AutoProtoSchemaBuilderTest {
          this.testField10 = testField10;
       }
 
+      @ProtoField(12)
+      public Map<String, String> getTestField12() {
+         return testField12;
+      }
+
+      public void setTestField12(Map<String, String> testField12) {
+         this.testField12 = testField12;
+      }
+
       static class Inner {
 
-         @ProtoField(number = 1, required = true)
+         @ProtoField(number = 1)
          int intField;
       }
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = {MessageWithRepeatedFields.class, MessageWithRepeatedFields.Inner.class})
+   @AutoProtoSchemaBuilder(includeClasses = {MessageWithRepeatedFields.class, MessageWithRepeatedFields.Inner.class}, syntax = ProtoSyntax.PROTO3)
    interface NonNullRepeatedFieldsInitializer extends SerializationContextInitializer {
    }
 
@@ -1143,7 +1161,7 @@ public class AutoProtoSchemaBuilderTest {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             CustomKey customKey = (CustomKey) o;
-            return key != null ? key.equals(customKey.key) : customKey.key == null;
+            return Objects.equals(key, customKey.key);
          }
 
          @Override
@@ -1325,7 +1343,7 @@ public class AutoProtoSchemaBuilderTest {
          includeClasses = {
                GenericMessage.class,
                GenericMessage.OtherMessage.class
-         }
+         }, syntax = ProtoSyntax.PROTO3
    )
    interface TestGenericMessageSerializationContextInitializer extends GeneratedSchema {
    }

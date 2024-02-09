@@ -21,22 +21,22 @@ public class Numerics {
       this.simpleDouble = simpleDouble;
    }
 
-   @ProtoField(number = 1, defaultValue = "0")
+   @ProtoField(number = 1)
    byte simpleByte;
 
-   @ProtoField(number = 2, defaultValue = "0")
+   @ProtoField(number = 2)
    short simpleShort;
 
-   @ProtoField(number = 3, defaultValue = "0")
+   @ProtoField(number = 3)
    int simpleInt;
 
-   @ProtoField(number = 4, defaultValue = "0")
+   @ProtoField(number = 4)
    long simpleLong;
 
-   @ProtoField(number = 5, defaultValue = "0")
+   @ProtoField(number = 5)
    float simpleFloat;
 
-   @ProtoField(number = 6, defaultValue = "0")
+   @ProtoField(number = 6)
    double simpleDouble;
 
    public byte simpleByte() {

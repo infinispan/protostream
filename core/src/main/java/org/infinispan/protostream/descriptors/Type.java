@@ -43,7 +43,9 @@ public enum Type {
 
    MESSAGE(JavaType.MESSAGE, WireType.LENGTH_DELIMITED),
 
-   ENUM(JavaType.ENUM, WireType.VARINT);
+   ENUM(JavaType.ENUM, WireType.VARINT),
+
+   MAP(JavaType.MAP, WireType.LENGTH_DELIMITED);
 
    private final JavaType javaType;
 
@@ -58,41 +60,26 @@ public enum Type {
     * If the type name is a primitive, it returns the corresponding enum constant, otherwise it returns {@code null}.
     */
    public static Type primitiveFromString(String typeName) {
-      switch (typeName) {
-         case "double":
-            return DOUBLE;
-         case "float":
-            return FLOAT;
-         case "int64":
-            return INT64;
-         case "uint64":
-            return UINT64;
-         case "sint64":
-            return SINT64;
-         case "fixed64":
-            return FIXED64;
-         case "sfixed64":
-            return SFIXED64;
-         case "int32":
-            return INT32;
-         case "uint32":
-            return UINT32;
-         case "sint32":
-            return SINT32;
-         case "fixed32":
-            return FIXED32;
-         case "sfixed32":
-            return SFIXED32;
-         case "bool":
-            return BOOL;
-         case "string":
-            return STRING;
-         case "bytes":
-            return BYTES;
-         default:
+      return switch (typeName) {
+         case "double" -> DOUBLE;
+         case "float" -> FLOAT;
+         case "int64" -> INT64;
+         case "uint64" -> UINT64;
+         case "sint64" -> SINT64;
+         case "fixed64" -> FIXED64;
+         case "sfixed64" -> SFIXED64;
+         case "int32" -> INT32;
+         case "uint32" -> UINT32;
+         case "sint32" -> SINT32;
+         case "fixed32" -> FIXED32;
+         case "sfixed32" -> SFIXED32;
+         case "bool" -> BOOL;
+         case "string" -> STRING;
+         case "bytes" -> BYTES;
+         default ->
             // unknown type, not a primitive for sure
-            return null;
-      }
+               null;
+      };
    }
 
    public JavaType getJavaType() {
@@ -111,6 +98,13 @@ public enum Type {
             this == UINT64 ||
             this == FIXED32 ||
             this == FIXED64;
+   }
+
+   public boolean isValidMapKey() {
+      return switch (this) {
+         case UINT32, UINT64, SINT32, SINT64, SFIXED32, SFIXED64, INT32, INT64, STRING, BOOL, FIXED32, FIXED64 -> true;
+         default -> false;
+      };
    }
 
    @Override

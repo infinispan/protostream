@@ -115,53 +115,24 @@ public final class ProtobufParser {
                      tagHandler.onTag(fieldNumber, null, in.readUInt64());
                   }
                } else {
-                  Object value;
-                  switch (fd.getType()) {
-                     case DOUBLE:
-                        value = in.readDouble();
-                        break;
-                     case FLOAT:
-                        value = in.readFloat();
-                        break;
-                     case BOOL:
-                        value = in.readBool();
-                        break;
-                     case INT32:
-                        value = in.readInt32();
-                        break;
-                     case SFIXED32:
-                        value = in.readSFixed32();
-                        break;
-                     case FIXED32:
-                        value = in.readFixed32();
-                        break;
-                     case UINT32:
-                        value = in.readUInt32();
-                        break;
-                     case SINT32:
-                        value = in.readSInt32();
-                        break;
-                     case INT64:
-                        value = in.readInt64();
-                        break;
-                     case UINT64:
-                        value = in.readUInt64();
-                        break;
-                     case FIXED64:
-                        value = in.readFixed64();
-                        break;
-                     case SFIXED64:
-                        value = in.readSFixed64();
-                        break;
-                     case SINT64:
-                        value = in.readSInt64();
-                        break;
-                     case ENUM:
-                        value = in.readEnum();
-                        break;
-                     default:
-                        throw new IOException("Unexpected field type " + fd.getType() + " for field " + fieldNumber);
-                  }
+                  Object value = switch (fd.getType()) {
+                     case DOUBLE -> in.readDouble();
+                     case FLOAT -> in.readFloat();
+                     case BOOL -> in.readBool();
+                     case INT32 -> in.readInt32();
+                     case SFIXED32 -> in.readSFixed32();
+                     case FIXED32 -> in.readFixed32();
+                     case UINT32 -> in.readUInt32();
+                     case SINT32 -> in.readSInt32();
+                     case INT64 -> in.readInt64();
+                     case UINT64 -> in.readUInt64();
+                     case FIXED64 -> in.readFixed64();
+                     case SFIXED64 -> in.readSFixed64();
+                     case SINT64 -> in.readSInt64();
+                     case ENUM -> in.readEnum();
+                     default ->
+                           throw new IOException("Unexpected field type " + fd.getType() + " for field " + fieldNumber);
+                  };
                   tagHandler.onTag(fieldNumber, fd, value);
                }
                break;

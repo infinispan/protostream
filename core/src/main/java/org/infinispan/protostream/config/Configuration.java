@@ -78,6 +78,8 @@ public interface Configuration {
 
       Builder setLogOutOfSequenceWrites(boolean logOutOfSequenceWrites);
 
+      Builder setLenient(boolean lenient);
+
       Builder maxNestedMessageDepth(int maxNestedMessageDepth);
 
       AnnotationsConfig.Builder annotationsConfig();

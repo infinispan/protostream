@@ -31,7 +31,7 @@ public class TestArraysAndCollectionsClass2 {
       this.anInt1 = anInt1;
    }
 
-   @ProtoField(number = 2, defaultValue = "0")
+   @ProtoField(number = 2)
    public int getAnInt2() {
       return anInt2;
    }

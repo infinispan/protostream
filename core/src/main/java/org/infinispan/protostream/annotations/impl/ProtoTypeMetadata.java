@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.config.Configuration;
@@ -125,6 +126,7 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
     * This is only for enums.
     */
    public abstract ProtoEnumValueMetadata getEnumMemberByName(String name);
+   public abstract ProtoEnumValueMetadata getEnumMemberByNumber(int number);
 
    public final ProtoMessageTypeMetadata getOuterType() {
       return outerType;
@@ -135,7 +137,7 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
    }
 
    @Override
-   public void generateProto(IndentWriter iw) {
+   public void generateProto(IndentWriter iw, ProtoSyntax syntax) {
       // subclasses must override this
    }
 

@@ -78,7 +78,7 @@ public class Note {
    }
 
    @Field
-   @ProtoField(number = 7, required = true)
+   @ProtoField(number = 7)
    public byte[] getBlurb() {
       return blurb;
    }

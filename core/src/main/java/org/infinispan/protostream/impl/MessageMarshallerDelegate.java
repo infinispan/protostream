@@ -75,16 +75,6 @@ final class MessageMarshallerDelegate<T> extends BaseMarshallerDelegate<T> {
          unknownFieldSet.writeTo(messageContext.out);
       }
 
-      // validate that all the required fields were written either by the marshaller or by the UnknownFieldSet
-      for (FieldDescriptor fd : fieldDescriptors) {
-         if (fd.isRequired() && !messageContext.isFieldMarked(fd.getNumber())
-               && (unknownFieldSet == null || !unknownFieldSet.hasTag(fd.getWireTag()))) {
-            throw new IllegalStateException("Required field \"" + fd.getFullName()
-                  + "\" should have been written by a calling a suitable method of "
-                  + MessageMarshaller.ProtoStreamWriter.class.getCanonicalName());
-         }
-      }
-
       writer.exitContext();
    }
 
@@ -100,15 +90,6 @@ final class MessageMarshallerDelegate<T> extends BaseMarshallerDelegate<T> {
 
       if (unknownFieldSetHandler != null && !unknownFieldSet.isEmpty()) {
          unknownFieldSetHandler.setUnknownFieldSet(message, unknownFieldSet);
-      }
-
-      // check that all required fields were seen in the stream, even if not actually read (because are unknown)
-      for (FieldDescriptor fd : fieldDescriptors) {
-         if (fd.isRequired()
-               && !messageContext.isFieldMarked(fd.getNumber())
-               && !unknownFieldSet.hasTag(fd.getWireTag())) {
-            throw new IOException("Required field \"" + fd.getFullName() + "\" was not encountered in the stream");
-         }
       }
 
       reader.exitContext();

@@ -1,3 +1,5 @@
+syntax = "proto3";
+
 package sample_bank_account;
 
 
@@ -11,7 +13,7 @@ message User {
     * @Field(store = Store.YES)
     * @SortableField
     */
-   required int32 id = 1;
+   int32 id = 1;
 
    /**
     * @Field(store = Store.YES)
@@ -22,7 +24,7 @@ message User {
     * @Field(store = Store.YES)
     * @SortableField
     */
-   required string name = 3;
+   string name = 3;
 
    /**
     * @Field(store = Store.YES, indexNullAs = "_null_")
@@ -43,19 +45,19 @@ message User {
       /**
        * @Field(store = Store.YES)
        */
-      required string street = 1;
+      string street = 1;
 
       /**
        * @Field(store = Store.YES)
        */
-      required string postCode = 2;
+      string postCode = 2;
 
       /**
        * @Field(store = Store.YES)
        */
-      required int32 number = 3;
+      int32 number = 3;
 
-      required bool isCommercial = 4;
+      bool isCommercial = 4;
    }
 
    /**
@@ -73,6 +75,7 @@ message User {
    enum Gender {
       MALE = 0;    //NOTE: It seems negative values are accepted too!
       FEMALE = 1;
+      UNSPECIFIED = 2;
    }
 
    /**
@@ -97,24 +100,30 @@ message User {
  * @Indexed
  */
 message Account {
+   reserved "gamma";
+   reserved "alpha", "beta";
+   reserved 8;
+   reserved 10, 11;
+   reserved 13 to 15;
+   reserved 17, 19 to 20, 22;
 
    /**
     * @Field(store = Store.YES)
     * @SortableField
     */
-   required int32 id = 1;
+   int32 id = 1;
 
    /**
     * @Field(store = Store.YES)
     * @SortableField
     */
-   optional string description = 2 [default = "Checking account"];
+   optional string description = 2;// [default = "Checking account"];
 
    /**
     * @Field(store = Store.YES)
     * @SortableField
     */
-   required fixed64 creationDate = 3;
+   fixed64 creationDate = 3;
 
    /**
     * @Indexed
@@ -145,7 +154,7 @@ message Account {
    /**
     * @Field(store = Store.YES)
     */
-   required Limits hardLimits = 5;
+   Limits hardLimits = 5;
 
    /**
     * @Field(store = Store.YES)
@@ -173,7 +182,7 @@ message Transaction {
     * @Field(store = Store.YES)
     * @SortableField
     */
-   required int32 id = 1;
+   int32 id = 1;
 
    /**
     * @Field
@@ -196,28 +205,34 @@ message Transaction {
    /**
     * @Field(store = Store.YES)
     */
-   required int32 accountId = 5;
+   int32 accountId = 5;
 
    /**
     * @Field(store = Store.YES)
     */
-   required fixed64 date = 6;  // there is no native Date type in protobuf so we have to store it as a long
+   fixed64 date = 6;  // there is no native Date type in protobuf so we have to store it as a long
 
    /**
     * @Field(store = Store.YES)
     * @SortableField
     */
-   required double amount = 7; // how do I store a BigDecimal? maybe as a byte array ..
+   double amount = 7; // how do I store a BigDecimal? maybe as a byte array ..
 
    /**
     * @Field(store = Store.YES)
     */
-   required bool isDebit = 8;
+   bool isDebit = 8;
 
    /**
     * No annotations here. This is left unindexed on purpose.
     */
-   required bool isValid = 9;
+   bool isValid = 9;
+
+   oneof choice {
+      string one = 10;
+      int32 or_the_other = 11;
+   }
+
 }
 
 message Numerics {
@@ -265,6 +280,15 @@ message int_array {
  */
 message user_list {
    repeated User theList = 1;
+}
+
+/**
+ * identifiers using protobuf keywords
+ */
+message message {
+   bool true = 1;
+   int32 map = 2;
+   string message = 3;
 }
 
 //todo demonstrate collection of 'any'

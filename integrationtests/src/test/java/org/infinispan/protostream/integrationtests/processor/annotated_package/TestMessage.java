@@ -8,6 +8,6 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public class TestMessage {
 
-   @ProtoField(number = 1, required = true)
+   @ProtoField(number = 1)
    boolean flag;
 }

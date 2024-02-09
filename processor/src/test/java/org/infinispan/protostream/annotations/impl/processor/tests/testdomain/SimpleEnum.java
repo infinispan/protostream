@@ -14,7 +14,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoName("SimpleEnumABC")
 public enum SimpleEnum {
 
-   @ProtoEnumValue(value = 4, name = "AX")
+   @ProtoEnumValue(value = 0, name = "AX")
    A,
 
    @ProtoEnumValue(value = 2, name = "BX")

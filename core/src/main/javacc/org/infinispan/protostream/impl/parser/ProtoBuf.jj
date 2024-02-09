@@ -1,0 +1,409 @@
+options {
+   STATIC=false;
+   SANITY_CHECK=true;
+   DEBUG_PARSER=false;
+   DEBUG_TOKEN_MANAGER=false;
+}
+
+PARSER_BEGIN(ProtoParser)
+
+package org.infinispan.protostream.impl.parser;
+
+import static org.infinispan.protostream.descriptors.FileDescriptor.fullName;
+
+import java.io.Reader;
+import java.util.regex.Pattern;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.EnumContainer;
+import org.infinispan.protostream.descriptors.EnumDescriptor;
+import org.infinispan.protostream.descriptors.EnumValueDescriptor;
+import org.infinispan.protostream.descriptors.FieldContainer;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.descriptors.Label;
+import org.infinispan.protostream.descriptors.MapDescriptor;
+import org.infinispan.protostream.descriptors.MessageContainer;
+import org.infinispan.protostream.descriptors.OneOfDescriptor;
+import org.infinispan.protostream.descriptors.Option;
+import org.infinispan.protostream.descriptors.OptionContainer;
+import org.infinispan.protostream.descriptors.ReservedContainer;
+
+/**
+* <a href="https://protobuf.dev/reference/protobuf/proto3-spec/">Protocol Buffers</a> parser.
+*/
+public class ProtoParser {
+   static final Pattern DECOMMENTIFY = Pattern.compile("(\\s*\\*+\\/|^([ \\t]*\\/\\*+|[ \\t]*\\*[ \\t]*))", Pattern.MULTILINE);
+
+   private Configuration configuration;
+   private FileDescriptor.Syntax syntax = FileDescriptor.Syntax.PROTO2;
+
+   static FileDescriptor parse(String fileName, Reader reader, Configuration configuration) throws ParseException {
+      ProtoParser parser = new ProtoParser(reader);
+      parser.configuration = configuration;
+      FileDescriptor.Builder f = parser.Proto();
+      f.withName(fileName);
+      return f.build();
+   }
+
+   static void appendComment(StringBuilder s) {
+      ProtostreamProtoParser.comments.get().append(s);
+   }
+
+   static String comment() {
+      String s = ProtostreamProtoParser.comments.get().toString();
+      ProtostreamProtoParser.comments.remove();
+      return DECOMMENTIFY.matcher(s).replaceAll("").trim();
+   }
+
+   static String unquote(String s) {
+      return s.charAt(0) == '"' ? s.substring(1, s.length() - 1) : s;
+   }
+
+   static String unquote(Token t) {
+      return unquote(t.image);
+   }
+
+   static int toInt(Token t) {
+      return Integer.parseInt(t.image);
+   }
+}
+
+PARSER_END(ProtoParser)
+
+<*> SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+| <"//" (~["\n","\r"])* ("\n" | "\r" | "\r\n")> { ProtoParser.appendComment(image); }
+| <"/*" (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")* "/"> { ProtoParser.appendComment(image); }
+}
+
+
+<DEFAULT> TOKEN :
+{
+  <STRLIT: "\"" ( ~["\""] )* "\"" >
+| <SEMI_COLON: ";">
+| <COLON: ":">
+| <COMMA: ",">
+| <DOT: ".">
+| <TO: "to">
+| <LBRACE: "{">
+| <RBRACE: "}">
+| <LPAREN: "(">
+| <RPAREN: ")">
+| <LBRACKET: "[">
+| <RBRACKET: "]">
+| <LT: "<">
+| <GT: ">">
+| <SYNTAX: "syntax">
+| <BOOLEAN: "true" | "false">
+| <ATTRIBUTE: "optional"
+            | "repeated"
+            | "required"> : IDSTATE
+| <OPTION: "option"> : IDSTATE
+| <IMPORT: "import">
+| <PUBLIC: "public">
+| <WEAK: "weak">
+| <PACKAGE: "package"> : IDSTATE
+| <SERVICE: "service">
+| <MAX: "max">
+| <MESSAGE: "message"> : IDSTATE
+| <ENUM: "enum"> : IDSTATE
+| <ONEOF: "oneof"> : IDSTATE
+| <MAP: "map">
+| <RESERVED: "reserved">
+| <RETURNS: "returns">
+| <STREAM: "stream">
+| <RPC: "rpc">
+| <NUMBER: "0" | (["-"])?["1"-"9"](["0"-"9"])* | "max">
+| <DOUBLE: ("0" | (["-"])?["1"-"9"](["0"-"9"])*) "." (["0"-"9"])*>
+}
+
+<DEFAULT, IDSTATE> TOKEN : {
+   <EQ: "="> : DEFAULT
+|  <IDENT: ["_","a"-"z","A"-"Z"] (["_","a"-"z","A"-"Z","0"-"9"])*> : DEFAULT
+| <FULLIDENT: ["_","a"-"z","A"-"Z"] (["_","a"-"z","A"-"Z","0"-"9"])* ("." ["_","a"-"z","A"-"Z"] (["_","a"-"z","A"-"Z","0"-"9"])*)+ > : DEFAULT
+}
+
+FileDescriptor.Builder Proto() : {
+    FileDescriptor.Builder f = new FileDescriptor.Builder();
+}
+{
+    [ Syntax(f) ] (Import(f) | Package(f) | Option(f) | TopLevelDef(f) | EmptyStatement() )* <EOF> { return f; }
+}
+
+void EmptyStatement() : {}
+{
+    <SEMI_COLON>
+}
+
+void TopLevelDef(FileDescriptor.Builder f) : {}
+{
+    Message(f) | Enum(f) | Service(f)
+}
+
+void Syntax(FileDescriptor.Builder f) : {
+    Token t;
+    comment(); // Discard comments
+}
+{
+    <SYNTAX> <EQ> t = <STRLIT> <SEMI_COLON> { syntax = FileDescriptor.Syntax.fromString(unquote(t)); f.withSyntax(syntax); }
+}
+
+void Import(FileDescriptor.Builder f) : {
+    boolean pub = false;
+    Token t;
+    comment(); // Discard comments
+}
+{
+    <IMPORT> [ <WEAK> | <PUBLIC> { pub = true; } ] t = <STRLIT> <SEMI_COLON> { if (pub) f.addPublicDependency(unquote(t)); else f.addDependency(unquote(t)); }
+}
+
+void Package(FileDescriptor.Builder f) : {
+    Token t;
+    comment(); // Discard comments
+}
+{
+    <PACKAGE> ( t = <IDENT> | t = <FULLIDENT>) <SEMI_COLON> { f.withPackageName(t.image); }
+}
+
+void Option(OptionContainer o) : {
+   String name;
+   String value;
+}
+{
+    <OPTION> name = OptionName() <EQ> value = Constant() <SEMI_COLON> { o.addOption(new Option(name, value)); }
+}
+
+void Enum(EnumContainer c) : {
+   EnumDescriptor.Builder e = new EnumDescriptor.Builder().withDocumentation(comment());
+   String name;
+}
+{
+    <ENUM> name = EnumName() EnumBody(e) { c.addEnum(e.withName(name)); }
+}
+
+void EnumBody(EnumDescriptor.Builder e) : {}
+{
+    <LBRACE> ( Option(e) | EnumField(e) | EmptyStatement() | Reserved(e) )+ <RBRACE>
+}
+
+void EnumField(EnumDescriptor.Builder e) : {
+   EnumValueDescriptor.Builder v = new EnumValueDescriptor.Builder().withDocumentation(comment());
+   Token t;
+}
+{
+    t = <IDENT> { v.withName(t.image); }<EQ> t = <NUMBER> { v.withTag(toInt(t)); } [ <LBRACKET> EnumValueOption(v) ( <COMMA> EnumValueOption(v) )* <RBRACKET> ] { e.addValue(v); }
+}
+
+void EnumValueOption(OptionContainer c) : {
+   String name;
+   String value;
+}
+{
+    name = OptionName() <EQ> value = Constant() { c.addOption(new Option(name, value)); }
+}
+
+void Field(FieldContainer c) : {
+   FieldDescriptor.Builder f = new FieldDescriptor.Builder().withDocumentation(comment());
+   String type;
+   Token label;
+   String name;
+   Token number;
+}
+{
+    [ label = <ATTRIBUTE> { f.withLabel(Label.fromString(label.image, syntax)); } ] type = Type() name = FieldName() <EQ> number = <NUMBER> [ <LBRACKET> FieldOptions(f) <RBRACKET> ] <SEMI_COLON> { c.addField(f.withTypeName(type).withName(name).withNumber(toInt(number))); }
+}
+
+void FieldOptions(OptionContainer c) : {}
+{
+    FieldOption(c) ( <COMMA> FieldOption(c) )*
+}
+
+void FieldOption(OptionContainer c) : {
+   Token name;
+   String value;
+}
+{
+    (name = <IDENT> | name = <FULLIDENT>) <EQ> value = Constant() { c.addOption(new Option(name.image, value)); }
+}
+
+void MapField(Descriptor.Builder c) : {
+   MapDescriptor.Builder m = new MapDescriptor.Builder();
+   m.withDocumentation(comment());
+   String keyType;
+   String valueType;
+   String name;
+   Token number;
+}
+{
+    <MAP> <LT> keyType = Type() <COMMA> valueType = Type() <GT> name = MapName() <EQ> number = <NUMBER> [ <LBRACKET> FieldOptions(m) <RBRACKET> ] <SEMI_COLON>
+    {
+      m.withKeyTypeName(keyType).withValueTypeName(valueType).withName(name).withNumber(toInt(number));
+      c.addMap(m);
+    }
+}
+
+void Message(MessageContainer c) : {
+   Descriptor.Builder m = new Descriptor.Builder().withDocumentation(comment());
+   String name;
+}
+{
+    <MESSAGE> name = MessageName() { m.withName(name).withFullName(fullName(c.getFullName(), name)); } MessageBody(m) { c.addMessage(m); }
+}
+
+void MessageBody(Descriptor.Builder m) : {}
+{
+    <LBRACE> ( Field(m) | Enum(m) | Message(m) | Option(m) | OneOf(m) | MapField(m) | Reserved(m) | EmptyStatement() )* <RBRACE>
+}
+
+void MessageValue() : {}
+{
+    <LBRACE> Message(null) <RBRACE> | <LT> Message(null) <GT>
+}
+
+void OneOf(Descriptor.Builder m) : {
+   OneOfDescriptor.Builder o = new OneOfDescriptor.Builder().withDocumentation(comment());
+   String name;
+}
+{
+    <ONEOF> name = OneOfName() <LBRACE> ( Option(m) | OneOfField(o) )+ <RBRACE> { m.addOneOf( o.withName(name)); }
+}
+
+void OneOfField(OneOfDescriptor.Builder o) : {
+   FieldDescriptor.Builder f = new FieldDescriptor.Builder().withLabel(Label.ONE_OF).withDocumentation(comment());
+   String name;
+   String type;
+   Token number;
+}
+{
+    type = Type() name = FieldName() <EQ> number = <NUMBER> [ <LBRACKET> FieldOptions(f) <RBRACKET> ] <SEMI_COLON> { o.addField(f.withTypeName(type).withName(name).withNumber(toInt(number))); }
+}
+
+String Type() : {
+    Token t;
+}
+{
+    (t = <IDENT> | t = <FULLIDENT>) { return t.image; }
+}
+
+void Reserved(ReservedContainer c) : {}
+{
+    <RESERVED> ( Ranges(c) | ReservedNames(c) )+ <SEMI_COLON>
+}
+
+void Ranges(ReservedContainer c) : {}
+{
+    Range(c) ( <COMMA> Range(c) )*
+}
+
+void Range(ReservedContainer c) : {
+   Token start;
+   Token end = null;
+}
+{
+    start = <NUMBER> [ <TO> (end = <NUMBER> | <MAX>) ] { if (end == null) c.addReserved(toInt(start)); else c.addReserved(toInt(start), toInt(end)); }
+}
+
+void ReservedNames(ReservedContainer c) : {
+   Token name;
+}
+{
+    name = <STRLIT> { c.addReserved(unquote(name)); } ( <COMMA> name = <STRLIT> { c.addReserved(unquote(name)); } )*
+}
+
+void Rpc() : {}
+{
+    <RPC> RpcName() <LPAREN> [ <STREAM> ] NamedType() <RPAREN> <RETURNS> <LPAREN> [ <STREAM> ] NamedType() <RPAREN> (( <LBRACE> (Option(null) | EmptyStatement() )+ <RBRACE> ) | <SEMI_COLON> )
+}
+
+void Service(FileDescriptor.Builder f) : {}
+{
+    <SERVICE> ServiceName() <LBRACE> (Option(f) | Rpc() | EmptyStatement() )+ <RBRACE>
+}
+
+String Constant() : {
+   String s;
+   Token t;
+}
+{
+    s = FullIdent() { return s; } | t = <NUMBER> { return t.image; } | t = <DOUBLE> { return t.image; } | t = <STRLIT> { return unquote(t); } | t = <BOOLEAN> { return t.image; } | MessageValue() { return null; }
+}
+
+String FullIdent() : {
+    Token t;
+    StringBuilder s = new StringBuilder();
+}
+{
+    t = <IDENT> { s.append(t.image); } ( <DOT> t = <IDENT> { s.append(t.image); } )* { return s.toString(); }
+}
+
+String MessageName() : {
+    Token t;
+}
+{
+    t = <IDENT> { return t.image; }
+}
+
+String EnumName() : {
+    Token t;
+}
+{
+    t = <IDENT> { return t.image; }
+}
+
+String FieldName() : {
+    Token t;
+}
+{
+    (t = <IDENT> | t = <ATTRIBUTE> | t = <BOOLEAN> | t = <ENUM> | t = <IMPORT> | t = <MAP> | t = <MAX> |
+     t = <MESSAGE> | t = <ONEOF> | t = <OPTION> | t = <PACKAGE> | t = <PUBLIC> | t = <RESERVED> |
+     t = <RETURNS> | t = <SERVICE> | t = <STREAM> | t = <SYNTAX> | t = <WEAK> ) { return t.image; }
+}
+
+String OneOfName() : {
+    Token t;
+}
+{
+    t = <IDENT> { return t.image; }
+}
+
+String OptionName() : {
+   Token t;
+}
+{
+   (t = <IDENT> | t = <FULLIDENT>) { return t.image; }
+}
+
+String MapName() : {
+    Token t;
+}
+{
+    t = <IDENT> { return t.image; }
+}
+
+String ServiceName() : {
+    Token t;
+}
+{
+    t = <IDENT> { return t.image; }
+}
+
+String RpcName() : {
+    Token t;
+}
+{
+    t = <IDENT> { return t.image; }
+}
+
+String NamedType() : {
+    Token t;
+    StringBuilder sb = new StringBuilder();
+}
+{
+    t = <IDENT> { sb.append(t.image); } ( <DOT> t = <IDENT> { sb.append('.').append(t.image); } )* { return sb.toString(); }
+}
+

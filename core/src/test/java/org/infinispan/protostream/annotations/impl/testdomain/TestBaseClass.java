@@ -21,7 +21,7 @@ public class TestBaseClass {
    @ProtoField(number = 888)
    public Float aFloat;
 
-   @ProtoField(number = 999, type = Type.MESSAGE, required = true)
+   @ProtoField(number = 999, type = Type.MESSAGE)
    public float x;
 
    private String name;
@@ -51,7 +51,7 @@ public class TestBaseClass {
 
    public static class InnerClassFromBase {
 
-      @ProtoField(number = 1, required = true)
+      @ProtoField(number = 1)
       public int innerInteger;
    }
 }

@@ -58,16 +58,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>protoparser</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.javassist</groupId>
-            <artifactId>javassist</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>com.google.testing.compile</groupId>
             <artifactId>compile-testing</artifactId>
         </dependency>

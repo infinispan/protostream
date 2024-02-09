@@ -13,7 +13,7 @@ public class TestArraysAndCollectionsClass {
    @ProtoField(number = 1)
    public Integer anInt1;
 
-   @ProtoField(number = 2, defaultValue = "0")
+   @ProtoField(number = 2)
    public int anInt2;
 
    @ProtoField(number = 3)

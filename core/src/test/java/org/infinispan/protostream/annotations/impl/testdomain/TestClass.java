@@ -25,7 +25,7 @@ public class TestClass extends TestBaseClass implements TestBaseInterface /*, Te
 
    private Integer height;
 
-   @ProtoField(number = 4, required = true)
+   @ProtoField(number = 4)
    @ProtoComment("The surname, of course")
    public String surname;
 
@@ -75,13 +75,13 @@ public class TestClass extends TestBaseClass implements TestBaseInterface /*, Te
    public static class InnerClass {
 
       @ProtoComment("some field documentation")
-      @ProtoField(number = 42, required = true)
+      @ProtoField(number = 42)
       public int innerAttribute;
    }
 
    public static class InnerClass2 {
 
-      @ProtoField(number = 42, required = true)
+      @ProtoField(number = 42)
       public int innerAttribute;
    }
 }

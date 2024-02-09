@@ -19,13 +19,13 @@ public class Simple {
    public Simple simple;
 
    //todo [anistor] should be possible not to require 'required' in this case because it is implied already?
-   @ProtoField(number = 1, required = true, defaultValue = "0.0")
+   @ProtoField(number = 1)
    public float afloat;
 
    @ProtoField(number = 2)
    public Integer anInteger;
 
-   @ProtoField(number = 314, name = "my_enum_field", defaultValue = "AX")
+   @ProtoField(number = 314, name = "my_enum_field")
    public TestEnum myEnumField;
 
    @ProtoField(number = 315)
@@ -47,7 +47,7 @@ public class Simple {
    }
 
    @ProtoDoc("X is unknown")
-   @ProtoField(number = 100, required = true, defaultValue = "0")
+   @ProtoField(number = 100)
    public void setX(int x) {
       this.x = x;
    }
@@ -60,7 +60,7 @@ public class Simple {
    }
 
    //todo test boxing type mismatch between getter, setter and field
-   @ProtoField(number = 101, required = true, defaultValue = "0")
+   @ProtoField(number = 101)
    public void setY(Integer y) {
       this.y = y;
    }
@@ -72,7 +72,7 @@ public class Simple {
       return z;
    }
 
-   @ProtoField(number = 102, required = true, defaultValue = "0")
+   @ProtoField(number = 102)
    public void setZ(String z) {
       this.z = z;
    }
@@ -84,12 +84,11 @@ public class Simple {
       return width;
    }
 
-   @ProtoField(number = 103, required = true, defaultValue = "0.71")
+   @ProtoField(number = 103, defaultValue = "0.71")
    public void setWidth(Float width) {
       this.width = width;
    }
 
    @ProtoUnknownFieldSet
-   //@ProtoField(number = 314, name = "my_enum_field", defaultValue = "AX")
    public UnknownFieldSet unknownFieldSet;
 }

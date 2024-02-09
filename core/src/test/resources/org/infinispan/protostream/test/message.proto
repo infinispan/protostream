@@ -1,3 +1,5 @@
+syntax = "proto3";
+
 package org.infinispan.protostream.test;
 
 import "org/infinispan/protostream/lib/base.proto";
@@ -7,11 +9,9 @@ option java_outer_classname = "file-option";
 option java_package = "com.pkg";
 
 message SearchRequest {
-    option message_set_wire_format = true;
-
-    required string query = 1;
+    string query = 1;
     /* a comment  */
-    optional int32 page_number = 2 [default = 10];
+    optional int32 page_number = 2;// [default = 10];
     optional int32 result_per_page = 3; // Another Comment
     repeated int32 flags = 4 [packed = true];
     enum DNT {
@@ -19,21 +19,22 @@ message SearchRequest {
         DO_NOT_TRACK = 0;
         TRACK_FOR_SURE = 1;
         DONT_CARE = 2;
+        SOME_ALIAS = 1;
     }
-    optional DNT dnt = 5 [default = DO_NOT_TRACK];
+    optional DNT dnt = 5; // [default = DO_NOT_TRACK];
     message Inner {
-        required int64 ival = 1;
+        int64 ival = 1;
         optional bool booly = 2;
         message MoreInner {
-           required bool nothing = 1;
+           bool nothing = 1;
         }
         message AnotherInner {
-            required bool nothing = 1;
+            bool nothing = 1;
             optional MoreInner f2 = 2;
         }
     }
-    required aEnum reqEnum = 6 [deprecated=true];
-    optional string label = 7 [default = "whatever"];
+    aEnum reqEnum = 6 [deprecated=true];
+    optional string label = 7; // [default = "whatever"];
     optional Inner typed = 8; 
 }
 
@@ -45,18 +46,12 @@ enum aEnum {
 message SearchResponse {
     repeated Result result = 1;
     optional org.infinispan.protostream.lib.Base base = 2;
-    required SearchRequest.Inner scoped = 3;
+    SearchRequest.Inner scoped = 3;
 }
 
 message Result {
-    required string url = 1;
+    string url = 1;
     optional string title = 2;
     repeated string snippets = 3;
-    required SearchRequest.Inner.MoreInner i = 4;
-    extensions 100 to 199;
-}
-
-extend SearchRequest.Inner.MoreInner {
-    optional float bar = 101 [packed=true];
-    required org.infinispan.protostream.lib.Base base = 102;
+    SearchRequest.Inner.MoreInner i = 4;
 }

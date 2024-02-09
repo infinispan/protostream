@@ -11,12 +11,13 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerator;
 import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
 import org.infinispan.protostream.annotations.impl.ImportedProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoEnumTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
-import org.infinispan.protostream.annotations.impl.processor.dependecy.CompileTimeDependency;
+import org.infinispan.protostream.annotations.impl.processor.dependency.CompileTimeDependency;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
@@ -39,8 +40,8 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    CompileTimeProtoSchemaGenerator(XTypeFactory typeFactory, GeneratedFilesWriter generatedFilesWriter,
                                    SerializationContext serializationContext, String generator,
                                    String fileName, String packageName, Map<XClass, CompileTimeDependency> dependencies,
-                                   Set<XClass> classes, boolean autoImportClasses, AnnotatedClassScanner classScanner) {
-      super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses);
+                                   Set<XClass> classes, boolean autoImportClasses, ProtoSyntax syntax, AnnotatedClassScanner classScanner) {
+      super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses, syntax);
       this.dependencies = dependencies;
       this.marshallerSourceCodeGenerator = new MarshallerSourceCodeGenerator(generatedFilesWriter, typeFactory, packageName);
       this.classScanner = classScanner;

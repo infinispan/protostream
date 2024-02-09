@@ -282,7 +282,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          return parent.getProtoStreamWriter();
       }
       if (writer == null) {
-         writer = new ProtoStreamWriterImpl(this, serCtx);
+         writer = new ProtoStreamWriterImpl(serCtx);
       }
       return writer;
    }

@@ -1,6 +1,5 @@
 package org.infinispan.protostream.config.impl;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,22 +12,18 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
  * @since 2.0
  */
 public final class ConfigurationImpl implements Configuration {
-
    private final boolean logOutOfSequenceReads;
-
    private final boolean logOutOfSequenceWrites;
-
+   private final boolean lenient;
    private final AnnotationsConfigImpl annotationsConfig;
-
    private final int maxNestedMessageDepth;
 
-   private ConfigurationImpl(boolean logOutOfSequenceReads, boolean logOutOfSequenceWrites,
-                             int maxNestedMessageDepth,
-                             Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
-      this.logOutOfSequenceReads = logOutOfSequenceReads;
-      this.logOutOfSequenceWrites = logOutOfSequenceWrites;
-      this.maxNestedMessageDepth = maxNestedMessageDepth;
-      this.annotationsConfig = new AnnotationsConfigImpl(annotations, logUndefinedAnnotations);
+   private ConfigurationImpl(BuilderImpl builder, Map<String, AnnotationConfigurationImpl> annotations) {
+      this.logOutOfSequenceReads = builder.logOutOfSequenceReads;
+      this.logOutOfSequenceWrites = builder.logOutOfSequenceWrites;
+      this.lenient = builder.lenient;
+      this.maxNestedMessageDepth = builder.maxNestedMessageDepth;
+      this.annotationsConfig = new AnnotationsConfigImpl(annotations, builder.logUndefinedAnnotations);
    }
 
    @Override
@@ -67,7 +62,7 @@ public final class ConfigurationImpl implements Configuration {
       private final boolean logUndefinedAnnotations;
 
       AnnotationsConfigImpl(Map<String, AnnotationConfigurationImpl> annotations, boolean logUndefinedAnnotations) {
-         this.annotations = Collections.unmodifiableMap(annotations);
+         this.annotations = Map.copyOf(annotations);
          this.logUndefinedAnnotations = logUndefinedAnnotations;
       }
 
@@ -88,14 +83,12 @@ public final class ConfigurationImpl implements Configuration {
    }
 
    public static final class BuilderImpl implements Builder {
-
       private boolean logOutOfSequenceReads = true;
-
       private boolean logOutOfSequenceWrites = true;
-
+      private boolean lenient = true;
       private int maxNestedMessageDepth = Configuration.DEFAULT_MAX_NESTED_DEPTH;
-
       private AnnotationsConfigBuilderImpl annotationsConfigBuilder = null;
+      private Boolean logUndefinedAnnotations;
 
       final class AnnotationsConfigBuilderImpl implements AnnotationsConfig.Builder {
 
@@ -144,6 +137,12 @@ public final class ConfigurationImpl implements Configuration {
       }
 
       @Override
+      public Builder setLenient(boolean lenient) {
+         this.lenient = lenient;
+         return this;
+      }
+
+      @Override
       public Builder maxNestedMessageDepth(int maxNestedMessageDepth) {
          this.maxNestedMessageDepth = maxNestedMessageDepth;
          return this;
@@ -188,10 +187,9 @@ public final class ConfigurationImpl implements Configuration {
          }
 
          // TypeId is the only predefined annotation. If there are more than one then we know we have at least one user defined.
-         Boolean logUndefinedAnnotations = ((AnnotationsConfigBuilderImpl) annotationsConfig()).logUndefinedAnnotations;
+         logUndefinedAnnotations = ((AnnotationsConfigBuilderImpl) annotationsConfig()).logUndefinedAnnotations;
          if (logUndefinedAnnotations == null) logUndefinedAnnotations = annotations.size() > 1;
-         return new ConfigurationImpl(logOutOfSequenceReads, logOutOfSequenceWrites, maxNestedMessageDepth,
-               annotations, logUndefinedAnnotations);
+         return new ConfigurationImpl(this, annotations);
       }
    }
 }

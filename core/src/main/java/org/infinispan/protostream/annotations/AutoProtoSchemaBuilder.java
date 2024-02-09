@@ -127,4 +127,9 @@ public @interface AutoProtoSchemaBuilder {
     * compilation error.
     */
    Class<? extends SerializationContextInitializer>[] dependsOn() default {};
+
+   /**
+    * Specifies the protobuf syntax used by the generated schema. Defaults to {@link ProtoSyntax#PROTO2}
+    */
+   ProtoSyntax syntax() default ProtoSyntax.PROTO2;
 }

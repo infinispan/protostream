@@ -35,12 +35,12 @@ public final class UUIDAdapter {
       return null;
    }
 
-   @ProtoField(number = 3, type = Type.FIXED64, defaultValue = "0")
+   @ProtoField(number = 3, type = Type.FIXED64)
    Long getMostSigBitsFixed(UUID uuid) {
       return uuid.getMostSignificantBits();
    }
 
-   @ProtoField(number = 4, type = Type.FIXED64, defaultValue = "0")
+   @ProtoField(number = 4, type = Type.FIXED64)
    Long getLeastSigBitsFixed(UUID uuid) {
       return uuid.getLeastSignificantBits();
    }

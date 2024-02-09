@@ -29,10 +29,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.TimeZone;
-import java.util.stream.Collectors;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufParser;
@@ -248,11 +245,6 @@ public final class JsonUtils {
    }
 
    private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber, boolean topLevel) throws IOException {
-      Set<String> requiredFields = messageDescriptor.getFields().stream()
-            .filter(FieldDescriptor::isRequired)
-            .map(FieldDescriptor::getName)
-            .collect(Collectors.toCollection(HashSet::new));
-
       ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
       TagWriter nestedWriter = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
 
@@ -277,7 +269,6 @@ public final class JsonUtils {
                   throw new IllegalStateException("Field '" + currentField + "' is not an object");
                }
                processObject(ctx, parser, nestedWriter, messageType, fd.getNumber(), false);
-               requiredFields.remove(currentField);
                break;
             }
             case FIELD_NAME:
@@ -298,18 +289,12 @@ public final class JsonUtils {
                } else {
                   writeField(parser, nestedWriter, fd.getType(), fd.getNumber());
                }
-               requiredFields.remove(currentField);
                break;
             }
             case VALUE_NULL:
                // we got null in, we write nothing out
                break;
          }
-      }
-
-      if (!requiredFields.isEmpty()) {
-         String missing = requiredFields.iterator().next();
-         throw new IllegalStateException("Required field '" + missing + "' missing");
       }
 
       if (topLevel) {

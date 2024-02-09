@@ -1,5 +1,6 @@
 package org.infinispan.protostream.descriptors;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,7 +17,7 @@ public final class OneOfDescriptor {
    private OneOfDescriptor(String name, String documentation, List<FieldDescriptor> fields) {
       this.name = name;
       this.documentation = documentation;
-      this.fields = fields;
+      this.fields = List.copyOf(fields);
    }
 
    public String getName() {
@@ -44,11 +45,11 @@ public final class OneOfDescriptor {
       return "OneOfDescriptor{name='" + name + '}';
    }
 
-   public static final class Builder {
+   public static final class Builder implements FieldContainer<Builder> {
 
       private String name;
       private String documentation;
-      private List<FieldDescriptor> fields;
+      private List<FieldDescriptor> fields = new ArrayList<>();
 
       public Builder withName(String name) {
          this.name = name;
@@ -62,6 +63,12 @@ public final class OneOfDescriptor {
 
       public Builder withFields(List<FieldDescriptor> fields) {
          this.fields = fields;
+         return this;
+      }
+
+      @Override
+      public Builder addField(FieldDescriptor.Builder field) {
+         this.fields.add(field.build());
          return this;
       }
 
