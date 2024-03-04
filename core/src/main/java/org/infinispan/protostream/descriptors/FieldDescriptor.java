@@ -20,6 +20,7 @@ public class FieldDescriptor extends AnnotatedDescriptorImpl implements Annotate
    protected final int number;
    protected final Label label;
    protected final String typeName;
+   protected final String defaultValue;
    protected final List<Option> options;
    protected Type type;
    protected FileDescriptor fileDescriptor;
@@ -34,6 +35,14 @@ public class FieldDescriptor extends AnnotatedDescriptorImpl implements Annotate
       options = List.copyOf(builder.options);
       typeName = builder.typeName;
       type = Type.primitiveFromString(typeName);
+      String dv = null;
+      for(Option o : options) {
+         if ("default".equals(o.getName())) {
+            dv = o.getValue().toString();
+            break;
+         }
+      }
+      defaultValue = dv;
    }
 
    public int getNumber() {
@@ -135,13 +144,17 @@ public class FieldDescriptor extends AnnotatedDescriptorImpl implements Annotate
    }
 
    public boolean hasDefaultValue() {
-      // Fields no longer have a default value since Protobuf 3
-      return false;
+      return defaultValue != null;
    }
 
    public Object getDefaultValue() {
-      // Fields no longer have a default value since Protobuf 3
-      return null;
+      if (getJavaType() == JavaType.MESSAGE) {
+         throw new UnsupportedOperationException("FieldDescriptor.getDefaultValue() called on an embedded message field (only scalars can have a default value).");
+      }
+      if (!hasDefaultValue()) {
+         return null;
+      }
+      return getJavaType().fromString(defaultValue);
    }
 
    public static class Builder implements OptionContainer<Builder> {
@@ -151,6 +164,7 @@ public class FieldDescriptor extends AnnotatedDescriptorImpl implements Annotate
       Label label = Label.OPTIONAL;
       List<Option> options = new ArrayList<>();
       String documentation;
+      private String defaultValue;
 
       public Builder withNumber(int number) {
          this.number = number;
