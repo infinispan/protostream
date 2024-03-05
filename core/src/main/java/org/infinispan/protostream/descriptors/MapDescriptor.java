@@ -27,6 +27,18 @@ public class MapDescriptor extends FieldDescriptor {
       return getKeyType().getJavaType();
    }
 
+   public int getWireTag() {
+      return WireType.makeTag(number, WireType.LENGTH_DELIMITED);
+   }
+
+   public int getKeyWireTag() {
+      return WireType.makeTag(1, keyType.getWireType());
+   }
+
+   public int getValueWireTag() {
+      return WireType.makeTag(2, type.getWireType());
+   }
+
    @Override
    public Label getLabel() {
       return Label.OPTIONAL;

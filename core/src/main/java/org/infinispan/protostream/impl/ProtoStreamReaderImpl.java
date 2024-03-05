@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageContext;
@@ -21,6 +22,7 @@ import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
 import org.jboss.logging.Logger;
@@ -149,24 +151,12 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
          case STRING:
             o = new String((byte[]) o, StandardCharsets.UTF_8);
             break;
-         case BYTES:
-            o = (byte[]) o;
+         case BYTES, INT64, UINT64, FIXED64, SFIXED64, SINT64, FIXED32, SFIXED32:
             break;
          case INT32:
          case UINT32:
          case SINT32:
             o = ((Long) o).intValue();
-            break;
-         case FIXED32:
-         case SFIXED32:
-            o = (Integer) o;
-            break;
-         case INT64:
-         case UINT64:
-         case FIXED64:
-         case SFIXED64:
-         case SINT64:
-            o = (Long) o;
             break;
          case BOOL:
             o = ((Long) o) != 0;
@@ -336,7 +326,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
       TagReader in = ctx.getReader();
       A a;
       if (fd.getType() == Type.GROUP) {
-         a = marshallerDelegate.unmarshall(ctx ,fd);
+         a = marshallerDelegate.unmarshall(ctx, fd);
          in.checkLastTagWas(WireType.makeTag(fd.getNumber(), WireType.WIRETYPE_END_GROUP));
       } else if (fd.getType() == Type.MESSAGE) {
          if (length < 0) {
@@ -424,56 +414,24 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
             break;
          }
          if (tag == expectedTag) {
-            Object value;
-            switch (type) {
-               case DOUBLE:
-                  value = messageContext.in.readDouble();
-                  break;
-               case FLOAT:
-                  value = messageContext.in.readFloat();
-                  break;
-               case BOOL:
-                  value = messageContext.in.readBool();
-                  break;
-               case STRING:
-                  value = messageContext.in.readString();
-                  break;
-               case BYTES:
-                  value = messageContext.in.readByteArray();
-                  break;
-               case INT64:
-                  value = messageContext.in.readInt64();
-                  break;
-               case UINT64:
-                  value = messageContext.in.readUInt64();
-                  break;
-               case FIXED64:
-                  value = messageContext.in.readFixed64();
-                  break;
-               case SFIXED64:
-                  value = messageContext.in.readSFixed64();
-                  break;
-               case SINT64:
-                  value = messageContext.in.readSInt64();
-                  break;
-               case INT32:
-                  value = messageContext.in.readInt32();
-                  break;
-               case FIXED32:
-                  value = messageContext.in.readFixed32();
-                  break;
-               case UINT32:
-                  value = messageContext.in.readUInt32();
-                  break;
-               case SFIXED32:
-                  value = messageContext.in.readSFixed32();
-                  break;
-               case SINT32:
-                  value = messageContext.in.readSInt32();
-                  break;
-               default:
-                  throw new IllegalStateException("Unexpected field type : " + type);
-            }
+            Object value = switch (type) {
+               case DOUBLE -> messageContext.in.readDouble();
+               case FLOAT -> messageContext.in.readFloat();
+               case BOOL -> messageContext.in.readBool();
+               case STRING -> messageContext.in.readString();
+               case BYTES -> messageContext.in.readByteArray();
+               case INT64 -> messageContext.in.readInt64();
+               case UINT64 -> messageContext.in.readUInt64();
+               case FIXED64 -> messageContext.in.readFixed64();
+               case SFIXED64 -> messageContext.in.readSFixed64();
+               case SINT64 -> messageContext.in.readSInt64();
+               case INT32 -> messageContext.in.readInt32();
+               case FIXED32 -> messageContext.in.readFixed32();
+               case UINT32 -> messageContext.in.readUInt32();
+               case SFIXED32 -> messageContext.in.readSFixed32();
+               case SINT32 -> messageContext.in.readSInt32();
+               default -> throw new IllegalStateException("Unexpected field type : " + type);
+            };
             collection.add(value);
          } else {
             messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
@@ -508,5 +466,80 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
             && messageContext.getMaxSeenFieldNumber() > fd.getNumber()) {
          log.fieldReadOutOfSequence(fd.getFullName());
       }
+   }
+
+   @Override
+   public <K, V, M extends Map<? super K, ? super V>> M readMap(String fieldName, M map, Class<K> keyClass, Class<V> valueClass) throws IOException {
+      final MapDescriptor md = (MapDescriptor) messageContext.getFieldByName(fieldName);
+      TagReaderImpl in = (TagReaderImpl) ctx.getReader();
+      final int expectedTag = md.getWireTag();
+      while (true) {
+         Object o = messageContext.unknownFieldSet.consumeTag(expectedTag);
+         if (o == null) {
+            break;
+         }
+         readMapEntry(map, valueClass, TagReaderImpl.newNestedInstance(in, (byte[]) o), md);
+      }
+      while (true) {
+         int tag = in.readTag();
+         if (tag == 0) {
+            break;
+         }
+         if (tag != expectedTag) {
+            messageContext.unknownFieldSet.readSingleField(tag, messageContext.in);
+            break;
+         }
+         int len = in.readUInt32();
+         int limit = in.pushLimit(len);
+         readMapEntry(map, valueClass, in, md);
+         in.popLimit(limit);
+      }
+      return map;
+   }
+
+   private <K, V, M extends Map<? super K, ? super V>> void readMapEntry(M map, Class<V> valueClass, TagReaderImpl in, MapDescriptor md) throws IOException {
+      int ktag = in.readTag();
+      if (ktag != md.getKeyWireTag()) {
+         throw new IllegalStateException();
+      }
+      Object k = switch (md.getKeyType()) {
+         case BOOL -> in.readBool();
+         case INT32 -> in.readInt32();
+         case INT64 -> in.readInt64();
+         case FIXED32 -> in.readFixed32();
+         case FIXED64 -> in.readFixed64();
+         case SINT32 -> in.readSInt32();
+         case SINT64 -> in.readSInt64();
+         case SFIXED32 -> in.readSFixed32();
+         case SFIXED64 -> in.readSFixed64();
+         case UINT32 -> in.readUInt32();
+         case UINT64 -> in.readUInt64();
+         case STRING -> in.readString();
+         default ->
+               throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + md.getFullName());
+      };
+      int vtag = in.readTag();
+      if (vtag != md.getValueWireTag()) {
+         throw new IllegalStateException();
+      }
+      Object v = switch (md.getType()) {
+         case BOOL -> in.readBool();
+         case INT32 -> in.readInt32();
+         case INT64 -> in.readInt64();
+         case FIXED32 -> in.readFixed32();
+         case FIXED64 -> in.readFixed64();
+         case SINT32 -> in.readSInt32();
+         case SINT64 -> in.readSInt64();
+         case SFIXED32 -> in.readSFixed32();
+         case SFIXED64 -> in.readSFixed64();
+         case UINT32 -> in.readUInt32();
+         case UINT64 -> in.readUInt64();
+         case STRING -> in.readString();
+         case MESSAGE -> readNestedObject(md, valueClass, in, -1);
+         default ->
+               throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + md.getFullName());
+      };
+      map.put((K) k, (V) v);
+      in.checkLastTagWas(0);
    }
 }

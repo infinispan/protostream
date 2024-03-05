@@ -30,6 +30,9 @@ jobs:
           mvn -B versions:set -DnewVersion=${{ github.event.inputs.version }} -DprocessAllModules=true
           mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+
       - name: Set up Java for publishing to OSSRH
         uses: actions/setup-java@v4
         with:

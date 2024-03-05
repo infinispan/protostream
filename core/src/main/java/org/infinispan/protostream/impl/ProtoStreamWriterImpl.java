@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageContext;
@@ -15,6 +16,7 @@ import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Label;
+import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
 import org.jboss.logging.Logger;
@@ -487,11 +489,6 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
    }
 
    @Override
-   public <E extends Enum<E>> void writeEnum(String fieldName, E value, Class<E> clazz) throws IOException {
-      writeEnum(fieldName, value);
-   }
-
-   @Override
    public <E extends Enum<E>> void writeEnum(String fieldName, E value) throws IOException {
       final FieldDescriptor fd = messageContext.getFieldByName(fieldName);
       if (fd.getType() != Type.ENUM) {
@@ -805,6 +802,94 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
             break;
          default:
             throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + fd.getFullName());
+      }
+   }
+
+   @Override
+   public <K, V> void writeMap(String fieldName, Map<? super K, ? super V> map, Class<K> keyClass, Class<V> valueClass) throws IOException {
+      final MapDescriptor md = (MapDescriptor) messageContext.getFieldByName(fieldName);
+      if (map == null) {
+         // a map can never be flagged as required
+         return;
+      }
+
+      final int fieldNumber = md.getNumber();
+      for (Map.Entry<? super K, ? super V> entry : map.entrySet()) {
+         Object key = entry.getKey();
+         validateElement(key, keyClass); // Protobuf 3 does not allow null keys
+         ByteArrayOutputStreamEx nestedBaos = new ByteArrayOutputStreamEx();
+         TagWriterImpl out = TagWriterImpl.newNestedInstance(messageContext.out, nestedBaos);
+         // Write the key as field 1
+         switch (md.getKeyType()) {
+            case BOOL -> out.writeBool(1, (Boolean) key);
+            case INT32 -> out.writeInt32(1, (Integer) key);
+            case INT64 -> out.writeInt64(1, (Long) key);
+            case FIXED32 -> out.writeFixed32(1, (Integer) key);
+            case FIXED64 -> out.writeFixed64(1, (Long) key);
+            case SINT32 -> out.writeSInt32(1, (Integer) key);
+            case SINT64 -> out.writeSInt64(1, (Long) key);
+            case SFIXED32 -> out.writeSFixed32(1, (Integer) key);
+            case SFIXED64 -> out.writeSFixed64(1, (Long) key);
+            case UINT32 -> out.writeUInt32(1, (Integer) key);
+            case UINT64 -> out.writeUInt64(1, (Long) key);
+            case STRING -> out.writeString(1, (String) key);
+            default ->
+                  throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + md.getFullName());
+         }
+         Object value = entry.getValue();
+         // Write the value as field 2
+         if (value == null) {
+            switch (md.getType()) {
+               case BOOL -> out.writeBool(2, false);
+               case INT32 -> out.writeInt32(2, 0);
+               case INT64 -> out.writeInt64(2, 0);
+               case FIXED32 -> out.writeFixed32(2, 0);
+               case FIXED64 -> out.writeFixed64(2, 0);
+               case SINT32 -> out.writeSInt32(2, 0);
+               case SINT64 -> out.writeSInt64(2, 0);
+               case SFIXED32 -> out.writeSFixed32(2, 0);
+               case SFIXED64 -> out.writeSFixed64(2, 0);
+               case UINT32 -> out.writeUInt32(2, 0);
+               case UINT64 -> out.writeUInt64(2, 0);
+               case DOUBLE -> out.writeDouble(2, 0);
+               case FLOAT -> out.writeFloat(2, 0);
+               case STRING -> out.writeString(2, "");
+               case BYTES -> out.writeBytes(2, new byte[0]);
+               case ENUM -> out.writeEnum(2, 0);
+               default ->
+                     throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + md.getFullName());
+            }
+         } else {
+            switch (md.getType()) {
+               case BOOL -> out.writeBool(2, (Boolean) value);
+               case INT32 -> out.writeInt32(2, (Integer) value);
+               case INT64 -> out.writeInt64(2, (Long) value);
+               case FIXED32 -> out.writeFixed32(2, (Integer) value);
+               case FIXED64 -> out.writeFixed64(2, (Long) value);
+               case SINT32 -> out.writeSInt32(2, (Integer) value);
+               case SINT64 -> out.writeSInt64(2, (Long) value);
+               case SFIXED32 -> out.writeSFixed32(2, (Integer) value);
+               case SFIXED64 -> out.writeSFixed64(2, (Long) value);
+               case UINT32 -> out.writeUInt32(2, (Integer) value);
+               case UINT64 -> out.writeUInt64(2, (Long) value);
+               case STRING -> out.writeString(2, (String) value);
+               case BYTES -> out.writeBytes(2, (byte[]) value);
+               case ENUM -> out.writeEnum(2, ((Enum<?>) value).ordinal());
+               case MESSAGE -> {
+                  // FIXME: there is too much nesting here. We can definitely improve things
+                  BaseMarshallerDelegate<V> marshallerDelegate = serCtx.getMarshallerDelegate(valueClass);
+                  ByteArrayOutputStreamEx mapValueBaos = new ByteArrayOutputStreamEx();
+                  TagWriterImpl mapValueOut = TagWriterImpl.newNestedInstance(out, mapValueBaos);
+                  marshallerDelegate.marshall(mapValueOut, md, (V) value);
+                  mapValueOut.flush();
+                  out.writeBytes(2, mapValueBaos.getByteBuffer());
+               }
+               default ->
+                     throw new IllegalArgumentException("The Protobuf declared field type is not compatible with the written type : " + md.getFullName());
+            }
+         }
+         out.flush();
+         messageContext.out.writeBytes(fieldNumber, nestedBaos.getByteBuffer());
       }
    }
 

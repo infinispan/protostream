@@ -273,10 +273,6 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       return depth;
    }
 
-   /**
-    * @deprecated this will be removed in 5.0 together with {@link org.infinispan.protostream.MessageMarshaller}
-    */
-   @Deprecated
    public ProtoStreamWriterImpl getProtoStreamWriter() {
       if (parent != null) {
          return parent.getProtoStreamWriter();

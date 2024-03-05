@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package org.infinispan.protostream.integrationtests.compliance;
+
+message CustomValue {
+  int32 id = 1;
+  string s = 2;
+}
+
+message MapsTest {
+  map<string, string> stringmap = 1;
+  map<int32, CustomValue> custommap = 2;
+}
