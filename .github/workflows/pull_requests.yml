@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -35,6 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
 
       - name: Setup Java
         uses: actions/setup-java@v4

@@ -10,13 +10,6 @@ jobs:
     steps:
       - uses: dorny/test-reporter@v1
         with:
-          artifact: jdk11-test-results
-          name: JDK 11 Tests
-          path: '**/*.xml'
-          reporter: java-junit
-
-      - uses: dorny/test-reporter@v1
-        with:
           artifact: jdk17-test-results
           name: JDK 17 Tests
           path: '**/*.xml'

@@ -272,10 +272,6 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       return (decoder instanceof InputStreamDecoder);
    }
 
-   /**
-    * @deprecated this will be removed in 5.0 together with {@link org.infinispan.protostream.MessageMarshaller}
-    */
-   @Deprecated
    public ProtoStreamReaderImpl getProtoStreamReader() {
       if (parent != null) {
          return parent.getProtoStreamReader();
@@ -326,7 +322,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
             return;
          }
          if (expectedTag == 0) {
-            throw new MalformedProtobufException("Expected ond of message but found tag " + lastTag);
+            throw new MalformedProtobufException("Expected end of message but found tag " + lastTag);
          }
          throw new MalformedProtobufException("Protobuf message end group tag expected but found " + lastTag);
       }

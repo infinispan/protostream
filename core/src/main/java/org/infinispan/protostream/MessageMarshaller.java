@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Contract to be implemented by manually written marshallers for Protobuf message (entity) types. The marshaller
@@ -12,10 +13,7 @@ import java.util.Date;
  *
  * @author anistor@redhat.com
  * @since 1.0
- * @deprecated since 4.3.1.Final. Will be removed in version 5. Please use annotation based marshallers instead. See
- * {@link org.infinispan.protostream.annotations.AutoProtoSchemaBuilder}
  */
-@Deprecated
 public interface MessageMarshaller<T> extends BaseMarshaller<T> {
 
    /**
@@ -85,6 +83,8 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       <E, C extends Collection<? super E>> C readCollection(String fieldName, C collection, Class<E> elementClass) throws IOException;
 
       <E> E[] readArray(String fieldName, Class<? extends E> elementClass) throws IOException;
+
+      <K, V, M extends Map<? super K, ? super V>> M readMap(String fieldName, M map, Class<K> keyClass, Class<V> valueClass) throws IOException;
    }
 
    /**
@@ -142,15 +142,6 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       <E> void writeObject(String fieldName, E value, Class<? extends E> clazz) throws IOException;
 
       /**
-       * Writes an enum value. The third argument (the {@code class} was never used internally) so this variant is now
-       * deprecated.
-       *
-       * @deprecated replaced by {@link ProtoStreamWriter#writeEnum(String fieldName, Enum value)}
-       */
-      @Deprecated
-      <E extends Enum<E>> void writeEnum(String fieldName, E value, Class<E> clazz) throws IOException;
-
-      /**
        * Writes an enum value.
        *
        * @param fieldName the field name
@@ -161,5 +152,7 @@ public interface MessageMarshaller<T> extends BaseMarshaller<T> {
       <E> void writeCollection(String fieldName, Collection<? super E> collection, Class<E> elementClass) throws IOException;
 
       <E> void writeArray(String fieldName, E[] array, Class<? extends E> elementClass) throws IOException;
+
+      <K, V> void writeMap(String fieldName, Map<? super K, ? super V> map, Class<K> keyClass, Class<V> valueClass) throws IOException;
    }
 }
