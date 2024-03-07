@@ -1,11 +1,11 @@
 package org.infinispan.protostream.annotations.impl.processor.tests;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
 
-@AutoProtoSchemaBuilder(includeClasses = {ReusableInitializer.A.class, ReusableInitializer.B.class}, syntax = ProtoSyntax.PROTO3)
+@ProtoSchema(includeClasses = {ReusableInitializer.A.class, ReusableInitializer.B.class}, syntax = ProtoSyntax.PROTO3)
 public interface ReusableInitializer extends SerializationContextInitializer {
 
    class A {
