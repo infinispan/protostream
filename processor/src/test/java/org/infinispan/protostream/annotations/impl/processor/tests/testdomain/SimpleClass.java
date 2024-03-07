@@ -28,6 +28,9 @@ public class SimpleClass {
    @ProtoField(number = 314, name = "my_enum_field", defaultValue = "AX")
    public SimpleEnum myEnumField;
 
+   @ProtoField(number = 400, name ="my_record")
+   public SimpleRecord rec;
+
    //TODO here we have several cases not covered by tests...
 /*
    private Integer x;

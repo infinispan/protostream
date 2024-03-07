@@ -87,4 +87,8 @@ public interface XClass extends XElement {
    default boolean isInterface() {
       return Modifier.isInterface(getModifiers());
    }
+
+   default boolean isRecord() {
+      return isAssignableTo(Record.class);
+   }
 }

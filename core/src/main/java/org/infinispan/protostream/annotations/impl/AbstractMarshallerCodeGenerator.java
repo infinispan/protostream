@@ -545,8 +545,8 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.println("int $len = $in.readUInt32();");
             iw.println("int $limit = $in.pushLimit($len);");
             iw.println("int $t = $in.readTag();");
-            String key = generateMapFieldReadMethod(mapMetadata.getKey(), iw, noFactory, true);
-            String value = generateMapFieldReadMethod(mapMetadata.getValue(), iw, noFactory, false);
+            String key = generateMapFieldReadMethod(mapMetadata.getKey(), iw, true);
+            String value = generateMapFieldReadMethod(mapMetadata.getValue(), iw, false);
             iw.printf("%s.put(%s, %s);\n", makeCollectionLocalVar(mapMetadata), key, value);
             iw.println("$in.checkLastTagWas(0);");
             iw.println("$in.popLimit($limit);");
@@ -559,11 +559,9 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.dec().println("}");
    }
 
-   private String generateMapFieldReadMethod(ProtoFieldMetadata fieldMetadata, IndentWriter iw, boolean noFactory, boolean readNext) {
-      final String v = makeFieldLocalVar(fieldMetadata);
-      if (noFactory || fieldMetadata.isRepeated()) {
-         iw.printf("%s %s = %s;\n", fieldMetadata.getJavaTypeName(), v, fieldMetadata.getProtobufType().getJavaType().defaultValueAsString());
-      }
+   private String generateMapFieldReadMethod(ProtoFieldMetadata fieldMetadata, IndentWriter iw, boolean readNext) {
+      final String v = "__mv$" + fieldMetadata.getNumber();
+      iw.printf("%s %s = %s;\n", fieldMetadata.getJavaTypeName(), v, fieldMetadata.getProtobufType().getJavaType().defaultValueAsString());
       iw.printf("if ($t == %s) {\n", makeFieldTag(fieldMetadata.getNumber(), fieldMetadata.getProtobufType().getWireType()));
       iw.inc();
       if (BaseProtoSchemaGenerator.generateMarshallerDebugComments) {

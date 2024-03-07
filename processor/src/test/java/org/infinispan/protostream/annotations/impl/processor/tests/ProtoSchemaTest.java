@@ -23,6 +23,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -33,6 +34,12 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleEnum;
+import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleRecord;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.Label;
+import org.infinispan.protostream.descriptors.MapDescriptor;
+import org.infinispan.protostream.descriptors.Type;
 import org.junit.Test;
 
 public class ProtoSchemaTest {
@@ -136,6 +143,7 @@ public class ProtoSchemaTest {
 //               EmbeddedMetadata.class,
                EmbeddedMetadata.EmbeddedLifespanExpirableMetadata.class,
                SimpleEnum.class,
+               SimpleRecord.class,
 //               String.class,
                X.class
          }
@@ -1374,6 +1382,54 @@ public class ProtoSchemaTest {
       assertArrayEquals("qwerty".getBytes(), (byte[]) genericMessage.field2.getValue());
       assertEquals("azerty", ((WrappedMessage) genericMessage.field3.getValue()).getValue());
       assertEquals("asdfg", ((GenericMessage.OtherMessage) genericMessage.field4.getValue()).field1);
+   }
+
+   @Proto
+   static final class BareMessage {
+      public int anInt;
+      public String aString;
+      public List<String> things;
+      public Map<String, String> moreThings;
+   }
+
+   @ProtoSchema(schemaFileName = "bare_message.proto",
+         includeClasses = {
+               BareMessage.class,
+         }, syntax = ProtoSyntax.PROTO3
+   )
+   interface TestBareMessageSerializationContextInitializer extends GeneratedSchema {
+   }
+
+   @Test
+   public void testBareMessage() {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+
+      GeneratedSchema generatedSchema = new TestBareMessageSerializationContextInitializerImpl();
+      generatedSchema.registerSchema(ctx);
+      generatedSchema.registerMarshallers(ctx);
+
+      assertTrue(generatedSchema.getProtoFile().contains("message BareMessage"));
+      Descriptor message = (Descriptor) ctx.getDescriptorByName("BareMessage");
+      FieldDescriptor field = message.getFields().get(0);
+      assertEquals("anInt", field.getName());
+      assertEquals(1, field.getNumber());
+      assertEquals(Type.INT32, field.getType());
+      assertEquals(Label.OPTIONAL, field.getLabel());
+      field = message.getFields().get(1);
+      assertEquals("aString", field.getName());
+      assertEquals(2, field.getNumber());
+      assertEquals(Type.STRING, field.getType());
+      assertEquals(Label.OPTIONAL, field.getLabel());
+      field = message.getFields().get(2);
+      assertEquals("things", field.getName());
+      assertEquals(3, field.getNumber());
+      assertEquals(Type.STRING, field.getType());
+      assertEquals(Label.REPEATED, field.getLabel());
+      MapDescriptor map = (MapDescriptor) message.getFields().get(3);
+      assertEquals("moreThings", map.getName());
+      assertEquals(4, map.getNumber());
+      assertEquals(Type.STRING, map.getKeyType());
+      assertEquals(Type.STRING, map.getType());
    }
 
    //todo warnings logged to log4j during generation do not end up in compiler's message log
