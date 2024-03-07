@@ -90,6 +90,30 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid default value for field '%s' of Java type %s from class %s: the %s enum must have a 0 value", id = 20)
    ProtoSchemaBuilderException noDefaultEnum(String fieldName, String canonicalName, String canonicalName1, String fullName);
 
+   @Message(value = "@ProtoFactory annotated %s signature mismatch. The first parameter is expected to be of type 'int' : %s", id = 21)
+   ProtoSchemaBuilderException factorySignatureMismatch(String kind, String factory);
+
+   @Message(value = "@ProtoFactory annotated %s signature mismatch. Expected %d parameters but found %d : %s", id = 22)
+   ProtoSchemaBuilderException factorySignatureMismatch(String kind, int expected, int found, String factory);
+
+   @Message(value = "@ProtoFactory annotated %s signature mismatch. The parameter '%s' does not match any field : %s", id = 23)
+   ProtoSchemaBuilderException factorySignatureMismatch(String kind, String parameterName, String factory);
+
+   @Message(value = "@ProtoFactory annotated %s signature mismatch: %s. The parameter '%s' does not match the type from the field definition.", id = 24)
+   ProtoSchemaBuilderException factorySignatureMismatchType(String kind, String factory, String parameterName);
+
+   @Message(value = "Found more than one @ProtoFactory annotated method / constructor : %s", id = 25)
+   ProtoSchemaBuilderException multipleFactories(String s);
+
+   @Message(value = "@ProtoFactory annotated constructor must not be private: %s", id = 26)
+   ProtoSchemaBuilderException privateFactory(String s);
+
+   @Message(value = "@ProtoFactory annotated method must be static: %s", id =27)
+   ProtoSchemaBuilderException nonStaticFactory(String s);
+
+   @Message(value = "@ProtoFactory annotated method has wrong return type: %s", id = 28)
+   ProtoSchemaBuilderException wrongFactoryReturnType(String s);
+
    class LogFactory {
       public static Log getLog(Class<?> clazz) {
          return Logger.getMessageLogger(Log.class, clazz.getName());

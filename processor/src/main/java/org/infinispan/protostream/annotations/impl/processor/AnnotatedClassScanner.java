@@ -30,6 +30,7 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -153,6 +154,10 @@ final class AnnotatedClassScanner {
             visitProtoName(e);
          }
 
+         for (Element e : roundEnv.getElementsAnnotatedWith(Proto.class)) {
+            visitProtoMessage(e);
+         }
+
          for (Element e : roundEnv.getElementsAnnotatedWith(ProtoAdapter.class)) {
             visitProtoAdapter(e);
          }
@@ -180,6 +185,9 @@ final class AnnotatedClassScanner {
       }
       if (e.getAnnotation(ProtoName.class) != null) {
          visitProtoName(e);
+      }
+      if (e.getAnnotation(Proto.class) != null) {
+         visitProtoMessage(e);
       }
 
       for (Element member : e.getEnclosedElements()) {
@@ -244,7 +252,7 @@ final class AnnotatedClassScanner {
    }
 
    private void visitProtoMessage(Element e) {
-      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE) {
+      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE && e.getKind() != ElementKind.RECORD) {
          throw new AnnotationProcessingException(e, "@ProtoMessage can only be applied to classes and interfaces.");
       }
       collectClasses((TypeElement) e);

@@ -19,6 +19,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -170,13 +171,11 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          ProtoFieldMetadata field = fieldsByNumber.get(memberNumber);
          XClass where = reserved.checkReserved(memberNumber);
          if (where != null) {
-            throw new ProtoSchemaBuilderException("Protobuf field \"" + field.getLocation() + "\" with number " + memberNumber +
-                  " conflicts with 'reserved' statement in " + where.getCanonicalName());
+            throw Log.LOG.reservedNumber(memberNumber, field.getName(), where.getCanonicalName());
          }
          where = reserved.checkReserved(field.getName());
          if (where != null) {
-            throw new ProtoSchemaBuilderException("Protobuf field \"" + field.getLocation() + "\" with number " + memberNumber +
-                  " conflicts with 'reserved' statement in " + where.getCanonicalName());
+            throw Log.LOG.reservedName(field.getName(), where.getCanonicalName());
          }
       }
 
@@ -254,25 +253,19 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             int startPos = 0;
             if (isIndexedContainer || isIterableContainer) {
                if (parameterTypes.length == 0 || parameterTypes[0] != typeFactory.fromClass(int.class)) {
-                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
-                        + " signature mismatch. The first parameter is expected to be of type 'int' : "
-                        + factory.toGenericString());
+                  throw Log.LOG.factorySignatureMismatch(factoryKind, factory.toGenericString());
                }
                startPos = 1;
             }
             String[] parameterNames = factory.getParameterNames();
             if (parameterNames.length != fieldsByNumber.size() + startPos) {
-               throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
-                     + " signature mismatch. Expected " + (fieldsByNumber.size() + startPos) + " parameters but found "
-                     + parameterNames.length + " : " + factory.toGenericString());
+               throw Log.LOG.factorySignatureMismatch(factoryKind, fieldsByNumber.size() + startPos, parameterNames.length, factory.toGenericString());
             }
             for (; startPos < parameterNames.length; startPos++) {
                String parameterName = parameterNames[startPos];
                ProtoFieldMetadata fieldMetadata = getFieldByPropertyName(parameterName);
                if (fieldMetadata == null) {
-                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
-                        + " signature mismatch. The parameter '" + parameterName
-                        + "' does not match any field : " + factory.toGenericString());
+                  throw Log.LOG.factorySignatureMismatch(factoryKind, parameterName, factory.toGenericString());
                }
                XClass parameterType = parameterTypes[startPos];
                boolean paramTypeMismatch = false;
@@ -289,9 +282,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   paramTypeMismatch = true;
                }
                if (paramTypeMismatch) {
-                  throw new ProtoSchemaBuilderException("@ProtoFactory annotated " + factoryKind
-                        + " signature mismatch: " + factory.toGenericString() + ". The parameter '"
-                        + parameterName + "' does not match the type from the field definition.");
+                  throw Log.LOG.factorySignatureMismatchType(factoryKind, factory.toGenericString(), parameterName);
                }
             }
          }
@@ -313,24 +304,28 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    private void checkInstantiability() {
       // ensure the class is not abstract
       if (annotatedClass.isAbstract() || annotatedClass.isInterface()) {
-         throw new ProtoSchemaBuilderException("Abstract classes are not allowed: " + getAnnotatedClassName());
+         throw Log.LOG.abstractClassNotAllowed(getAnnotatedClassName());
       }
       // ensure it is not a local or anonymous class
       if (annotatedClass.isLocal()) {
-         throw new ProtoSchemaBuilderException("Local or anonymous classes are not allowed. The class " + getAnnotatedClassName() + " must be instantiable using an accessible no-argument constructor.");
+         throw Log.LOG.localOrAnonymousClass(getAnnotatedClassName());
       }
       // ensure the class is not a non-static inner class
       if (annotatedClass.getEnclosingClass() != null && !annotatedClass.isStatic()) {
-         throw new ProtoSchemaBuilderException("Non-static inner classes are not allowed. The class " + getAnnotatedClassName() + " must be instantiable using an accessible no-argument constructor.");
+         throw Log.LOG.nonStaticInnerClass(getAnnotatedClassName());
+      }
+      if (javaClass.isRecord()) {
+         Iterable<? extends XConstructor> declaredConstructors = javaClass.getDeclaredConstructors();
+         factory = declaredConstructors.iterator().next();
       }
 
       for (XConstructor c : annotatedClass.getDeclaredConstructors()) {
          if (c.getAnnotation(ProtoFactory.class) != null) {
             if (factory != null) {
-               throw new ProtoSchemaBuilderException("Found more than one @ProtoFactory annotated method / constructor : " + c);
+               throw Log.LOG.multipleFactories(c.toString());
             }
             if (c.isPrivate()) {
-               throw new ProtoSchemaBuilderException("@ProtoFactory annotated constructor must not be private: " + c);
+               throw Log.LOG.privateFactory(c.toString());
             }
             factory = c;
          }
@@ -339,16 +334,16 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       for (XMethod m : annotatedClass.getDeclaredMethods()) {
          if (m.getAnnotation(ProtoFactory.class) != null) {
             if (factory != null) {
-               throw new ProtoSchemaBuilderException("Found more than one @ProtoFactory annotated method / constructor : " + m);
+               throw Log.LOG.multipleFactories(m.toString());
             }
             if (!isAdapter && !m.isStatic()) {
-               throw new ProtoSchemaBuilderException("@ProtoFactory annotated method must be static: " + m);
+               throw Log.LOG.nonStaticFactory(m.toString());
             }
             if (m.isPrivate()) {
-               throw new ProtoSchemaBuilderException("@ProtoFactory annotated method must not be private: " + m);
+               throw Log.LOG.privateFactory(m.toString());
             }
             if (m.getReturnType() != javaClass) {
-               throw new ProtoSchemaBuilderException("@ProtoFactory annotated method has wrong return type: " + m);
+               throw Log.LOG.wrongFactoryReturnType(m.toString());
             }
             factory = m;
          }
@@ -372,141 +367,21 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          // avoid re-examining classes due to multiple interface inheritance
          return;
       }
-
+      if (clazz.isRecord()) {
+         discoverFieldsFromRecord(clazz, fieldsByNumber, fieldsByName);
+         return;
+      }
       if (clazz.getSuperclass() != null) {
          discoverFields(clazz.getSuperclass(), examinedClasses, fieldsByNumber, fieldsByName, oneofs);
       }
       for (XClass i : clazz.getInterfaces()) {
          discoverFields(i, examinedClasses, fieldsByNumber, fieldsByName, oneofs);
       }
+      discoverFieldsFromClassFields(clazz, fieldsByNumber, fieldsByName, oneofs);
+      discoverFieldsFromClassMethods(clazz, fieldsByNumber, fieldsByName, oneofs);
+   }
 
-      for (XField field : clazz.getDeclaredFields()) {
-         if (field.getAnnotation(ProtoUnknownFieldSet.class) != null) {
-            if (isAdapter) {
-               throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + clazz.getCanonicalName() + '.' + field);
-            }
-            if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
-               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + clazz.getCanonicalName() + '.' + field);
-            }
-            if (field.getAnnotation(ProtoField.class) != null) {
-               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet and @ProtoField annotations cannot be used together: " + field);
-            }
-            unknownFieldSetField = field;
-         } else {
-            ProtoField annotation = field.getAnnotation(ProtoField.class);
-            if (annotation != null) {
-               if (isAdapter) {
-                  throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + clazz.getCanonicalName() + '.' + field);
-               }
-               if (field.isStatic()) {
-                  throw new ProtoSchemaBuilderException("Static fields cannot be @ProtoField annotated: " + clazz.getCanonicalName() + '.' + field);
-               }
-               if (factory == null && field.isFinal()) { //todo [anistor] maybe allow this
-                  throw new ProtoSchemaBuilderException("Final fields cannot be @ProtoField annotated: " + clazz.getCanonicalName() + '.' + field);
-               }
-               if (field.isPrivate()) {
-                  throw new ProtoSchemaBuilderException("Private fields cannot be @ProtoField annotated: " + clazz.getCanonicalName() + '.' + field);
-               }
-               int number = getNumber(annotation, field);
-               String fieldName = annotation.name();
-               if (fieldName.isEmpty()) {
-                  fieldName = field.getName();
-               }
-
-               Type protobufType = annotation.type();
-               if (field.getType() == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
-                  // MESSAGE is the default and stands for 'undefined', we can override it with a better default
-                  protobufType = Type.BYTES;
-               }
-               boolean isArray = isArray(field.getType(), protobufType);
-               boolean isRepeated = isRepeated(field.getType(), protobufType);
-               boolean isRequired = annotation.required();
-               if (isRequired && protoSchemaGenerator.syntax() != ProtoSyntax.PROTO2) {
-                  throw new ProtoSchemaBuilderException("Field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required when using \"" + protoSchemaGenerator.syntax() + "\" syntax, while processing " + this.protoSchemaGenerator.generator);
-               }
-               boolean isMap = isMap(field.getType());
-               if (isMap && protoSchemaGenerator.syntax() == ProtoSyntax.PROTO2) {
-                  throw new ProtoSchemaBuilderException("Field '" + fieldName + "' of " + clazz.getCanonicalName() + " of type map is not supported when using \"" + protoSchemaGenerator.syntax() + "\" syntax, while processing " + this.protoSchemaGenerator.generator);
-               }
-               if (isRepeated && isRequired) {
-                  throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required.");
-               }
-               XClass javaType = getJavaTypeFromAnnotation(annotation);
-               if (javaType == typeFactory.fromClass(void.class)) {
-                  javaType = isRepeated ? field.determineRepeatedElementType() : field.getType();
-               }
-               if (javaType == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
-                  // MESSAGE is the default and stands for 'undefined', we can override it with a better default
-                  protobufType = Type.BYTES;
-               }
-               if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract() && !javaType.isEnum()) {
-                  throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract, while processing " + this.protoSchemaGenerator.generator);
-               }
-
-               protobufType = getProtobufType(javaType, protobufType);
-
-               ProtoTypeMetadata protoTypeMetadata = null;
-               if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
-                  protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
-               }
-
-               ProtoFieldMetadata fieldMetadata;
-               if (isMap) {
-                  // Determine the map implementation
-                  XClass repeatedImplementation = getMapImplementation(clazz, field.getType(), getMapImplementationFromAnnotation(annotation), fieldName, isRepeated);
-                  XClass keyJavaType = field.getTypeArgument(0);
-                  Type keyProtobufType = getProtobufType(keyJavaType, Type.MESSAGE);
-                  if (!keyProtobufType.isValidMapKey()) {
-                     throw new ProtoSchemaBuilderException("The key of the map field '" + fieldName + "' of " + clazz.getName() + " must be either a String or an integral type, while processing " + this.protoSchemaGenerator.generator);
-                  }
-                  fieldMetadata = new ProtoMapMetadata(number, fieldName, keyJavaType, javaType, repeatedImplementation, keyProtobufType, protobufType, protoTypeMetadata, field);
-               } else {
-                  Object defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation.defaultValue(), isRepeated);
-                  if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
-                     throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " is not nullable so it should be either marked required or should have a default value, while processing " + this.protoSchemaGenerator.generator);
-                  }
-                  // Handle oneof
-                  String oneof = annotation.oneof();
-                  if (oneof.isEmpty()) {
-                     oneof = null;
-                  } else {
-                     if (oneof.equals(fieldName) || fieldsByName.containsKey(oneof)) {
-                        throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " is member of the '" + oneof + "' oneof which collides with an existing field or oneof, while processing " + this.protoSchemaGenerator.generator);
-                     }
-                     if (isRepeated || isRequired) {
-                        throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " cannot be marked repeated or required since it is member of the '" + oneof + " oneof, while processing " + this.protoSchemaGenerator.generator);
-                     }
-                     oneofs.add(oneof);
-                  }
-                  // Determine the collection implementation
-                  XClass repeatedImplementation;
-                  if (isArray) {
-                     repeatedImplementation = typeFactory.fromClass(ArrayList.class);
-                  } else {
-                     repeatedImplementation = getCollectionImplementation(clazz, field.getType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
-                  }
-                  fieldMetadata = new ProtoFieldMetadata(number, fieldName, oneof, javaType, repeatedImplementation,
-                        protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue, field);
-               }
-
-               ProtoFieldMetadata existing = fieldsByNumber.get(number);
-               if (existing != null) {
-                  throw new ProtoSchemaBuilderException("Duplicate field number definition. Found two field definitions with number " + number + ": in "
-                        + fieldMetadata.getLocation() + " and in " + existing.getLocation() + ", while processing " + this.protoSchemaGenerator.generator);
-               }
-               existing = fieldsByName.get(fieldMetadata.getName());
-               if (existing != null) {
-                  throw new ProtoSchemaBuilderException("Duplicate field name definition. Found two field definitions with name '" + fieldMetadata.getName() + "': in "
-                        + fieldMetadata.getLocation() + " and in " + existing.getLocation() + ", while processing " + this.protoSchemaGenerator.generator);
-               }
-
-               checkReserved(fieldMetadata);
-               fieldsByNumber.put(fieldMetadata.getNumber(), fieldMetadata);
-               fieldsByName.put(fieldName, fieldMetadata);
-            }
-         }
-      }
-
+   private void discoverFieldsFromClassMethods(XClass clazz, Map<Integer, ProtoFieldMetadata> fieldsByNumber, Map<String, ProtoFieldMetadata> fieldsByName, Set<String> oneofs) {
       Set<XMethod> skipMethods = new HashSet<>();
 
       for (XMethod method : clazz.getDeclaredMethods()) {
@@ -524,14 +399,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             String propertyName;
             if (method.getReturnType() == typeFactory.fromClass(void.class)) {
                // this method is expected to be a setter
-               if (method.getName().startsWith("set") && method.getName().length() > 3) {
-                  propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
-               } else {
-                  throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
-               }
-               if (isAdapter && method.getParameterTypes().length != 2 || !isAdapter && method.getParameterTypes().length != 1) {
-                  throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
-               }
+               propertyName = detectPropertyNameFromSetter(method);
                //TODO [anistor] also check setter args
                unknownFieldSetSetter = method;
                unknownFieldSetGetter = findGetter(propertyName, method.getParameterTypes()[0]);
@@ -539,16 +407,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                skipMethods.add(unknownFieldSetGetter);
             } else {
                // this method is expected to be a getter
-               if (method.getName().startsWith("get") && method.getName().length() > 3) {
-                  propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
-               } else if (method.getName().startsWith("is") && method.getName().length() > 2) {
-                  propertyName = Character.toLowerCase(method.getName().charAt(2)) + method.getName().substring(3);
-               } else {
-                  throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
-               }
-               if (isAdapter && method.getParameterTypes().length != 1 || !isAdapter && method.getParameterTypes().length != 0) {
-                  throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
-               }
+               propertyName = determinePropertyNameFromGetter(method);
                //TODO [anistor] also check getter args
                unknownFieldSetGetter = method;
                unknownFieldSetSetter = findSetter(propertyName, unknownFieldSetGetter.getReturnType());
@@ -571,15 +430,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                // we can have the annotation present on either getter or setter but not both
                if (method.getReturnType() == typeFactory.fromClass(void.class)) {
                   // this method is expected to be a setter
-                  if (method.getName().startsWith("set") && method.getName().length() >= 4) {
-                     propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
-                  } else {
-                     // not a standard java-beans setter, use the whole name as property name
-                     propertyName = method.getName();
-                  }
-                  if (isAdapter && method.getParameterTypes().length != 2 || !isAdapter && method.getParameterTypes().length != 1) {
-                     throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
-                  }
+                  propertyName = detectPropertyNameFromSetter(method);
                   //TODO [anistor] also check setter args
                   setter = method;
                   getter = findGetter(propertyName, method.getParameterTypes()[0]);
@@ -591,17 +442,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   }
                } else {
                   // this method is expected to be a getter
-                  if (method.getName().startsWith("get") && method.getName().length() >= 4) {
-                     propertyName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
-                  } else if (method.getName().startsWith("is") && method.getName().length() >= 3) {
-                     propertyName = Character.toLowerCase(method.getName().charAt(2)) + method.getName().substring(3);
-                  } else {
-                     // not a standard java-beans getter
-                     propertyName = method.getName();
-                  }
-                  if (isAdapter && method.getParameterTypes().length != 1 || !isAdapter && method.getParameterTypes().length != 0) {
-                     throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
-                  }
+                  propertyName = determinePropertyNameFromGetter(method);
                   //TODO [anistor] also check getter args
                   getter = method;
                   getterReturnType = getter.getReturnType();
@@ -624,11 +465,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   fieldName = propertyName;
                }
 
-               Type protobufType = annotation.type();
-               if (getterReturnType == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
-                  // MESSAGE is the default and stands for 'undefined', we can override it with a better default
-                  protobufType = Type.BYTES;
-               }
+               Type protobufType = defaultType(annotation, getterReturnType);
                boolean isArray = isArray(getterReturnType, protobufType);
                boolean isRepeated = isRepeated(getterReturnType, protobufType);
                boolean isRequired = annotation.required();
@@ -651,7 +488,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   protobufType = Type.BYTES;
                }
                if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract() && !javaType.isEnum()) {
-                  throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
+                  throw Log.LOG.abstractType(javaType.getCanonicalName(), fieldName, clazz.getCanonicalName());
                }
 
                protobufType = getProtobufType(javaType, protobufType);
@@ -677,18 +514,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   if (isArray) {
                      repeatedImplementation = typeFactory.fromClass(ArrayList.class);
                   }
-                  String oneof = annotation.oneof();
-                  if (oneof.isEmpty()) {
-                     oneof = null;
-                  } else {
-                     if (oneof.equals(fieldName) || fieldsByName.containsKey(oneof)) {
-                        throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " is member of the '" + oneof + "' oneof which collides with an existing field or oneof, while processing " + this.protoSchemaGenerator.generator);
-                     }
-                     if (isRepeated || isRequired) {
-                        throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " cannot be marked repeated or required since it is member of the '" + oneof + " oneof, while processing " + this.protoSchemaGenerator.generator);
-                     }
-                     oneofs.add(oneof);
-                  }
+                  String oneof = validateOneOf(clazz, fieldsByName, oneofs, annotation, fieldName, isRepeated, isRequired);
                   // Determine default value
                   Object defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation.defaultValue(), isRepeated);
                   if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
@@ -719,6 +545,257 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
    }
 
+   private Type defaultType(ProtoField annotation, XClass type) {
+      Type protobufType = annotation == null ? Type.MESSAGE : annotation.type();
+      if (type == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
+         // MESSAGE is the default and stands for 'undefined', we can override it with a better default
+         protobufType = Type.BYTES;
+      }
+      return protobufType;
+   }
+
+   private void discoverFieldsFromClassFields(XClass clazz, Map<Integer, ProtoFieldMetadata> fieldsByNumber, Map<String, ProtoFieldMetadata> fieldsByName, Set<String> oneofs) {
+      boolean implicitFields = clazz.getAnnotation(Proto.class) != null;
+      int position = 0;
+      for (XField field : clazz.getDeclaredFields()) {
+         position++;
+         if (field.getAnnotation(ProtoUnknownFieldSet.class) != null) {
+            if (isAdapter) {
+               throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + clazz.getCanonicalName() + '.' + field);
+            }
+            if (unknownFieldSetField != null || unknownFieldSetGetter != null || unknownFieldSetSetter != null) {
+               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet annotation should not occur more than once in a class and its superclasses and superinterfaces : " + clazz.getCanonicalName() + '.' + field);
+            }
+            if (field.getAnnotation(ProtoField.class) != null) {
+               throw new ProtoSchemaBuilderException("The @ProtoUnknownFieldSet and @ProtoField annotations cannot be used together: " + field);
+            }
+            unknownFieldSetField = field;
+         } else {
+            ProtoField annotation = field.getAnnotation(ProtoField.class);
+            if (annotation != null || implicitFields) {
+               validateField(clazz, field);
+               int number = annotation != null ? getNumber(annotation, field) : position;
+               String fieldName = getName(annotation, field);
+               Type protobufType = defaultType(annotation, field.getType());
+               boolean isArray = isArray(field.getType(), protobufType);
+               boolean isRepeated = isRepeated(field.getType(), protobufType);
+               boolean isRequired = annotation != null && annotation.required();
+               if (isRequired && protoSchemaGenerator.syntax() != ProtoSyntax.PROTO2) {
+                  throw new ProtoSchemaBuilderException("Field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required when using \"" + protoSchemaGenerator.syntax() + "\" syntax, while processing " + this.protoSchemaGenerator.generator);
+               }
+               boolean isMap = isMap(field.getType());
+               if (isMap && protoSchemaGenerator.syntax() == ProtoSyntax.PROTO2) {
+                  throw new ProtoSchemaBuilderException("Field '" + fieldName + "' of " + clazz.getCanonicalName() + " of type map is not supported when using \"" + protoSchemaGenerator.syntax() + "\" syntax, while processing " + this.protoSchemaGenerator.generator);
+               }
+               if (isRepeated && isRequired) {
+                  throw new ProtoSchemaBuilderException("Repeated field '" + fieldName + "' of " + clazz.getCanonicalName() + " cannot be marked required.");
+               }
+               XClass javaType = getJavaTypeFromAnnotation(annotation);
+               if (javaType == typeFactory.fromClass(void.class)) {
+                  javaType = isRepeated ? field.determineRepeatedElementType() : field.getType();
+               }
+               if (javaType == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
+                  // MESSAGE is the default and stands for 'undefined', we can override it with a better default
+                  protobufType = Type.BYTES;
+               }
+               if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract() && !javaType.isEnum()) {
+                  throw Log.LOG.abstractType(javaType.getCanonicalName(), fieldName, clazz.getCanonicalName());
+               }
+
+               protobufType = getProtobufType(javaType, protobufType);
+
+               ProtoTypeMetadata protoTypeMetadata = null;
+               if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
+                  protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
+               }
+
+               ProtoFieldMetadata fieldMetadata;
+               if (isMap) {
+                  // Determine the map implementation
+                  XClass repeatedImplementation = getMapImplementation(clazz, field.getType(), getMapImplementationFromAnnotation(annotation), fieldName, isRepeated);
+                  XClass keyJavaType = field.getTypeArgument(0);
+                  Type keyProtobufType = getProtobufType(keyJavaType, Type.MESSAGE);
+                  if (!keyProtobufType.isValidMapKey()) {
+                     throw new ProtoSchemaBuilderException("The key of the map field '" + fieldName + "' of " + clazz.getName() + " must be either a String or an integral type, while processing " + this.protoSchemaGenerator.generator);
+                  }
+                  fieldMetadata = new ProtoMapMetadata(number, fieldName, keyJavaType, javaType, repeatedImplementation, keyProtobufType, protobufType, protoTypeMetadata, field);
+               } else {
+                  Object defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation == null ? "" : annotation.defaultValue(), isRepeated);
+                  if (!isRequired && !isRepeated && javaType.isPrimitive() && defaultValue == null) {
+                     throw new ProtoSchemaBuilderException("Primitive field '" + fieldName + "' of " + clazz.getCanonicalName() + " is not nullable so it should be either marked required or should have a default value, while processing " + this.protoSchemaGenerator.generator);
+                  }
+                  // Handle oneof
+                  String oneof = validateOneOf(clazz, fieldsByName, oneofs, annotation, fieldName, isRepeated, isRequired);
+                  // Determine the collection implementation
+                  XClass repeatedImplementation;
+                  if (isArray) {
+                     repeatedImplementation = typeFactory.fromClass(ArrayList.class);
+                  } else {
+                     repeatedImplementation = getCollectionImplementation(clazz, field.getType(), getCollectionImplementationFromAnnotation(annotation), fieldName, isRepeated);
+                  }
+                  fieldMetadata = new ProtoFieldMetadata(number, fieldName, oneof, javaType, repeatedImplementation,
+                        protobufType, protoTypeMetadata, isRequired, isRepeated, isArray, defaultValue, field);
+               }
+
+               ProtoFieldMetadata existing = fieldsByNumber.get(number);
+               if (existing != null) {
+                  throw new ProtoSchemaBuilderException("Duplicate field number definition. Found two field definitions with number " + number + ": in "
+                        + fieldMetadata.getLocation() + " and in " + existing.getLocation() + ", while processing " + this.protoSchemaGenerator.generator);
+               }
+               existing = fieldsByName.get(fieldMetadata.getName());
+               if (existing != null) {
+                  throw new ProtoSchemaBuilderException("Duplicate field name definition. Found two field definitions with name '" + fieldMetadata.getName() + "': in "
+                        + fieldMetadata.getLocation() + " and in " + existing.getLocation() + ", while processing " + this.protoSchemaGenerator.generator);
+               }
+
+               checkReserved(fieldMetadata);
+               fieldsByNumber.put(fieldMetadata.getNumber(), fieldMetadata);
+               fieldsByName.put(fieldName, fieldMetadata);
+            }
+         }
+      }
+   }
+
+   private static String getName(ProtoField annotation, XField field) {
+      if (annotation == null || annotation.name().isEmpty()) {
+         return field.getName();
+      } else {
+         return annotation.name();
+      }
+   }
+
+   private String validateOneOf(XClass clazz, Map<String, ProtoFieldMetadata> fieldsByName, Set<String> oneofs, ProtoField annotation, String fieldName, boolean isRepeated, boolean isRequired) {
+      if (annotation == null) {
+         return null;
+      }
+      String oneof = annotation.oneof();
+      if (oneof.isEmpty()) {
+         oneof = null;
+      } else {
+         if (oneof.equals(fieldName) || fieldsByName.containsKey(oneof)) {
+            throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " is member of the '" + oneof + "' oneof which collides with an existing field or oneof, while processing " + this.protoSchemaGenerator.generator);
+         }
+         if (isRepeated || isRequired) {
+            throw new ProtoSchemaBuilderException("The field named '" + fieldName + "' of " + clazz.getName() + " cannot be marked repeated or required since it is member of the '" + oneof + " oneof, while processing " + this.protoSchemaGenerator.generator);
+         }
+         oneofs.add(oneof);
+      }
+      return oneof;
+   }
+
+   private void validateField(XClass clazz, XField field) {
+      if (isAdapter) {
+         throw new ProtoSchemaBuilderException("No ProtoStream annotations should be present on fields when @ProtoAdapter is present on a class : " + clazz.getCanonicalName() + '.' + field);
+      }
+      if (field.isStatic()) {
+         throw new ProtoSchemaBuilderException("Static fields cannot be @ProtoField annotated: " + clazz.getCanonicalName() + '.' + field);
+      }
+      if (factory == null && field.isFinal()) { //todo [anistor] maybe allow this
+         throw new ProtoSchemaBuilderException("Final fields cannot be @ProtoField annotated: " + clazz.getCanonicalName() + '.' + field);
+      }
+      if (field.isPrivate()) {
+         throw new ProtoSchemaBuilderException("Private fields cannot be @ProtoField annotated: " + clazz.getCanonicalName() + '.' + field);
+      }
+   }
+
+   private String detectPropertyNameFromSetter(XMethod method) {
+      if (isAdapter && method.getParameterTypes().length != 2 || !isAdapter && method.getParameterTypes().length != 1) {
+         throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
+      }
+      if (method.getName().startsWith("set") && method.getName().length() > 3) {
+         return Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
+      } else {
+         return method.getName(); // throw new ProtoSchemaBuilderException("Illegal setter method signature: " + method);
+      }
+   }
+
+   private String determinePropertyNameFromGetter(XMethod method) {
+      if (isAdapter && method.getParameterTypes().length != 1 || !isAdapter && method.getParameterTypes().length != 0) {
+         throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
+      }
+      if (method.getName().startsWith("get") && method.getName().length() > 3) {
+         return Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
+      } else if (method.getName().startsWith("is") && method.getName().length() > 2) {
+         return Character.toLowerCase(method.getName().charAt(2)) + method.getName().substring(3);
+      } else {
+         // not a standard java-beans getter
+         return method.getName();  //throw new ProtoSchemaBuilderException("Illegal getter method signature: " + method);
+      }
+   }
+
+   private void discoverFieldsFromRecord(XClass clazz, Map<Integer, ProtoFieldMetadata> fieldsByNumber, Map<String, ProtoFieldMetadata> fieldsByName) {
+      String[] parameterNames = factory.getParameterNames();
+      XClass[] parameterTypes = factory.getParameterTypes();
+      for (int i = 0; i < factory.getParameterCount(); i++) {
+         int fieldNumber = i + 1;
+         String fieldName = parameterNames[i];
+         XClass javaType = parameterTypes[i];
+         ProtoField annotation = javaType.getAnnotation(ProtoField.class);
+
+         Type protobufType = defaultType(annotation, javaType);
+
+         XMethod getter = clazz.getMethod(fieldName);
+         boolean isArray = isArray(javaType, protobufType);
+         boolean isRepeated = isRepeated(javaType, protobufType);
+         boolean isMap = isMap(javaType);
+
+         // Determine the collection/map implementation
+         XClass repeatedImplementation = null;
+         if (isMap) {
+            repeatedImplementation = getMapImplementation(clazz, javaType, getMapImplementationFromAnnotation(annotation), fieldName, true);
+         } else if (isArray) {
+            repeatedImplementation = typeFactory.fromClass(ArrayList.class);
+         } else if (isRepeated) {
+            repeatedImplementation = getCollectionImplementation(clazz, javaType, getCollectionImplementationFromAnnotation(annotation), fieldName, true);
+         }
+
+         if (isRepeated) {
+            javaType = getter.determineRepeatedElementType();
+         }
+
+         if (javaType == typeFactory.fromClass(byte[].class) && protobufType == Type.MESSAGE) {
+            // MESSAGE is the default and stands for 'undefined', we can override it with a better default
+            protobufType = Type.BYTES;
+         }
+         if (!javaType.isArray() && !javaType.isPrimitive() && javaType.isAbstract() && !javaType.isEnum()) {
+            throw new ProtoSchemaBuilderException("The type " + javaType.getCanonicalName() + " of field '" + fieldName + "' of " + clazz.getCanonicalName() + " should not be abstract.");
+         }
+
+         protobufType = getProtobufType(javaType, protobufType);
+         ProtoTypeMetadata protoTypeMetadata = null;
+         if (protobufType.getJavaType() == JavaType.ENUM || protobufType.getJavaType() == JavaType.MESSAGE) {
+            protoTypeMetadata = protoSchemaGenerator.scanAnnotations(javaType);
+         }
+         String oneof = null;
+         Object defaultValue;
+         if (annotation == null) {
+            defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, null, false);
+         } else {
+            if (annotation.number() > 0) fieldNumber = annotation.number();
+            if (!annotation.name().isEmpty()) fieldName = annotation.name();
+            if (!annotation.oneof().isEmpty()) oneof = annotation.oneof();
+            defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, annotation.defaultValue(), false);
+         }
+         ProtoFieldMetadata fieldMetadata;
+         if (isMap) {
+            XClass keyJavaType = getter.getTypeArgument(0);
+            Type keyType = getProtobufType(keyJavaType, Type.MESSAGE);
+            if (!keyType.isValidMapKey()) {
+               throw new ProtoSchemaBuilderException("The key of the map field '" + fieldName + "' of " + clazz.getName() + " must be either a String or an integral type, while processing " + this.protoSchemaGenerator.generator);
+            }
+            fieldMetadata = new ProtoMapMetadata(fieldNumber, fieldName, keyJavaType, javaType, repeatedImplementation, keyType, protobufType, protoTypeMetadata, fieldName, getter, getter, null);
+         } else {
+            fieldMetadata = new ProtoFieldMetadata(fieldNumber, fieldName, oneof, javaType,
+                  repeatedImplementation, protobufType, protoTypeMetadata,
+                  false, isRepeated, isArray, defaultValue, fieldName,
+                  getter, getter, null);
+         }
+         checkReserved(fieldMetadata);
+         fieldsByNumber.put(fieldMetadata.getNumber(), fieldMetadata);
+         fieldsByName.put(fieldMetadata.getName(), fieldMetadata);
+      }
+   }
+
    private static int getNumber(ProtoField annotation, XMember member) {
       int number = annotation.number();
       if (number == 0) {
@@ -741,15 +818,15 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    protected XClass getCollectionImplementationFromAnnotation(ProtoField annotation) {
-      return typeFactory.fromClass(annotation.collectionImplementation());
+      return annotation == null ? typeFactory.fromClass(Collection.class) : typeFactory.fromClass(annotation.collectionImplementation());
    }
 
    protected XClass getMapImplementationFromAnnotation(ProtoField annotation) {
-      return typeFactory.fromClass(annotation.mapImplementation());
+      return annotation == null ? typeFactory.fromClass(Map.class) : typeFactory.fromClass(annotation.mapImplementation());
    }
 
    protected XClass getJavaTypeFromAnnotation(ProtoField annotation) {
-      return typeFactory.fromClass(annotation.javaType());
+      return annotation == null ? typeFactory.fromClass(void.class) : typeFactory.fromClass(annotation.javaType());
    }
 
    /**
@@ -1157,9 +1234,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       boolean isBoolean = propertyType == typeFactory.fromClass(boolean.class) || propertyType == typeFactory.fromClass(Boolean.class);
       String methodName = (isBoolean ? "is" : "get") + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
 
+      XMethod getter;
       if (isAdapter) {
          // lookup a java-bean style method first
-         XMethod getter = annotatedClass.getMethod(methodName);
+         getter = annotatedClass.getMethod(methodName);
          if (getter == null && isBoolean) {
             // retry with 'get' instead of 'is'
             methodName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
@@ -1182,10 +1260,9 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   + "' of type " + propertyType.getCanonicalName() + " in class " + getAnnotatedClassName()
                   + ". The candidate method does not have a suitable return type: " + getter);
          }
-         return getter;
       } else {
          // lookup a java-bean style method first
-         XMethod getter = javaClass.getMethod(methodName);
+         getter = javaClass.getMethod(methodName);
          if (getter == null && isBoolean) {
             // retry with 'get' instead of 'is'
             methodName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
@@ -1208,15 +1285,16 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   + "' of type " + propertyType.getCanonicalName() + " in class " + javaClass.getCanonicalName()
                   + ". The candidate method does not have a suitable return type: " + getter);
          }
-         return getter;
       }
+      return getter;
    }
 
    private XMethod findSetter(String propertyName, XClass propertyType) {
       String methodName = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+      XMethod setter;
       if (isAdapter) {
          // lookup a java-bean style method first
-         XMethod setter = annotatedClass.getMethod(methodName, javaClass, propertyType);
+         setter = annotatedClass.getMethod(methodName, javaClass, propertyType);
          if (setter == null) {
             // try the property name directly
             setter = annotatedClass.getMethod(propertyName, javaClass, propertyType);
@@ -1230,10 +1308,9 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   + "' of type " + propertyType.getCanonicalName() + " in class " + getAnnotatedClassName()
                   + ". The candidate method does not have a suitable return type: " + setter);
          }
-         return setter;
       } else {
          // lookup a java-bean style method first
-         XMethod setter = javaClass.getMethod(methodName, propertyType);
+         setter = javaClass.getMethod(methodName, propertyType);
          if (setter == null) {
             // try the property name directly
             setter = javaClass.getMethod(propertyName, propertyType);
@@ -1247,8 +1324,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                   + "' of type " + propertyType.getCanonicalName() + " in class " + getJavaClassName()
                   + ". The candidate method does not have a suitable return type: " + setter);
          }
-         return setter;
       }
+      return setter;
    }
 
    private void checkForbiddenAnnotations(XMethod m1, XMethod m2) {

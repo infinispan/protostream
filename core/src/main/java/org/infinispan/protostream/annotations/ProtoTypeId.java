@@ -7,8 +7,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An optional annotation for specifying the a numeric type identifier for a Protobuf message or enum type. This numeric
- * identifier must be globally unique so it can be used to identify the type instead of the fully qualified name.
+ * An optional annotation for specifying a numeric type identifier for a Protobuf message or enum type. This numeric
+ * identifier must be globally unique, so it can be used to identify the type instead of the fully qualified name.
  * <p>
  * This Java annotations results in a protostream documentation annotation 'TypeId' being added to the generated proto
  * schema.
