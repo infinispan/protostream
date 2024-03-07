@@ -19,17 +19,13 @@ import org.infinispan.protostream.SerializationContextInitializer;
  * This annotation is used at compile time annotation processing only and should not be relied upon at runtime, so its
  * retention is set to {@link RetentionPolicy#CLASS}.
  * <p>
- * <em>NOTE:</em> This annotation can also be used on packages but this kind of usage has been deprecated in 4.3.4 and
- * will be removed in version 5. See <a href="https://issues.redhat.com/browse/IPROTO-157">IPROTO-157</a>.
  *
  * @author anistor@redhat.com
- * @since 4.3
- * @deprecated since 5.0. Use the {@link ProtoSchema} replacement instead.
+ * @since 5.0
  */
 @Target({ElementType.TYPE, ElementType.PACKAGE})
 @Retention(RetentionPolicy.CLASS)
-@Deprecated(since = "5.0")
-public @interface AutoProtoSchemaBuilder {
+public @interface ProtoSchema {
 
    /**
     * The name of the generated Java implementation class (optional). If missing, the name of the current class plus the
@@ -89,24 +85,6 @@ public @interface AutoProtoSchemaBuilder {
    Class<?>[] excludeClasses() default {};
 
    /**
-    * Indicates if we accept classes not explicitly included by the {@link #includeClasses} or {@link #basePackages} to
-    * be auto-detected by reference from the already included classes and to be added automatically. If this is set to
-    * {@code false} (which is the default) it results in a compilation error when such a case is encountered.
-    *
-    * @deprecated since 4.3.4. This will be removed in version 5. See <a href="https://issues.redhat.com/browse/IPROTO-158">IPROTO-158</a>.
-    */
-   @Deprecated
-   boolean autoImportClasses() default false;
-
-   /**
-    * Enable generation of a {@code META-INF/services} file for the generated implementation class of the {@link
-    * SerializationContextInitializer} to be loadable by the {@link java.util.ServiceLoader}. This defaults to {@code true}.
-    * The ProtoStream library does not make any use of the {@link java.util.ServiceLoader} to benefit from this
-    * mechanism but the user's application is free to use it.
-    */
-   boolean service() default true;
-
-   /**
     * Generate only the marshallers and skip the schema file.
     * <p>
     * The schema is actually always generated at compile time, in memory, so that various validations can be performed
@@ -125,7 +103,7 @@ public @interface AutoProtoSchemaBuilder {
    /**
     * The {@link SerializationContextInitializer}s that must be executed before this one. Classes or interfaces listed
     * here must implement {@link SerializationContextInitializer} and must also be annotated with
-    * {@code AutoProtoSchemaBuilder}. Classes not annotated with {@link AutoProtoSchemaBuilder} will result in a
+    * {@code AutoProtoSchemaBuilder}. Classes not annotated with {@link ProtoSchema} will result in a
     * compilation error.
     */
    Class<? extends SerializationContextInitializer>[] dependsOn() default {};

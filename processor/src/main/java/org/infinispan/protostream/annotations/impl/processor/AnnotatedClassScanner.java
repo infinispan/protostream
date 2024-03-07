@@ -62,7 +62,7 @@ final class AnnotatedClassScanner {
    private final MirrorTypeFactory typeFactory;
 
    private final Element builderElement;
-   private final AutoProtoSchemaBuilder builderAnnotation;
+   private final ProtoSchemaAnnotation builderAnnotation;
 
    private final Set<String> basePackages;
    private final Set<TypeMirror> includedClasses;
@@ -73,7 +73,7 @@ final class AnnotatedClassScanner {
    private final String initializerFQClassName;
 
    AnnotatedClassScanner(Messager messager, Elements elements, Types types, MirrorTypeFactory typeFactory,
-                         Element builderElement, AutoProtoSchemaBuilder builderAnnotation) {
+                         Element builderElement, ProtoSchemaAnnotation builderAnnotation) {
       this.messager = messager;
       this.elements = elements;
       this.types = types;
@@ -81,10 +81,8 @@ final class AnnotatedClassScanner {
       this.builderElement = builderElement;
       this.builderAnnotation = builderAnnotation;
 
-      includedClasses = new LinkedHashSet<>(DangerousActions.getTypeMirrors(builderAnnotation, AutoProtoSchemaBuilder::includeClasses));
-
-      excludedClasses = new LinkedHashSet<>(DangerousActions.getTypeMirrors(builderAnnotation, AutoProtoSchemaBuilder::excludeClasses));
-
+      includedClasses = new LinkedHashSet<>(builderAnnotation.includeClasses());
+      excludedClasses = new LinkedHashSet<>(builderAnnotation.excludeClasses());
       basePackages = getBasePackages();
 
       if (!includedClasses.isEmpty()) {

@@ -29,12 +29,13 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoReserved.Range;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleEnum;
 import org.junit.Test;
 
-public class AutoProtoSchemaBuilderTest {
+public class ProtoSchemaTest {
 
    @ProtoComment("This is the documentation")
    @ProtoName("NoteMsg")
@@ -126,7 +127,7 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(schemaFileName = "TestFile.proto", schemaFilePath = "org/infinispan/protostream/generated_schemas", schemaPackageName = "firstTestPackage",
+   @ProtoSchema(schemaFileName = "TestFile.proto", schemaFilePath = "org/infinispan/protostream/generated_schemas", schemaPackageName = "firstTestPackage",
          includeClasses = {
                Note.class,
                SimpleClass.class,
@@ -185,8 +186,8 @@ public class AutoProtoSchemaBuilderTest {
    public void testLocalAnnotatedClassesAreSkipped() {
       // Standard Java annotation processors do not process the bodies of methods, so LocalInitializer is never seen by our AP and no code is generated for it, and that is OK.
       // If we ever decide to process method bodies we should probably study the approach used by "The Checker Framework" (https://checkerframework.org).
-      @AutoProtoSchemaBuilder(className = "NeverEverGenerated",
-            basePackages = "org.infinispan.protostream.annotations.impl.processor", service = true)
+      @ProtoSchema(className = "NeverEverGenerated",
+            basePackages = "org.infinispan.protostream.annotations.impl.processor")
       abstract class LocalInitializer implements SerializationContextInitializer {
       }
 
@@ -235,7 +236,7 @@ public class AutoProtoSchemaBuilderTest {
       assertNotNull(found.getProtoFile());
    }
 
-   @AutoProtoSchemaBuilder(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, syntax = ProtoSyntax.PROTO3)
+   @ProtoSchema(dependsOn = ReusableInitializer.class, includeClasses = DependentInitializer.C.class, syntax = ProtoSyntax.PROTO3)
    public interface DependentInitializer extends SerializationContextInitializer {
       class C {
          @ProtoField(number = 1)
@@ -802,7 +803,7 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = MessageWithAllFieldTypes.class, syntax = ProtoSyntax.PROTO3)
+   @ProtoSchema(includeClasses = MessageWithAllFieldTypes.class, syntax = ProtoSyntax.PROTO3)
    interface AllFieldTypesInitializer extends SerializationContextInitializer {
    }
 
@@ -927,7 +928,7 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = {MessageWithRepeatedFields.class, MessageWithRepeatedFields.Inner.class}, syntax = ProtoSyntax.PROTO3)
+   @ProtoSchema(includeClasses = {MessageWithRepeatedFields.class, MessageWithRepeatedFields.Inner.class}, syntax = ProtoSyntax.PROTO3)
    interface NonNullRepeatedFieldsInitializer extends SerializationContextInitializer {
    }
 
@@ -1056,7 +1057,7 @@ public class AutoProtoSchemaBuilderTest {
    }
 
    // TODO [anistor] print a huge warning for not annotated classes and an indication that it can be turned off by at least adding @ProtoName
-   @AutoProtoSchemaBuilder(includeClasses = {RGBColor.class, ImmutableColor.class})
+   @ProtoSchema(includeClasses = {RGBColor.class, ImmutableColor.class})
    interface ImmutableMessageTestInitializer extends GeneratedSchema {
    }
 
@@ -1339,7 +1340,7 @@ public class AutoProtoSchemaBuilderTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(schemaFileName = "generic_message.proto", service = false,
+   @ProtoSchema(schemaFileName = "generic_message.proto",
          includeClasses = {
                GenericMessage.class,
                GenericMessage.OtherMessage.class
