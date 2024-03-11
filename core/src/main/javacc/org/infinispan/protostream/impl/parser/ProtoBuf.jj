@@ -47,13 +47,14 @@ public class ProtoParser {
    }
 
    static void appendComment(StringBuilder s) {
-      ProtostreamProtoParser.comments.get().append(s);
+      String comment = DECOMMENTIFY.matcher(s).replaceAll("").trim();
+      ProtostreamProtoParser.comments.get().append(comment).append('\n');
    }
 
    static String comment() {
-      String s = ProtostreamProtoParser.comments.get().toString();
+      StringBuilder s = ProtostreamProtoParser.comments.get();
       ProtostreamProtoParser.comments.remove();
-      return DECOMMENTIFY.matcher(s).replaceAll("").trim();
+      return s.toString();
    }
 
    static String unquote(String s) {

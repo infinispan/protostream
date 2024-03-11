@@ -8,6 +8,9 @@ package sample_bank_account;
  * @TypeId(100042)
  */
 message User {
+   /* CommentOne */
+
+   /* @CommentTwo */
 
    /**
     * @Field(store = Store.YES)
