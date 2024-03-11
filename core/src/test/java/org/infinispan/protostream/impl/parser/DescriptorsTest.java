@@ -838,6 +838,7 @@ public class DescriptorsTest {
       Descriptor userMessageType = messageTypes.get(0);
       assertEquals("sample_bank_account.User", userMessageType.getFullName());
       assertEquals(Boolean.TRUE, userMessageType.getProcessedAnnotation("Indexed"));
+      assertEquals("CommentOne\n@CommentTwo\n@Field(store = Store.YES)\n@SortableField\n", userMessageType.getFields().get(0).getDocumentation());
 
       Descriptor accountMessageType = messageTypes.get(1);
       assertEquals("sample_bank_account.Account", accountMessageType.getFullName());
