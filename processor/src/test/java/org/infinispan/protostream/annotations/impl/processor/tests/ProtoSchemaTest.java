@@ -1385,15 +1385,24 @@ public class ProtoSchemaTest {
    }
 
    @Proto
+   enum BareEnum {
+      ZERO,
+      ONE,
+      TWO
+   }
+
+   @Proto
    static final class BareMessage {
       public int anInt;
       public String aString;
       public List<String> things;
       public Map<String, String> moreThings;
+      public BareEnum anEnum;
    }
 
    @ProtoSchema(schemaFileName = "bare_message.proto",
          includeClasses = {
+               BareEnum.class,
                BareMessage.class,
          }, syntax = ProtoSyntax.PROTO3
    )
@@ -1430,6 +1439,10 @@ public class ProtoSchemaTest {
       assertEquals(4, map.getNumber());
       assertEquals(Type.STRING, map.getKeyType());
       assertEquals(Type.STRING, map.getType());
+      field = message.getFields().get(4);
+      assertEquals("anEnum", field.getName());
+      assertEquals(5, field.getNumber());
+      assertEquals(Type.ENUM, field.getType());
    }
 
    //todo warnings logged to log4j during generation do not end up in compiler's message log
