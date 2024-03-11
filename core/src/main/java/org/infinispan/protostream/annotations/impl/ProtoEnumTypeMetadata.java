@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
@@ -73,20 +74,21 @@ public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
    @Override
    public void scanMemberAnnotations() {
+      final boolean implicit = annotatedEnumClass.getAnnotation(Proto.class) != null;
       if (membersByNumber == null) {
          membersByNumber = new TreeMap<>();
          membersByName = new HashMap<>();
          for (XEnumConstant ec : annotatedEnumClass.getEnumConstants()) {
             ProtoEnumValue annotation = ec.getAnnotation(ProtoEnumValue.class);
-            if (annotation == null) {
-               throw new ProtoSchemaBuilderException("Enum constants must have the @ProtoEnumValue annotation: " + getAnnotatedClassName() + '.' + ec.getName());
+            if (annotation == null && !implicit) {
+               throw Log.LOG.explicitEnumValueAnnotations(ec.getName(), annotatedEnumClass.getName());
             }
-            int number = getNumber(annotation, ec);
+            int number = annotation == null ? ec.getOrdinal() : getNumber(annotation, ec);
             if (membersByNumber.containsKey(number)) {
                throw new ProtoSchemaBuilderException("Found duplicate definition of Protobuf enum tag " + number + " on enum constant: " + getAnnotatedClassName() + '.' + ec.getName()
                      + " clashes with " + membersByNumber.get(number).getJavaEnumName());
             }
-            String name = annotation.name();
+            String name = annotation == null ? ec.getName() : annotation.name();
             if (name.isEmpty()) {
                name = ec.getName();
             }

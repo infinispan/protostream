@@ -155,7 +155,7 @@ final class AnnotatedClassScanner {
          }
 
          for (Element e : roundEnv.getElementsAnnotatedWith(Proto.class)) {
-            visitProtoMessage(e);
+            visitProto(e);
          }
 
          for (Element e : roundEnv.getElementsAnnotatedWith(ProtoAdapter.class)) {
@@ -187,7 +187,7 @@ final class AnnotatedClassScanner {
          visitProtoName(e);
       }
       if (e.getAnnotation(Proto.class) != null) {
-         visitProtoMessage(e);
+         visitProto(e);
       }
 
       for (Element member : e.getEnclosedElements()) {
@@ -238,29 +238,27 @@ final class AnnotatedClassScanner {
    }
 
    private void visitProtoTypeId(Element e) {
-      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE && e.getKind() != ElementKind.ENUM) {
-         throw new AnnotationProcessingException(e, "@ProtoTypeId can only be applied to classes, interfaces and enums.");
+      switch (e.getKind()) {
+         case CLASS, INTERFACE, RECORD, ENUM -> collectClasses((TypeElement) e);
+         default ->
+               throw new AnnotationProcessingException(e, "@ProtoTypeId can only be applied to classes, records, interfaces and enums.");
       }
-      collectClasses((TypeElement) e);
    }
 
    private void visitProtoName(Element e) {
-      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE && e.getKind() != ElementKind.ENUM) {
-         throw new AnnotationProcessingException(e, "@ProtoName can only be applied to classes, interfaces and enums.");
+      switch (e.getKind()) {
+         case CLASS, INTERFACE, RECORD, ENUM -> collectClasses((TypeElement) e);
+         default ->
+               throw new AnnotationProcessingException(e, "@ProtoName can only be applied to classes, interfaces, records and enums.");
       }
       collectClasses((TypeElement) e);
    }
 
-   private void visitProtoMessage(Element e) {
-      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE && e.getKind() != ElementKind.RECORD) {
-         throw new AnnotationProcessingException(e, "@ProtoMessage can only be applied to classes and interfaces.");
-      }
-      collectClasses((TypeElement) e);
-   }
-
-   private void visitProtoEnum(Element e) {
-      if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE) {
-         throw new AnnotationProcessingException(e, "@ProtoEnum can only be applied to enums.");
+   private void visitProto(Element e) {
+      switch (e.getKind()) {
+         case CLASS, INTERFACE, RECORD, ENUM -> collectClasses((TypeElement) e);
+         default ->
+               throw new AnnotationProcessingException(e, "@Proto can only be applied to classes, interfaces, records and enums.");
       }
       collectClasses((TypeElement) e);
    }

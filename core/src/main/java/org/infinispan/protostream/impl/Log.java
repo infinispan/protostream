@@ -114,6 +114,9 @@ public interface Log extends BasicLogger {
    @Message(value = "@ProtoFactory annotated method has wrong return type: %s", id = 28)
    ProtoSchemaBuilderException wrongFactoryReturnType(String s);
 
+   @Message(value = "Value `%s` on enum `%s` must be annotated with @ProtoEnumValue", id = 29)
+   ProtoSchemaBuilderException explicitEnumValueAnnotations(String value, String name);
+
    class LogFactory {
       public static Log getLog(Class<?> clazz) {
          return Logger.getMessageLogger(Log.class, clazz.getName());

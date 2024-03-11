@@ -15,7 +15,6 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerator;
 import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
 import org.infinispan.protostream.annotations.impl.ImportedProtoTypeMetadata;
-import org.infinispan.protostream.annotations.impl.ProtoEnumTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.processor.dependency.CompileTimeDependency;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
@@ -50,11 +49,6 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    @Override
    protected AbstractMarshallerCodeGenerator makeMarshallerCodeGenerator() {
       return marshallerSourceCodeGenerator;
-   }
-
-   @Override
-   protected ProtoTypeMetadata makeEnumTypeMetadata(XClass javaType) {
-      return new ProtoEnumTypeMetadata(javaType, getTargetClass(javaType));
    }
 
    @Override
