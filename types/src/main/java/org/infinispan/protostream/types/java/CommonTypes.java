@@ -1,9 +1,10 @@
 package org.infinispan.protostream.types.java;
 
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.types.java.math.BigDecimalAdapter;
 import org.infinispan.protostream.types.java.math.BigIntegerAdapter;
+import org.infinispan.protostream.types.java.util.BitSetAdapter;
 import org.infinispan.protostream.types.java.util.UUIDAdapter;
 
 /**
@@ -12,7 +13,7 @@ import org.infinispan.protostream.types.java.util.UUIDAdapter;
  * @author anistor@redhat.com
  * @since 4.4
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       className = "CommonTypesSchema",
       schemaFileName = "common-java-types.proto",
       schemaFilePath = "/protostream",
@@ -20,7 +21,8 @@ import org.infinispan.protostream.types.java.util.UUIDAdapter;
       includeClasses = {
             UUIDAdapter.class,
             BigIntegerAdapter.class,
-            BigDecimalAdapter.class
+            BigDecimalAdapter.class,
+            BitSetAdapter.class
       }
 )
 public interface CommonTypes extends GeneratedSchema {
