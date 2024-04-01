@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagReader;
-import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.XClass;
@@ -24,6 +23,7 @@ import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
+import org.infinispan.protostream.impl.TagWriterImpl;
 
 /**
  * @author anistor@readhat.com
@@ -171,7 +171,7 @@ public abstract class AbstractMarshallerCodeGenerator {
     * Make field name for caching a marshaller delegate for a related message.
     */
    protected String makeMarshallerDelegateFieldName(ProtoFieldMetadata field) {
-      return "__md$" + field.getNumber();
+      return "__md$" + field.getNumber() + (field.getJavaType().isEnum() ? "e" : "");
    }
 
    /**
@@ -599,7 +599,6 @@ public abstract class AbstractMarshallerCodeGenerator {
             String mdField = initMarshallerDelegateField(iw, fieldMetadata);
             iw.println("int enumVal = $in.readEnum();");
             iw.printf("%s = (%s) %s.getMarshaller().decode(enumVal);\n", v, fieldMetadata.getJavaTypeName(), mdField);
-            iw.println("}");
             break;
          }
          default:
@@ -699,7 +698,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          getUnknownFieldSetFieldStatement = "o.getUnknownFieldSet()";
       }
       if (!messageTypeMetadata.getFields().isEmpty() || getUnknownFieldSetFieldStatement != null) {
-         iw.printf("final %s $out = $1.getWriter();\n", TagWriter.class.getName());
+         iw.printf("%s $out = (%s) $1.getWriter();\n", TagWriterImpl.class.getName(), TagWriterImpl.class.getName());
          iw.printf("final %s o = (%s) $2;\n", messageTypeMetadata.getJavaClassName(), messageTypeMetadata.getJavaClassName());
          for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
             iw.println("{");
@@ -763,10 +762,12 @@ public abstract class AbstractMarshallerCodeGenerator {
                   );
                   iw.printf("try (NestedWriter $n = new NestedWriter($1, %d)) {\n", fieldMetadata.getNumber());
                   iw.inc();
-                  writeFieldValue(mapFieldMetadata.getKey(), iw, v + ".getKey()", "$n.getWriter()");
-                  writeFieldValue(mapFieldMetadata.getValue(), iw, v + ".getValue()", "$n.getWriter()");
+                  iw.println("$out = $n.getWriter();");
+                  writeFieldValue(mapFieldMetadata.getKey(), iw, v + ".getKey()", "$out");
+                  writeFieldValue(mapFieldMetadata.getValue(), iw, v + ".getValue()", "$out");
                   iw.dec();
                   iw.println("}");
+                  iw.printf("$out = (%s) $1.getWriter();\n", TagWriterImpl.class.getName());
                } else {
                   iw.printf("for (java.util.Iterator<%s> it = %s.iterator(); it.hasNext(); ) {\n", fieldMetadata.getJavaTypeName(), f);
                   iw.inc();
@@ -822,7 +823,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.inc();
             String mdField = initMarshallerDelegateField(iw, fieldMetadata);
             iw.printf("%s.writeTag(%d, %s.impl.WireFormat.WIRETYPE_START_GROUP);\n", out, fieldMetadata.getNumber(), PROTOSTREAM_PACKAGE);
-            iw.printf("writeMessage(%s, $1, %s);\n", mdField, v);
+            iw.printf("writeMessage(%s, %s, %s);\n", mdField, out, v);
             iw.printf("%s.writeTag(%d, %s.impl.WireFormat.WIRETYPE_END_GROUP);\n", out, fieldMetadata.getNumber(), PROTOSTREAM_PACKAGE);
             iw.dec();
             iw.println("}");
@@ -832,7 +833,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.println("{");
             iw.inc();
             String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-            iw.printf("writeNestedMessage(%s, $1, %d, %s);\n", mdField, fieldMetadata.getNumber(), v);
+            iw.printf("writeNestedMessage(%s, %s, %d, %s);\n", mdField, out, fieldMetadata.getNumber(), v);
             iw.dec();
             iw.println("}");
             break;
