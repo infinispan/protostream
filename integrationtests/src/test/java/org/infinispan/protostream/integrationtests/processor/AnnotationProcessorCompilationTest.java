@@ -179,13 +179,13 @@ public class AnnotationProcessorCompilationTest {
    @Test
    public void testReservedFieldName() {
       Compilation compilation = CompilationUtils.compile("org/infinispan/protostream/integrationtests/processor/ReservedFieldName.java");
-      assertThat(compilation).hadErrorContaining("Protobuf field \"txt\" with number 1 conflicts with 'reserved' statement in test_basic_stuff.TestMessage");
+      assertThat(compilation).hadErrorContaining("IPROTO000010: Name 'txt' is reserved on `test_basic_stuff.TestMessage`");
    }
 
    @Test
    public void testReservedFieldNumber() {
       Compilation compilation = CompilationUtils.compile("org/infinispan/protostream/integrationtests/processor/ReservedFieldNumber.java");
-      assertThat(compilation).hadErrorContaining("Protobuf field \"txt\" with number 1 conflicts with 'reserved' statement in test_basic_stuff.TestMessage");
+      assertThat(compilation).hadErrorContaining("IPROTO000011: Number 1 used by 'txt' is reserved on 'test_basic_stuff.TestMessage'");
    }
 
    @Test

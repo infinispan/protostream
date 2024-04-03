@@ -764,8 +764,8 @@ public class DescriptorsTest {
       assertNotNull(typeX);
       assertEquals(1, typeX.getFields().size());
       FieldDescriptor field1 = typeX.getFields().get(0);
-      assertEquals("some doc text \nsome more doc text", typeX.getDocumentation());
-      assertEquals("field doc text", field1.getDocumentation());
+      assertEquals("some doc text \nsome more doc text", typeX.getDocumentation().trim());
+      assertEquals("field doc text", field1.getDocumentation().trim());
    }
 
    @Test
@@ -809,11 +809,11 @@ public class DescriptorsTest {
       assertNotNull(typeX);
       assertEquals(1, typeX.getFields().size());
       FieldDescriptor field1 = typeX.getFields().get(0);
-      assertEquals("@Foo(fooValue) \nsome more doc text", typeX.getDocumentation());
+      assertEquals("@Foo(fooValue) \nsome more doc text", typeX.getDocumentation().trim());
       Map<String, AnnotationElement.Annotation> typeAnnotations = typeX.getAnnotations();
       assertEquals("fooValue", typeAnnotations.get("Foo").getDefaultAttributeValue().getValue());
       assertEquals("fooValue", typeX.getProcessedAnnotation("Foo"));
-      assertEquals("@Bar(barValue)", field1.getDocumentation());
+      assertEquals("@Bar(barValue)", field1.getDocumentation().trim());
       Map<String, AnnotationElement.Annotation> fieldAnnotations = field1.getAnnotations();
       assertEquals("barValue", fieldAnnotations.get("Bar").getDefaultAttributeValue().getValue());
       assertEquals("barValue", field1.getProcessedAnnotation("Bar"));
