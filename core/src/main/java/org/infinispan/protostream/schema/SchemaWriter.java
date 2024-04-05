@@ -2,7 +2,6 @@ package org.infinispan.protostream.schema;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -99,7 +98,7 @@ class SchemaWriter {
       }
    }
 
-   private void writeReserved(Writer w, BitSet reservedNumbers) throws IOException {
+   private void writeReserved(Writer w, ReservedNumbers reservedNumbers) throws IOException {
       if (!reservedNumbers.isEmpty()) {
          writeOffset(w);
          w.write("reserved ");

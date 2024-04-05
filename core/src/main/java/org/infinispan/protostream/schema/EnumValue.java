@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @since 5.0
@@ -17,10 +18,10 @@ public class EnumValue {
    private final Map<String, Object> options;
 
 
-   public EnumValue(Builder builder) {
+   public EnumValue(Builder builder, AtomicInteger autoNumber) {
       this.name = builder.name;
       this.fullName = builder.getFullName();
-      this.number = builder.number;
+      this.number = builder.number < 0 ? autoNumber.getAndIncrement() : builder.number;
       this.comments = List.copyOf(builder.comments);
       this.options = Map.copyOf(builder.options);
    }
@@ -46,8 +47,8 @@ public class EnumValue {
    }
 
    public static class Builder implements OptionContainer<Builder>, CommentContainer<Builder>, ReservedContainer<Enum.Builder> {
-      private final String name;
-      private final int number;
+      final String name;
+      final int number;
       private final Enum.Builder parent;
       private final List<String> comments = new ArrayList<>();
       private final Map<String, Object> options = new HashMap<>();
@@ -58,8 +59,8 @@ public class EnumValue {
          this.number = number;
       }
 
-      EnumValue create() {
-         return new EnumValue(this);
+      EnumValue create(AtomicInteger autoNumber) {
+         return new EnumValue(this, autoNumber);
       }
 
       public Schema build() {
@@ -75,6 +76,10 @@ public class EnumValue {
       public Builder addOption(String name, Object value) {
          options.put(name, value);
          return this;
+      }
+
+      public EnumValue.Builder addValue(String name) {
+         return addValue(name, -1);
       }
 
       public EnumValue.Builder addValue(String name, int number) {

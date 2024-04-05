@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
+import org.infinispan.protostream.impl.Log;
 
 /**
  * @since 5.0
  */
-public class Field  {
+public class Field {
    protected final Type type;
    protected final String name;
    protected final String fullName;
@@ -18,11 +21,18 @@ public class Field  {
    protected final List<String> comments;
    protected final java.util.Map<String, Object> options;
 
-   Field(Builder builder) {
+   Field(Builder builder, AtomicInteger autoNumber) {
       this.type = builder.type;
       this.name = builder.name;
       this.fullName = builder.getFullName();
-      this.number = builder.number;
+      if (builder.number == 0) {
+         this.number = autoNumber.getAndIncrement();
+      } else {
+         if (builder.number < 0 || builder.number > 536_870_911 || (builder.number >= 19_000 && builder.number <= 19_999)) {
+            throw Log.LOG.invalidFieldNumber(builder.number, this.fullName);
+         }
+         this.number = builder.number;
+      }
       this.repeated = builder.repeated;
       this.options = java.util.Map.copyOf(builder.options);
       this.comments = List.copyOf(builder.comments);
@@ -127,8 +137,8 @@ public class Field  {
          return this;
       }
 
-      protected Field create() {
-         return new Field(this);
+      protected Field create(AtomicInteger autoNumber) {
+         return new Field(this, autoNumber);
       }
 
       @Override
