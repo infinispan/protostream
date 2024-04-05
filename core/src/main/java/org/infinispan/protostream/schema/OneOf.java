@@ -3,7 +3,9 @@ package org.infinispan.protostream.schema;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -16,10 +18,10 @@ public class OneOf {
    private final java.util.Map<String, Field> fields;
    private final List<String> comments;
 
-   OneOf(Builder builder) {
+   OneOf(Builder builder, AtomicInteger autoNumber) {
       this.name = builder.name;
       this.fullName = builder.getFullName();
-      this.fields = builder.fields.entrySet().stream().collect(Collectors.toUnmodifiableMap(java.util.Map.Entry::getKey, e -> e.getValue().create()));
+      this.fields = builder.fields.entrySet().stream().collect(Collectors.toUnmodifiableMap(java.util.Map.Entry::getKey, e -> e.getValue().create(autoNumber)));
       this.comments = List.copyOf(builder.comments);
    }
 
@@ -41,19 +43,23 @@ public class OneOf {
 
    public static class FieldBuilder implements OptionContainer<FieldBuilder>, CommentContainer<FieldBuilder> {
       private final Builder parent;
-      private final Field.Builder builder;
+      final Field.Builder builder;
 
       FieldBuilder(Builder parent, Type type, String name, int number) {
          this.parent = parent;
          this.builder = new Field.Builder(parent.message, type, name, number, false);
       }
 
+      public FieldBuilder addOneOfField(Type type, String name) {
+         return addOneOfField(type, name, 0);
+      }
+
       public FieldBuilder addOneOfField(Type type, String name, int number) {
          return parent.addOneOfField(type, name, number);
       }
 
-      public Field create() {
-         return builder.create();
+      public Field create(AtomicInteger autoNumber) {
+         return builder.create(autoNumber);
       }
 
       @Override
@@ -82,13 +88,17 @@ public class OneOf {
    public static class Builder implements CommentContainer<Builder> {
 
       private final Message.Builder message;
-      private final String name;
+      final String name;
       private final java.util.Map<String, FieldBuilder> fields = new HashMap<>();
       private final List<String> comments = new ArrayList<>();
 
       Builder(Message.Builder message, String name) {
          this.message = message;
          this.name = name;
+      }
+
+      public FieldBuilder addOneOfField(Type type, String name) {
+         return addOneOfField(type, name, 0);
       }
 
       public FieldBuilder addOneOfField(Type type, String name, int number) {
@@ -107,8 +117,12 @@ public class OneOf {
          return this;
       }
 
-      OneOf create() {
-         return new OneOf(this);
+      OneOf create(AtomicInteger autoNumber) {
+         return new OneOf(this, autoNumber);
+      }
+
+      Map<String, FieldBuilder> getFields() {
+         return fields;
       }
 
       public String getFullName() {

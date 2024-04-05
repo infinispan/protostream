@@ -22,6 +22,8 @@ import java.util.ConcurrentModificationException;
 import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
 
+import org.infinispan.protostream.schema.ReservedNumbers;
+
 /**
  * A sparse bit set for storing occurrences of bits where a large amount of the stored bits are expected to be zero.
  * This implementation uses a simplistic indexing scheme which provides {@code log(n)} performance for accessing
@@ -29,7 +31,7 @@ import java.util.PrimitiveIterator;
  * {@code 0} and {@link Long#MAX_VALUE}, inclusive. However, the maximum number of sparse 64-bit words in use by the
  * set bits in the bit set is limited by the int length limit of arrays.
  */
-public class SparseBitSet {
+public class SparseBitSet implements ReservedNumbers {
    private long[] words;
    private long[] indices;
    private int size;
@@ -118,8 +120,16 @@ public class SparseBitSet {
       return value ? set(i) : clear(i);
    }
 
-   public void set(long from, long to) {
-      for (long i = from; i < to; i++) {
+   /**
+    * Sets the bits from the specified fromIndex (inclusive) to the specified toIndex (exclusive) to true.
+    * Params:
+    *
+    * @param fromIndex – index of the first bit to be set
+    * @param toIndex   – index after the last bit to be set
+    * @throws IndexOutOfBoundsException – if fromIndex is negative, or toIndex is negative, or fromIndex is larger than toIndex
+    */
+   public void set(long fromIndex, long toIndex) {
+      for (long i = fromIndex; i < toIndex; i++) {
          set(i);
       }
    }
@@ -129,6 +139,7 @@ public class SparseBitSet {
     *
     * @return {@code true} if the bit at index {@code i} is set, false otherwise.
     */
+   @Override
    public boolean get(long i) {
       if (i < 0)
          throw new IllegalArgumentException("i < 0: " + i);
@@ -151,6 +162,7 @@ public class SparseBitSet {
     * @return the size of this {@code SparseBitSet}, i.e. the number of set bits.
     * @see #bitCount()
     */
+   @Override
    public int size() {
       long bitCount = bitCount();
 
@@ -163,8 +175,68 @@ public class SparseBitSet {
    /**
     * @return true if this {@code SparseBitSet} contains no set bits, false otherwise.
     */
+   @Override
    public boolean isEmpty() {
       return size == 0;
+   }
+
+   @Override
+   public int nextSetBit(int fromIndex) {
+      if (fromIndex < 0) {
+         throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
+      }
+      int wordIndex = findWord(fromIndex);
+      if (wordIndex < 0) {
+         wordIndex = -wordIndex - 1;
+         fromIndex = adjustBase(fromIndex, wordIndex);
+      }
+      while (wordIndex < size) {
+         if ((words[wordIndex] & (1L << (fromIndex & 63))) != 0) {
+            return fromIndex;
+         }
+         fromIndex++;
+         if ((fromIndex % 64) == 0) {
+            wordIndex = findWord(fromIndex);
+            if (wordIndex < 0) {
+               wordIndex = -wordIndex - 1;
+               fromIndex = adjustBase(fromIndex, wordIndex);
+            }
+         }
+      }
+      return -1;
+   }
+
+   private int adjustBase(int fromIndex, int wordIndex) {
+      if (wordIndex < size) {
+         fromIndex = (int) (indices[wordIndex] << 6);
+      }
+      return fromIndex;
+   }
+
+   @Override
+   public int nextClearBit(int fromIndex) {
+      if (fromIndex < 0) {
+         throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
+      }
+      int wordIndex = findWord(fromIndex);
+      if (wordIndex < 0) {
+         wordIndex = -wordIndex - 1;
+         fromIndex = adjustBase(fromIndex, wordIndex);
+      }
+      while (wordIndex < size) {
+         if ((words[wordIndex] & (1L << (fromIndex & 63))) == 0) {
+            return fromIndex;
+         }
+         fromIndex++;
+         if ((fromIndex % 64) == 0) {
+            wordIndex = findWord(fromIndex);
+            if (wordIndex < 0) {
+               wordIndex = -wordIndex - 1;
+               fromIndex = adjustBase(fromIndex, wordIndex);
+            }
+         }
+      }
+      return -1;
    }
 
    /**

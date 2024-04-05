@@ -1,13 +1,15 @@
 package org.infinispan.protostream.schema;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @since 5.0
  */
 public class Map extends Field {
    private final Type valueType;
 
-   Map(Builder builder) {
-      super(builder);
+   Map(Builder builder, AtomicInteger autoNumber) {
+      super(builder, autoNumber);
       this.valueType = builder.valueType;
    }
 
@@ -25,8 +27,8 @@ public class Map extends Field {
       }
 
       @Override
-      protected Map create() {
-         return new Map(this);
+      protected Map create(AtomicInteger autoNumber) {
+         return new Map(this, autoNumber);
       }
    }
 }
