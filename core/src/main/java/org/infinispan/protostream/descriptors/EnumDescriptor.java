@@ -10,7 +10,6 @@ import java.util.Set;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.impl.SparseBitSet;
 
@@ -21,7 +20,7 @@ import org.infinispan.protostream.impl.SparseBitSet;
  * @author anistor@redhat.com
  * @since 2.0
  */
-public final class EnumDescriptor extends AnnotatedDescriptorImpl implements GenericDescriptor {
+public final class EnumDescriptor extends ReservableDescriptor implements GenericDescriptor {
    private Integer typeId;
    private final List<Option> options;
    private final List<EnumValueDescriptor> values;
@@ -29,14 +28,10 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
    private final Map<String, EnumValueDescriptor> valueByName;
    private FileDescriptor fileDescriptor;
    private Descriptor containingType;
-   private final SparseBitSet reservedNumbers;
-   private final Set<String> reservedNames;
 
    private EnumDescriptor(Builder builder) {
-      super(builder.name, builder.fullName, builder.documentation);
+      super(builder.name, builder.fullName, builder.documentation, builder.reservedNumbers, builder.reservedNames);
       this.options = List.copyOf(builder.options);
-      this.reservedNumbers = builder.reservedNumbers;
-      this.reservedNames = Set.copyOf(builder.reservedNames);
       this.values = List.copyOf(builder.values);
       this.valueByNumber = new HashMap<>(values.size());
       this.valueByName = new HashMap<>(values.size());
@@ -149,6 +144,34 @@ public final class EnumDescriptor extends AnnotatedDescriptorImpl implements Gen
    @Override
    public String toString() {
       return "EnumDescriptor{fullName=" + getFullName() + '}';
+   }
+
+   public void checkCompatibility(EnumDescriptor that, boolean strict, List<String> errors) {
+      for (EnumValueDescriptor thatValue : that.getValues()) {
+         if (reservedNumbers.get(thatValue.getNumber())) {
+            errors.add(Log.LOG.reservedNumber(thatValue.getNumber(), thatValue.getName(), that.getFullName()).getMessage());
+         }
+         if (reservedNames.contains(thatValue.getName())) {
+            errors.add(Log.LOG.reservedName(thatValue.getName(), that.getFullName()).getMessage());
+         }
+      }
+      for (EnumValueDescriptor thisValue : values) {
+         EnumValueDescriptor thatValue = that.valueByName.get(thisValue.getName());
+         if (thatValue == null) {
+            // Value was removed, make sure it has been reserved
+            if (!that.reservedNames.contains(thisValue.getName())) {
+               errors.add(Log.LOG.removedFieldNotReserved(thisValue.getFullName()));
+            }
+            if (!that.reservedNumbers.get(thisValue.getNumber())) {
+               errors.add(Log.LOG.removedFieldNotReserved(thisValue.getFullName(), thisValue.getNumber()));
+            }
+         } else {
+            if (thisValue.getNumber() != thatValue.getNumber()) {
+               errors.add(Log.LOG.modifiedFieldNumber(thisValue.getFullName(), thisValue.getNumber(), thatValue.getNumber()));
+            }
+         }
+      }
+      checkReservation(that, strict, errors);
    }
 
    public static final class Builder implements OptionContainer<Builder>, ReservedContainer<Builder> {

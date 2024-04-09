@@ -17,12 +17,14 @@ public final class ConfigurationImpl implements Configuration {
    private final boolean lenient;
    private final AnnotationsConfigImpl annotationsConfig;
    private final int maxNestedMessageDepth;
+   private final SchemaValidation schemaValidation;
 
    private ConfigurationImpl(BuilderImpl builder, Map<String, AnnotationConfigurationImpl> annotations) {
       this.logOutOfSequenceReads = builder.logOutOfSequenceReads;
       this.logOutOfSequenceWrites = builder.logOutOfSequenceWrites;
       this.lenient = builder.lenient;
       this.maxNestedMessageDepth = builder.maxNestedMessageDepth;
+      this.schemaValidation = builder.schemaValidation;
       this.annotationsConfig = new AnnotationsConfigImpl(annotations, builder.logUndefinedAnnotations);
    }
 
@@ -42,16 +44,24 @@ public final class ConfigurationImpl implements Configuration {
    }
 
    @Override
+   public SchemaValidation schemaValidation() {
+      return schemaValidation;
+   }
+
+   @Override
    public AnnotationsConfig annotationsConfig() {
       return annotationsConfig;
    }
 
    @Override
    public String toString() {
-      return "Configuration{" +
+      return "ConfigurationImpl{" +
             "logOutOfSequenceReads=" + logOutOfSequenceReads +
             ", logOutOfSequenceWrites=" + logOutOfSequenceWrites +
+            ", lenient=" + lenient +
             ", annotationsConfig=" + annotationsConfig +
+            ", maxNestedMessageDepth=" + maxNestedMessageDepth +
+            ", schemaValidation=" + schemaValidation +
             '}';
    }
 
@@ -89,6 +99,7 @@ public final class ConfigurationImpl implements Configuration {
       private int maxNestedMessageDepth = Configuration.DEFAULT_MAX_NESTED_DEPTH;
       private AnnotationsConfigBuilderImpl annotationsConfigBuilder = null;
       private Boolean logUndefinedAnnotations;
+      private SchemaValidation schemaValidation = SchemaValidation.DEFAULT;
 
       final class AnnotationsConfigBuilderImpl implements AnnotationsConfig.Builder {
 
@@ -145,6 +156,12 @@ public final class ConfigurationImpl implements Configuration {
       @Override
       public Builder maxNestedMessageDepth(int maxNestedMessageDepth) {
          this.maxNestedMessageDepth = maxNestedMessageDepth;
+         return this;
+      }
+
+      @Override
+      public Builder schemaValidation(SchemaValidation schemaValidation) {
+         this.schemaValidation = schemaValidation;
          return this;
       }
 

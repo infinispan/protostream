@@ -43,6 +43,12 @@ public interface Configuration {
     */
    int maxNestedMessageDepth();
 
+   /**
+    * The type of validation done when updating schemas in the {@link org.infinispan.protostream.SerializationContext}.
+    * Default to {@link SchemaValidation#STRICT}
+    */
+   SchemaValidation schemaValidation();
+
    AnnotationsConfig annotationsConfig();
 
    interface AnnotationsConfig {
@@ -82,6 +88,8 @@ public interface Configuration {
 
       Builder maxNestedMessageDepth(int maxNestedMessageDepth);
 
+      Builder schemaValidation(SchemaValidation schemaValidation);
+
       AnnotationsConfig.Builder annotationsConfig();
 
       Configuration build();
@@ -89,5 +97,13 @@ public interface Configuration {
 
    static Builder builder() {
       return new ConfigurationImpl.BuilderImpl();
+   }
+
+   enum SchemaValidation {
+      UNRESTRICTED,
+      LENIENT,
+      STRICT;
+
+      public static final SchemaValidation DEFAULT = STRICT;
    }
 }

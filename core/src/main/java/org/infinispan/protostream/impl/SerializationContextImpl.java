@@ -90,7 +90,7 @@ public final class SerializationContextImpl implements SerializationContext {
    public Map<String, GenericDescriptor> getGenericDescriptors() {
       long stamp = descriptorLock.readLock();
       try {
-         return Collections.unmodifiableMap(new HashMap<>(genericDescriptors));
+         return Map.copyOf(genericDescriptors);
       } finally {
          descriptorLock.unlockRead(stamp);
       }
@@ -104,6 +104,20 @@ public final class SerializationContextImpl implements SerializationContext {
       Map<String, FileDescriptor> fileDescriptorMap = parser.parse(source);
       long stamp = descriptorLock.writeLock();
       try {
+         // validate all proto files before doing anything else
+         if (configuration.schemaValidation() != Configuration.SchemaValidation.UNRESTRICTED) {
+            List<String> errors = new ArrayList<>();
+            for (Map.Entry<String, FileDescriptor> newDescriptor : fileDescriptorMap.entrySet()) {
+               FileDescriptor oldDescriptor = fileDescriptors.get(newDescriptor.getKey());
+               if (oldDescriptor != null) {
+                  oldDescriptor.checkCompatibility(newDescriptor.getValue(), configuration.schemaValidation() == Configuration.SchemaValidation.STRICT, errors);
+               }
+            }
+            if (!errors.isEmpty()) {
+               throw Log.LOG.incompatibleSchemaChanges(String.join("\n", errors));
+            }
+         }
+
          // unregister all types from the files that are being overwritten
          for (String fileName : fileDescriptorMap.keySet()) {
             FileDescriptor oldFileDescriptor = fileDescriptors.get(fileName);
@@ -404,7 +418,7 @@ public final class SerializationContextImpl implements SerializationContext {
          Registration registration = marshallersByClass.get(javaClass);
          if (registration != null) {
             if (registration.marshallerProvider != null) {
-               String typeName = ((InstanceMarshallerProvider<Object>)registration.marshallerProvider).getTypeName(object);
+               String typeName = ((InstanceMarshallerProvider<Object>) registration.marshallerProvider).getTypeName(object);
                if (typeName == null) {
                   throw new IllegalArgumentException("No marshaller registered for object of Java type " + javaClass.getName() + " : " + object);
                }

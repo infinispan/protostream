@@ -62,6 +62,15 @@ public class SparseBitSet implements ReservedNumbers {
       this.indices = new long[capacity];
    }
 
+   public SparseBitSet(SparseBitSet other) {
+      this.words = new long[other.words.length];
+      this.indices = new long[other.indices.length];
+      this.size = other.size;
+      this.modCount = other.modCount;
+      System.arraycopy(other.words, 0, this.words, 0, other.words.length);
+      System.arraycopy(other.indices, 0, this.indices, 0, other.indices.length);
+   }
+
    /**
     * Set the bit at index {@code i}.
     *
@@ -277,6 +286,7 @@ public class SparseBitSet implements ReservedNumbers {
       return (indices[size - 1] << 6) + bitIndex;
    }
 
+   @Override
    public PrimitiveIterator.OfLong iterator() {
       return new Iter(0, 0) {
          @Override
@@ -370,6 +380,12 @@ public class SparseBitSet implements ReservedNumbers {
       words[size - 1] = 0;
       indices[size - 1] = 0;
       size--;
+   }
+
+   public void removeAll(ReservedNumbers that) {
+      for(long l : that) {
+         set(l, false);
+      }
    }
 
    private abstract class Iter implements PrimitiveIterator.OfLong {
