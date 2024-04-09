@@ -3,6 +3,7 @@ package org.infinispan.protostream.impl;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.MalformedProtobufException;
@@ -125,6 +126,27 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Enum '%s' must have a default enum value (with number = 0)", id = 32)
    IllegalStateException missingDefaultEnumValue(String name);
+
+   @Message(value = "Type '%s' no longer reserves field names '%s'", id = 33)
+   String removedReservedNames(String name, Set<String> names);
+
+   @Message(value = "Type '%s' no longer reserves field numbers '%s'", id = 34)
+   String removedReservedNumbers(String name, Object numbers);
+
+   @Message(value = "Field '%s' number was changed from %d to %d", id = 35)
+   String modifiedFieldNumber(String name, int oldNumber, int newNumber);
+
+   @Message(value = "Field '%s' was removed, but its name has not been reserved", id = 36)
+   String removedFieldNotReserved(String name);
+
+   @Message(value = "Field '%s' was removed, but its number %d has not been reserved", id = 37)
+   String removedFieldNotReserved(String name, int number);
+
+   @Message(value = "Field '%s''s type was changed from '%s' to '%s'", id = 38)
+   String modifiedFieldType(String fullName, String fromType, String toType);
+
+   @Message(value = "Incompatible schema changes:\n%s", id = 39)
+   IllegalStateException incompatibleSchemaChanges(String changes);
 
    class LogFactory {
       public static Log getLog(Class<?> clazz) {

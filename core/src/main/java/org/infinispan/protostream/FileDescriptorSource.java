@@ -32,6 +32,7 @@ public final class FileDescriptorSource {
     */
    private ProgressCallback progressCallback;
 
+
    /**
     * A callback interface that receives status notifications during the processing of files defined by a {@link
     * FileDescriptorSource}.

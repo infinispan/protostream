@@ -54,4 +54,5 @@ message Result {
     optional string title = 2;
     repeated string snippets = 3;
     SearchRequest.Inner.MoreInner i = 4;
+    map<string,string> props = 5 [deprecated = false];
 }

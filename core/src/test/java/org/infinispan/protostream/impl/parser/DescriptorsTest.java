@@ -1098,15 +1098,19 @@ public class DescriptorsTest {
       parseAndResolve(fileDescriptorSource);
    }
 
-   private Map<String, FileDescriptor> parseAndResolve(FileDescriptorSource fileDescriptorSource, Configuration config) {
-      // parse the input
-      ProtostreamProtoParser protoParser = new ProtostreamProtoParser(config);
-      Map<String, FileDescriptor> fileDescriptorMap = protoParser.parse(fileDescriptorSource);
-
+   public static void resolve(Map<String, FileDescriptor> fileDescriptorMap) {
       // resolve imports and types
       ResolutionContext resolutionContext = new ResolutionContext(null, fileDescriptorMap,
             new HashMap<>(), new HashMap<>(), new HashMap<>());
       resolutionContext.resolve();
+   }
+
+   public static Map<String, FileDescriptor> parseAndResolve(FileDescriptorSource fileDescriptorSource, Configuration config) {
+      // parse the input
+      ProtostreamProtoParser protoParser = new ProtostreamProtoParser(config);
+      Map<String, FileDescriptor> fileDescriptorMap = protoParser.parse(fileDescriptorSource);
+
+      resolve(fileDescriptorMap);
 
       return fileDescriptorMap;
    }
@@ -1116,7 +1120,7 @@ public class DescriptorsTest {
    }
 
    private void assertResult(Descriptor descriptor) {
-      assertThat(descriptor.getFields()).hasSize(4);
+      assertThat(descriptor.getFields()).hasSize(5);
       assertThat(descriptor.findFieldByName("url").getJavaType()).isEqualTo(JavaType.STRING);
       assertThat(descriptor.findFieldByName("title").getLabel()).isEqualTo(Label.OPTIONAL);
       assertThat(descriptor.findFieldByName("i").getType()).isEqualTo(Type.MESSAGE);
@@ -1209,8 +1213,8 @@ public class DescriptorsTest {
       assertEquals(1, topLevelEnum.getValues().get(1).getNumber());
    }
 
-   private File asFile(String resourcePath) {
-      URL resource = getClass().getClassLoader().getResource(resourcePath);
+   public static File asFile(String resourcePath) {
+      URL resource = DescriptorsTest.class.getClassLoader().getResource(resourcePath);
       if (resource != null) {
          return new File(resource.getPath());
       }

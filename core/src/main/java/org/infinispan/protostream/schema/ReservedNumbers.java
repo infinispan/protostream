@@ -1,6 +1,6 @@
 package org.infinispan.protostream.schema;
 
-public interface ReservedNumbers {
+public interface ReservedNumbers extends Iterable<Long> {
    boolean get(long i);
 
    int size();

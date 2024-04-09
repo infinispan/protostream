@@ -73,11 +73,10 @@ public final class JsonUtils {
 
    public static byte[] fromCanonicalJSON(ImmutableSerializationContext ctx, Reader reader) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-      TagWriter writer = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
 
-      JsonParser parser = jsonFactory.createParser(reader);
-
-      try {
+      try (reader; baos) {
+         TagWriter writer = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
+         JsonParser parser = jsonFactory.createParser(reader);
          while (true) {
             JsonToken token = parser.nextToken();
             if (token == null) {
@@ -98,9 +97,6 @@ public final class JsonUtils {
          return baos.toByteArray();
       } catch (JsonProcessingException e) {
          throw new IllegalStateException("Invalid JSON", e);
-      } finally {
-         baos.close();
-         reader.close();
       }
    }
 
@@ -122,57 +118,27 @@ public final class JsonUtils {
             case VALUE_STRING: {
                String topLevelTypeName = parser.getText();
                GenericDescriptor descriptorByName = null;
-               Type fieldType;
-               switch (topLevelTypeName) {
-                  case "double":
-                     fieldType = Type.DOUBLE;
-                     break;
-                  case "float":
-                     fieldType = Type.FLOAT;
-                     break;
-                  case "int32":
-                     fieldType = Type.INT32;
-                     break;
-                  case "int64":
-                     fieldType = Type.INT64;
-                     break;
-                  case "fixed32":
-                     fieldType = Type.FIXED32;
-                     break;
-                  case "fixed64":
-                     fieldType = Type.FIXED64;
-                     break;
-                  case "bool":
-                     fieldType = Type.BOOL;
-                     break;
-                  case "string":
-                     fieldType = Type.STRING;
-                     break;
-                  case "bytes":
-                     fieldType = Type.BYTES;
-                     break;
-                  case "uint32":
-                     fieldType = Type.UINT32;
-                     break;
-                  case "uint64":
-                     fieldType = Type.UINT64;
-                     break;
-                  case "sfixed32":
-                     fieldType = Type.SFIXED32;
-                     break;
-                  case "sfixed64":
-                     fieldType = Type.SFIXED64;
-                     break;
-                  case "sint32":
-                     fieldType = Type.SINT32;
-                     break;
-                  case "sint64":
-                     fieldType = Type.SINT64;
-                     break;
-                  default:
+               Type fieldType = switch (topLevelTypeName) {
+                  case "double" -> Type.DOUBLE;
+                  case "float" -> Type.FLOAT;
+                  case "int32" -> Type.INT32;
+                  case "int64" -> Type.INT64;
+                  case "fixed32" -> Type.FIXED32;
+                  case "fixed64" -> Type.FIXED64;
+                  case "bool" -> Type.BOOL;
+                  case "string" -> Type.STRING;
+                  case "bytes" -> Type.BYTES;
+                  case "uint32" -> Type.UINT32;
+                  case "uint64" -> Type.UINT64;
+                  case "sfixed32" -> Type.SFIXED32;
+                  case "sfixed64" -> Type.SFIXED64;
+                  case "sint32" -> Type.SINT32;
+                  case "sint64" -> Type.SINT64;
+                  default -> {
                      descriptorByName = ctx.getDescriptorByName(topLevelTypeName);
-                     fieldType = descriptorByName instanceof EnumDescriptor ? Type.ENUM : Type.MESSAGE;
-               }
+                     yield descriptorByName instanceof EnumDescriptor ? Type.ENUM : Type.MESSAGE;
+                  }
+               };
 
                switch (fieldType) {
                   case ENUM:
@@ -344,40 +310,24 @@ public final class JsonUtils {
    }
 
    private static int getPrimitiveFieldId(Type primitiveType) {
-      switch (primitiveType) {
-         case DOUBLE:
-            return WRAPPED_DOUBLE;
-         case FLOAT:
-            return WRAPPED_FLOAT;
-         case INT32:
-            return WRAPPED_INT32;
-         case INT64:
-            return WRAPPED_INT64;
-         case FIXED32:
-            return WRAPPED_FIXED32;
-         case FIXED64:
-            return WRAPPED_FIXED64;
-         case BOOL:
-            return WRAPPED_BOOL;
-         case STRING:
-            return WRAPPED_STRING;
-         case BYTES:
-            return WRAPPED_BYTES;
-         case UINT32:
-            return WRAPPED_UINT32;
-         case UINT64:
-            return WRAPPED_UINT64;
-         case SFIXED32:
-            return WRAPPED_SFIXED32;
-         case SFIXED64:
-            return WRAPPED_SFIXED64;
-         case SINT32:
-            return WRAPPED_SINT32;
-         case SINT64:
-            return WRAPPED_SINT64;
-         default:
-            throw new IllegalStateException("Unknown field type " + primitiveType);
-      }
+      return switch (primitiveType) {
+         case DOUBLE -> WRAPPED_DOUBLE;
+         case FLOAT -> WRAPPED_FLOAT;
+         case INT32 -> WRAPPED_INT32;
+         case INT64 -> WRAPPED_INT64;
+         case FIXED32 -> WRAPPED_FIXED32;
+         case FIXED64 -> WRAPPED_FIXED64;
+         case BOOL -> WRAPPED_BOOL;
+         case STRING -> WRAPPED_STRING;
+         case BYTES -> WRAPPED_BYTES;
+         case UINT32 -> WRAPPED_UINT32;
+         case UINT64 -> WRAPPED_UINT64;
+         case SFIXED32 -> WRAPPED_SFIXED32;
+         case SFIXED64 -> WRAPPED_SFIXED64;
+         case SINT32 -> WRAPPED_SINT32;
+         case SINT64 -> WRAPPED_SINT64;
+         default -> throw new IllegalStateException("Unknown field type " + primitiveType);
+      };
    }
 
    private static void processArray(ImmutableSerializationContext ctx, String type, String field, JsonParser parser, TagWriter writer) throws IOException {
@@ -493,9 +443,7 @@ public final class JsonUtils {
 
          private void indent() {
             jsonOut.append('\n');
-            for (int k = initNestingLevel + nestingLevel.indent; k > 0; k--) {
-               jsonOut.append("   ");
-            }
+            jsonOut.append("   ".repeat(Math.max(0, initNestingLevel + nestingLevel.indent)));
          }
 
          @Override
@@ -836,48 +784,28 @@ public final class JsonUtils {
          char ch = value.charAt(cur);
          String esc = null;
          if (ch < ' ') {
-            switch (ch) {
-               case '\t':
-                  esc = "\\t";
-                  break;
-               case '\b':
-                  esc = "\\b";
-                  break;
-               case '\n':
-                  esc = "\\n";
-                  break;
-               case '\r':
-                  esc = "\\r";
-                  break;
-               case '\f':
-                  esc = "\\f";
-                  break;
-               default:
-                  esc = String.format("\\u%04x", (int) ch);
-            }
+            esc = switch (ch) {
+               case '\t' -> "\\t";
+               case '\b' -> "\\b";
+               case '\n' -> "\\n";
+               case '\r' -> "\\r";
+               case '\f' -> "\\f";
+               default -> String.format("\\u%04x", (int) ch);
+            };
          } else if (ch < 128) {
             if (ch == '"') {
                esc = "\\\"";
             } else if (ch == '\\') {
                esc = "\\\\";
             } else if (htmlSafe) {
-               switch (ch) {
-                  case '<':
-                     esc = "\\u003c";
-                     break;
-                  case '>':
-                     esc = "\\u003e";
-                     break;
-                  case '&':
-                     esc = "\\u0026";
-                     break;
-                  case '=':
-                     esc = "\\u003d";
-                     break;
-                  case '\'':
-                     esc = "\\u0027";
-                     break;
-               }
+               esc = switch (ch) {
+                  case '<' -> "\\u003c";
+                  case '>' -> "\\u003e";
+                  case '&' -> "\\u0026";
+                  case '=' -> "\\u003d";
+                  case '\'' -> "\\u0027";
+                  default -> esc;
+               };
             }
          } else if (ch == '\u2028') {
             esc = "\\u2028";

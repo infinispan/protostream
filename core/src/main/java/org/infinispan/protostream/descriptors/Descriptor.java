@@ -12,7 +12,6 @@ import java.util.Set;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.impl.SparseBitSet;
 
@@ -23,7 +22,7 @@ import org.infinispan.protostream.impl.SparseBitSet;
  * @author anistor@redhat.com
  * @since 2.0
  */
-public final class Descriptor extends AnnotatedDescriptorImpl implements GenericDescriptor {
+public final class Descriptor extends ReservableDescriptor implements GenericDescriptor {
    private Integer typeId;
    private final List<Option> options;
    private final List<FieldDescriptor> fields;
@@ -34,16 +33,12 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
    private final Map<String, FieldDescriptor> fieldsByName;
    private FileDescriptor fileDescriptor;
    private Descriptor containingType;
-   private final SparseBitSet reservedNumbers;
-   private final Set<String> reservedNames;
 
    private Descriptor(Builder builder) {
-      super(builder.name, builder.fullName, builder.documentation);
+      super(builder.name, builder.fullName, builder.documentation, builder.reservedNumbers, builder.reservedNames);
       this.options = List.copyOf(builder.options);
       this.fields = List.copyOf(builder.fields);
       this.oneofs = List.copyOf(builder.oneOfs);
-      this.reservedNumbers = builder.reservedNumbers;
-      this.reservedNames = Set.copyOf(builder.reservedNames);
       int totalFields = this.fields.size() + this.oneofs.size();
       fieldsByNumber = new HashMap<>(totalFields);
       fieldsByName = new HashMap<>(totalFields);
@@ -198,6 +193,43 @@ public final class Descriptor extends AnnotatedDescriptorImpl implements Generic
 
    public boolean isReserved(int number) {
       return reservedNumbers.get(number);
+   }
+
+   public void checkCompatibility(Descriptor that, boolean strict, List<String> errors) {
+      for (FieldDescriptor thatField : that.fields) {
+         if (reservedNumbers.get(thatField.getNumber())) {
+            errors.add(Log.LOG.reservedNumber(thatField.getNumber(), thatField.getName(), that.getFullName()).getMessage());
+         }
+         if (reservedNames.contains(thatField.getName())) {
+            errors.add(Log.LOG.reservedName(thatField.getName(), that.getFullName()).getMessage());
+         }
+      }
+      for (FieldDescriptor thisField : this.fields) {
+         FieldDescriptor thatField = that.fieldsByName.get(thisField.getName());
+         if (thatField == null) {
+            // Value was removed, make sure it has been reserved
+            if (!that.reservedNames.contains(thisField.getName())) {
+               errors.add(Log.LOG.removedFieldNotReserved(thisField.getFullName()));
+            }
+            if (!that.reservedNumbers.get(thisField.getNumber())) {
+               errors.add(Log.LOG.removedFieldNotReserved(thisField.getFullName(), thisField.getNumber()));
+            }
+         } else {
+            if (thisField.getNumber() != thatField.getNumber()) {
+               errors.add(Log.LOG.modifiedFieldNumber(thisField.getFullName(), thisField.getNumber(), thatField.getNumber()));
+            }
+            if (!thisField.getTypeName().equals(thatField.getTypeName())) {
+               errors.add(Log.LOG.modifiedFieldType(thisField.getFullName(), thisField.getTypeName(), thatField.getTypeName()));
+            }
+         }
+      }
+      checkReservation(that, strict, errors);
+      for(Descriptor dThat : that.getNestedTypes()) {
+         nestedMessageTypes.stream().filter(d -> d.getName().equals(dThat.getName())).findFirst().ifPresent(d -> d.checkCompatibility(dThat, strict, errors));
+      }
+      for(EnumDescriptor eThat : that.getEnumTypes()) {
+         nestedEnumTypes.stream().filter(e -> e.getName().equals(eThat.getName())).findFirst().ifPresent(e -> e.checkCompatibility(eThat, strict, errors));
+      }
    }
 
    public static final class Builder implements OptionContainer<Builder>, FieldContainer<Builder>, EnumContainer<Builder>, MessageContainer<Builder>, ReservedContainer<Builder> {

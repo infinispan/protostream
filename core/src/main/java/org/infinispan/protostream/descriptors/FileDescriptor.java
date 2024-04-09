@@ -1,11 +1,13 @@
 package org.infinispan.protostream.descriptors;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.config.Configuration;
@@ -140,6 +142,10 @@ public final class FileDescriptor {
 
    public Map<String, FileDescriptor> getDependants() {
       return dependants;
+   }
+
+   public Collection<String> getDependencies() {
+      return Stream.concat(dependencies.stream(), publicDependencies.stream()).toList();
    }
 
    public boolean isResolved() {
@@ -400,6 +406,23 @@ public final class FileDescriptor {
          throw new IllegalStateException("File '" + name + "' is not resolved yet");
       }
       return fileNamespace.getLocalNamespace().getTypes();
+   }
+
+   public void checkCompatibility(FileDescriptor that, boolean strict, List<String> errors) {
+      for(Descriptor dThat : that.getMessageTypes()) {
+         messageTypes.stream().filter(d -> d.getName().equals(dThat.getName())).findFirst().ifPresent(d -> d.checkCompatibility(dThat, strict, errors));
+      }
+      for(EnumDescriptor eThat : that.getEnumTypes()) {
+         enumTypes.stream().filter(e -> e.getName().equals(eThat.getName())).findFirst().ifPresent(e -> e.checkCompatibility(eThat, strict, errors));
+      }
+   }
+
+   public void checkCompatibility(FileDescriptor that, boolean strict) {
+      List<String> errors = new ArrayList<>();
+      checkCompatibility(that, strict, errors);
+      if (!errors.isEmpty()) {
+         throw Log.LOG.incompatibleSchemaChanges(String.join("\n", errors));
+      }
    }
 
    @Override
