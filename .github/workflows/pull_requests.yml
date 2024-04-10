@@ -28,7 +28,7 @@ jobs:
         run: mvn -B verify -Dmaven.test.failure.ignore=true -Dansi.strip=true
 
       - name: Test Logs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
           name: jdk17-test-results
@@ -53,7 +53,7 @@ jobs:
         run: mvn -B verify -Dmaven.test.failure.ignore=true -Dansi.strip=true
 
       - name: Test Logs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
           name: jdk21-test-results
