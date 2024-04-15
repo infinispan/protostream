@@ -12,7 +12,7 @@
 
     <groupId>org.infinispan.protostream</groupId>
     <artifactId>parent</artifactId>
-    <version>5.0.3.Final</version>
+    <version>5.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>ProtoStream - parent</name>
