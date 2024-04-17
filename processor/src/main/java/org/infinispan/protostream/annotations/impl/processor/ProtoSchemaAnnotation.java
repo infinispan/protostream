@@ -49,7 +49,7 @@ class ProtoSchemaAnnotation {
       schemaFileName = annotation.schemaFileName();
       schemaFilePath = annotation.schemaFilePath();
       schemaPackageName = annotation.schemaPackageName();
-      service = true;
+      service = annotation.service();
       syntax = annotation.syntax();
       value = annotation.value();
    }

@@ -85,6 +85,14 @@ public @interface ProtoSchema {
    Class<?>[] excludeClasses() default {};
 
    /**
+    * Enable generation of a {@code META-INF/services} file for the generated implementation class of the {@link
+    * SerializationContextInitializer} to be loadable by the {@link java.util.ServiceLoader}. This defaults to {@code true}.
+    * The ProtoStream library does not make any use of the {@link java.util.ServiceLoader} to benefit from this
+    * mechanism but the user's application is free to use it.
+    */
+   boolean service() default true;
+
+   /**
     * Generate only the marshallers and skip the schema file.
     * <p>
     * The schema is actually always generated at compile time, in memory, so that various validations can be performed
