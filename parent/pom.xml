@@ -124,7 +124,7 @@
         <version.mockito>5.11.0</version.mockito>
         <version.jcipannotations>1.0</version.jcipannotations>
         <version.fest.assertions>2.0M10</version.fest.assertions>
-        <version.jboss.logging>3.5.3.Final</version.jboss.logging>
+        <version.jboss.logging>3.6.0.Final</version.jboss.logging>
         <version.jboss.logging.annotations>2.2.1.Final</version.jboss.logging.annotations>
         <version.jboss.logging.processor>2.2.1.Final</version.jboss.logging.processor>
         <version.log4j>2.23.1</version.log4j>
