@@ -160,6 +160,11 @@ public final class FileDescriptorSource {
       return this;
    }
 
+
+   public FileDescriptorSource addProtoFile(File protoFile) throws IOException {
+      return addProtoFile(protoFile.getName(), protoFile);
+   }
+
    public static FileDescriptorSource fromResources(ClassLoader userClassLoader, String... classPathResources) throws IOException {
       return new FileDescriptorSource().addProtoFiles(userClassLoader, classPathResources);
    }

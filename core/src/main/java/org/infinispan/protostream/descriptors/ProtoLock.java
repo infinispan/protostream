@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.infinispan.protostream.impl.Log;
+
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -33,6 +35,25 @@ public class ProtoLock {
 
    public Map<String, FileDescriptor> descriptors() {
       return descriptors;
+   }
+
+   /**
+    * Checks for compatibility between all the descriptors in this ProtoLock instance against those in the supplied one
+    *
+    * @param that
+    * @param strict
+    */
+   public void checkCompatibility(ProtoLock that, boolean strict) {
+      List<String> errors = new ArrayList<>();
+      for (Map.Entry<String, FileDescriptor> descriptor : descriptors.entrySet()) {
+         FileDescriptor d2 = that.descriptors.get(descriptor.getKey());
+         if (d2 != null) {
+            descriptor.getValue().checkCompatibility(d2, strict, errors);
+         }
+      }
+      if (!errors.isEmpty()) {
+         throw Log.LOG.incompatibleSchemaChanges(String.join("\n", errors));
+      }
    }
 
    public static ProtoLock readLockFile(InputStream is) throws IOException {
@@ -108,26 +129,28 @@ public class ProtoLock {
             JsonNode message = messages.get(m);
             String name = message.get("name").asText();
             Descriptor.Builder mb = messageBuilders.computeIfAbsent(name, n -> new Descriptor.Builder().withName(n).withFullName(namePrefix + n));
-            ArrayNode fields = (ArrayNode) message.get("fields");
-            Map<String, OneOfDescriptor.Builder> oneOfBuilders = new HashMap<>();
-            for (int f = 0; f < fields.size(); f++) {
-               JsonNode field = fields.get(f);
-               FieldDescriptor.Builder fb = new FieldDescriptor.Builder();
-               fb.withName(field.get("name").asText());
-               fb.withNumber(field.get("id").asInt());
-               fb.withTypeName(field.get("type").asText());
-               if (field.has("is_repeated")) {
-                  fb.withLabel(Label.REPEATED);
-               }
-               if (field.has("optional")) {
-                  fb.withLabel(Label.OPTIONAL);
-               }
-               readOptions(field, fb);
-               if (message.has("oneof_parent")) {
-                  String oneOf = message.get("oneof_parent").asText();
-                  oneOfBuilders.computeIfAbsent(oneOf, n -> new OneOfDescriptor.Builder().withName(n)).addField(fb);
-               } else {
-                  mb.addField(fb);
+            if (message.has("fields")) {
+               ArrayNode fields = (ArrayNode) message.get("fields");
+               Map<String, OneOfDescriptor.Builder> oneOfBuilders = new HashMap<>();
+               for (int f = 0; f < fields.size(); f++) {
+                  JsonNode field = fields.get(f);
+                  FieldDescriptor.Builder fb = new FieldDescriptor.Builder();
+                  fb.withName(field.get("name").asText());
+                  fb.withNumber(field.get("id").asInt());
+                  fb.withTypeName(field.get("type").asText());
+                  if (field.has("is_repeated")) {
+                     fb.withLabel(Label.REPEATED);
+                  }
+                  if (field.has("optional")) {
+                     fb.withLabel(Label.OPTIONAL);
+                  }
+                  readOptions(field, fb);
+                  if (message.has("oneof_parent")) {
+                     String oneOf = message.get("oneof_parent").asText();
+                     oneOfBuilders.computeIfAbsent(oneOf, n -> new OneOfDescriptor.Builder().withName(n)).addField(fb);
+                  } else {
+                     mb.addField(fb);
+                  }
                }
             }
             if (message.has("maps")) {
