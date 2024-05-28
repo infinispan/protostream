@@ -115,7 +115,7 @@
 
         <!-- plugins version -->
         <version.maven.javacc>3.0.1</version.maven.javacc>
-        <version.maven.nexus-staging>1.6.13</version.maven.nexus-staging>
+        <version.maven.nexus-staging>1.7.0</version.maven.nexus-staging>
         <version.maven.gpg>3.2.4</version.maven.gpg>
         <version.protobuf.plugin>0.6.1</version.protobuf.plugin>
 
