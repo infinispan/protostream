@@ -104,7 +104,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <version.buildnumber.plugin>3.1.0</version.buildnumber.plugin>
         <version.compiler.plugin>3.12.1</version.compiler.plugin>
-        <version.enforcer.plugin>3.4.1</version.enforcer.plugin>
+        <version.enforcer.plugin>3.5.0</version.enforcer.plugin>
         <version.install.plugin>3.1.2</version.install.plugin>
         <version.jar.plugin>3.3.0</version.jar.plugin>
         <version.javadoc.plugin>3.6.0</version.javadoc.plugin>
