@@ -633,26 +633,11 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
    }
 
    private String makeStringLiteral(String s) {
-      StringBuilder sb = new StringBuilder(s.length() + 2);
-      sb.append('\"');
-      for (int i = 0; i < s.length(); i++) {
-         char ch = s.charAt(i);
-         switch (ch) {
-            case '\n':
-               sb.append("\\n\" +\n\"");
-               break;
-            case '\"':
-               sb.append("\\\"");
-               break;
-            case '\\':
-               sb.append("\\\\");
-               break;
-            default:
-               sb.append(ch);
-         }
-      }
-      sb.append('\"');
-      return sb.toString();
+      return new StringBuilder(s.length() + 8)
+              .append("\"\"\"\n")
+              .append(s)
+              .append("\n\"\"\"")
+              .toString();
    }
 
    private String makeNestedClassName(TypeElement e, String className) {
