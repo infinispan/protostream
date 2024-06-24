@@ -1,6 +1,6 @@
 package org.infinispan.protostream;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.protostream.impl.parser.DescriptorsTest.asFile;
 import static org.infinispan.protostream.impl.parser.DescriptorsTest.parseAndResolve;
 
