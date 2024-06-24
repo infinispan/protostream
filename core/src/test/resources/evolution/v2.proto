@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package evolution;
 
+/*
+ * @TypeId(10003)
+ */
 enum e1 {
   V0 = 0;
   V1 = 1;

@@ -147,6 +147,9 @@ public final class EnumDescriptor extends ReservableDescriptor implements Generi
    }
 
    public void checkCompatibility(EnumDescriptor that, boolean strict, List<String> errors) {
+      if ((typeId == null && that.typeId != null) || (typeId != null && that.typeId == null) || (typeId != null && !typeId.equals(that.typeId))) {
+         errors.add(Log.LOG.incompatibleTypeIds(fullName, typeId, that.typeId));
+      }
       for (EnumValueDescriptor thatValue : that.getValues()) {
          if (reservedNumbers.get(thatValue.getNumber())) {
             errors.add(Log.LOG.reservedNumber(thatValue.getNumber(), thatValue.getName(), that.getFullName()).getMessage());
