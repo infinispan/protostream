@@ -117,6 +117,9 @@
                         <goals>
                             <goal>test-compile</goal>
                         </goals>
+                        <configuration>
+                            <protocArtifact>com.google.protobuf:protoc:${version.protobuf}:exe:${os.detected.classifier}</protocArtifact>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
