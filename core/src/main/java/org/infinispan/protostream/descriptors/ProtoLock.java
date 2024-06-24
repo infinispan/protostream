@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -31,6 +32,7 @@ public class ProtoLock {
 
    public ProtoLock(Collection<FileDescriptor> descriptors) {
       this.descriptors = descriptors.stream().collect(Collectors.toUnmodifiableMap(FileDescriptor::getName, Function.identity()));
+
    }
 
    public Map<String, FileDescriptor> descriptors() {
@@ -57,6 +59,10 @@ public class ProtoLock {
    }
 
    public static ProtoLock readLockFile(InputStream is) throws IOException {
+      return readLockFile(is, Configuration.builder().build());
+   }
+
+   public static ProtoLock readLockFile(InputStream is, Configuration configuration) throws IOException {
       JsonFactory jsonFactory = new JsonFactory();
       jsonFactory.setCodec(new ObjectMapper());
       JsonParser json = jsonFactory.createParser(is);
@@ -83,6 +89,9 @@ public class ProtoLock {
             for (int e = 0; e < enums.size(); e++) {
                JsonNode en = enums.get(e);
                EnumDescriptor.Builder eb = new EnumDescriptor.Builder();
+               if (en.has("type_id")) {
+                  eb.withDocumentation("@TypeId(" + en.get("type_id").asText() + ")");
+               }
                ArrayNode enumFields = (ArrayNode) en.get("enum_fields");
                for (int v = 0; v < enumFields.size(); v++) {
                   JsonNode enumField = enumFields.get(v);
@@ -116,7 +125,9 @@ public class ProtoLock {
             }
          }
          messageBuilders.values().forEach(fdb::addMessage);
-         descriptors.add(fdb.build());
+         FileDescriptor fd = fdb.build();
+         fd.setConfiguration(configuration);
+         descriptors.add(fd);
       }
       return new ProtoLock(descriptors);
    }
@@ -129,6 +140,9 @@ public class ProtoLock {
             JsonNode message = messages.get(m);
             String name = message.get("name").asText();
             Descriptor.Builder mb = messageBuilders.computeIfAbsent(name, n -> new Descriptor.Builder().withName(n).withFullName(namePrefix + n));
+            if (message.has("type_id")) {
+               mb.withDocumentation("@TypeId(" + message.get("type_id").asText() + ")");
+            }
             if (message.has("fields")) {
                ArrayNode fields = (ArrayNode) message.get("fields");
                Map<String, OneOfDescriptor.Builder> oneOfBuilders = new HashMap<>();
@@ -263,6 +277,9 @@ public class ProtoLock {
       boolean hasMaps = false;
       j.writeStartObject();
       j.writeStringField("name", md.getName());
+      if (md.getTypeId() != null) {
+         j.writeNumberField("type_id", md.getTypeId());
+      }
       j.writeFieldName("fields");
       j.writeStartArray();
       for (OneOfDescriptor o : md.getOneOfs()) {

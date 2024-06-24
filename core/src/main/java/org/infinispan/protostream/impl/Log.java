@@ -148,6 +148,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Incompatible schema changes:\n%s", id = 39)
    IllegalStateException incompatibleSchemaChanges(String changes);
 
+   @Message(value = "Incompatible @ProtoTypeId in '%s', from '%s' to '%s'", id = 40)
+   String incompatibleTypeIds(String name, Integer t1, Integer t2);
+
    class LogFactory {
       public static Log getLog(Class<?> clazz) {
          return Logger.getMessageLogger(Log.class, clazz.getName());

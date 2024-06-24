@@ -196,6 +196,9 @@ public final class Descriptor extends ReservableDescriptor implements GenericDes
    }
 
    public void checkCompatibility(Descriptor that, boolean strict, List<String> errors) {
+      if ((typeId == null && that.typeId != null) || (typeId != null && that.typeId == null) || (typeId != null && !typeId.equals(that.typeId))) {
+         errors.add(Log.LOG.incompatibleTypeIds(fullName, typeId, that.typeId));
+      }
       for (FieldDescriptor thatField : that.fields) {
          if (reservedNumbers.get(thatField.getNumber())) {
             errors.add(Log.LOG.reservedNumber(thatField.getNumber(), thatField.getName(), that.getFullName()).getMessage());
