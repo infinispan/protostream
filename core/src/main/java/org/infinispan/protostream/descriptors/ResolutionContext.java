@@ -26,13 +26,13 @@ public class ResolutionContext {
 
    private final Map<Integer, GenericDescriptor> typeIds = new HashMap<>();
 
-   private Map<String, GenericDescriptor> allGlobalTypes;
+   private final Map<String, GenericDescriptor> allGlobalTypes;
 
-   private Map<String, GenericDescriptor> globalTypes = new HashMap<>();
+   private final Map<String, GenericDescriptor> globalTypes = new HashMap<>();
 
-   private Map<String, EnumValueDescriptor> allEnumValueDescriptors;
+   private final Map<String, EnumValueDescriptor> allEnumValueDescriptors;
 
-   private Map<String, EnumValueDescriptor> enumValueDescriptors = new HashMap<>();
+   private final Map<String, EnumValueDescriptor> enumValueDescriptors = new HashMap<>();
 
    public ResolutionContext(FileDescriptorSource.ProgressCallback progressCallback,
                             Map<String, FileDescriptor> fileDescriptorMap,
@@ -100,8 +100,7 @@ public class ResolutionContext {
 
       globalTypes.put(genericDescriptor.getFullName(), genericDescriptor);
 
-      if (genericDescriptor instanceof EnumDescriptor) {
-         EnumDescriptor enumDescriptor = (EnumDescriptor) genericDescriptor;
+      if (genericDescriptor instanceof EnumDescriptor enumDescriptor) {
          for (EnumValueDescriptor ev : enumDescriptor.getValues()) {
             enumValueDescriptors.put(ev.getScopedName(), ev);
          }
@@ -127,8 +126,7 @@ public class ResolutionContext {
                + " clashes with enum value " + existingEnumValueDescriptor.getFullName());
       }
 
-      if (genericDescriptor instanceof EnumDescriptor) {
-         EnumDescriptor enumDescriptor = (EnumDescriptor) genericDescriptor;
+      if (genericDescriptor instanceof EnumDescriptor enumDescriptor) {
          for (EnumValueDescriptor ev : enumDescriptor.getValues()) {
             // check if this enum value constant conflicts with another enum value constant
             existingEnumValueDescriptor = lookup(enumValueDescriptors, allEnumValueDescriptors, ev.getScopedName());

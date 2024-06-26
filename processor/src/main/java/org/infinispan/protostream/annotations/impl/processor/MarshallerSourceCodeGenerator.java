@@ -6,9 +6,11 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.lang.model.element.Element;
 
@@ -201,6 +203,15 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       iw.println("@Override");
       iw.printf("public String getTypeName() { return \"%s\"; }\n", makeQualifiedTypeName(pmtm.getFullName()));
       iw.println();
+      String[] subClassNames = pmtm.getSubClassNames();
+      if (subClassNames != null && subClassNames.length > 0) {
+         iw.println("@Override");
+         iw.println("public String[] getSubClassNames() {");
+         iw.inc().print("return new String[] {");
+         iw.print(Arrays.stream(subClassNames).collect(Collectors.joining(",", "\"", "\"")));
+         iw.println("};");
+         iw.dec().println("}");
+      }
 
       if (pmtm.isIndexedContainer()) {
          if (pmtm.isAdapter()) {

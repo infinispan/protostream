@@ -34,4 +34,12 @@ public @interface ProtoAdapter {
     * The actual class being marshalled.
     */
    Class<?> value();
+
+   /**
+    * Any sub-classes of the main class specified by {@link #value()} which should also be handled by this adapter.
+    * This is useful, for example, when implementing an adapter for an interface, but the actual implementation class is
+    * determined by a factory method, such as {@link java.util.List#of}.
+    * This element uses names instead of actual classes so that it is possible to specify non-public classes.
+    */
+   String[] subClassNames() default {};
 }
