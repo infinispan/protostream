@@ -116,6 +116,11 @@
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Aorg.jboss.logging.tools.addGeneratedAnnotation=false</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
 
             <plugin>
