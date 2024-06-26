@@ -1,7 +1,7 @@
 package org.infinispan.protostream.types.java;
 
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.types.java.arrays.BooleanArrayAdapter;
 import org.infinispan.protostream.types.java.arrays.BoxedBooleanArrayAdapter;
 import org.infinispan.protostream.types.java.arrays.BoxedByteArrayAdapter;
@@ -29,7 +29,7 @@ import org.infinispan.protostream.types.java.collections.TreeSetAdapter;
  * @author anistor@redhat.com
  * @since 4.4
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       className = "CommonContainerTypesSchema",
       schemaFileName = "common-java-container-types.proto",
       schemaFilePath = "/protostream",
