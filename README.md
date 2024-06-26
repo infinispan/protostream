@@ -1,28 +1,48 @@
 # ProtoStream
 [![Build Status](https://ci.infinispan.org/buildStatus/icon?job=Protostream%2Fmain)](https://ci.infinispan.org/job/Protostream/job/main/)
-[![Maven Central](https://img.shields.io/badge/maven/central-5.0.1.Final-green.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|5.0.1.Final|)
+[![Maven Central](https://img.shields.io/badge/maven/central-5.0.5.Final-green.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|5.0.5.Final|)
 [![Javadoc](https://img.shields.io/badge/Javadoc-online-green.svg)](http://www.javadoc.io/doc/org.infinispan.protostream/protostream)
 [![License](https://img.shields.io/github/license/infinispan/infinispan.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Java 8+](https://img.shields.io/badge/java-17+-blue.svg)](http://java.oracle.com)
+[![Java 17+](https://img.shields.io/badge/java-17+-blue.svg)](http://java.oracle.com)
 
-ProtoStream is a serialization library based on [Protobuf](https://developers.google.com/protocol-buffers/) data format. It is open source software released under the
-[Apache License, v2.0](https://www.apache.org/licenses/LICENSE-2.0 "The Apache License, v2.0").
-ProtoStream is part of the [Infinispan](https://github.com/infinispan/infinispan) data grid platform. For more information about Infinispan visit the project's
-website on [https://infinispan.org](https://infinispan.org "The Infinispan project page")
+ProtoStream is a Java serialization library based on the [Protocol Buffers](https://developers.google.com/protocol-buffers/) data format. 
+It is open source software released under the [Apache License, v2.0](https://www.apache.org/licenses/LICENSE-2.0 "The Apache License, v2.0").
+ProtoStream is part of the [Infinispan](https://github.com/infinispan/infinispan) platform, but can be used standalone.
+For more information about Infinispan visit the project's website on [https://infinispan.org](https://infinispan.org "the Infinispan project page").
+Documentation on how to use ProtoStream in your projects is available [https://infinispan.org/docs/stable/titles/encoding/encoding.html#marshalling_user_types](here).
 
+Features
+--------
+* annotate your Java classes, enums and records to automatically generate the `.proto` schema
+* provide adapters for third-party classes
+* compile-time generation of high-performance protocol buffers serializers / deserializers
+* Protocol Buffers 2 and 3
+* support for custom annotations
+* provides a library of ready-made adapters for common JDK classes (`BigDecimal`, `UUID`, `ArrayList`, `LocalDateTime` and more)
+* programmatic `.proto` schema generation
+* built-in backwards compatibility checks to ensure schemas use [https://protobuf.dev/programming-guides/dos-donts/](Protocol Buffers best practices)
 
-Usage (via Maven)
------------------
+Usage
+-----
 
-Add this dependency to your `pom.xml` file:
+If you are using Maven, add this dependency to your `pom.xml` file:
    
 ```xml
 <dependency>
    <groupId>org.infinispan.protostream</groupId>
    <artifactId>protostream</artifactId>
-   <version>5.0.1.Final</version>
+   <version>5.0.5.Final</version>
 </dependency>
 ```
+
+If you are using Gradle, add this dependency to your build file:
+
+```
+dependencies { 
+    implementation 'org.infinispan.protostream:protostream:5.0.5.Final'
+}
+```
+
 
 Annotation processor
 --------------------
@@ -33,25 +53,33 @@ will be automatically discovered by the service loader mechanism. Another way, w
 is to use the `--processor-path` option.
 
 ```shell
-javac --processor-path /path/to/protostream-processor-5.0.1.Final.jar:... ...
+javac --processor-path /path/to/protostream-processor-5.0.5.Final.jar:... ...
 ```
 
 Using Maven:
 ```xml
 <plugin>
   <artifactId>maven-compiler-plugin</artifactId>
-  <version>3.12.1</version>
+  <version>3.13.0</version>
   <configuration>
     <!-- Annotation processors -->
     <annotationProcessorPaths>
       <annotationProcessorPath>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>protostream-processor</artifactId>
-        <version>5.0.1.Final</version>
+        <version>5.0.5.Final</version>
       </annotationProcessorPath>
     </annotationProcessorPaths>
   </configuration>
 </plugin>
+```
+
+Using Gradle:
+```
+dependencies {
+    annotationProcessor 'org.infinispan.protostream:protostream-processor:5.0.5.Final'
+    ...
+}
 ```
 
 The annotation processor supports some configuration options:
@@ -75,7 +103,7 @@ The following `pom.xml` snippet shows how to do it with Maven:
       <annotationProcessorPath>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>protostream-processor</artifactId>
-        <version>5.0.1.Final</version>
+        <version>5.0.5.Final</version>
       </annotationProcessorPath>
     </annotationProcessorPaths>
   </configuration>

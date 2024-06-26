@@ -58,6 +58,7 @@ jobs:
 
       - name: Tag Release
         run: |
+          sed -e "s/[0-9]\+\.[0-9]\+\.[0-9]\+\.Final/${{ github.even.inputs.version }}/g" README.md
           git commit -a -m "Releasing ${{ github.event.inputs.version }}"
           git tag ${{ github.event.inputs.version }}
 
