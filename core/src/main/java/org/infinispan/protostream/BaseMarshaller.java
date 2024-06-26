@@ -9,6 +9,7 @@ package org.infinispan.protostream;
  * @since 1.0
  */
 public interface BaseMarshaller<T> {
+   String[] EMPTY = new String[0];
 
    /**
     * Returns the Java type handled by this marshaller. This must not change over multiple invocations.
@@ -24,4 +25,11 @@ public interface BaseMarshaller<T> {
     * @return the full name of the message or enum type, defined in a proto file.
     */
    String getTypeName();
+
+   /**
+    * Returns any subclass names
+    */
+   default String[] getSubClassNames() {
+      return EMPTY;
+   }
 }

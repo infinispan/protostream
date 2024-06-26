@@ -1,7 +1,7 @@
 package org.infinispan.protostream.impl;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +32,7 @@ import net.jcip.annotations.GuardedBy;
  * @since 1.0
  */
 public final class SerializationContextImpl implements SerializationContext {
+   static final Class<?>[] EMPTY_CLASSES = new Class[0];
 
    private static final Log log = Log.LogFactory.getLog(SerializationContextImpl.class);
 
@@ -80,7 +81,7 @@ public final class SerializationContextImpl implements SerializationContext {
    public Map<String, FileDescriptor> getFileDescriptors() {
       long stamp = descriptorLock.readLock();
       try {
-         return Collections.unmodifiableMap(new HashMap<>(fileDescriptors));
+         return Map.copyOf(fileDescriptors);
       } finally {
          descriptorLock.unlockRead(stamp);
       }
@@ -248,6 +249,14 @@ public final class SerializationContextImpl implements SerializationContext {
             throw new IllegalArgumentException("The given marshaller attempts to override an existing marshaller registered indirectly via an InstanceMarshallerProvider. Please unregister it first.");
          }
 
+         final Class<?>[] subClasses;
+         String[] subClassNames = marshaller.getSubClassNames();
+         if (subClassNames.length > 0) {
+            subClasses = Arrays.stream(subClassNames).map(SerializationContextImpl::classForName).toArray(Class[]::new);
+         } else {
+            subClasses = EMPTY_CLASSES;
+         }
+
          if (existingByName != null) {
             Registration anotherByClass = marshallersByClass.get(existingByName.marshallerDelegate.getMarshaller().getJavaClass());
             if (anotherByClass == null) {
@@ -261,15 +270,30 @@ public final class SerializationContextImpl implements SerializationContext {
                }
             }
             marshallersByClass.remove(existingByName.marshallerDelegate.getMarshaller().getJavaClass());
+            for (Class<?> subClass : subClasses) {
+               marshallersByClass.remove(subClass);
+            }
          }
          if (existingByClass != null) {
             marshallersByName.remove(existingByClass.marshallerDelegate.getMarshaller().getTypeName());
          }
+
          Registration registration = new Registration(makeMarshallerDelegate(marshaller));
          marshallersByClass.put(marshaller.getJavaClass(), registration);
          marshallersByName.put(marshaller.getTypeName(), registration);
+         for (Class<?> subClass : subClasses) {
+            marshallersByClass.put(subClass, registration);
+         }
       } finally {
          manifestLock.unlockWrite(stamp);
+      }
+   }
+
+   static Class<?> classForName(String name) {
+      try {
+         return Class.forName(name);
+      } catch (ClassNotFoundException e) {
+         throw new RuntimeException(e);
       }
    }
 

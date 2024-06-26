@@ -1,5 +1,6 @@
 package org.infinispan.protostream.annotations.impl;
 
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.annotations.impl.types.XClass;
@@ -87,6 +88,11 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
    public String getJavaClassName() {
       String canonicalName = javaClass.getCanonicalName();
       return canonicalName != null ? canonicalName : javaClass.getName();
+   }
+
+   public String[] getSubClassNames() {
+      ProtoAdapter adapter = getAnnotatedClass().getAnnotation(ProtoAdapter.class);
+      return adapter != null ? adapter.subClassNames() : null;
    }
 
    /**

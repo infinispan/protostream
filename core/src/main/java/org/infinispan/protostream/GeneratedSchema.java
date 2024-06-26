@@ -8,7 +8,7 @@ import java.io.UncheckedIOException;
  * An annotation-based generated proto schema file. This is just a more specific flavour of
  * {@link SerializationContextInitializer} that also exposes the generated Protobuf schema, which consists of the file
  * name and the file contents. Users will never implement this interface directly. Implementations are always generated
- * by the annotation processor based on the {@link org.infinispan.protostream.annotations.AutoProtoSchemaBuilder}
+ * by the annotation processor based on the {@link org.infinispan.protostream.annotations.ProtoSchema}
  * annotation, identically as for {@link SerializationContextInitializer}.
  *
  * @author anistor@redhat.com
