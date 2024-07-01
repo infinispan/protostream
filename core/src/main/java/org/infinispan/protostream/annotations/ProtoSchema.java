@@ -120,4 +120,17 @@ public @interface ProtoSchema {
     * Specifies the protobuf syntax used by the generated schema. Defaults to {@link ProtoSyntax#PROTO2}
     */
    ProtoSyntax syntax() default ProtoSyntax.PROTO2;
+
+   /**
+    * Specifies whether generated marshallers should allow missing fields of Byte Arrays, Enums, boxed primitives and
+    * Strings to be initialized as null when the {@link ProtoField#defaultValue()} is defined as an empty string.
+    * <p>
+    * This field has no affect when utilising ProtoSyntax.PROTO2 as this is the only supported behavior, see IPROTO-349
+    * for more details.
+    * <p>
+    * WARNING. Enabling this behaviour goes against the protobuf specification and could cause issues if your application
+    * utilises other languages and/or protobuf libraries. We only recommend enabling this feature if ProtoStream is the
+    * only protobuf library in use.
+    */
+   boolean allowNullFields() default false;
 }
