@@ -77,6 +77,10 @@ public class FieldDescriptor extends AnnotatedDescriptorImpl implements Annotate
       return label == Label.REPEATED;
    }
 
+   public boolean isMap() {
+      return false;
+   }
+
    public JavaType getJavaType() {
       return getType().getJavaType();
    }

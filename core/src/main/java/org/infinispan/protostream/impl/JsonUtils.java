@@ -44,6 +44,7 @@ import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.Label;
+import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -230,11 +231,15 @@ public final class JsonUtils {
                break;
             case START_OBJECT: {
                FieldDescriptor fd = messageDescriptor.findFieldByName(currentField);
-               Descriptor messageType = fd.getMessageType();
-               if (messageType == null) {
-                  throw new IllegalStateException("Field '" + currentField + "' is not an object");
+               if (fd.isMap()) {
+                  processMap(ctx, (MapDescriptor) fd, parser, nestedWriter);
+               } else {
+                  Descriptor messageType = fd.getMessageType();
+                  if (messageType == null) {
+                     throw new IllegalStateException("Field '" + currentField + "' is not an object");
+                  }
+                  processObject(ctx, parser, nestedWriter, messageType, fd.getNumber(), false);
                }
-               processObject(ctx, parser, nestedWriter, messageType, fd.getNumber(), false);
                break;
             }
             case FIELD_NAME:
@@ -279,6 +284,76 @@ public final class JsonUtils {
 
       writer.flush();
    }
+
+   private static void processMap(ImmutableSerializationContext ctx, MapDescriptor md, JsonParser parser, TagWriter writer) throws IOException {
+      while (true) {
+         JsonToken token = parser.nextToken();
+         if (token == JsonToken.END_OBJECT) {
+            break;
+         }
+         if (token != JsonToken.FIELD_NAME) {
+            throw new IllegalStateException("Unexpected token");
+         }
+         ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
+         TagWriter nestedWriter = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
+         String key = parser.getCurrentName();
+         switch (md.getKeyType()) {
+            case STRING -> nestedWriter.writeString(1, key);
+            case INT32 -> nestedWriter.writeInt32(1, Integer.parseInt(key));
+            case INT64 -> nestedWriter.writeInt64(1, Long.parseLong(key));
+            case FIXED32 -> nestedWriter.writeFixed32(1, Integer.parseInt(key));
+            case FIXED64 -> nestedWriter.writeFixed64(1, Long.parseLong(key));
+            case SINT32 -> nestedWriter.writeSInt32(1, Integer.parseInt(key));
+            case SINT64 -> nestedWriter.writeSInt64(1, Long.parseLong(key));
+            case SFIXED32 -> nestedWriter.writeSFixed32(1, Integer.parseInt(key));
+            case SFIXED64 -> nestedWriter.writeSFixed64(1, Long.parseLong(key));
+            case UINT32 -> nestedWriter.writeUInt32(1, Integer.parseInt(key));
+            case UINT64 -> nestedWriter.writeUInt64(1, Long.parseLong(key));
+         }
+         processMapValue(ctx, parser, nestedWriter, md);
+         writer.writeBytes(md.getNumber(), baos.toByteArray());
+         writer.flush();
+      }
+
+   }
+
+   private static void processMapValue(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, MapDescriptor md) throws IOException {
+      JsonToken token = parser.nextToken();
+      if (token == null) {
+         return;
+      }
+      switch (token) {
+         case START_OBJECT: {
+            processObject(ctx, parser, writer, md.getMessageType(),2, false);
+            break;
+         }
+         case VALUE_STRING:
+            writer.writeString(2, parser.getValueAsString());
+            break;
+         case VALUE_NUMBER_INT:
+            switch (md.getType()) {
+               case INT32 -> writer.writeInt32(2, parser.getIntValue());
+               case INT64 -> writer.writeInt64(2, parser.getLongValue());
+               case FIXED32 -> writer.writeFixed32(2, parser.getIntValue());
+               case FIXED64 -> writer.writeFixed64(2, parser.getLongValue());
+               case SINT32 -> writer.writeSInt32(2, parser.getIntValue());
+               case SINT64 -> writer.writeSInt64(2, parser.getLongValue());
+               case SFIXED32 -> writer.writeSFixed32(2, parser.getIntValue());
+               case SFIXED64 -> writer.writeSFixed64(2, parser.getLongValue());
+               case UINT32 -> writer.writeUInt32(2, parser.getIntValue());
+               case UINT64 -> writer.writeUInt64(2, parser.getLongValue());
+            }
+            break;
+         case VALUE_NUMBER_FLOAT:
+            switch (md.getType()) {
+               case FLOAT -> writer.writeFloat(2, parser.getFloatValue());
+               case DOUBLE -> writer.writeDouble(2, parser.getDoubleValue());
+            }
+            break;
+      }
+      writer.flush();
+   }
+
 
    private static void processPrimitive(JsonParser parser, TagWriter writer, Type fieldType) throws IOException {
       while (true) {
@@ -546,15 +621,14 @@ public final class JsonUtils {
                return;
             }
             startSlot(fieldDescriptor);
-
             nestingLevel = new JsonNestingLevel(nestingLevel);
-
             if (prettyPrint) {
                indent();
                nestingLevel.indent++;
             }
-
-            jsonOut.append('{');
+            if (!fieldDescriptor.isMap()) {
+               jsonOut.append('{');
+            }
          }
 
          @Override
@@ -566,7 +640,9 @@ public final class JsonUtils {
                nestingLevel.indent--;
                indent();
             }
-            jsonOut.append('}');
+            if (!fieldDescriptor.isMap()) {
+               jsonOut.append('}');
+            }
             nestingLevel = nestingLevel.previous;
          }
 
@@ -590,37 +666,40 @@ public final class JsonUtils {
             if (nestingLevel.repeatedFieldDescriptor != null && nestingLevel.repeatedFieldDescriptor != fieldDescriptor) {
                endArraySlot();
             }
-
+            boolean map = nestingLevel.previous != null && nestingLevel.previous.repeatedFieldDescriptor != null && nestingLevel.previous.repeatedFieldDescriptor.isMap();
             if (nestingLevel.isFirstField) {
                nestingLevel.isFirstField = false;
             } else {
-               jsonOut.append(',');
+               jsonOut.append(map ? ':' : ',');
             }
-            if (!fieldDescriptor.isRepeated() || nestingLevel.repeatedFieldDescriptor == null) {
+            if (!map) {
+               if (!fieldDescriptor.isRepeated() || nestingLevel.repeatedFieldDescriptor == null) {
+                  if (prettyPrint) {
+                     indent();
+                  }
+                  if (fieldDescriptor.getLabel() == Label.ONE_OF) {
+                     jsonOut.append('"').append(JSON_VALUE_FIELD).append("\":");
+                  } else {
+                     jsonOut.append('"').append(fieldDescriptor.getName()).append("\":");
+                  }
+               }
                if (prettyPrint) {
-                  indent();
+                  jsonOut.append(' ');
                }
-               if (fieldDescriptor.getLabel() == Label.ONE_OF) {
-                  jsonOut.append('"').append(JSON_VALUE_FIELD).append("\":");
-               } else {
-                  jsonOut.append('"').append(fieldDescriptor.getName()).append("\":");
-               }
-            }
-            if (prettyPrint) {
-               jsonOut.append(' ');
             }
             if (fieldDescriptor.isRepeated() && nestingLevel.repeatedFieldDescriptor == null) {
                nestingLevel.repeatedFieldDescriptor = fieldDescriptor;
-               jsonOut.append('[');
+               jsonOut.append(fieldDescriptor.isMap() ? '{' : '[');
             }
          }
 
          private void endArraySlot() {
+            boolean map = nestingLevel.repeatedFieldDescriptor.isMap();
             if (prettyPrint && nestingLevel.repeatedFieldDescriptor.getType() == Type.MESSAGE) {
                indent();
             }
             nestingLevel.repeatedFieldDescriptor = null;
-            jsonOut.append(']');
+            jsonOut.append(map ? '}' : ']');
          }
       };
 
@@ -773,6 +852,7 @@ public final class JsonUtils {
    }
 
    // todo [anistor] do we really need html escaping? so far I'm keeping it so we behave like previous implementation
+
    /**
     * Escapes a string literal in order to have a valid JSON representation. Optionally it can also escape some html chars.
     */

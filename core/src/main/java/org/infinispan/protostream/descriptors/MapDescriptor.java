@@ -3,15 +3,31 @@ package org.infinispan.protostream.descriptors;
 public class MapDescriptor extends FieldDescriptor {
    private final String keyTypeName;
    private final Type keyType;
+   private final Descriptor descriptor;
 
    private MapDescriptor(Builder builder) {
       super(builder);
       keyTypeName = builder.keyTypeName;
       keyType = Type.primitiveFromString(keyTypeName);
+      Descriptor.Builder b = new Descriptor.Builder().withName(name).withFullName(fullName);
+      FieldDescriptor.Builder kb = new FieldDescriptor.Builder().withNumber(1).withName("key").withTypeName(keyTypeName);
+      b.addField(kb);
+      FieldDescriptor.Builder vb = new FieldDescriptor.Builder().withNumber(2).withName("value").withTypeName(typeName);
+      b.addField(vb);
+      descriptor = b.build();
+   }
+
+   public Descriptor asDescriptor() {
+      return descriptor;
    }
 
    @Override
    public boolean isRepeated() {
+      return true;
+   }
+
+   @Override
+   public boolean isMap() {
       return true;
    }
 
@@ -42,6 +58,12 @@ public class MapDescriptor extends FieldDescriptor {
    @Override
    public Label getLabel() {
       return Label.OPTIONAL;
+   }
+
+   @Override
+   void setMessageType(Descriptor descriptor) {
+      super.setMessageType(descriptor);
+      this.descriptor.getFields().get(1).setMessageType(descriptor);
    }
 
    @Override
