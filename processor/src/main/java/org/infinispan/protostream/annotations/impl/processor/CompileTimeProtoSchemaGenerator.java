@@ -39,8 +39,9 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    CompileTimeProtoSchemaGenerator(XTypeFactory typeFactory, GeneratedFilesWriter generatedFilesWriter,
                                    SerializationContext serializationContext, String generator,
                                    String fileName, String packageName, Map<XClass, CompileTimeDependency> dependencies,
-                                   Set<XClass> classes, boolean autoImportClasses, ProtoSyntax syntax, AnnotatedClassScanner classScanner) {
-      super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses, syntax);
+                                   Set<XClass> classes, boolean autoImportClasses, ProtoSyntax syntax, boolean allowNullFields,
+                                   AnnotatedClassScanner classScanner) {
+      super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses, syntax, allowNullFields);
       this.dependencies = dependencies;
       this.marshallerSourceCodeGenerator = new MarshallerSourceCodeGenerator(generatedFilesWriter, typeFactory, packageName);
       this.classScanner = classScanner;
