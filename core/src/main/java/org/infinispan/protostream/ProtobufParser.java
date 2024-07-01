@@ -5,6 +5,7 @@ import java.io.InputStream;
 
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.protostream.impl.TagReaderImpl;
@@ -64,12 +65,19 @@ public final class ProtobufParser {
          final int fieldNumber = WireType.getTagFieldNumber(tag);
          final WireType wireType = WireType.fromTag(tag);
          final FieldDescriptor fd = messageDescriptor != null ? messageDescriptor.findFieldByNumber(fieldNumber) : null;
-
          switch (wireType) {
             case LENGTH_DELIMITED: {
                if (fd == null) {
                   byte[] value = in.readByteArray();
                   tagHandler.onTag(fieldNumber, null, value);
+               } else if (fd instanceof MapDescriptor md) {
+                  int length = in.readUInt32();
+                  int oldLimit = in.pushLimit(length);
+                  tagHandler.onStartNested(fieldNumber, fd);
+                  parseMessage(tagHandler, md.asDescriptor(), in);
+                  tagHandler.onEndNested(fieldNumber, fd);
+                  in.checkLastTagWas(0);
+                  in.popLimit(oldLimit);
                } else if (fd.getType() == Type.STRING) {
                   String value = in.readString();
                   tagHandler.onTag(fieldNumber, fd, value);
