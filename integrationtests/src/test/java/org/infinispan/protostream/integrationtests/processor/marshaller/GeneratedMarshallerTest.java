@@ -60,6 +60,16 @@ public class GeneratedMarshallerTest {
    }
 
    @Test
+   public void testRegisterTwice() {
+      var ctx = ProtobufUtil.newSerializationContext();
+      MapSchema.INSTANCE.registerSchema(ctx);
+      MapSchema.INSTANCE.registerMarshallers(ctx);
+
+      MapSchema.INSTANCE.registerSchema(ctx);
+      MapSchema.INSTANCE.registerMarshallers(ctx);
+   }
+
+   @Test
    public void testMaps() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
       MapSchema.INSTANCE.registerSchema(ctx);

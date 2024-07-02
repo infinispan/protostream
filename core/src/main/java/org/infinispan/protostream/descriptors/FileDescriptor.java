@@ -288,7 +288,6 @@ public final class FileDescriptor {
    }
 
    private void collectDescriptors(Descriptor descriptor, ResolutionContext resolutionContext) {
-      descriptor.setFileDescriptor(this);
       fileNamespace.put(descriptor.getFullName(), descriptor);
       resolutionContext.addGenericDescriptor(descriptor);
 
@@ -301,7 +300,6 @@ public final class FileDescriptor {
    }
 
    private void collectEnumDescriptors(EnumDescriptor enumDescriptor, ResolutionContext resolutionContext) {
-      enumDescriptor.setFileDescriptor(this);
       fileNamespace.put(enumDescriptor.getFullName(), enumDescriptor);
       resolutionContext.addGenericDescriptor(enumDescriptor);
    }
@@ -423,6 +421,14 @@ public final class FileDescriptor {
       if (!errors.isEmpty()) {
          throw Log.LOG.incompatibleSchemaChanges(String.join("\n", errors));
       }
+   }
+
+   public void parseAnnotations() {
+      if (configuration == null) {
+         throw new IllegalStateException("FileDescriptor.setConfiguration() must be invoked before parsing the annotations");
+      }
+      messageTypes.forEach(descriptor -> descriptor.setFileDescriptor(this));
+      enumTypes.forEach(enumDescriptor -> enumDescriptor.setFileDescriptor(this));
    }
 
    @Override

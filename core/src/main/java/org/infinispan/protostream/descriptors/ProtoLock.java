@@ -127,6 +127,7 @@ public class ProtoLock {
          messageBuilders.values().forEach(fdb::addMessage);
          FileDescriptor fd = fdb.build();
          fd.setConfiguration(configuration);
+         fd.parseAnnotations();
          descriptors.add(fd);
       }
       return new ProtoLock(descriptors);
