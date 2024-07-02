@@ -834,7 +834,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
     * type.
     */
    private Object getDefaultValue(XClass clazz, String fieldName, XClass fieldType, Type protobufType, String value, boolean isRepeated) {
-      if (protoSchemaGenerator.syntax() == ProtoSyntax.PROTO2) {
+      if (protoSchemaGenerator.syntax() == ProtoSyntax.PROTO2 ||
+            (protoSchemaGenerator.allowNullFields() && !fieldType.isPrimitive())) {
          if (value == null || value.isEmpty()) {
             return null;
          }
