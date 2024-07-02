@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl;
 
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_CONTAINER_TYPE_NAME;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_DOUBLE;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_ENUM;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED32;
@@ -587,7 +588,7 @@ public final class JsonUtils {
          }
 
          private void startSlot(FieldDescriptor fieldDescriptor) {
-            if (nestingLevel.repeatedFieldDescriptor != null && nestingLevel.repeatedFieldDescriptor != fieldDescriptor) {
+            if (nestingLevel.repeatedFieldDescriptor != null && !nestingLevel.repeatedFieldDescriptor.name.equals(fieldDescriptor.name)) {
                endArraySlot();
             }
 
@@ -630,6 +631,7 @@ public final class JsonUtils {
          private String typeName;
          private byte[] wrappedMessage;
          private Integer wrappedEnum;
+         private String wrappedContainerType;
 
          private GenericDescriptor getDescriptor() {
             return typeId != null ? ctx.getDescriptorByTypeId(typeId) : ctx.getDescriptorByName(typeName);
@@ -654,6 +656,11 @@ public final class JsonUtils {
                case WRAPPED_ENUM:
                   wrappedEnum = (Integer) tagValue;
                   break;
+               case WRAPPED_CONTAINER_TYPE_NAME:
+                  wrappedContainerType = (String) tagValue;
+                  GenericDescriptor descriptorByName = ctx.getDescriptorByName(wrappedContainerType);
+                  messageHandler.onStart(descriptorByName);
+                  break;
                case WrappedMessage.WRAPPED_BYTE:
                case WrappedMessage.WRAPPED_SHORT:
                case WrappedMessage.WRAPPED_DOUBLE:
@@ -671,16 +678,22 @@ public final class JsonUtils {
                case WrappedMessage.WRAPPED_SFIXED64:
                case WrappedMessage.WRAPPED_SINT32:
                case WrappedMessage.WRAPPED_SINT64:
-                  messageHandler.onStart(null);
-                  messageHandler.onTag(fieldNumber, fieldDescriptor, tagValue);
-                  messageHandler.onEnd();
+                  if (wrappedContainerType != null) {
+                     messageHandler.onTag(fieldNumber, new RepeatedFieldDescriptor(fieldDescriptor), tagValue);
+                  } else {
+                     messageHandler.onStart(null);
+                     messageHandler.onTag(fieldNumber, fieldDescriptor, tagValue);
+                     messageHandler.onEnd();
+                  }
                   break;
             }
          }
 
          @Override
          public void onEnd() {
-            if (wrappedEnum != null) {
+            if (wrappedContainerType != null) {
+               messageHandler.onEnd();
+            } else if (wrappedEnum != null) {
                EnumDescriptor enumDescriptor = (EnumDescriptor) getDescriptor();
                String enumConstantName = enumDescriptor.findValueByNumber(wrappedEnum).getName();
                FieldDescriptor fd = wrapperDescriptor.findFieldByNumber(WRAPPED_ENUM);
