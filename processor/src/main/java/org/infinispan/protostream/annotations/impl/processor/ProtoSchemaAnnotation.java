@@ -20,6 +20,7 @@ class ProtoSchemaAnnotation {
    private final String schemaPackageName;
    private final boolean service;
    private final ProtoSyntax syntax;
+   private boolean allowNullFields;
    private final String[] value;
    private final Annotation annotation;
    private final String annotationName;
@@ -36,6 +37,7 @@ class ProtoSchemaAnnotation {
       schemaPackageName = annotation.schemaPackageName();
       service = annotation.service();
       syntax = annotation.syntax();
+      allowNullFields = false;
       value = annotation.value();
    }
 
@@ -51,6 +53,7 @@ class ProtoSchemaAnnotation {
       schemaPackageName = annotation.schemaPackageName();
       service = annotation.service();
       syntax = annotation.syntax();
+      allowNullFields = annotation.allowNullFields();
       value = annotation.value();
    }
 
@@ -112,6 +115,10 @@ class ProtoSchemaAnnotation {
 
    public ProtoSyntax syntax() {
       return syntax;
+   }
+
+   public boolean allowNullFields() {
+      return allowNullFields;
    }
 
    public String[] value() {

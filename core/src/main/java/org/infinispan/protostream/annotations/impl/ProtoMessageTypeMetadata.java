@@ -769,7 +769,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          String oneof = null;
          Object defaultValue;
          if (annotation == null) {
-            defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, null, false);
+            defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, "", false);
          } else {
             if (annotation.number() > 0) fieldNumber = annotation.number();
             if (!annotation.name().isEmpty()) fieldName = annotation.name();
@@ -834,7 +834,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
     * type.
     */
    private Object getDefaultValue(XClass clazz, String fieldName, XClass fieldType, Type protobufType, String value, boolean isRepeated) {
-      if (protoSchemaGenerator.syntax() == ProtoSyntax.PROTO2) {
+      if (protoSchemaGenerator.syntax() == ProtoSyntax.PROTO2 ||
+            (protoSchemaGenerator.allowNullFields() && !fieldType.isPrimitive())) {
          if (value == null || value.isEmpty()) {
             return null;
          }
