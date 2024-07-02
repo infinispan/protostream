@@ -546,15 +546,14 @@ public final class JsonUtils {
                return;
             }
             startSlot(fieldDescriptor);
-
             nestingLevel = new JsonNestingLevel(nestingLevel);
-
             if (prettyPrint) {
                indent();
                nestingLevel.indent++;
             }
-
-            jsonOut.append('{');
+            if (!fieldDescriptor.isMap()) {
+               jsonOut.append('{');
+            }
          }
 
          @Override
@@ -566,7 +565,9 @@ public final class JsonUtils {
                nestingLevel.indent--;
                indent();
             }
-            jsonOut.append('}');
+            if (!fieldDescriptor.isMap()) {
+               jsonOut.append('}');
+            }
             nestingLevel = nestingLevel.previous;
          }
 
@@ -590,37 +591,40 @@ public final class JsonUtils {
             if (nestingLevel.repeatedFieldDescriptor != null && nestingLevel.repeatedFieldDescriptor != fieldDescriptor) {
                endArraySlot();
             }
-
+            boolean map = nestingLevel.previous != null && nestingLevel.previous.repeatedFieldDescriptor != null && nestingLevel.previous.repeatedFieldDescriptor.isMap();
             if (nestingLevel.isFirstField) {
                nestingLevel.isFirstField = false;
             } else {
-               jsonOut.append(',');
+               jsonOut.append(map ? ':': ',');
             }
-            if (!fieldDescriptor.isRepeated() || nestingLevel.repeatedFieldDescriptor == null) {
+            if (!map) {
+               if (!fieldDescriptor.isRepeated() || nestingLevel.repeatedFieldDescriptor == null) {
+                  if (prettyPrint) {
+                     indent();
+                  }
+                  if (fieldDescriptor.getLabel() == Label.ONE_OF) {
+                     jsonOut.append('"').append(JSON_VALUE_FIELD).append("\":");
+                  } else {
+                     jsonOut.append('"').append(fieldDescriptor.getName()).append("\":");
+                  }
+               }
                if (prettyPrint) {
-                  indent();
+                  jsonOut.append(' ');
                }
-               if (fieldDescriptor.getLabel() == Label.ONE_OF) {
-                  jsonOut.append('"').append(JSON_VALUE_FIELD).append("\":");
-               } else {
-                  jsonOut.append('"').append(fieldDescriptor.getName()).append("\":");
-               }
-            }
-            if (prettyPrint) {
-               jsonOut.append(' ');
             }
             if (fieldDescriptor.isRepeated() && nestingLevel.repeatedFieldDescriptor == null) {
                nestingLevel.repeatedFieldDescriptor = fieldDescriptor;
-               jsonOut.append('[');
+               jsonOut.append(fieldDescriptor.isMap() ? '{' : '[');
             }
          }
 
          private void endArraySlot() {
+            boolean map = nestingLevel.repeatedFieldDescriptor.isMap();
             if (prettyPrint && nestingLevel.repeatedFieldDescriptor.getType() == Type.MESSAGE) {
                indent();
             }
             nestingLevel.repeatedFieldDescriptor = null;
-            jsonOut.append(']');
+            jsonOut.append(map ? '}' : ']');
          }
       };
 

@@ -6,17 +6,19 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.types.java.CommonTypes;
 
 @ProtoSchema(
-        syntax = ProtoSyntax.PROTO3,
-        schemaPackageName = "generic",
-        schemaFilePath = "proto",
-        schemaFileName = "generic.proto",
-        dependsOn = CommonTypes.class,
-        includeClasses = {
-                ModelWithMap.class,
-                SimpleEnum.class
-        }
+      syntax = ProtoSyntax.PROTO3,
+      schemaPackageName = "generic",
+      schemaFilePath = "proto",
+      schemaFileName = "generic.proto",
+      dependsOn = CommonTypes.class,
+      includeClasses = {
+            ModelWithMap.class,
+            SimpleEnum.class,
+            MapOfString.class,
+            MapOfUUID.class,
+            MapOfMapOfUUID.class
+      }
 )
 public interface MapSchema extends GeneratedSchema {
-
-    MapSchema INSTANCE = new MapSchemaImpl();
+   MapSchema INSTANCE = new MapSchemaImpl();
 }
