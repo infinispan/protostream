@@ -25,7 +25,9 @@ jobs:
           repository: infinispan/infinispan
 
       - name: Jira Summary
-        run: echo SUMMARY=$(echo "${{ github.event.pull_request.title }}" | grep -oP '(?<=Bump )(.*)(?=from)|(?<=to )(.*)' | tr -d '\n') >> $GITHUB_ENV
+        run: echo SUMMARY=$(echo "${PR_TITLE}" | grep -oP '(?<=Bump )(.*)(?=from)|(?<=to )(.*)' | tr -d '\n') >> $GITHUB_ENV
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
 
       - name: Create or Update Existing Jira
         run: |
