@@ -769,7 +769,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          String oneof = null;
          Object defaultValue;
          if (annotation == null) {
-            defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, null, false);
+            defaultValue = getDefaultValue(clazz, fieldName, javaType, protobufType, "", false);
          } else {
             if (annotation.number() > 0) fieldNumber = annotation.number();
             if (!annotation.name().isEmpty()) fieldName = annotation.name();

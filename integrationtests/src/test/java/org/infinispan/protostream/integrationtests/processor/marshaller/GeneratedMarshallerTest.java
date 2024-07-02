@@ -24,6 +24,7 @@ import org.infinispan.protostream.integrationtests.processor.marshaller.model.Mo
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.NullTestModel;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.Player;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.SimpleEnum;
+import org.infinispan.protostream.integrationtests.processor.marshaller.model.SimpleRecord;
 import org.junit.Test;
 
 public class GeneratedMarshallerTest {
@@ -84,6 +85,11 @@ public class GeneratedMarshallerTest {
       assertNull(player.getShirtNumber());
       assertEquals(0, player.getMatchRating());
       assertNull(player.getBytes());
+
+      bytes = ProtobufUtil.toWrappedByteArray(ctx, new SimpleRecord(null, null));
+      SimpleRecord record = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertNull(record.string());
+      assertNull(record.boxedInt());
    }
 
    @Test
@@ -100,6 +106,11 @@ public class GeneratedMarshallerTest {
       assertEquals(0, model.primitiveInt);
       assertNull(model.bytes);
       assertNull(model.simpleEnum);
+
+      bytes = ProtobufUtil.toWrappedByteArray(ctx, new SimpleRecord(null, null));
+      SimpleRecord record = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertNull(record.string());
+      assertNull(record.boxedInt());
    }
 
    @Test
@@ -116,12 +127,18 @@ public class GeneratedMarshallerTest {
       assertEquals(0, model.primitiveInt);
       assertEquals(0, model.bytes.length);
       assertEquals(SimpleEnum.FIRST, model.simpleEnum);
+
+      bytes = ProtobufUtil.toWrappedByteArray(ctx, new SimpleRecord(null, null));
+      SimpleRecord record = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals("", record.string());
+      assertEquals((Integer) 0, record.boxedInt());
    }
 
    @ProtoSchema(
          includeClasses = {
                NullTestModel.class,
-               SimpleEnum.class
+               SimpleEnum.class,
+               SimpleRecord.class
          },
          schemaPackageName = "nonulls",
          schemaFilePath = "proto",
@@ -135,7 +152,8 @@ public class GeneratedMarshallerTest {
          allowNullFields = true,
          includeClasses = {
                NullTestModel.class,
-               SimpleEnum.class
+               SimpleEnum.class,
+               SimpleRecord.class
          },
          schemaPackageName = "allownulls",
          schemaFilePath = "proto",
