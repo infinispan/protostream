@@ -45,6 +45,7 @@ public final class ProtostreamProtoParser {
          try {
             FileDescriptor fileDescriptor = ProtoParser.parse(fileName, new StringReader(entry.getValue()), configuration);
             fileDescriptor.setConfiguration(configuration);
+            fileDescriptor.parseAnnotations();
             fileDescriptorMap.put(fileName, fileDescriptor);
          } catch (DescriptorParserException e) {
             reportParsingError(fileDescriptorSource, fileDescriptorMap, fileName, e);
