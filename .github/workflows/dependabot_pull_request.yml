@@ -25,7 +25,9 @@ jobs:
           repository: infinispan/infinispan
 
       # Explicitly set the default repository as it will be infinispan/infinispan due to the previous checkout step
-      - run: gh repo set-default infinispan/protostream
+      - run: |
+          git remote add protostream git@github.com:infinispan/protostream.git
+          gh repo set-default infinispan/protostream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
