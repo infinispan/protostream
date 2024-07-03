@@ -335,6 +335,9 @@ public class ProtoLock {
       } else {
          j.writeStringField("name", ed.getName());
       }
+      if (ed.getTypeId() != null) {
+         j.writeNumberField("type_id", ed.getTypeId());
+      }
       j.writeFieldName("enum_fields");
       j.writeStartArray();
       for (EnumValueDescriptor ev : ed.getValues()) {
