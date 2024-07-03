@@ -33,6 +33,7 @@
         <module>processor</module>
         <module>types</module>
         <module>integrationtests</module>
+        <module>maven-plugin</module>
     </modules>
 
     <build>

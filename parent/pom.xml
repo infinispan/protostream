@@ -114,6 +114,7 @@
         <version.install.plugin>3.1.2</version.install.plugin>
         <version.jar.plugin>3.3.0</version.jar.plugin>
         <version.javadoc.plugin>3.6.0</version.javadoc.plugin>
+        <version.plugin.api>3.9.8</version.plugin.api>
         <version.scm.plugin>2.1.0</version.scm.plugin>
         <version.source.plugin>3.3.0</version.source.plugin>
         <version.surefire.plugin>3.1.2</version.surefire.plugin>
@@ -122,6 +123,7 @@
         <version.maven.javacc>3.0.1</version.maven.javacc>
         <version.maven.nexus-staging>1.7.0</version.maven.nexus-staging>
         <version.maven.gpg>3.2.4</version.maven.gpg>
+        <version.maven.plugin-tools>3.13.1</version.maven.plugin-tools>
         <version.protobuf.plugin>0.6.1</version.protobuf.plugin>
 
         <version.junit>4.13.2</version.junit>
@@ -324,6 +326,19 @@
                 <version>${version.protobuf}</version>
                 <scope>test</scope>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-plugin-api</artifactId>
+                <version>${version.plugin.api}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven.plugin-tools</groupId>
+                <artifactId>maven-plugin-annotations</artifactId>
+                <version>${version.maven.plugin-tools}</version>
+                <scope>provided</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -450,6 +465,21 @@
                         <dateFormatTimeZone>UTC</dateFormatTimeZone>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>${version.maven.plugin-tools}</version>
+                    <executions>
+                        <execution>
+                            <id>help-mojo</id>
+                            <goals>
+                                <!-- good practice is to generate help mojo for plugin -->
+                                <goal>helpmojo</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
             </plugins>
 
         </pluginManagement>
