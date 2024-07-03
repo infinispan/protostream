@@ -80,7 +80,7 @@ jobs:
           gh pr edit ${{ github.event.pull_request.number }} --milestone "$(./infinispan/bin/jira/get_milestone.sh)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PROJECT_KEY: ISPN
+          PROJECT_KEY: IPROTO
           TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
 #      - name: Approve PR for auto-merge
