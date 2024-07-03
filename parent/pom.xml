@@ -93,16 +93,22 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <project.build.outputTimestamp>${git.commit.time}</project.build.outputTimestamp>
+
         <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
         <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
-        <jboss.releases.repo.url>${jboss.releases.nexus.url}/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+        <jboss.releases.repo.url>${jboss.releases.nexus.url}/service/local/staging/deploy/maven2/
+        </jboss.releases.repo.url>
         <jboss.snapshots.repo.id>jboss-snapshots-repository</jboss.snapshots.repo.id>
-        <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
+        <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/
+        </jboss.snapshots.repo.url>
 
         <!-- overwrite plugins version from jboss-parent -->
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
-        <version.buildnumber.plugin>3.1.0</version.buildnumber.plugin>
+        <version.antrun.plugin>3.1.0</version.antrun.plugin>
+        <version.artifact.plugin>3.5.1</version.artifact.plugin>
+        <version.buildnumber.plugin>3.2.0</version.buildnumber.plugin>
         <version.compiler.plugin>3.12.1</version.compiler.plugin>
         <version.enforcer.plugin>3.5.0</version.enforcer.plugin>
         <version.install.plugin>3.1.2</version.install.plugin>
@@ -110,7 +116,6 @@
         <version.javadoc.plugin>3.6.0</version.javadoc.plugin>
         <version.scm.plugin>2.1.0</version.scm.plugin>
         <version.source.plugin>3.3.0</version.source.plugin>
-        <version.antrun.plugin>3.1.0</version.antrun.plugin>
         <version.surefire.plugin>3.1.2</version.surefire.plugin>
 
         <!-- plugins version -->
@@ -124,8 +129,8 @@
         <version.mockito>5.12.0</version.mockito>
         <version.jcipannotations>1.0</version.jcipannotations>
         <version.jboss.logging>3.6.0.Final</version.jboss.logging>
-        <version.jboss.logging.annotations>2.2.1.Final</version.jboss.logging.annotations>
-        <version.jboss.logging.processor>2.2.1.Final</version.jboss.logging.processor>
+        <version.jboss.logging.annotations>3.0.0.Final</version.jboss.logging.annotations>
+        <version.jboss.logging.processor>3.0.0.Final</version.jboss.logging.processor>
         <version.log4j>2.23.1</version.log4j>
         <version.jboss.marshalling>2.1.4.Final</version.jboss.marshalling>
         <version.jackson>2.17.1</version.jackson>
@@ -136,7 +141,8 @@
         <!-- maven repository urls -->
         <maven.releases.nexus.url>https://s01.oss.sonatype.org/</maven.releases.nexus.url>
         <maven.releases.repo.id>ossrh</maven.releases.repo.id>
-        <maven.releases.repo.url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</maven.releases.repo.url>
+        <maven.releases.repo.url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/
+        </maven.releases.repo.url>
         <maven.snapshots.repo.id>ossrh</maven.snapshots.repo.id>
         <maven.snapshots.repo.url>https://s01.oss.sonatype.org/content/repositories/snapshots</maven.snapshots.repo.url>
     </properties>
@@ -332,6 +338,12 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-artifact-plugin</artifactId>
+                    <version>${version.artifact.plugin}</version>
+                </plugin>
+
+                <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
                         <release>${maven.compiler.target}</release>
@@ -406,8 +418,40 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>buildnumber-maven-plugin</artifactId>
                     <version>${version.buildnumber.plugin}</version>
+                    <executions>
+                        <execution>
+                            <phase>validate</phase>
+                            <goals>
+                                <goal>create</goal>
+                            </goals>
+                            <configuration>
+                                <doCheck>false</doCheck>
+                                <doUpdate>false</doUpdate>
+                                <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+                                <timezone>UTC</timezone>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>io.github.git-commit-id</groupId>
+                    <artifactId>git-commit-id-maven-plugin</artifactId>
+                    <version>8.0.2</version>
+                    <executions>
+                        <execution>
+                            <id>get-the-git-infos</id>
+                            <goals>
+                                <goal>revision</goal>
+                            </goals>
+                            <phase>initialize</phase>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <dateFormatTimeZone>UTC</dateFormatTimeZone>
+                    </configuration>
                 </plugin>
             </plugins>
+
         </pluginManagement>
 
         <plugins>
@@ -449,6 +493,14 @@
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
                 <version>${version.protobuf.plugin}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>io.github.git-commit-id</groupId>
+                <artifactId>git-commit-id-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
