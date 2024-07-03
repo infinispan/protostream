@@ -24,6 +24,9 @@ jobs:
           ref: main
           repository: infinispan/infinispan
 
+      # Explicitly set the default repository as it will be infinispan/infinispan due to the previous checkout step
+      - run: gh repo set-default infinispan/protostream
+
       - name: Jira Summary
         run: echo SUMMARY=$(echo "${PR_TITLE}" | grep -oP '(?<=Bump )(.*)(?=from)|(?<=to )(.*)' | tr -d '\n') >> $GITHUB_ENV
         env:
