@@ -14,6 +14,7 @@ import org.infinispan.protostream.types.java.CommonTypes;
       includeClasses = {
             ModelWithMap.class,
             SimpleEnum.class,
+            MapOfLong.class,
             MapOfString.class,
             MapOfUUID.class,
             MapOfMapOfUUID.class

@@ -23,6 +23,7 @@ import org.infinispan.protostream.impl.JsonUtils;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.FootballSchema;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.FootballSchemaImpl;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.FootballTeam;
+import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfLong;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfMapOfUUID;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfString;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfUUID;
@@ -265,6 +266,21 @@ public class GeneratedMarshallerTest {
 
       byte[] bytes2 = JsonUtils.fromCanonicalJSON(ctx, new StringReader(json));
       assertArrayEquals(bytes, bytes2);
+   }
+
+   @Test
+   public void testMapOfLong() throws Exception {
+      var ctx = ProtobufUtil.newSerializationContext();
+      MapSchema.INSTANCE.registerSchema(ctx);
+      MapSchema.INSTANCE.registerMarshallers(ctx);
+
+      var key = "1";
+      var value = (Long) 1L;
+      var m = new MapOfLong();
+      m.data = Map.of(key, value);
+      var bytes = ProtobufUtil.toWrappedByteArray(ctx, m);
+      MapOfLong copy = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(value, copy.data.get(key));
    }
 
    private static void assertJson(String j1, String j2) throws IOException {
