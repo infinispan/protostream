@@ -27,7 +27,7 @@ public enum JavaType {
 
       @Override
       public String defaultValueAsString() {
-         return "0";
+         return "0L";
       }
    },
    FLOAT {
