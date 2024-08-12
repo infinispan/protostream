@@ -283,6 +283,44 @@ public class GeneratedMarshallerTest {
       assertEquals(value, copy.data.get(key));
    }
 
+   @Test
+   public void testMapOfMapToJson() throws IOException {
+      var ctx = ProtobufUtil.newSerializationContext();
+      MapSchema.INSTANCE.registerSchema(ctx);
+      MapSchema.INSTANCE.registerMarshallers(ctx);
+
+      var adapter = Map.of("a", uuid);
+      var simple = Map.of("b", 2);
+      var enumMap = Map.of("c", SimpleEnum.SECOND);
+      var maps = new ModelWithMap();
+
+      maps.setAdapterMap(adapter);
+      maps.setSimpleMap(simple);
+      maps.setEnumMap(enumMap);
+
+      var bytes = ProtobufUtil.toWrappedByteArray(ctx, maps);
+      ModelWithMap copy = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertNotNull(copy);
+      String json = JsonUtils.toCanonicalJSON(ctx, bytes, false);
+      assertJson("""
+              {
+                   "_type": "generic.ModelWithMap",
+                   "simpleMap": {
+                       "b": 2
+                   },
+                   "adapterMap": {
+                       "a": {"mostSigBitsFixed":0,"leastSigBitsFixed":0}
+                   },
+                   "enumMap": {
+                       "c": "SECOND"
+                   }
+               }
+              """, json);
+
+      byte[] bytes2 = JsonUtils.fromCanonicalJSON(ctx, new StringReader(json));
+      assertArrayEquals(bytes, bytes2);
+   }
+
    private static void assertJson(String j1, String j2) throws IOException {
       ObjectMapper mapper = new ObjectMapper();
       assertEquals(mapper.readTree(j1), mapper.readTree(j2));

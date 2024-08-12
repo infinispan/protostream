@@ -67,6 +67,12 @@ public class MapDescriptor extends FieldDescriptor {
    }
 
    @Override
+   void setEnumType(EnumDescriptor enumDescriptor) {
+      super.setEnumType(enumDescriptor);
+      this.descriptor.getFields().get(1).setEnumType(enumDescriptor);
+   }
+
+   @Override
    public String toString() {
       return "MapDescriptor{" +
             "keyTypeName='" + keyTypeName + '\'' +

@@ -257,7 +257,7 @@ public final class JsonUtils {
                }
 
                if (fd.getType() == Type.ENUM) {
-                  writeEnumField(parser, nestedWriter, fd);
+                  writeEnumField(parser, nestedWriter, fd, fd.getNumber());
                } else {
                   writeField(parser, nestedWriter, fd.getType(), fd.getNumber());
                }
@@ -329,7 +329,11 @@ public final class JsonUtils {
             break;
          }
          case VALUE_STRING:
-            writer.writeString(2, parser.getValueAsString());
+            if (md.getType() == Type.ENUM) {
+               writeEnumField(parser, writer, md, 2);
+            } else {
+               writer.writeString(2, parser.getValueAsString());
+            }
             break;
          case VALUE_NUMBER_INT:
             switch (md.getType()) {
@@ -455,7 +459,7 @@ public final class JsonUtils {
                   throw new IllegalStateException("Field '" + fd.getName() + "' is not an array");
                }
                if (fd.getType() == Type.ENUM) {
-                  writeEnumField(parser, writer, fd);
+                  writeEnumField(parser, writer, fd, fd.getNumber());
                } else {
                   writeField(parser, writer, fd.getType(), fd.getNumber());
                }
@@ -793,7 +797,7 @@ public final class JsonUtils {
       ProtobufParser.INSTANCE.parse(wrapperHandler, wrapperDescriptor, bytes);
    }
 
-   private static void writeEnumField(JsonParser parser, TagWriter writer, FieldDescriptor fd) throws IOException {
+   private static void writeEnumField(JsonParser parser, TagWriter writer, FieldDescriptor fd, int fieldNumber) throws IOException {
       String value = parser.getText();
       EnumDescriptor enumDescriptor = fd.getEnumType();
       EnumValueDescriptor valueDescriptor = enumDescriptor.findValueByName(value);
@@ -801,7 +805,7 @@ public final class JsonUtils {
          throw new IllegalStateException("Invalid enum value '" + value + "'");
       }
       int choice = valueDescriptor.getNumber();
-      writer.writeEnum(fd.getNumber(), choice);
+      writer.writeEnum(fieldNumber, choice);
    }
 
    private static void writeField(JsonParser parser, TagWriter writer, Type fieldType, int fieldNumber) throws IOException {
