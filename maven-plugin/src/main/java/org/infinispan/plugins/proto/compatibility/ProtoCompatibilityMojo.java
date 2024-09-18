@@ -3,11 +3,15 @@ package org.infinispan.plugins.proto.compatibility;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.stream.Stream;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -34,14 +38,17 @@ import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
       requiresDependencyResolution = ResolutionScope.COMPILE,
       threadSafe = true)
 public class ProtoCompatibilityMojo extends AbstractMojo {
+   @Parameter(defaultValue = "false")
+   private boolean commitProtoLock;
+
    @Parameter(defaultValue = "${basedir}")
    private String protoLockRoot;
 
    @Parameter(defaultValue = "${project.build.directory}/classes/proto", readonly = true)
    private String protoSourceRoot;
 
-   @Parameter(defaultValue = "false")
-   private boolean commitProtoLock;
+   @Parameter
+   private String remoteLockFiles;
 
    @Parameter(defaultValue = "false")
    private boolean skip;
@@ -60,23 +67,14 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
 
          Path lockFile = Paths.get(protoLockRoot, "proto.lock");
          boolean lockFileExists = Files.exists(lockFile);
-         if (!commitProtoLock && !lockFileExists) {
-            getLog().info("Ignoring protolock check as there isn't an existing proto.lock file and commitProtoLock=false.");
+         boolean remoteCheck = !remoteLockFiles.isEmpty();
+         if (!commitProtoLock && !lockFileExists && !remoteCheck) {
+            getLog().info("Ignoring protolock check as there isn't an existing proto.lock file, commitProtoLock=false and no remoteLockFiles are specified.");
             return;
          }
-         Path protoRoot = Paths.get(protoSourceRoot);
-         List<Path> protoFiles;
-         try (Stream<Path> stream = Files.walk(protoRoot)) {
-            protoFiles = stream.filter(p -> p.getFileName().toString().endsWith(".proto")).toList();
-         }
-         FileDescriptorSource fds = new FileDescriptorSource();
-         for (Path p : protoFiles) {
-            fds.addProtoFile(protoRoot.relativize(p).toString(), p.toFile());
-         }
-         ProtostreamProtoParser parser = new ProtostreamProtoParser(Configuration.builder().build());
-         Map<String, FileDescriptor> descriptors = parser.parse(fds);
-         ProtoLock protoNew = new ProtoLock(descriptors.values());
+         ProtoLock protoNew = protoLockFromDir(Paths.get(protoSourceRoot));
          if (!lockFileExists) {
+            checkRemoteCompatibility(protoNew);
             try (OutputStream os = Files.newOutputStream(lockFile)) {
                protoNew.writeLockFile(os);
             }
@@ -87,7 +85,8 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
                protoOld = ProtoLock.readLockFile(is);
             }
             protoOld.checkCompatibility(protoNew, true);
-            getLog().info("Backwards compatibility check passed.");
+            getLog().info(String.format("Backwards compatibility check against local file '%s' passed.", lockFile));
+            checkRemoteCompatibility(protoNew);
 
             if (commitProtoLock) {
                try (OutputStream os = Files.newOutputStream(lockFile)) {
@@ -98,6 +97,34 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
          }
       } catch (IOException e) {
          throw new MojoExecutionException("An error occurred while running protolock", e);
+      }
+   }
+
+   private ProtoLock protoLockFromDir(Path protoRoot) throws IOException {
+      List<Path> protoFiles;
+      try (Stream<Path> stream = Files.walk(protoRoot)) {
+         protoFiles = stream.filter(p -> p.getFileName().toString().endsWith(".proto")).toList();
+      }
+      FileDescriptorSource fds = new FileDescriptorSource();
+      for (Path p : protoFiles) {
+         fds.addProtoFile(protoRoot.relativize(p).toString(), p.toFile());
+      }
+      ProtostreamProtoParser parser = new ProtostreamProtoParser(Configuration.builder().build());
+      Map<String, FileDescriptor> descriptors = parser.parse(fds);
+      return new ProtoLock(descriptors.values());
+   }
+
+   private void checkRemoteCompatibility(ProtoLock currentState) throws IOException {
+      if (remoteLockFiles.isEmpty())
+         return;
+
+      for (String file : remoteLockFiles.split(",")) {
+         getLog().info(String.format("Checking backwards compatibility check against remote file '%s'", file));
+         try (InputStream is = new URL(file).openStream()) {
+            ProtoLock remoteLockFile = ProtoLock.readLockFile(is);
+            currentState.checkCompatibility(remoteLockFile, true);
+         }
+         getLog().info(String.format("Backwards compatibility check against remote file '%s' passed", file));
       }
    }
 }
