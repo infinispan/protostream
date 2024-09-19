@@ -43,6 +43,9 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
    @Parameter(defaultValue = "false")
    private boolean commitProtoLock;
 
+   @Parameter(defaultValue = "false")
+   private boolean skip;
+
    /**
     * Execute the plugin.
     *
@@ -50,6 +53,11 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
     */
    public void execute() throws MojoExecutionException {
       try {
+         if (skip) {
+            getLog().info("Skipping proto compatibility check");
+            return;
+         }
+
          Path lockFile = Paths.get(protoLockRoot, "proto.lock");
          boolean lockFileExists = Files.exists(lockFile);
          if (!commitProtoLock && !lockFileExists) {
