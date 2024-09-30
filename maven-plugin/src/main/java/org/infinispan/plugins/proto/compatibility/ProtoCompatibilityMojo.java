@@ -3,17 +3,15 @@ package org.infinispan.plugins.proto.compatibility;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.stream.Stream;
 
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -50,6 +48,9 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
    @Parameter
    private String remoteLockFiles;
 
+   @Parameter(defaultValue = "${session}")
+   private MavenSession session;
+
    @Parameter(defaultValue = "false")
    private boolean skip;
 
@@ -67,8 +68,7 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
 
          Path lockFile = Paths.get(protoLockRoot, "proto.lock");
          boolean lockFileExists = Files.exists(lockFile);
-         boolean remoteCheck = !remoteLockFiles.isEmpty();
-         if (!commitProtoLock && !lockFileExists && !remoteCheck) {
+         if (!commitProtoLock && !lockFileExists && !remoteCheck()) {
             getLog().info("Ignoring protolock check as there isn't an existing proto.lock file, commitProtoLock=false and no remoteLockFiles are specified.");
             return;
          }
@@ -115,8 +115,13 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
    }
 
    private void checkRemoteCompatibility(ProtoLock currentState) throws IOException {
-      if (remoteLockFiles.isEmpty())
+      if (!remoteCheck())
          return;
+
+      if (session.isOffline()) {
+         getLog().info("Skipping backwards compatibility check against remote files as maven is in Offline mode");
+         return;
+      }
 
       for (String file : remoteLockFiles.split(",")) {
          getLog().info(String.format("Checking backwards compatibility check against remote file '%s'", file));
@@ -126,5 +131,9 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
          }
          getLog().info(String.format("Backwards compatibility check against remote file '%s' passed", file));
       }
+   }
+
+   private boolean remoteCheck() {
+      return remoteLockFiles != null && !remoteLockFiles.isEmpty();
    }
 }
