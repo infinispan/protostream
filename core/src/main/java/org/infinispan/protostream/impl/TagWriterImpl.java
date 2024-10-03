@@ -15,7 +15,6 @@ import java.util.Map;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufTagMarshaller;
-import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.WireType;
 
@@ -66,9 +65,13 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamEncoder(output, ProtobufUtil.DEFAULT_STREAM_BUFFER_SIZE));
+      return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamNoBufferEncoder(output));
    }
 
+   /**
+    * @deprecated since 5.0.10 Please use {@link #newInstance(ImmutableSerializationContext, OutputStream)} with a {@link java.io.BufferedOutputStream} instead
+    */
+   @Deprecated
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output, int bufferSize) {
       return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamEncoder(output, bufferSize));
    }
@@ -90,6 +93,10 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       return new TagWriterImpl((SerializationContextImpl) serCtx, new NoOpEncoder());
    }
 
+   /**
+    * @deprecated since 5.0.10 Please use {@link #newInstance(ImmutableSerializationContext, OutputStream)}
+    */
+   @Deprecated
    public static TagWriterImpl newInstanceNoBuffer(ImmutableSerializationContext ctx, OutputStream out) {
       return new TagWriterImpl((SerializationContextImpl) ctx, new OutputStreamNoBufferEncoder(out));
    }

@@ -77,7 +77,7 @@ public final class JsonUtils {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
 
       try (reader; baos) {
-         TagWriter writer = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
+         TagWriter writer = TagWriterImpl.newInstance(ctx, baos);
          JsonParser parser = jsonFactory.createParser(reader);
          while (true) {
             JsonToken token = parser.nextToken();
@@ -214,7 +214,7 @@ public final class JsonUtils {
 
    private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber, boolean topLevel) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-      TagWriter nestedWriter = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
+      TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, baos);
 
       String currentField = null;
 
@@ -296,7 +296,7 @@ public final class JsonUtils {
             throw new IllegalStateException("Unexpected token");
          }
          ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-         TagWriter nestedWriter = TagWriterImpl.newInstanceNoBuffer(ctx, baos);
+         TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, baos);
          String key = parser.getCurrentName();
          switch (md.getKeyType()) {
             case STRING -> nestedWriter.writeString(1, key);
