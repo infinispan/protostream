@@ -127,7 +127,7 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
          getLog().info(String.format("Checking backwards compatibility check against remote file '%s'", file));
          try (InputStream is = new URL(file).openStream()) {
             ProtoLock remoteLockFile = ProtoLock.readLockFile(is);
-            currentState.checkCompatibility(remoteLockFile, true);
+            remoteLockFile.checkCompatibility(currentState, true);
          }
          getLog().info(String.format("Backwards compatibility check against remote file '%s' passed", file));
       }
