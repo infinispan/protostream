@@ -177,7 +177,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
          iw.println();
       }
 
-      AutoProtoSchemaBuilderAnnotationProcessor.addGeneratedClassHeader(iw, true);
+      AutoProtoSchemaBuilderAnnotationProcessor.addGeneratedClassHeader(iw);
       iw.println("@SuppressWarnings(\"all\")");
       iw.printf("public final class %s extends %s implements %s<%s>", marshallerClassName, GeneratedMarshallerBase.class.getName(), ProtobufTagMarshaller.class.getName(), pmtm.getJavaClassName());
       String elementType = null;
