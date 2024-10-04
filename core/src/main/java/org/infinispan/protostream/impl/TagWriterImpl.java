@@ -131,13 +131,30 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       encoder.writeVarint64(value);
    }
 
+   public static boolean onlyAscii(String ba, int off, int len) {
+      int limit = off + len;
+      for (int i = off; i < limit; i++) {
+         if (ba.charAt(i) > 127) {
+            return false;
+         }
+      }
+      return true;
+   }
+
    @Override
-   public void writeString(int number, String value) throws IOException {
-      // TODO [anistor] This is expensive! What can we do to make it more efficient?
+   public void writeString(int number, String s) throws IOException {
       // Also, when just count bytes for message size we do a useless first conversion, and another one will follow later.
 
+      if (onlyAscii(s, 0, s.length())) {
+         encoder.writeLengthDelimitedField(number, s.length());
+         for (int i = 0; i < s.length(); ++i) {
+            encoder.writeByte((byte) s.charAt(i));
+         }
+         return;
+      }
+
       // Charset.encode is not able to encode directly into our own buffers!
-      byte[] utf8buffer = value.getBytes(StandardCharsets.UTF_8);
+      byte[] utf8buffer = s.getBytes(StandardCharsets.UTF_8);
 
       encoder.writeLengthDelimitedField(number, utf8buffer.length);
       encoder.writeBytes(utf8buffer, 0, utf8buffer.length);
