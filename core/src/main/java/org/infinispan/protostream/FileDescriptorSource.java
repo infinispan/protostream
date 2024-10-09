@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -196,17 +195,5 @@ public final class FileDescriptorSource {
 
    public ProgressCallback getProgressCallback() {
       return progressCallback;
-   }
-
-   /**
-    * Finds a resource with a given path relative to a given {@link Class} and returns it as a {@link String}.
-    *
-    * @throws UncheckedIOException if the resource is not found or an I/O error occurs
-    * @deprecated This method is strictly for internal use and has been deprecated in 4.3.4 to prevent use from external
-    * projects as it is subject for removal in 5.
-    */
-   @Deprecated
-   public static String getResourceAsString(Class<?> c, String resourcePath) throws UncheckedIOException {
-      return ResourceUtils.getResourceAsString(c, resourcePath);
    }
 }
