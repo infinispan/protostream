@@ -73,27 +73,27 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
             return;
          }
          ProtoLock protoNew = protoLockFromDir(Paths.get(protoSourceRoot));
-         if (!lockFileExists) {
-            checkRemoteCompatibility(protoNew);
-            try (OutputStream os = Files.newOutputStream(lockFile)) {
-               protoNew.writeLockFile(os);
-            }
-            getLog().info("Initialized protolock.");
-         } else {
+         if (lockFileExists) {
             ProtoLock protoOld;
             try (InputStream is = Files.newInputStream(lockFile)) {
                protoOld = ProtoLock.readLockFile(is);
             }
             protoOld.checkCompatibility(protoNew, true);
             getLog().info(String.format("Backwards compatibility check against local file '%s' passed.", lockFile));
+         }
+
+         if (remoteCheck())
             checkRemoteCompatibility(protoNew);
 
-            if (commitProtoLock) {
-               try (OutputStream os = Files.newOutputStream(lockFile)) {
-                  protoNew.writeLockFile(os);
-               }
-               getLog().info("Schema changes committed to proto.lock.");
+         if (commitProtoLock) {
+            try (OutputStream os = Files.newOutputStream(lockFile)) {
+               protoNew.writeLockFile(os);
             }
+            getLog().info(
+                  lockFileExists ?
+                        "Schema changes committed to proto.lock." :
+                        "Initialized protolock."
+            );
          }
       } catch (IOException e) {
          throw new MojoExecutionException("An error occurred while running protolock", e);
@@ -115,9 +115,6 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
    }
 
    private void checkRemoteCompatibility(ProtoLock currentState) throws IOException {
-      if (!remoteCheck())
-         return;
-
       if (session.isOffline()) {
          getLog().info("Skipping backwards compatibility check against remote files as maven is in Offline mode");
          return;
