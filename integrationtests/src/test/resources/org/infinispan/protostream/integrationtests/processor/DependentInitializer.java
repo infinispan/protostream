@@ -7,7 +7,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import test_basic_stuff.TestMessage;
 
 @AutoProtoSchemaBuilder(schemaFilePath = "/", dependsOn = test_basic_stuff.AbstractFirstInitializer.class,
-         includeClasses = DependentInitializer.A.class, autoImportClasses = false, service = true)
+         includeClasses = DependentInitializer.A.class, service = true)
 interface DependentInitializer extends SerializationContextInitializer {
 
    class A {

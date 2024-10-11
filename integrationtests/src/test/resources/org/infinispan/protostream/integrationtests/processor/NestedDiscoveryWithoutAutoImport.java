@@ -5,16 +5,16 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
 
 @AutoProtoSchemaBuilder(includeClasses = {OuterMessage2.class, OuterMessage3.class},
-      autoImportClasses = false, schemaFilePath = "/")
+      schemaFilePath = "/")
 interface NestedDiscoveryWithoutAutoImport extends SerializationContextInitializer {
 }
 
 @AutoProtoSchemaBuilder(basePackages = "test_nested_discovery_without_auto_import",
-      autoImportClasses = false, schemaFilePath = "/")
+      schemaFilePath = "/")
 interface NestedDiscoveryWithoutAutoImport2 extends SerializationContextInitializer {
 }
 
-@AutoProtoSchemaBuilder(autoImportClasses = false, schemaFilePath = "/")
+@AutoProtoSchemaBuilder(schemaFilePath = "/")
 interface NestedDiscoveryWithoutAutoImport3 extends SerializationContextInitializer {
 }
 

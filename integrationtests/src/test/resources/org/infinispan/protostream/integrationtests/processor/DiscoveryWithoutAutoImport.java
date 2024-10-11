@@ -4,7 +4,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@AutoProtoSchemaBuilder(includeClasses = OuterMessage1.class, autoImportClasses = false)
+@AutoProtoSchemaBuilder(includeClasses = OuterMessage1.class)
 public interface DiscoveryWithoutAutoImport extends SerializationContextInitializer {
 }
 

@@ -64,11 +64,6 @@ public abstract class BaseProtoSchemaGenerator {
    protected final Set<XClass> classes;
 
    /**
-    * Indicates if class dependencies are automatically added when discovered or will generate an error.
-    */
-   protected final boolean autoImportClasses;
-
-   /**
     * Known classes: the user-added classes ({@link #classes}) plus all their superclasses and superinterfaces. This is
     * only used when auto-import is disabled.
     */
@@ -87,7 +82,7 @@ public abstract class BaseProtoSchemaGenerator {
 
    protected BaseProtoSchemaGenerator(XTypeFactory typeFactory, SerializationContext serializationContext,
                                       String generator, String fileName, String packageName, Set<XClass> classes,
-                                      boolean autoImportClasses, ProtoSyntax syntax, boolean allowNullFields) {
+                                      ProtoSyntax syntax, boolean allowNullFields) {
       if (fileName == null) {
          throw new ProtoSchemaBuilderException("fileName cannot be null");
       }
@@ -98,7 +93,6 @@ public abstract class BaseProtoSchemaGenerator {
       this.fileName = fileName;
       this.packageName = packageName;
       this.classes = classes;
-      this.autoImportClasses = autoImportClasses;
       this.syntax = syntax;
       this.allowNullFields = allowNullFields;
    }
@@ -276,7 +270,7 @@ public abstract class BaseProtoSchemaGenerator {
    void collectMetadata(ProtoTypeMetadata protoTypeMetadata) {
       boolean isUnknownClass = isUnknownClass(protoTypeMetadata.getJavaClass());
 
-      if (isUnknownClass && !autoImportClasses && !protoTypeMetadata.isImported()) {
+      if (isUnknownClass && !protoTypeMetadata.isImported()) {
          // autoImportClasses is off and we are attempting expanding the class set -> NOPE!
          throw new ProtoSchemaBuilderException("Found a reference to class "
                + protoTypeMetadata.getJavaClassName()
