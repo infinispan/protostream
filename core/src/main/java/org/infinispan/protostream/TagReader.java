@@ -86,24 +86,24 @@ public interface TagReader {
     */
    void popLimit(int oldLimit);
 
-   /** 
+   /**
     * Returns the full buffer array allowing an alternative protobuf parser to be used in marshallers,
-    * and at the root message level. This should not be mixed with the other tag reader read***() 
+    * and at the root message level. This should not be mixed with the other tag reader read***()
     * methods, or else an IllegalStateException will be thrown. Therefore you cannot mix protostream
-    * annotated models with other parsers reading the raw payload array. 
+    * annotated models with other parsers reading the raw payload array.
     */
    byte[] fullBufferArray() throws IOException;
 
-   /** 
+   /**
     * Returns the input stream allowing an alternative protobuf parser to be used in marshallers,
-    * and at the root message level. This should not be mixed with the other tag reader read***() 
+    * and at the root message level. This should not be mixed with the other tag reader read***()
     * methods, or else an IllegalStateException will be thrown. Therefore you cannot mix protostream
-    * annotated models with other parsers reading the raw payload input stream.  
+    * annotated models with other parsers reading the raw payload input stream.
     */
    InputStream fullBufferInputStream() throws IOException;
 
    /**
     * @return Returns true if the original payload is InputStream based.
     */
-   boolean isInputStream(); 
+   boolean isInputStream();
 }

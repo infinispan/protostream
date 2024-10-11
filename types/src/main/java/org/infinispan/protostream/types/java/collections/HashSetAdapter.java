@@ -17,4 +17,3 @@ public final class HashSetAdapter<E> extends AbstractCollectionAdapter<HashSet<E
       return new HashSet<>(size);
    }
 }
-

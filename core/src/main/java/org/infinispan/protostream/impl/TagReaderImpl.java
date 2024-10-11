@@ -246,16 +246,16 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    @Override
    public byte[] fullBufferArray() throws IOException {
       checkBufferUnused("fullBufferArray");
-      
+
       return decoder.getBufferArray();
    }
 
    @Override
    public InputStream fullBufferInputStream() throws IOException {
       checkBufferUnused("fullBufferInputStream");
-      
+
       if (isInputStream()) {
-         return ((InputStreamDecoder)decoder).getInputStream();
+         return ((InputStreamDecoder) decoder).getInputStream();
       } else {
          return new ByteArrayInputStream(decoder.getBufferArray());
       }
@@ -693,7 +693,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       byte[] getBufferArray() throws IOException {
          return buf.array();
       }
-      
+
 
       @Override
       boolean isAtEnd() {
