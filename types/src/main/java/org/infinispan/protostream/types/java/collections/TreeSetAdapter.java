@@ -18,4 +18,3 @@ public final class TreeSetAdapter<E> extends AbstractCollectionAdapter<TreeSet<E
       return new TreeSet<>();
    }
 }
-

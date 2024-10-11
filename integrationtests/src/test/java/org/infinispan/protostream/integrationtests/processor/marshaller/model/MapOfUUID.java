@@ -8,7 +8,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 public class MapOfUUID {
 
-    @ProtoField(value = 1, mapImplementation = HashMap.class)
-    public Map<String, UUID> data;
+   @ProtoField(value = 1, mapImplementation = HashMap.class)
+   public Map<String, UUID> data;
 
 }

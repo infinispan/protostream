@@ -5,11 +5,11 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 public class Player {
 
-   private String name;
-   private FootballTeam footballTeam;
-   private Integer shirtNumber;
-   private int matchRating;
-   private byte[] bytes;
+   private final String name;
+   private final FootballTeam footballTeam;
+   private final Integer shirtNumber;
+   private final int matchRating;
+   private final byte[] bytes;
 
    @ProtoFactory
    public Player(String name, FootballTeam footballTeam, Integer shirtNumber, int matchRating, byte[] bytes) {
