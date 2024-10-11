@@ -9,7 +9,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 @Proto
 public record Play(String name, List<String> matches) {
 
-   @ProtoSchema(includeClasses = { Play.class }, schemaPackageName = "my",
+   @ProtoSchema(includeClasses = {Play.class}, schemaPackageName = "my",
          schemaFileName = "play.proto", schemaFilePath = "proto")
    public interface PlaySchema extends GeneratedSchema {
    }

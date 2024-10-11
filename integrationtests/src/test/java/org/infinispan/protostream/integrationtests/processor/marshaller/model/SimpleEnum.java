@@ -7,6 +7,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @Proto
 public enum SimpleEnum {
 
-    FIRST, SECOND
+   FIRST, SECOND
 
 }

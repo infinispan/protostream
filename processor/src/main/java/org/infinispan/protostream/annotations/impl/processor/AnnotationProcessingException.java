@@ -12,7 +12,7 @@ import javax.lang.model.element.Element;
 final class AnnotationProcessingException extends RuntimeException {
 
    private final Element location;
-   
+
    private final String message;
 
    private final Object[] msgParams;

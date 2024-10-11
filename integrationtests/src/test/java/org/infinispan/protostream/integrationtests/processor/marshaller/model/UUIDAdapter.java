@@ -1,12 +1,12 @@
 package org.infinispan.protostream.integrationtests.processor.marshaller.model;
 
+import java.util.UUID;
+
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.descriptors.Type;
-
-import java.util.UUID;
 
 @ProtoAdapter(UUID.class)
 @ProtoReserved({100, 99})

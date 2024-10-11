@@ -37,7 +37,7 @@ public class FullBufferReadTest {
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
       ctx.registerProtoFiles(fileDescriptorSource);
-       
+
       class MockMarshallerFuncs implements MarshallerFuncs<X> {
          public byte[] actualBytes = null;
          public boolean isInputStream = false;
@@ -46,7 +46,7 @@ public class FullBufferReadTest {
          public X read(ReadContext rc) throws IOException {
             TagReader r = rc.getReader();
             isInputStream = r.isInputStream();
-            actualBytes = r.fullBufferArray();   
+            actualBytes = r.fullBufferArray();
             return null;
          }
 
@@ -54,22 +54,22 @@ public class FullBufferReadTest {
          public void write(WriteContext wc, X p) throws IOException {
             TagWriter w = wc.getWriter();
             w.writeInt32(1, p.f1);
-            w.writeInt64(2, p.f2); 
+            w.writeInt64(2, p.f2);
          }
       }
       MockMarshallerFuncs mockMarshallerFuncs = new MockMarshallerFuncs();
-          
+
       ctx.registerMarshallerProvider(new MockProtobufMarshaller<>(X.class, "test.X", mockMarshallerFuncs));
-      
+
       byte[] fullMsgBytes = ProtobufUtil.toWrappedByteArray(ctx, new X(1234, 4321L));
-            
+
       ProtobufUtil.fromWrappedByteArray(ctx, fullMsgBytes);
 
       assertNotNull(mockMarshallerFuncs.actualBytes);
       assertEquals(6, mockMarshallerFuncs.actualBytes.length);
       assertFalse(mockMarshallerFuncs.isInputStream);
 
-      byte[] expectedBytes = { 8, -46, 9, 16, -31, 33 };
+      byte[] expectedBytes = {8, -46, 9, 16, -31, 33};
       assertNotNull(expectedBytes);
       assertTrue(Arrays.equals(mockMarshallerFuncs.actualBytes, expectedBytes));
    }
@@ -80,7 +80,7 @@ public class FullBufferReadTest {
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
       ctx.registerProtoFiles(fileDescriptorSource);
-       
+
       class MockMarshallerFuncs implements MarshallerFuncs<X> {
          public InputStream actualStream = null;
          public boolean isInputStream = false;
@@ -97,15 +97,15 @@ public class FullBufferReadTest {
          public void write(WriteContext wc, X p) throws IOException {
             TagWriter w = wc.getWriter();
             w.writeInt32(1, p.f1);
-            w.writeInt64(2, p.f2); 
+            w.writeInt64(2, p.f2);
          }
       }
       MockMarshallerFuncs mockMarshallerFuncs = new MockMarshallerFuncs();
-          
+
       ctx.registerMarshallerProvider(new MockProtobufMarshaller<>(X.class, "test.X", mockMarshallerFuncs));
-      
+
       byte[] fullMsgBytes = ProtobufUtil.toWrappedByteArray(ctx, new X(1234, 4321L));
-      InputStream in = new ByteArrayInputStream(fullMsgBytes);      
+      InputStream in = new ByteArrayInputStream(fullMsgBytes);
 
       ProtobufUtil.fromWrappedStream(ctx, in);
 
@@ -116,7 +116,7 @@ public class FullBufferReadTest {
       byte[] actualBytes = new byte[mockMarshallerFuncs.actualStream.available()];
       mockMarshallerFuncs.actualStream.read(actualBytes);
 
-      byte[] expectedBytes = { 8, -46, 9, 16, -31, 33 };
+      byte[] expectedBytes = {8, -46, 9, 16, -31, 33};
       assertNotNull(expectedBytes);
       assertTrue(Arrays.equals(actualBytes, expectedBytes));
    }
@@ -127,7 +127,7 @@ public class FullBufferReadTest {
 
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
       ctx.registerProtoFiles(fileDescriptorSource);
-       
+
       class MockMarshallerFuncs implements MarshallerFuncs<X> {
          public byte[] actualBytes = null;
 
@@ -135,7 +135,7 @@ public class FullBufferReadTest {
          public X read(ReadContext rc) throws IOException {
             TagReader r = rc.getReader();
             r.readTag(); // calling any tag or field read prior to fullBufferArray should call IllegalStateException
-            actualBytes = r.fullBufferArray();   
+            actualBytes = r.fullBufferArray();
             return null;
          }
 
@@ -143,35 +143,38 @@ public class FullBufferReadTest {
          public void write(WriteContext wc, X p) throws IOException {
             TagWriter w = wc.getWriter();
             w.writeInt32(1, p.f1);
-            w.writeInt64(2, p.f2); 
+            w.writeInt64(2, p.f2);
          }
       }
       MockMarshallerFuncs mockMarshallerFuncs = new MockMarshallerFuncs();
-          
+
       ctx.registerMarshallerProvider(new MockProtobufMarshaller<>(X.class, "test.X", mockMarshallerFuncs));
-      
+
       byte[] fullMsgBytes = ProtobufUtil.toWrappedByteArray(ctx, new X(1234, 4321L));
-      
+
       try {
          ProtobufUtil.fromWrappedByteArray(ctx, fullMsgBytes);
          fail("IllegalStateException expected");
       } catch (IllegalStateException e) {
-         assertEquals("fullBufferArray in marshaller can only be used on an unprocessed buffer", e.getMessage());         
+         assertEquals("fullBufferArray in marshaller can only be used on an unprocessed buffer", e.getMessage());
          assertNull(mockMarshallerFuncs.actualBytes);
       }
    }
 
-   /** Test Support **/
+   /**
+    * Test Support
+    **/
 
    private String file = "package test;\n" +
-      "message X {\n" +
-      "   optional int32 f1 = 1;\n" +
-      "   optional int64 f2 = 2;\n" +
-      "}";
+         "message X {\n" +
+         "   optional int32 f1 = 1;\n" +
+         "   optional int64 f2 = 2;\n" +
+         "}";
 
    private class X {
       Integer f1;
       Long f2;
+
       private X(Integer f1, Long f2) {
          this.f1 = f1;
          this.f2 = f2;
@@ -180,12 +183,13 @@ public class FullBufferReadTest {
 
    private interface MarshallerFuncs<P> {
       P read(ReadContext rc) throws IOException;
+
       void write(WriteContext wc, P p) throws IOException;
    }
- 
+
    private class MockProtobufMarshaller<P> implements MarshallerProvider {
       private Class<? extends P> clazz;
-      private String typeName; 
+      private String typeName;
       private MarshallerFuncs<P> marshallerFuncs;
 
       MockProtobufMarshaller(Class<? extends P> clazz, String typeName, MarshallerFuncs<P> marshallerFuncs) {
@@ -233,7 +237,7 @@ public class FullBufferReadTest {
                return typeName;
             }
          };
-      }      
+      }
    }
 
 }
