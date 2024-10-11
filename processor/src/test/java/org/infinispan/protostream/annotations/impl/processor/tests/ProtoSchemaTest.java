@@ -169,7 +169,7 @@ public class ProtoSchemaTest {
       assertTrue(protoFile.contains("@MyCustomAnnotation("));
    }
 
-   @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer", autoImportClasses = true,
+   @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer",
          basePackages = "org.infinispan.protostream.annotations.impl.processor", syntax = ProtoSyntax.PROTO3)
    abstract static class SecondInitializer implements GeneratedSchema {
       SecondInitializer() {
@@ -207,7 +207,7 @@ public class ProtoSchemaTest {
    }
 
    // Using a fully implemented initializer as a base is not the usual use case but some users might need this and we do support it.
-   @AutoProtoSchemaBuilder(className = "NonAbstractInitializerImpl", autoImportClasses = true,
+   @AutoProtoSchemaBuilder(className = "NonAbstractInitializerImpl",
          basePackages = "org.infinispan.protostream.annotations.impl.processor", syntax = ProtoSyntax.PROTO3)
    static class NonAbstractInitializer implements GeneratedSchema {
 

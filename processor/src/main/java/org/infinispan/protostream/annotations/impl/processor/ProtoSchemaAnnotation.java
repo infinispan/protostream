@@ -11,7 +11,6 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
 
 class ProtoSchemaAnnotation {
 
-   private final boolean autoImportClasses;
    private final String[] basePackages;
    private final String className;
    private final boolean marshallersOnly;
@@ -20,7 +19,7 @@ class ProtoSchemaAnnotation {
    private final String schemaPackageName;
    private final boolean service;
    private final ProtoSyntax syntax;
-   private boolean allowNullFields;
+   private final boolean allowNullFields;
    private final String[] value;
    private final Annotation annotation;
    private final String annotationName;
@@ -28,7 +27,6 @@ class ProtoSchemaAnnotation {
    public ProtoSchemaAnnotation(AutoProtoSchemaBuilder annotation) {
       this.annotation = annotation;
       this.annotationName = AutoProtoSchemaBuilder.class.getSimpleName();
-      autoImportClasses = annotation.autoImportClasses();
       basePackages = annotation.basePackages();
       className = annotation.className();
       marshallersOnly = annotation.marshallersOnly();
@@ -44,7 +42,6 @@ class ProtoSchemaAnnotation {
    public ProtoSchemaAnnotation(ProtoSchema annotation) {
       this.annotation = annotation;
       this.annotationName = ProtoSchema.class.getSimpleName();
-      autoImportClasses = false;
       basePackages = annotation.basePackages();
       className = annotation.className();
       marshallersOnly = annotation.marshallersOnly();
@@ -55,10 +52,6 @@ class ProtoSchemaAnnotation {
       syntax = annotation.syntax();
       allowNullFields = annotation.allowNullFields();
       value = annotation.value();
-   }
-
-   public boolean autoImportClasses() {
-      return autoImportClasses;
    }
 
    public String[] basePackages() {

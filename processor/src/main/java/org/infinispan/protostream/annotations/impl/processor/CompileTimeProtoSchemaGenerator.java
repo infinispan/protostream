@@ -39,9 +39,9 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
    CompileTimeProtoSchemaGenerator(XTypeFactory typeFactory, GeneratedFilesWriter generatedFilesWriter,
                                    SerializationContext serializationContext, String generator,
                                    String fileName, String packageName, Map<XClass, CompileTimeDependency> dependencies,
-                                   Set<XClass> classes, boolean autoImportClasses, ProtoSyntax syntax, boolean allowNullFields,
+                                   Set<XClass> classes, ProtoSyntax syntax, boolean allowNullFields,
                                    AnnotatedClassScanner classScanner) {
-      super(typeFactory, serializationContext, generator, fileName, packageName, classes, autoImportClasses, syntax, allowNullFields);
+      super(typeFactory, serializationContext, generator, fileName, packageName, classes, syntax, allowNullFields);
       this.dependencies = dependencies;
       this.marshallerSourceCodeGenerator = new MarshallerSourceCodeGenerator(generatedFilesWriter, typeFactory, packageName);
       this.classScanner = classScanner;
@@ -84,7 +84,7 @@ final class CompileTimeProtoSchemaGenerator extends BaseProtoSchemaGenerator {
       if (super.isUnknownClass(c) && !dependencies.containsKey(c) && !classScanner.isClassAcceptable(c)) {
          throw new ProtoSchemaBuilderException("Found a reference to class " + c.getCanonicalName() +
                " which was not explicitly included by @AutoProtoSchemaBuilder and the combination of" +
-               " relevant attributes (basePackages, includeClasses, excludeClasses, autoImportClasses)" +
+               " relevant attributes (basePackages, includeClasses, excludeClasses)" +
                " do not allow it to be included.");
       }
 

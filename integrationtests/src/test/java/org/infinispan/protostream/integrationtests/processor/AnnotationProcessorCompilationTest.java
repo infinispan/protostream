@@ -114,7 +114,7 @@ public class AnnotationProcessorCompilationTest {
       assertThat(compilation).hadErrorContaining("Found a reference to class"
             + " test_discovery_without_auto_import.InnerMessage1 which was not explicitly included by"
             + " @AutoProtoSchemaBuilder and the combination of relevant attributes"
-            + " (basePackages, includeClasses, excludeClasses, autoImportClasses) do not allow it to be included.");
+            + " (basePackages, includeClasses, excludeClasses) do not allow it to be included.");
    }
 
    @Test

@@ -341,8 +341,8 @@ final class AnnotatedClassScanner {
          return false;
       }
 
-      // we're including based on packages only, or we have autoImportClasses enabled
-      return includedClasses.isEmpty() || builderAnnotation.autoImportClasses();
+      // we're including based on packages only
+      return includedClasses.isEmpty();
    }
 
    private Set<String> getBasePackages() {

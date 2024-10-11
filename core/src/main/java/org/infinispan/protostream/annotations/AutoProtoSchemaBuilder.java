@@ -89,11 +89,8 @@ public @interface AutoProtoSchemaBuilder {
    Class<?>[] excludeClasses() default {};
 
    /**
-    * Indicates if we accept classes not explicitly included by the {@link #includeClasses} or {@link #basePackages} to
-    * be auto-detected by reference from the already included classes and to be added automatically. If this is set to
-    * {@code false} (which is the default) it results in a compilation error when such a case is encountered.
-    *
-    * @deprecated since 4.3.4. This will be removed in version 5. See <a href="https://issues.redhat.com/browse/IPROTO-158">IPROTO-158</a>.
+    * @deprecated since 4.3.4. This does nothing and is only present for backwards compatibility and will be removed in a
+    * future version.
     */
    @Deprecated
    boolean autoImportClasses() default false;

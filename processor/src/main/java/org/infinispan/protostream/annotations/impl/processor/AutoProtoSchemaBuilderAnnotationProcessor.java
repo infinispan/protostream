@@ -260,7 +260,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       Set<XClass> xclasses = classScanner.getXClasses();
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
-            initializerPackageName, protobufFileName, protobufPackageName, dependencies.marshalledClasses, xclasses, builderAnnotation.autoImportClasses(),
+            initializerPackageName, protobufFileName, protobufPackageName, dependencies.marshalledClasses, xclasses,
             builderAnnotation.syntax(), builderAnnotation.allowNullFields(), classScanner);
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
@@ -306,7 +306,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
             typeElement.getQualifiedName().toString(), protobufFileName, protobufPackageName, dependencies.marshalledClasses,
-            xclasses, annotation.autoImportClasses(), annotation.syntax(), annotation.allowNullFields(), classScanner);
+            xclasses, annotation.syntax(), annotation.allowNullFields(), classScanner);
 
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
@@ -613,7 +613,6 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       }
       iw.append("service = ").append(String.valueOf(annotation.service())).append(",\n");
       iw.append("marshallersOnly = ").append(String.valueOf(marshallersOnly)).append(",\n");
-      iw.append("autoImportClasses = ").append(String.valueOf(annotation.autoImportClasses())).append(",\n");
       iw.append("includeClasses = {");
       iw.inc();
       boolean first = true;
