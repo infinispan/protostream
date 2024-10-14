@@ -1,9 +1,11 @@
-# ProtoStream
-[![Build Status](https://ci.infinispan.org/buildStatus/icon?job=Protostream%2Fmain)](https://ci.infinispan.org/job/Protostream/job/main/)
-[![Maven Central](https://img.shields.io/badge/maven/central-5.0.5.Final-green.svg)](http://search.maven.org/#artifactdetails|org.infinispan.protostream|protostream|5.0.5.Final|)
-[![Javadoc](https://img.shields.io/badge/Javadoc-online-green.svg)](http://www.javadoc.io/doc/org.infinispan.protostream/protostream)
-[![License](https://img.shields.io/github/license/infinispan/infinispan.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Java 17+](https://img.shields.io/badge/java-17+-blue.svg)](http://java.oracle.com)
+# ![ProtoStream](./protostream.png)
+
+![Maven Central Version](https://img.shields.io/maven-central/v/org.infinispan.protostream/protostream?versionPrefix=5&style=for-the-badge)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/infinispan/protostream/test_report.yaml?branch=main&style=for-the-badge)
+[![License](https://img.shields.io/github/license/infinispan/infinispan?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
+![Supported JVM Versions](https://img.shields.io/badge/JVM-17-green.svg?style=for-the-badge&logo=openjdk)
+[![Javadoc](https://img.shields.io/badge/Javadoc-online-green.svg?style=for-the-badge&logo=openjdk)](http://www.javadoc.io/doc/org.infinispan.protostream/protostream)
+[![Project Chat](https://img.shields.io/badge/zulip-join_chat-pink.svg?style=for-the-badge&logo=zulip)](https://infinispan.zulipchat.com/)
 
 ProtoStream is a Java serialization library based on the [Protocol Buffers](https://developers.google.com/protocol-buffers/) data format. 
 It is open source software released under the [Apache License, v2.0](https://www.apache.org/licenses/LICENSE-2.0 "The Apache License, v2.0").
@@ -31,7 +33,7 @@ If you are using Maven, add this dependency to your `pom.xml` file:
 <dependency>
    <groupId>org.infinispan.protostream</groupId>
    <artifactId>protostream</artifactId>
-   <version>5.0.5.Final</version>
+   <version>5.0.12.Final</version>
 </dependency>
 ```
 
@@ -39,7 +41,7 @@ If you are using Gradle, add this dependency to your build file:
 
 ```
 dependencies { 
-    implementation 'org.infinispan.protostream:protostream:5.0.5.Final'
+    implementation 'org.infinispan.protostream:protostream:5.0.12.Final'
 }
 ```
 
