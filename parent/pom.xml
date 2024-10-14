@@ -134,7 +134,7 @@
         <version.mockito>5.14.1</version.mockito>
         <version.jcipannotations>1.0</version.jcipannotations>
         <version.jboss.logging>3.6.1.Final</version.jboss.logging>
-        <version.jboss.logging.annotations>3.0.1.Final</version.jboss.logging.annotations>
+        <version.jboss.logging.annotations>3.0.2.Final</version.jboss.logging.annotations>
         <version.jboss.logging.processor>3.0.2.Final</version.jboss.logging.processor>
         <version.log4j>2.24.1</version.log4j>
         <version.jboss.marshalling>2.2.1.Final</version.jboss.marshalling>
