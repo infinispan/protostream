@@ -25,10 +25,17 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
           ssh-key: ${{ secrets.INFINISPAN_RELEASE_PRIVATE_KEY }}
 
+      - name: Configure Git User
+        run: |
+          git config user.email "infinispan@infinispan.org"
+          git config user.name "Infinispan"
+
       - name: Set release version
         run: |
           mvn -B versions:set -DnewVersion=${{ github.event.inputs.version }} -DprocessAllModules=true
           mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
+          sed -e "s/[0-9]\+\.[0-9]\+\.[0-9]\+\.Final/${{ github.event.inputs.version }}/g" README.md
+          git commit -a -m "Releasing ${{ github.event.inputs.version }}"
 
       - name: Set up Java for publishing to OSSRH
         uses: actions/setup-java@v4
@@ -48,15 +55,8 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
 
-      - name: Configure Git User
-        run: |
-          git config user.email "infinispan@infinispan.org"
-          git config user.name "Infinispan"
-
       - name: Tag Release
         run: |
-          sed -e "s/[0-9]\+\.[0-9]\+\.[0-9]\+\.Final/${{ github.event.inputs.version }}/g" README.md
-          git commit -a -m "Releasing ${{ github.event.inputs.version }}"
           git tag ${{ github.event.inputs.version }}
 
       - name: Next Version
