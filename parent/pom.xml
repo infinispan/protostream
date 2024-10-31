@@ -107,7 +107,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
         <version.antrun.plugin>3.1.0</version.antrun.plugin>
-        <version.artifact.plugin>3.5.2</version.artifact.plugin>
+        <version.artifact.plugin>3.5.3</version.artifact.plugin>
         <version.buildnumber.plugin>3.2.0</version.buildnumber.plugin>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
         <version.compiler.plugin>3.12.1</version.compiler.plugin>
