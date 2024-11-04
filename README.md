@@ -1,4 +1,4 @@
-# ![ProtoStream](./protostream_logo.png)
+# ![ProtoStream](./infinispan_protostream_stacked.png)
 
 ![Maven Central Version](https://img.shields.io/maven-central/v/org.infinispan.protostream/protostream?versionPrefix=5&style=for-the-badge)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/infinispan/protostream/test_report.yaml?branch=main&style=for-the-badge)
