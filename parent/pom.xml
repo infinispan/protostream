@@ -141,7 +141,7 @@
         <version.jackson>2.18.1</version.jackson>
         <version.auto-service>1.1.1</version.auto-service>
         <version.assertj>3.26.3</version.assertj>
-        <version.protobuf>4.28.3</version.protobuf>
+        <version.protobuf>4.29.0</version.protobuf>
 
         <!-- maven repository urls -->
         <maven.releases.nexus.url>https://s01.oss.sonatype.org/</maven.releases.nexus.url>
