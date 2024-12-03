@@ -362,7 +362,7 @@ String FieldName() : {
 {
     (t = <IDENT> | t = <ATTRIBUTE> | t = <BOOLEAN> | t = <ENUM> | t = <IMPORT> | t = <MAP> | t = <MAX> |
      t = <MESSAGE> | t = <ONEOF> | t = <OPTION> | t = <PACKAGE> | t = <PUBLIC> | t = <RESERVED> |
-     t = <RETURNS> | t = <SERVICE> | t = <STREAM> | t = <SYNTAX> | t = <WEAK> ) { return t.image; }
+     t = <RETURNS> | t = <RPC> | t = <SERVICE> | t = <STREAM> | t = <SYNTAX> | t = <TO> | t = <WEAK> ) { return t.image; }
 }
 
 String OneOfName() : {

@@ -292,6 +292,8 @@ message message {
    bool true = 1;
    int32 map = 2;
    string message = 3;
+   int32 to = 4;
+   bool rpc = 5;
 }
 
 //todo demonstrate collection of 'any'
