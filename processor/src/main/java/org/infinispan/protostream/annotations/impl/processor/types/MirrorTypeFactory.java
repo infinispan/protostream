@@ -699,6 +699,11 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
 
       @Override
+      public boolean isInterface() {
+         return typeElement.getKind().isInterface();
+      }
+
+      @Override
       public XConstructor getDeclaredConstructor(XClass... argTypes) {
          return cacheConstructor(findExecutableElement(true, null, argTypes));
       }
