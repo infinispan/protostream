@@ -1,3 +1,4 @@
+
 package org.infinispan.protostream.annotations.impl;
 
 import java.io.ByteArrayOutputStream;
@@ -92,11 +93,12 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    private static String getProtoName(XClass annotatedClass, XClass javaClass) {
+      var clazz = javaClass.isInterface() ? annotatedClass : javaClass;
       ProtoName annotation = annotatedClass.getAnnotation(ProtoName.class);
       if (annotation != null) {
-         return annotation.value().isEmpty() ? javaClass.getSimpleName() : annotation.value();
+         return annotation.value().isEmpty() ? clazz.getSimpleName() : annotation.value();
       } else {
-         return javaClass.getSimpleName();
+         return clazz.getSimpleName();
       }
    }
 
