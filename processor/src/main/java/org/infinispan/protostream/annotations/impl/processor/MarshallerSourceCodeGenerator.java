@@ -208,7 +208,7 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
          iw.println("@Override");
          iw.println("public String[] getSubClassNames() {");
          iw.inc().print("return new String[] {");
-         iw.print(Arrays.stream(subClassNames).collect(Collectors.joining(",", "\"", "\"")));
+         iw.print(Arrays.stream(subClassNames).map(s -> "\"" + s + "\"").collect(Collectors.joining(",")));
          iw.println("};");
          iw.dec().println("}");
       }

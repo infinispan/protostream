@@ -242,6 +242,7 @@ public final class SerializationContextImpl implements SerializationContext {
 
       long stamp = manifestLock.writeLock();
       try {
+         var isInterface = marshaller.getJavaClass().isInterface();
          Registration existingByName = marshallersByName.get(marshaller.getTypeName());
          Registration existingByClass = marshallersByClass.get(marshaller.getJavaClass());
          if (existingByName != null && existingByName.marshallerProvider != null ||
@@ -259,17 +260,19 @@ public final class SerializationContextImpl implements SerializationContext {
 
          if (existingByName != null) {
             Registration anotherByClass = marshallersByClass.get(existingByName.marshallerDelegate.getMarshaller().getJavaClass());
-            if (anotherByClass == null) {
-               throw new IllegalStateException("Inconsistent marshaller definitions!");
-            }
-            if (anotherByClass.marshallerProvider != null) {
-               throw new IllegalArgumentException("The given marshaller attempts to override an existing marshaller registered indirectly via an InstanceMarshallerProvider. Please unregister that first.");
-            } else {
-               if (!anotherByClass.marshallerDelegate.getMarshaller().getTypeName().equals(marshaller.getTypeName())) {
+            if (!isInterface) {
+               if (anotherByClass == null) {
                   throw new IllegalStateException("Inconsistent marshaller definitions!");
                }
+               if (anotherByClass.marshallerProvider != null) {
+                  throw new IllegalArgumentException("The given marshaller attempts to override an existing marshaller registered indirectly via an InstanceMarshallerProvider. Please unregister that first.");
+               } else {
+                  if (!anotherByClass.marshallerDelegate.getMarshaller().getTypeName().equals(marshaller.getTypeName())) {
+                     throw new IllegalStateException("Inconsistent marshaller definitions!");
+                  }
+               }
+               marshallersByClass.remove(existingByName.marshallerDelegate.getMarshaller().getJavaClass());
             }
-            marshallersByClass.remove(existingByName.marshallerDelegate.getMarshaller().getJavaClass());
             for (Class<?> subClass : subClasses) {
                marshallersByClass.remove(subClass);
             }
@@ -279,7 +282,10 @@ public final class SerializationContextImpl implements SerializationContext {
          }
 
          Registration registration = new Registration(makeMarshallerDelegate(marshaller));
-         marshallersByClass.put(marshaller.getJavaClass(), registration);
+         // If the Class associated with the marshaller is an interface, then we only add the subClassName implementations
+         if (!isInterface)
+            marshallersByClass.put(marshaller.getJavaClass(), registration);
+
          marshallersByName.put(marshaller.getTypeName(), registration);
          for (Class<?> subClass : subClasses) {
             marshallersByClass.put(subClass, registration);

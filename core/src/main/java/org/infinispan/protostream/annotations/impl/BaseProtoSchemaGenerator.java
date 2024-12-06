@@ -277,7 +277,8 @@ public abstract class BaseProtoSchemaGenerator {
                + " which was not added to the builder and 'autoImportClasses' is disabled.");
       }
 
-      ProtoTypeMetadata existingByClass = metadataByClass.get(protoTypeMetadata.getJavaClass());
+      XClass clazz = protoTypeMetadata.isInterfaceAdapter() ? protoTypeMetadata.getAnnotatedClass() : protoTypeMetadata.getJavaClass();
+      ProtoTypeMetadata existingByClass = metadataByClass.get(clazz);
       if (existingByClass != null) {
          throw new ProtoSchemaBuilderException("Found a duplicate type definition. Java type '" + protoTypeMetadata.getJavaClassName() + "' is defined by "
                + protoTypeMetadata.getAnnotatedClassName() + " and also by " + existingByClass.getAnnotatedClassName());
@@ -289,7 +290,7 @@ public abstract class BaseProtoSchemaGenerator {
                + protoTypeMetadata.getAnnotatedClassName() + " and also by " + existingByName.getAnnotatedClassName());
       }
       metadataByTypeName.put(fullName, protoTypeMetadata);
-      metadataByClass.put(protoTypeMetadata.getJavaClass(), protoTypeMetadata);
+      metadataByClass.put(clazz, protoTypeMetadata);
    }
 
    protected boolean isUnknownClass(XClass c) {

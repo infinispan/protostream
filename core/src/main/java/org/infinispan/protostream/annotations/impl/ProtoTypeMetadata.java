@@ -112,6 +112,10 @@ public abstract class ProtoTypeMetadata implements HasProtoSchema {
       return false;
    }
 
+   public boolean isInterfaceAdapter() {
+      return javaClass.isInterface();
+   }
+
    /**
     * Indicates if this type comes from the currently processed/generated schema of from an external schema.
     */
