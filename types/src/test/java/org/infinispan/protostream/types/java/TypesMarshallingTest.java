@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -42,6 +43,7 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -217,6 +219,17 @@ public class TypesMarshallingTest {
       testConfiguration.method.marshallAndUnmarshallTest(time, context, false);
    }
 
+   @Test
+   public void testMultipleAdaptersForInterface() throws IOException {
+      // Skip JSON test as WrappedMessage instances are not serialized/parsed with JSON correctly
+      // https://github.com/infinispan/protostream/issues/379
+      Assume.assumeFalse(testConfiguration.method == MarshallingMethodType.JSON);
+      testConfiguration.method.marshallAndUnmarshallTest(Collections.emptyList(), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(Collections.singletonList("1"), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(List.of(), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(List.of(1), context, false);
+   }
+
    @FunctionalInterface
    public interface MarshallingMethod {
       void marshallAndUnmarshallTest(Object original, ImmutableSerializationContext ctx, boolean isArray) throws IOException;
@@ -233,6 +246,7 @@ public class TypesMarshallingTest {
       register(new CommonTypesSchema(), ctx);
       register(new CommonContainerTypesSchema(), ctx);
       register(new BookSchemaImpl(), ctx);
+      register(new ListSchemaImpl(), ctx);
       return ctx;
    }
 
