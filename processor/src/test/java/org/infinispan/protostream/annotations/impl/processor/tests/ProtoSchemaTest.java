@@ -2,6 +2,7 @@ package org.infinispan.protostream.annotations.impl.processor.tests;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -32,6 +33,7 @@ import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoReserved.Range;
 import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
+import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.Inheritance;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleEnum;
 import org.infinispan.protostream.annotations.impl.processor.tests.testdomain.SimpleRecord;
@@ -168,6 +170,43 @@ public class ProtoSchemaTest {
       String protoFile = serCtxInitializer.getProtoFile();
       assertTrue(protoFile.contains("@MyCustomAnnotation("));
    }
+
+   @Test
+   public void testInheritedTypes() {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+
+      GeneratedSchema schema1 = new ParentClassSCIImpl();
+      schema1.registerSchema(ctx);
+      schema1.registerMarshallers(ctx);
+
+      GeneratedSchema schema2 = new ChildClassSCIImpl();
+      schema2.registerSchema(ctx);
+      schema2.registerMarshallers(ctx);
+      assertFalse(schema2.getProtoFile().contains("ParentType"));
+   }
+
+   @ProtoSchema(
+         includeClasses = {
+               Inheritance.Parent.class,
+               Inheritance.ParentType.class
+         },
+         schemaFileName = "Parent.proto",
+         schemaFilePath = "org/infinispan/protostream/generated_schemas",
+         syntax = ProtoSyntax.PROTO3
+   )
+   interface ParentClassSCI extends SerializationContextInitializer {}
+
+   @ProtoSchema(
+         dependsOn = ParentClassSCI.class,
+         includeClasses = {
+               Inheritance.Child.class,
+               Inheritance.ChildType.class
+         },
+         schemaFileName = "Child.proto",
+         schemaFilePath = "org/infinispan/protostream/generated_schemas",
+         syntax = ProtoSyntax.PROTO3
+   )
+   interface ChildClassSCI extends SerializationContextInitializer {}
 
    @AutoProtoSchemaBuilder(schemaFilePath = "second_initializer", className = "TestInitializer",
          basePackages = "org.infinispan.protostream.annotations.impl.processor", syntax = ProtoSyntax.PROTO3)

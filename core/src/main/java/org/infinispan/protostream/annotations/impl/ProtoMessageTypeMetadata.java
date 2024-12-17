@@ -529,12 +529,12 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
                }
 
                ProtoFieldMetadata existing = fieldsByNumber.get(number);
-               if (existing != null) {
+               if (isDuplicateField(existing, fieldMetadata)) {
                   throw new ProtoSchemaBuilderException("Duplicate field definition. Found two field definitions with number " + number + ": in "
                         + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
                existing = fieldsByName.get(fieldMetadata.getName());
-               if (existing != null) {
+               if (isDuplicateField(existing, fieldMetadata)) {
                   throw new ProtoSchemaBuilderException("Duplicate field definition. Found two field definitions with name '" + fieldMetadata.getName() + "': in "
                         + fieldMetadata.getLocation() + " and in " + existing.getLocation());
                }
@@ -545,6 +545,16 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             }
          }
       }
+   }
+
+   private boolean isDuplicateField(ProtoFieldMetadata existing, ProtoFieldMetadata newField) {
+      if (existing == null)
+         return false;
+
+      if (existing.isArray() || newField.isArray())
+         return true;
+
+      return !newField.getJavaType().isAssignableTo(existing.getJavaType());
    }
 
    private Type defaultType(ProtoField annotation, XClass type) {
