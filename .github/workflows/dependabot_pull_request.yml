@@ -1,4 +1,4 @@
-name: Dependabot Jira
+name: Dependabot Auto-Merge
 
 on:
   pull_request_target:
@@ -11,7 +11,7 @@ on:
       - reopened
 
 jobs:
-  jira:
+  auto-merge:
     if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
