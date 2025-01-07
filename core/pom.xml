@@ -27,7 +27,7 @@
 
         <dependency>
             <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging-processor</artifactId>
+            <artifactId>jboss-logging-annotations</artifactId>
             <optional>true</optional>
         </dependency>
 
@@ -120,6 +120,13 @@
                     <compilerArgs>
                         <arg>-Aorg.jboss.logging.tools.addGeneratedAnnotation=false</arg>
                     </compilerArgs>
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>org.jboss.logging</groupId>
+                            <artifactId>jboss-logging-processor</artifactId>
+                            <version>${version.jboss.logging.processor}</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 
