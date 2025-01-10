@@ -47,6 +47,8 @@ public abstract class AbstractMarshallerCodeGenerator {
 
    private final String protobufSchemaPackage;
 
+   private final boolean useGenerics = false;
+
    protected AbstractMarshallerCodeGenerator(XTypeFactory typeFactory, String protobufSchemaPackage) {
       this.typeFactory = typeFactory;
       this.protobufSchemaPackage = protobufSchemaPackage;
@@ -719,7 +721,11 @@ public abstract class AbstractMarshallerCodeGenerator {
                         mapFieldMetadata.getValue().getJavaTypeName()
                   );
                } else {
-                  iw.printf("java.util.Collection<%s>", fieldMetadata.getJavaTypeName());
+                  if (useGenerics) {
+                     iw.printf("java.util.Collection<%s>", fieldMetadata.getJavaTypeName());
+                  } else {
+                     iw.printf("java.util.Collection");
+                  }
                }
             } else {
                iw.print(fieldMetadata.getJavaTypeName());
@@ -769,9 +775,15 @@ public abstract class AbstractMarshallerCodeGenerator {
                   iw.println("}");
                   iw.printf("$out = (%s) $1.getWriter();\n", TagWriterImpl.class.getName());
                } else {
-                  iw.printf("for (java.util.Iterator<%s> it = %s.iterator(); it.hasNext(); ) {\n", fieldMetadata.getJavaTypeName(), f);
-                  iw.inc();
-                  iw.printf("final %s %s = it.next();\n", fieldMetadata.getJavaTypeName(), v);
+                  if (useGenerics) {
+                     iw.printf("for (java.util.Iterator<%s> it = %s.iterator(); it.hasNext(); ) {\n", fieldMetadata.getJavaTypeName(), f);
+                     iw.inc();
+                     iw.printf("final %s %s = it.next();\n", fieldMetadata.getJavaTypeName(), v);
+                  } else {
+                     iw.printf("for (java.util.Iterator it = %s.iterator(); it.hasNext(); ) {\n", f);
+                     iw.inc();
+                     iw.printf("final %s %s = (%s) it.next();\n", fieldMetadata.getJavaTypeName(), v, fieldMetadata.getJavaTypeName());
+                  }
                }
             }
             if (!fieldMetadata.isMap()) {

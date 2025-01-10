@@ -158,7 +158,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
 
       switch (typeMirror.getKind()) {
          case ERROR:
-            throw new IllegalStateException("Unresolved type : " + typeMirror.toString());
+            throw new IllegalStateException("Unresolved type : " + typeMirror);
          case VOID:
             return voidType;
          case BOOLEAN:
@@ -186,6 +186,9 @@ public final class MirrorTypeFactory implements XTypeFactory {
             XClass componentType = fromTypeMirror(((ArrayType) typeMirror).getComponentType());
             String fqn = "[" + componentType.getName();
             return classCache.computeIfAbsent(fqn, k -> new MirrorArray(componentType));
+         }
+         case TYPEVAR: {
+            throw new UnsupportedOperationException("Protostream cannot generate marshallers for generic types. Please use a ProtoAdapter with WrappedMessages");
          }
          default:
             throw new IllegalStateException("Unexpected type kind : " + typeMirror.getKind());
@@ -459,7 +462,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
    /**
     * Only for declared types, not for primitives, arrays, or void.
     */
-   private final class MirrorClass implements XClass, HasModelElement {
+   private class MirrorClass implements XClass, HasModelElement {
 
       private final DeclaredType typeMirror;
 

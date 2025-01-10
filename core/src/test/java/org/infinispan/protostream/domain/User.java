@@ -46,6 +46,7 @@ public class User implements Externalizable {   // implement Externalizable just
    private boolean someBoolean = true;
    private long someLong = 34;
    private boolean someOtherBoolean;
+   private Set<Pair<String, String>> properties;
 
    @ProtoField(number = 1, defaultValue = "0")
    public int getId() {
@@ -227,6 +228,15 @@ public class User implements Externalizable {   // implement Externalizable just
       this.someOtherBoolean = someOtherBoolean;
    }
 
+   @ProtoField(number = 21)
+   public Set<Pair<String, String>> getProperties() {
+      return properties;
+   }
+
+   public void setProperties(Set<Pair<String, String>> properties) {
+      this.properties = properties;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -250,6 +260,7 @@ public class User implements Externalizable {   // implement Externalizable just
             ", someBoolean=" + someBoolean +
             ", someLong=" + someLong +
             ", someOtherBoolean=" + someOtherBoolean +
+            ", properties=" + properties +
             '}';
    }
 
@@ -346,6 +357,15 @@ public class User implements Externalizable {   // implement Externalizable just
       out.writeBoolean(someBoolean);
       out.writeLong(someLong);
       out.writeBoolean(someOtherBoolean);
+      if (properties == null) {
+         out.writeInt(-1);
+      } else {
+         out.writeInt(properties.size());
+         for (Pair<String, String> property : properties) {
+            out.writeUTF(property.left());
+            out.writeUTF(property.right());
+         }
+      }
    }
 
    @Override
@@ -408,6 +428,13 @@ public class User implements Externalizable {   // implement Externalizable just
       someBoolean = in.readBoolean();
       someLong = in.readLong();
       someOtherBoolean = in.readBoolean();
+      int numProperties = in.readInt();
+      if (numProperties >= 0) {
+         properties = new HashSet<>(numProperties);
+         for (int i = 0; i < numProperties; i++) {
+            properties.add(new Pair<>(in.readUTF(), in.readUTF()));
+         }
+      }
    }
 
    @Override
@@ -434,13 +461,14 @@ public class User implements Externalizable {   // implement Externalizable just
             someDouble == user.someDouble &&
             someBoolean == user.someBoolean &&
             someLong == user.someLong &&
-            someOtherBoolean == user.someOtherBoolean;
+            someOtherBoolean == user.someOtherBoolean &&
+            Objects.equals(properties, user.properties);
    }
 
    @Override
    public int hashCode() {
       return Objects.hash(id, name, surname, salutation, accountIds, addresses, age, gender, notes, creationDate,
             passwordExpirationDate, qrCode, primaryAddress, someDate, someFloat, someString, someDouble, someBoolean,
-            someLong, someOtherBoolean);
+            someLong, someOtherBoolean, properties);
    }
 }
