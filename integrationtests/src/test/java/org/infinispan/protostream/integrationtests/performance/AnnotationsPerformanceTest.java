@@ -18,6 +18,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.Note;
+import org.infinispan.protostream.domain.PairAdapter;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.domain.marshallers.NoteMarshaller;
 import org.infinispan.protostream.domain.marshallers.UserMarshaller;
@@ -149,7 +150,8 @@ public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
          includeClasses = {
                Address.class,
                Note.class,
-               User.class
+               User.class,
+               PairAdapter.class
          }
    )
    interface NoteSchema extends GeneratedSchema {
