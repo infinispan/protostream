@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author anistor@redhat.com
@@ -197,7 +196,7 @@ public class Account {
             ", creationDate='" + creationDate + '\'' +
             ", limits=" + limits +
             ", hardLimits=" + hardLimits +
-            ", blurb=" + (blurb != null ? blurb.stream().map(Arrays::toString).collect(Collectors.toList()) : "null") +
+            ", blurb=" + (blurb != null ? blurb.stream().map(Arrays::toString).toList() : "null") +
             ", currencies=" + Arrays.toString(currencies) +
             '}';
    }
