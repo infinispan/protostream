@@ -137,7 +137,7 @@
         <version.jboss.logging.annotations>3.0.3.Final</version.jboss.logging.annotations>
         <version.jboss.logging.processor>3.0.3.Final</version.jboss.logging.processor>
         <version.log4j>2.24.3</version.log4j>
-        <version.jboss.marshalling>2.2.1.Final</version.jboss.marshalling>
+        <version.jboss.marshalling>2.2.2.Final</version.jboss.marshalling>
         <version.jackson>2.18.2</version.jackson>
         <version.auto-service>1.1.1</version.auto-service>
         <version.assertj>3.27.2</version.assertj>
