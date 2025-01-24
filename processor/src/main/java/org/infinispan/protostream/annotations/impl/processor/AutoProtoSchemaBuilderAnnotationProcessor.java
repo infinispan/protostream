@@ -44,6 +44,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.IndentWriter;
+import org.infinispan.protostream.annotations.impl.OriginatingClasses;
 import org.infinispan.protostream.annotations.impl.processor.dependency.CompileTimeDependency;
 import org.infinispan.protostream.annotations.impl.processor.types.HasModelElement;
 import org.infinispan.protostream.annotations.impl.processor.types.MirrorTypeFactory;
