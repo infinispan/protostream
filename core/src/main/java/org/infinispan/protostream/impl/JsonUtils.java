@@ -2,7 +2,6 @@ package org.infinispan.protostream.impl;
 
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
-import static org.infinispan.protostream.WrappedMessage.WRAPPED_CONTAINER_TYPE_NAME;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_DOUBLE;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_ENUM;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED32;
@@ -24,27 +23,20 @@ import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT64;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Reader;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.RandomAccessOutputStream;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.WrappedMessage;
-import org.infinispan.protostream.descriptors.AnnotatedDescriptor;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
-import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 
@@ -61,14 +53,11 @@ import com.fasterxml.jackson.core.JsonToken;
  */
 public final class JsonUtils {
 
-   // Z-normalized RFC 3339 format
-   private static final String RFC_3339_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
-
    private static final JsonFactory jsonFactory = new JsonFactory();
 
-   private static final String JSON_TYPE_FIELD = "_type";
+   static final String JSON_TYPE_FIELD = "_type";
 
-   private static final String JSON_VALUE_FIELD = "_value";
+   static final String JSON_VALUE_FIELD = "_value";
 
    private JsonUtils() {
    }
@@ -103,13 +92,17 @@ public final class JsonUtils {
    }
 
    private static void processDocument(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer) throws IOException {
+      processDocument(ctx, parser, writer, true);
+   }
+
+   private static void processDocument(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, boolean keepIteration) throws IOException {
       while (true) {
          JsonToken token = parser.nextToken();
          if (token == null) {
             break;
          }
          switch (token) {
-            case END_OBJECT: {
+            case END_ARRAY, END_OBJECT: {
                return;
             }
             case FIELD_NAME: {
@@ -152,6 +145,8 @@ public final class JsonUtils {
                   default:
                      processPrimitive(parser, writer, fieldType);
                }
+
+               if (!keepIteration) return;
             }
          }
       }
@@ -167,8 +162,6 @@ public final class JsonUtils {
             case END_OBJECT:
                return;
             case FIELD_NAME:
-               String fieldName = parser.getCurrentName();
-               expectField(JSON_VALUE_FIELD, fieldName);
                break;
             case VALUE_STRING: {
                String enumValueName = parser.getText();
@@ -213,8 +206,8 @@ public final class JsonUtils {
    }
 
    private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber, boolean topLevel) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-      TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, baos);
+      RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
+      TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, raos);
 
       String currentField = null;
 
@@ -232,7 +225,10 @@ public final class JsonUtils {
                break;
             case START_OBJECT: {
                FieldDescriptor fd = messageDescriptor.findFieldByName(currentField);
-               if (fd.isMap()) {
+               if (fd == null) {
+                  expectField(JSON_VALUE_FIELD, currentField);
+                  processDocument(ctx, parser, nestedWriter);
+               } else if (fd.isMap()) {
                   processMap(ctx, (MapDescriptor) fd, parser, nestedWriter);
                } else {
                   Descriptor messageType = fd.getMessageType();
@@ -269,7 +265,11 @@ public final class JsonUtils {
          }
       }
 
-      if (topLevel) {
+      if (WrappedMessage.knownWrappedDescriptor(ctx, messageDescriptor)) {
+         nestedWriter.flush();
+         byte[] serialized = raos.toByteArray();
+         writer.writeRawBytes(serialized, 0, serialized.length);
+      } else if (topLevel) {
          Integer topLevelTypeId = messageDescriptor.getTypeId();
          if (topLevelTypeId == null) {
             writer.writeString(WRAPPED_TYPE_NAME, messageDescriptor.getFullName());
@@ -277,10 +277,10 @@ public final class JsonUtils {
             writer.writeUInt32(WRAPPED_TYPE_ID, topLevelTypeId);
          }
          nestedWriter.flush();
-         writer.writeBytes(WRAPPED_MESSAGE, baos.toByteArray());
+         writer.writeBytes(WRAPPED_MESSAGE, raos.toByteArray());
       } else {
          nestedWriter.flush();
-         writer.writeBytes(fieldNumber, baos.toByteArray());
+         writer.writeBytes(fieldNumber, raos.toByteArray());
       }
 
       writer.flush();
@@ -418,14 +418,19 @@ public final class JsonUtils {
          }
          switch (token) {
             case END_ARRAY:
-               return;
+               break;
             case START_ARRAY:
                processArray(ctx, type, field, parser, writer); //todo [anistor] array in array does not seem to work since initial version
                break;
             case START_OBJECT: {
+               RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
+               TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, raos);
+               processDocument(ctx, parser, nestedWriter, false);
+               nestedWriter.flush();
+
                Descriptor d = (Descriptor) ctx.getDescriptorByName(type);
                FieldDescriptor fd = d.findFieldByName(field);
-               processObject(ctx, parser, writer, fd.getMessageType(), fd.getNumber(), false);
+               writer.writeBytes(fd.getNumber(), raos.toByteArray());
                break;
             }
             case VALUE_STRING:
@@ -469,22 +474,6 @@ public final class JsonUtils {
       }
    }
 
-   private static final class JsonNestingLevel {
-
-      boolean isFirstField = true;
-
-      FieldDescriptor repeatedFieldDescriptor;
-
-      int indent;
-
-      JsonNestingLevel previous;
-
-      JsonNestingLevel(JsonNestingLevel previous) {
-         this.previous = previous;
-         this.indent = previous != null ? previous.indent + 1 : 0;
-      }
-   }
-
    /**
     * Converts a Protobuf encoded message to its <a href="https://developers.google.com/protocol-buffers/docs/proto3#json">
     * canonical JSON representation</a>.
@@ -509,290 +498,8 @@ public final class JsonUtils {
       }
 
       Descriptor wrapperDescriptor = ctx.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
-
-      boolean prettyPrint = initNestingLevel >= 0;
-
-      TagHandler messageHandler = new TagHandler() {
-
-         private JsonNestingLevel nestingLevel;
-
-         /**
-          * Have we written the "_type" field?
-          */
-         private boolean missingType = true;
-
-         private void indent() {
-            jsonOut.append('\n');
-            jsonOut.append("   ".repeat(Math.max(0, initNestingLevel + nestingLevel.indent)));
-         }
-
-         @Override
-         public void onStart(GenericDescriptor descriptor) {
-            nestingLevel = new JsonNestingLevel(null);
-            if (prettyPrint) {
-               indent();
-               nestingLevel.indent++;
-            }
-            jsonOut.append('{');
-            writeType(descriptor);
-         }
-
-         private void writeType(AnnotatedDescriptor descriptor) {
-            if (descriptor != null && nestingLevel.previous == null && nestingLevel.isFirstField) {
-               missingType = false;
-               nestingLevel.isFirstField = false;
-               if (prettyPrint) {
-                  indent();
-               }
-               jsonOut.append('\"').append("_type").append('\"').append(':');
-               if (prettyPrint) {
-                  jsonOut.append(' ');
-               }
-               String type;
-               if (descriptor instanceof FieldDescriptor) {
-                  type = ((FieldDescriptor) descriptor).getTypeName();
-               } else {
-                  type = descriptor.getFullName();
-               }
-               jsonOut.append('\"').append(type).append('\"');
-            }
-         }
-
-         @Override
-         public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
-            if (fieldDescriptor == null) {
-               // unknown field, ignore
-               return;
-            }
-
-            if (missingType) {
-               writeType(fieldDescriptor);
-            }
-
-            startSlot(fieldDescriptor);
-
-            switch (fieldDescriptor.getType()) {
-               case STRING:
-                  escapeJson((String) tagValue, jsonOut, true);
-                  break;
-               case UINT64:
-               case FIXED64:
-                  jsonOut.append(Long.toUnsignedString((Long) tagValue));
-                  break;
-               case UINT32:
-               case FIXED32:
-                  jsonOut.append(Integer.toUnsignedString((Integer) tagValue));
-                  break;
-               case FLOAT:
-                  Float f = (Float) tagValue;
-                  if (f.isInfinite() || f.isNaN()) {
-                     // Infinity and NaN need to be quoted
-                     jsonOut.append('\"').append(f).append('\"');
-                  } else {
-                     jsonOut.append(f);
-                  }
-                  break;
-               case DOUBLE:
-                  Double d = (Double) tagValue;
-                  if (d.isInfinite() || d.isNaN()) {
-                     jsonOut.append('\"').append(d).append('\"');
-                  } else {
-                     jsonOut.append(d);
-                  }
-                  break;
-               case ENUM:
-                  EnumValueDescriptor enumValue = fieldDescriptor.getEnumType().findValueByNumber((Integer) tagValue);
-                  jsonOut.append('\"').append(enumValue.getName()).append('\"');
-                  break;
-               case BYTES:
-                  String base64encoded = Base64.getEncoder().encodeToString((byte[]) tagValue);
-                  jsonOut.append('\"').append(base64encoded).append('\"');
-                  break;
-               default:
-                  if (tagValue instanceof Date) {
-                     jsonOut.append('\"').append(formatDate((Date) tagValue)).append('\"');
-                  } else if (fieldNumber == WRAPPED_ENUM && fieldDescriptor.name.equals("wrappedEnum")) {
-                     jsonOut.append('\"').append(tagValue).append('\"');
-                  } else {
-                     jsonOut.append(tagValue);
-                  }
-            }
-         }
-
-         @Override
-         public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
-            if (fieldDescriptor == null) {
-               // unknown field, ignore
-               return;
-            }
-            startSlot(fieldDescriptor);
-            nestingLevel = new JsonNestingLevel(nestingLevel);
-            if (prettyPrint) {
-               indent();
-               nestingLevel.indent++;
-            }
-            if (!fieldDescriptor.isMap()) {
-               jsonOut.append('{');
-            }
-         }
-
-         @Override
-         public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
-            if (nestingLevel.repeatedFieldDescriptor != null) {
-               endArraySlot();
-            }
-            if (prettyPrint) {
-               nestingLevel.indent--;
-               indent();
-            }
-            if (!fieldDescriptor.isMap()) {
-               jsonOut.append('}');
-            }
-            nestingLevel = nestingLevel.previous;
-         }
-
-         @Override
-         public void onEnd() {
-            if (nestingLevel.repeatedFieldDescriptor != null) {
-               endArraySlot();
-            }
-            if (prettyPrint) {
-               nestingLevel.indent--;
-               indent();
-            }
-            jsonOut.append('}');
-            nestingLevel = null;
-            if (prettyPrint) {
-               jsonOut.append('\n');
-            }
-         }
-
-         private void startSlot(FieldDescriptor fieldDescriptor) {
-            if (nestingLevel.repeatedFieldDescriptor != null && !nestingLevel.repeatedFieldDescriptor.name.equals(fieldDescriptor.name)) {
-               endArraySlot();
-            }
-            boolean map = nestingLevel.previous != null && nestingLevel.previous.repeatedFieldDescriptor != null && nestingLevel.previous.repeatedFieldDescriptor.isMap();
-            if (nestingLevel.isFirstField) {
-               nestingLevel.isFirstField = false;
-            } else {
-               jsonOut.append(map ? ':' : ',');
-            }
-            if (!map) {
-               if (!fieldDescriptor.isRepeated() || nestingLevel.repeatedFieldDescriptor == null) {
-                  if (prettyPrint) {
-                     indent();
-                  }
-                  if (fieldDescriptor.getLabel() == Label.ONE_OF) {
-                     jsonOut.append('"').append(JSON_VALUE_FIELD).append("\":");
-                  } else {
-                     jsonOut.append('"').append(fieldDescriptor.getName()).append("\":");
-                  }
-               }
-               if (prettyPrint) {
-                  jsonOut.append(' ');
-               }
-            }
-            if (fieldDescriptor.isRepeated() && nestingLevel.repeatedFieldDescriptor == null) {
-               nestingLevel.repeatedFieldDescriptor = fieldDescriptor;
-               jsonOut.append(fieldDescriptor.isMap() ? '{' : '[');
-            }
-         }
-
-         private void endArraySlot() {
-            boolean map = nestingLevel.repeatedFieldDescriptor.isMap();
-            if (prettyPrint && nestingLevel.repeatedFieldDescriptor.getType() == Type.MESSAGE) {
-               indent();
-            }
-            nestingLevel.repeatedFieldDescriptor = null;
-            jsonOut.append(map ? '}' : ']');
-         }
-      };
-
-      TagHandler wrapperHandler = new TagHandler() {
-
-         private Integer typeId;
-         private String typeName;
-         private byte[] wrappedMessage;
-         private Integer wrappedEnum;
-         private String wrappedContainerType;
-
-         private GenericDescriptor getDescriptor() {
-            return typeId != null ? ctx.getDescriptorByTypeId(typeId) : ctx.getDescriptorByName(typeName);
-         }
-
-         @Override
-         public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
-            if (fieldDescriptor == null) {
-               // ignore unknown fields
-               return;
-            }
-            switch (fieldNumber) {
-               case WRAPPED_TYPE_ID:
-                  typeId = (Integer) tagValue;
-                  break;
-               case WRAPPED_TYPE_NAME:
-                  typeName = (String) tagValue;
-                  break;
-               case WRAPPED_MESSAGE:
-                  wrappedMessage = (byte[]) tagValue;
-                  break;
-               case WRAPPED_ENUM:
-                  wrappedEnum = (Integer) tagValue;
-                  break;
-               case WRAPPED_CONTAINER_TYPE_NAME:
-                  wrappedContainerType = (String) tagValue;
-                  GenericDescriptor descriptorByName = ctx.getDescriptorByName(wrappedContainerType);
-                  messageHandler.onStart(descriptorByName);
-                  break;
-               case WrappedMessage.WRAPPED_BYTE:
-               case WrappedMessage.WRAPPED_SHORT:
-               case WrappedMessage.WRAPPED_DOUBLE:
-               case WrappedMessage.WRAPPED_FLOAT:
-               case WrappedMessage.WRAPPED_INT64:
-               case WrappedMessage.WRAPPED_UINT64:
-               case WrappedMessage.WRAPPED_INT32:
-               case WrappedMessage.WRAPPED_FIXED64:
-               case WrappedMessage.WRAPPED_FIXED32:
-               case WrappedMessage.WRAPPED_BOOL:
-               case WrappedMessage.WRAPPED_STRING:
-               case WrappedMessage.WRAPPED_BYTES:
-               case WrappedMessage.WRAPPED_UINT32:
-               case WrappedMessage.WRAPPED_SFIXED32:
-               case WrappedMessage.WRAPPED_SFIXED64:
-               case WrappedMessage.WRAPPED_SINT32:
-               case WrappedMessage.WRAPPED_SINT64:
-                  if (wrappedContainerType != null) {
-                     messageHandler.onTag(fieldNumber, new RepeatedFieldDescriptor(fieldDescriptor), tagValue);
-                  } else {
-                     messageHandler.onStart(null);
-                     messageHandler.onTag(fieldNumber, fieldDescriptor, tagValue);
-                     messageHandler.onEnd();
-                  }
-                  break;
-            }
-         }
-
-         @Override
-         public void onEnd() {
-            if (wrappedContainerType != null) {
-               messageHandler.onEnd();
-            } else if (wrappedEnum != null) {
-               EnumDescriptor enumDescriptor = (EnumDescriptor) getDescriptor();
-               String enumConstantName = enumDescriptor.findValueByNumber(wrappedEnum).getName();
-               FieldDescriptor fd = wrapperDescriptor.findFieldByNumber(WRAPPED_ENUM);
-               messageHandler.onStart(enumDescriptor);
-               messageHandler.onTag(WRAPPED_ENUM, fd, enumConstantName);
-               messageHandler.onEnd();
-            } else if (wrappedMessage != null) {
-               try {
-                  Descriptor messageDescriptor = (Descriptor) getDescriptor();
-                  ProtobufParser.INSTANCE.parse(messageHandler, messageDescriptor, wrappedMessage);
-               } catch (IOException e) {
-                  throw new RuntimeException(e);
-               }
-            }
-         }
-      };
+      JsonTagHandler messageHandler = new JsonTagHandler(initNestingLevel, jsonOut);
+      TagHandler wrapperHandler = new JsonWrappedTagHandler(messageHandler, ctx);
 
       ProtobufParser.INSTANCE.parse(wrapperHandler, wrapperDescriptor, bytes);
    }
@@ -868,73 +575,4 @@ public final class JsonUtils {
       }
    }
 
-   // todo [anistor] do we really need html escaping? so far I'm keeping it so we behave like previous implementation
-
-   /**
-    * Escapes a string literal in order to have a valid JSON representation. Optionally it can also escape some html chars.
-    */
-   private static void escapeJson(String value, StringBuilder out, boolean htmlSafe) {
-      out.append('"');
-      int prev = 0;
-      int len = value.length();
-      for (int cur = 0; cur < len; cur++) {
-         char ch = value.charAt(cur);
-         String esc = null;
-         if (ch < ' ') {
-            esc = switch (ch) {
-               case '\t' -> "\\t";
-               case '\b' -> "\\b";
-               case '\n' -> "\\n";
-               case '\r' -> "\\r";
-               case '\f' -> "\\f";
-               default -> String.format("\\u%04x", (int) ch);
-            };
-         } else if (ch < 128) {
-            if (ch == '"') {
-               esc = "\\\"";
-            } else if (ch == '\\') {
-               esc = "\\\\";
-            } else if (htmlSafe) {
-               esc = switch (ch) {
-                  case '<' -> "\\u003c";
-                  case '>' -> "\\u003e";
-                  case '&' -> "\\u0026";
-                  case '=' -> "\\u003d";
-                  case '\'' -> "\\u0027";
-                  default -> esc;
-               };
-            }
-         } else if (ch == '\u2028') {
-            esc = "\\u2028";
-         } else if (ch == '\u2029') {
-            esc = "\\u2029";
-         } else {
-            continue;
-         }
-         if (esc != null) {
-            if (prev < cur) {
-               out.append(value, prev, cur);
-            }
-            prev = cur + 1;
-            out.append(esc);
-         }
-      }
-      if (prev < len) {
-         out.append(value, prev, len);
-      }
-      out.append('"');
-   }
-
-   private static String formatDate(Date date) {
-      return timestampFormat.get().format(date);
-   }
-
-   private static final ThreadLocal<DateFormat> timestampFormat = ThreadLocal.withInitial(() -> {
-      // Z-normalized RFC 3339 format
-      SimpleDateFormat sdf = new SimpleDateFormat(RFC_3339_DATE_FORMAT);
-      GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-      calendar.setGregorianChange(new Date(Long.MIN_VALUE));
-      sdf.setCalendar(calendar);
-      return sdf;
-   });
 }
