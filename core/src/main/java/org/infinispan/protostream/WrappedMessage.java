@@ -2,13 +2,18 @@ package org.infinispan.protostream;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 import org.infinispan.protostream.containers.ElementContainerAdapter;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
@@ -43,6 +48,11 @@ import org.infinispan.protostream.impl.TagWriterImpl;
  * @since 1.0
  */
 public final class WrappedMessage {
+
+   private static final Collection<Class<?>> WRAPPED_KNOWN_TYPES = List.of(
+         Instant.class,
+         Date.class
+   );
 
    /**
     * The fully qualified Protobuf type name of this message.
@@ -709,6 +719,61 @@ public final class WrappedMessage {
       }
       var elementReader = TagReaderImpl.newInstance(ctx, in.readByteArray());
       return readMessage(ctx, elementReader, true);
+   }
+
+   public static boolean knownWrappedDescriptor(ImmutableSerializationContext ctx, GenericDescriptor descriptor) {
+      return WRAPPED_KNOWN_TYPES.stream()
+            .filter(ctx::canMarshall)
+            .map(ctx::getMarshaller)
+            .filter(Objects::nonNull)
+            .anyMatch(m -> ctx.getDescriptorByName(m.getTypeName()) == descriptor);
+   }
+
+   /**
+    * Verify whether the given field belongs to a wrapped message.
+    *
+    * <p>
+    * The field must be contained by a message with type ID of {@link #PROTOBUF_TYPE_ID} and full name of
+    * {@link #PROTOBUF_TYPE_NAME}. The field number must be one of the fields defined in the wrapped message.
+    * </p>
+    *
+    * @param descriptor the descriptor of a field to verify.
+    * @return <code>true</code> if this field belongs to a wrapped message, <code>false</code>, otherwise.
+    */
+   public static boolean isWrappedMessageField(FieldDescriptor descriptor) {
+      Descriptor cm = descriptor.getContainingMessage();
+      if (cm == null || cm.getTypeId() == null || !(cm.getTypeId() == PROTOBUF_TYPE_ID && cm.getFullName().equals(PROTOBUF_TYPE_NAME)))
+         return false;
+
+      int number = descriptor.getNumber();
+      return number == WRAPPED_DOUBLE
+            || number == WRAPPED_FLOAT
+            || number == WRAPPED_INT64
+            || number == WRAPPED_UINT64
+            || number == WRAPPED_INT32
+            || number == WRAPPED_BOOL
+            || number == WRAPPED_STRING
+            || number == WRAPPED_CHAR
+            || number == WRAPPED_SHORT
+            || number == WRAPPED_BYTE
+            || number == WRAPPED_DATE_MILLIS
+            || number == WRAPPED_INSTANT_SECONDS
+            || number == WRAPPED_INSTANT_NANOS
+            || number == WRAPPED_BYTES
+            || number == WRAPPED_UINT32
+            || number == WRAPPED_SFIXED32
+            || number == WRAPPED_SFIXED64
+            || number == WRAPPED_SINT32
+            || number == WRAPPED_SINT64
+            || number == WRAPPED_TYPE_NAME
+            || number == WRAPPED_MESSAGE
+            || number == WRAPPED_ENUM
+            || number == WRAPPED_TYPE_ID
+            || number == WRAPPED_EMPTY
+            || number == WRAPPED_CONTAINER_SIZE
+            || number == WRAPPED_CONTAINER_TYPE_NAME
+            || number == WRAPPED_CONTAINER_TYPE_ID
+            || number == WRAPPED_CONTAINER_MESSAGE;
    }
 
    /**

@@ -1,0 +1,112 @@
+{
+   "_type": "collections.ListOfAdapter",
+   "elements": [
+      {
+         "_type": "org.infinispan.protostream.WrappedMessage",
+         "wrappedMessage": {
+            "_type": "collections.ListOfAdapter",
+            "elements": [
+               {
+                  "_type": "org.infinispan.protostream.WrappedMessage",
+                  "wrappedInt32": 1
+               },
+               {
+                  "_type": "org.infinispan.protostream.WrappedMessage",
+                  "wrappedInt32": 2
+               },
+               {
+                  "_type": "org.infinispan.protostream.WrappedMessage",
+                  "wrappedInt32": 3
+               }
+            ]
+         }
+      },
+      {
+         "_type": "org.infinispan.protostream.WrappedMessage",
+         "wrappedMessage": {
+            "_type": "collections.SingletonListAdapter",
+            "element": {
+               "_type": "org.infinispan.protostream.WrappedMessage",
+               "wrappedMessage": {
+                  "_type": "collections.ListOfAdapter",
+                  "elements": [
+                     {
+                        "_type": "org.infinispan.protostream.WrappedMessage",
+                        "wrappedInt32": 4
+                     },
+                     {
+                        "_type": "org.infinispan.protostream.WrappedMessage",
+                        "wrappedInt32": 5
+                     },
+                     {
+                        "_type": "org.infinispan.protostream.WrappedMessage",
+                        "wrappedInt32": 6
+                     }
+                  ]
+               }
+            }
+         }
+      },
+      {
+         "_type": "org.infinispan.protostream.WrappedMessage",
+         "wrappedMessage": {
+            "_type": "org.infinispan.protostream.WrappedMessage",
+            "wrappedMessage": {
+               "_type": "collections.SingletonListAdapter",
+               "element": {
+                  "_type": "org.infinispan.protostream.WrappedMessage",
+                  "wrappedMessage": {
+                     "_type": "collections.ListOfAdapter",
+                     "elements": [
+                        {
+                           "_type": "org.infinispan.protostream.WrappedMessage",
+                           "wrappedString": "hello"
+                        },
+                        {
+                           "_type": "org.infinispan.protostream.WrappedMessage",
+                           "wrappedString": "world"
+                        }
+                     ]
+                  }
+               }
+            }
+         }
+      },
+      {
+         "_type": "org.infinispan.protostream.WrappedMessage",
+         "wrappedMessage": {
+            "_type": "org.infinispan.protostream.WrappedMessage",
+            "wrappedMessage": {
+               "_type": "collections.ListOfAdapter",
+               "elements": [
+                  {
+                     "_type": "org.infinispan.protostream.WrappedMessage",
+                     "wrappedMessage": {
+                        "_type": "collections.SingletonListAdapter",
+                        "element": {
+                           "_type": "org.infinispan.protostream.WrappedMessage",
+                           "wrappedInt32": 1
+                        }
+                     }
+                  },
+                  {
+                     "_type": "org.infinispan.protostream.WrappedMessage",
+                     "wrappedMessage": {
+                        "_type": "org.infinispan.protostream.commons.UUID",
+                        "mostSigBitsFixed": 10473435877399219472,
+                        "leastSigBitsFixed": 13784316350839693612
+                     }
+                  }
+               ]
+            }
+         }
+      },
+      {
+         "_type": "org.infinispan.protostream.WrappedMessage",
+         "wrappedEnum": {
+            "_type": "org.infinispan.protostream.commons.Month",
+            "wrappedEnum": "SEPTEMBER"
+         }
+      }
+   ]
+}
