@@ -26,7 +26,7 @@ public class JSONTranscodingTest {
 
       byte[] proto = ProtobufUtil.toWrappedByteArray(context, matches);
       String json = ProtobufUtil.toCanonicalJSON(context, proto);
-      assertThat(json).isEqualTo("{\"_type\":\"org.infinispan.protostream.commons.ArrayList\",\"_value\":[\"one\",\"two\"]}");
+      assertThat(json).isEqualTo("{\"_type\":\"org.infinispan.protostream.commons.ArrayList\",\"wrappedContainerSize\":2,\"wrappedContainerMessage\":\"\",\"_value\":[{\"string\":\"one\"},{\"string\":\"two\"}]}");
 
       ArrayList<String> reloaded = ProtobufUtil.fromWrappedByteArray(context, proto);
       assertThat(reloaded).isEqualTo(matches);
