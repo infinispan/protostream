@@ -249,14 +249,14 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    public void testWithMissingTypeSpecialField() throws Exception {
       Throwable error = testFromJson("{ \"street\":\"Abbey Rd\" }");
       assertTrue(error instanceof IllegalStateException);
-      assertTrue(error.getMessage().contains("should contain a top level field '_type'"));
+      assertTrue(error.getMessage().contains("Expected field '_type' but it was 'street'"));
    }
 
    @Test
    public void testWithMissingValueSpecialField() throws Exception {
       Throwable error = testFromJson("{ \"_type\":\"double\", \"person\": true }");
       assertTrue(error instanceof IllegalStateException);
-      assertTrue(error.getMessage().contains("should contain a top level field '_value'"));
+      assertTrue(error.getMessage().contains("Expected field '_value' but it was 'person"));
    }
 
    @Test
@@ -514,8 +514,8 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    private void assertValid(String json) {
-      try {
-         JsonParser parser = new JsonFactory().createParser(json);
+      assertTrue(json == null || !json.isEmpty());
+      try (JsonParser parser = new JsonFactory().createParser(json)) {
          while (parser.nextToken() != null) {
             // read all tokens and hope for no errors
          }
