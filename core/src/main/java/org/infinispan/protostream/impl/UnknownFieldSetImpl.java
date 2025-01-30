@@ -4,7 +4,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -12,6 +11,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.infinispan.protostream.RandomAccessOutputStream;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.UnknownFieldSet;
@@ -198,15 +198,11 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
 
    @Override
    public void writeExternal(ObjectOutput out) throws IOException {
-      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx();
+      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl();
       TagWriter output = TagWriterImpl.newInstance(null, baos);
       writeTo(output);
-      output.flush();
-      ByteBuffer buffer = baos.getByteBuffer();
-      int off = buffer.arrayOffset();
-      int len = buffer.limit() - off;
-      out.writeInt(len);
-      out.write(buffer.array(), off, len);
+      out.writeInt(baos.getPosition());
+      baos.copyTo(out);
    }
 
    @Override

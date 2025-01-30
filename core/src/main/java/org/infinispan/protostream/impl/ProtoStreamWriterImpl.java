@@ -12,6 +12,7 @@ import java.util.Map;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.RandomAccessOutputStream;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
@@ -506,7 +507,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
 
    private void writeMessage(FieldDescriptor fd, Object value, Class<?> clazz) throws IOException {
       BaseMarshallerDelegate marshallerDelegate = serCtx.getMarshallerDelegate(clazz);
-      ByteArrayOutputStreamEx nestedBaos = new ByteArrayOutputStreamEx();
+      RandomAccessOutputStream nestedBaos = new RandomAccessOutputStreamImpl();
       TagWriterImpl nestedOut = TagWriterImpl.newNestedInstance(messageContext.out, nestedBaos);
       marshallerDelegate.marshall(nestedOut, fd, value);
       nestedOut.flush();
@@ -817,7 +818,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       for (Map.Entry<? super K, ? super V> entry : map.entrySet()) {
          Object key = entry.getKey();
          validateElement(key, keyClass); // Protobuf 3 does not allow null keys
-         ByteArrayOutputStreamEx nestedBaos = new ByteArrayOutputStreamEx();
+         RandomAccessOutputStream nestedBaos = new RandomAccessOutputStreamImpl();
          TagWriterImpl out = TagWriterImpl.newNestedInstance(messageContext.out, nestedBaos);
          // Write the key as field 1
          switch (md.getKeyType()) {
@@ -878,7 +879,7 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
                case MESSAGE -> {
                   // FIXME: there is too much nesting here. We can definitely improve things
                   BaseMarshallerDelegate<V> marshallerDelegate = serCtx.getMarshallerDelegate(valueClass);
-                  ByteArrayOutputStreamEx mapValueBaos = new ByteArrayOutputStreamEx();
+                  RandomAccessOutputStream mapValueBaos = new RandomAccessOutputStreamImpl();
                   TagWriterImpl mapValueOut = TagWriterImpl.newNestedInstance(out, mapValueBaos);
                   marshallerDelegate.marshall(mapValueOut, md, (V) value);
                   mapValueOut.flush();

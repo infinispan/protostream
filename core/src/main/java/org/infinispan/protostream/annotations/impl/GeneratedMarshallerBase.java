@@ -3,9 +3,10 @@ package org.infinispan.protostream.annotations.impl;
 import java.io.IOException;
 
 import org.infinispan.protostream.ProtobufTagMarshaller;
+import org.infinispan.protostream.RandomAccessOutputStream;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
-import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.Log;
+import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;
 
 /**
@@ -51,7 +52,7 @@ public class GeneratedMarshallerBase {
    }
 
    public static class NestedWriter implements AutoCloseable {
-      final ByteArrayOutputStreamEx baos;
+      final RandomAccessOutputStream baos;
       final TagWriterImpl writer;
       private final ProtobufTagMarshaller.WriteContext ctx;
       private final int fieldNumber;
@@ -59,7 +60,7 @@ public class GeneratedMarshallerBase {
       public NestedWriter(ProtobufTagMarshaller.WriteContext ctx, int fieldNumber) {
          this.ctx = ctx;
          this.fieldNumber = fieldNumber;
-         this.baos = new ByteArrayOutputStreamEx();
+         this.baos = new RandomAccessOutputStreamImpl();
          this.writer = TagWriterImpl.newNestedInstance(ctx, baos);
       }
 
