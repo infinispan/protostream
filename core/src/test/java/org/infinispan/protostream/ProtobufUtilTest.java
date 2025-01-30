@@ -9,7 +9,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -119,6 +122,30 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
       // assert that toWrappedByteArray works correctly as a shorthand for toByteArray on a WrappedMessage
       assertArrayEquals(userBytes1, userBytes2);
+   }
+
+   @Test
+   public void testMessageWrappingStream() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+
+      User user = new User();
+      user.setId(1);
+      user.setName("John");
+      user.setSurname("Batman");
+      user.setGender(User.Gender.MALE);
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
+      user.setAddresses(Arrays.asList(new Address("Old Street", "XYZ42", -12), new Address("Bond Street", "W23", 2)));
+
+      byte[] userBytes1;
+      try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+         ProtobufUtil.toWrappedStream(ctx, out, user);
+         userBytes1 = out.toByteArray();
+      }
+
+      try (InputStream in = new ByteArrayInputStream(userBytes1)) {
+         User user1 = ProtobufUtil.fromWrappedStream(ctx, in);
+         assertEquals(user, user1);
+      }
    }
 
    @Test

@@ -1,6 +1,5 @@
 package org.infinispan.protostream;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,8 +9,8 @@ import java.util.Objects;
 
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
-import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
 import org.infinispan.protostream.impl.JsonUtils;
+import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.TagReaderImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;
@@ -70,18 +69,23 @@ public final class ProtobufUtil {
       out.flush();
    }
 
-   public static void writeTo(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
+   public static void writeTo(ImmutableSerializationContext ctx, RandomAccessOutputStream out, Object t) throws IOException {
       write(ctx, TagWriterImpl.newInstance(ctx, out), t);
    }
 
+   public static void writeTo(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
+      TagWriterImpl writer = out instanceof RandomAccessOutputStream raos ? TagWriterImpl.newInstance(ctx, raos) : TagWriterImpl.newInstance(ctx, out);
+      write(ctx, writer, t);
+   }
+
    public static byte[] toByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(DEFAULT_ARRAY_BUFFER_SIZE);
+      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl(DEFAULT_ARRAY_BUFFER_SIZE);
       writeTo(ctx, baos, t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(DEFAULT_ARRAY_BUFFER_SIZE);
+      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl(DEFAULT_ARRAY_BUFFER_SIZE);
       writeTo(ctx, baos, t);
       return baos.getByteBuffer();
    }
@@ -142,19 +146,24 @@ public final class ProtobufUtil {
    }
 
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t, int bufferSize) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(bufferSize);
+      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl(bufferSize);
       WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, baos), t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toWrappedByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
-      ByteArrayOutputStreamEx baos = new ByteArrayOutputStreamEx(DEFAULT_ARRAY_BUFFER_SIZE);
+      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl(DEFAULT_ARRAY_BUFFER_SIZE);
       WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, baos), t);
       return baos.getByteBuffer();
    }
 
-   public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
+   public static void toWrappedStream(ImmutableSerializationContext ctx, RandomAccessOutputStream out, Object t) throws IOException {
       WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, out), t);
+   }
+
+   public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
+      TagWriter writer = out instanceof RandomAccessOutputStream raos ? TagWriterImpl.newInstance(ctx, raos) : TagWriterImpl.newInstance(ctx, out);
+      WrappedMessage.write(ctx, writer, t);
    }
 
    /**

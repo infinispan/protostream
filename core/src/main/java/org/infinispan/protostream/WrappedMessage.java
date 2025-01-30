@@ -1,21 +1,21 @@
 package org.infinispan.protostream;
 
-import org.infinispan.protostream.containers.ElementContainerAdapter;
-import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
-import org.infinispan.protostream.containers.IterableElementContainerAdapter;
-import org.infinispan.protostream.descriptors.WireType;
-import org.infinispan.protostream.impl.BaseMarshallerDelegate;
-import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
-import org.infinispan.protostream.impl.EnumMarshallerDelegate;
-import org.infinispan.protostream.impl.SerializationContextImpl;
-import org.infinispan.protostream.impl.TagReaderImpl;
-import org.infinispan.protostream.impl.TagWriterImpl;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Objects;
+
+import org.infinispan.protostream.containers.ElementContainerAdapter;
+import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
+import org.infinispan.protostream.containers.IterableElementContainerAdapter;
+import org.infinispan.protostream.descriptors.WireType;
+import org.infinispan.protostream.impl.BaseMarshallerDelegate;
+import org.infinispan.protostream.impl.EnumMarshallerDelegate;
+import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
+import org.infinispan.protostream.impl.SerializationContextImpl;
+import org.infinispan.protostream.impl.TagReaderImpl;
+import org.infinispan.protostream.impl.TagWriterImpl;
 
 /**
  * A wrapper for messages, enums or primitive types that encodes the type of the inner object/value and also helps keep
@@ -315,7 +315,7 @@ public final class WrappedMessage {
          if (t.getClass().isEnum()) {
             ((EnumMarshallerDelegate) marshallerDelegate).encode(WRAPPED_ENUM, (Enum<?>) t, out);
          } else {
-            ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
+            RandomAccessOutputStream buffer = new RandomAccessOutputStreamImpl();
             TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, buffer);
             marshallerDelegate.marshall(nestedCtx, null, t);
             nestedCtx.flush();
@@ -339,7 +339,7 @@ public final class WrappedMessage {
       int containerSize = ((ElementContainerAdapter) containerMarshaller).getNumElements(container);
       out.writeUInt32(WRAPPED_CONTAINER_SIZE, containerSize);
 
-      ByteArrayOutputStreamEx buffer = new ByteArrayOutputStreamEx();
+      RandomAccessOutputStream buffer = new RandomAccessOutputStreamImpl();
       TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, buffer);
       marshallerDelegate.marshall(nestedCtx, null, container);
       nestedCtx.flush();
@@ -353,7 +353,7 @@ public final class WrappedMessage {
    }
 
    private static void writeContainerWrappingElements(BaseMarshaller containerMarshaller, int containerSize, Object container,
-                                                      ImmutableSerializationContext ctx, TagWriter out, ByteArrayOutputStreamEx buffer) throws IOException {
+                                                      ImmutableSerializationContext ctx, TagWriter out, RandomAccessOutputStream buffer) throws IOException {
       if (containerMarshaller instanceof IterableElementContainerAdapter) {
          Iterator<?> elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);
          for (int i = 0; i < containerSize; i++) {
@@ -392,7 +392,7 @@ public final class WrappedMessage {
       }
    }
 
-   private static void writeContainerElementWrapped(ImmutableSerializationContext ctx, TagWriter out, ByteArrayOutputStreamEx buffer, Object e) throws IOException {
+   private static void writeContainerElementWrapped(ImmutableSerializationContext ctx, TagWriter out, RandomAccessOutputStream buffer, Object e) throws IOException {
       if (tryWritePrimitive(out, e, true)) {
          return;
       }
