@@ -456,6 +456,8 @@ public abstract class AbstractMarshallerCodeGenerator {
                               makeArrayLocalVar(fieldMetadata) : makeCollectionLocalVar(fieldMetadata))
                         : makeFieldLocalVar(fieldMetadata);
                   iw.append(var);
+                  if (fieldMetadata.isStream())
+                     iw.append(".stream()");
                   found = true;
                   break;
                }
@@ -720,12 +722,12 @@ public abstract class AbstractMarshallerCodeGenerator {
                         mapFieldMetadata.getKey().getJavaTypeName(),
                         mapFieldMetadata.getValue().getJavaTypeName()
                   );
+               } else if (fieldMetadata.isIterable()) {
+                  printFieldAssignmentWithGenerics("java.lang.Iterable", fieldMetadata, iw);
+               } else if (fieldMetadata.isStream()) {
+                  printFieldAssignmentWithGenerics("java.util.stream.Stream", fieldMetadata, iw);
                } else {
-                  if (useGenerics) {
-                     iw.printf("java.util.Collection<%s>", fieldMetadata.getJavaTypeName());
-                  } else {
-                     iw.printf("java.util.Collection");
-                  }
+                  printFieldAssignmentWithGenerics("java.util.Collection", fieldMetadata, iw);
                }
             } else {
                iw.print(fieldMetadata.getJavaTypeName());
@@ -803,6 +805,14 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.println("if (u != null && !u.isEmpty()) u.writeTo($out);");
             iw.dec().println("}");
          }
+      }
+   }
+
+   private void printFieldAssignmentWithGenerics(String type, ProtoFieldMetadata fieldMeta, IndentWriter iw) {
+      if (useGenerics) {
+         iw.printf("%s<%s>", type, fieldMeta.getJavaTypeName());
+      } else {
+         iw.printf(type);
       }
    }
 
@@ -1052,7 +1062,11 @@ public abstract class AbstractMarshallerCodeGenerator {
          if (messageTypeMetadata.isAdapter()) {
             setPropExpr.append(obj).append(", ");
          }
-         setPropExpr.append(value).append(')');
+         setPropExpr.append(value);
+         if (fieldMetadata.isStream()) {
+            setPropExpr.append(".stream()");
+         }
+         setPropExpr.append(')');
       } else {
          setPropExpr.append("FIXME"); //Map
       }

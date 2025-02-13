@@ -30,6 +30,8 @@ public class ProtoFieldMetadata implements HasProtoSchema {
    private final boolean isRequired;
    private final boolean isRepeated;
    private final boolean isArray;
+   private final boolean isIterable;
+   private final boolean isStream;
    private final Object defaultValue;
    private final String propertyName;
    private final XMember declaringMember;
@@ -39,8 +41,8 @@ public class ProtoFieldMetadata implements HasProtoSchema {
 
    ProtoFieldMetadata(int number, String name, String oneof, XClass javaType,
                       XClass repeatedImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
-                      boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
-                      XField field) {
+                      boolean isRequired, boolean isRepeated, boolean isArray, boolean isIterable, boolean isStream,
+                      Object defaultValue, XField field) {
       this.number = number;
       this.name = name;
       this.oneof = oneof;
@@ -50,6 +52,8 @@ public class ProtoFieldMetadata implements HasProtoSchema {
       this.isRequired = isRequired;
       this.isRepeated = isRepeated;
       this.isArray = isArray;
+      this.isIterable = isIterable;
+      this.isStream = isStream;
       this.defaultValue = defaultValue;
       this.protobufType = protobufType;
       this.declaringMember = field;
@@ -62,8 +66,8 @@ public class ProtoFieldMetadata implements HasProtoSchema {
 
    ProtoFieldMetadata(int number, String name, String oneof, XClass javaType,
                       XClass repeatedImplementation, Type protobufType, ProtoTypeMetadata protoTypeMetadata,
-                      boolean isRequired, boolean isRepeated, boolean isArray, Object defaultValue,
-                      String propertyName, XMethod definingMethod, XMethod getter, XMethod setter) {
+                      boolean isRequired, boolean isRepeated, boolean isArray, boolean isIterable, boolean isStream,
+                      Object defaultValue, String propertyName, XMethod definingMethod, XMethod getter, XMethod setter) {
       this.number = number;
       this.name = name;
       this.oneof = oneof;
@@ -73,6 +77,8 @@ public class ProtoFieldMetadata implements HasProtoSchema {
       this.isRequired = isRequired;
       this.isRepeated = isRepeated;
       this.isArray = isArray;
+      this.isIterable = isIterable;
+      this.isStream = isStream;
       this.defaultValue = defaultValue;
       this.protobufType = protobufType;
       this.field = null;
@@ -133,6 +139,14 @@ public class ProtoFieldMetadata implements HasProtoSchema {
 
    public boolean isArray() {
       return isArray;
+   }
+
+   public boolean isIterable() {
+      return isIterable;
+   }
+
+   public boolean isStream() {
+      return isStream;
    }
 
    public boolean isMap() {

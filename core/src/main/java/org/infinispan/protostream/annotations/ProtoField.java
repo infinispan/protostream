@@ -71,10 +71,11 @@ public @interface ProtoField {
    Class<?> javaType() default void.class;
 
    /**
-    * The actual concrete and instantiable implementation type of the Collection. This Class should only be specified if
-    * the Java property type is really a Collection and must be assignable to the property type. It should be used when
-    * the type of the Collection is an interface or an abstract class in order to designate the actual concrete class
-    * that must be instantiated by the marshaling layer when reading this from a data stream.
+    * The {@link java.util.Collection} to be utilised when unmarshalling the field from a data stream. This Class should
+    * only be specified if the Java property type is a {@link java.util.Collection}, {@link java.lang.Iterable} or
+    * {@link java.util.stream.Stream} and must be assignable to the property type. It should be used when
+    * the field's type an interface or an abstract class in order to designate the actual concrete class
+    * that must be instantiated by the marshaling layer.
     */
    Class<? extends Collection> collectionImplementation() default Collection.class;
 
