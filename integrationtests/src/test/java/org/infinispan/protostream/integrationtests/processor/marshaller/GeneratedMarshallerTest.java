@@ -9,9 +9,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.ProtobufUtil;
@@ -23,6 +26,7 @@ import org.infinispan.protostream.impl.JsonUtils;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.FootballSchema;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.FootballSchemaImpl;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.FootballTeam;
+import org.infinispan.protostream.integrationtests.processor.marshaller.model.IterableModel;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfLong;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfMapOfUUID;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfString;
@@ -33,6 +37,7 @@ import org.infinispan.protostream.integrationtests.processor.marshaller.model.Nu
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.Player;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.SimpleEnum;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.SimpleRecord;
+import org.infinispan.protostream.integrationtests.processor.marshaller.model.StreamModel;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -319,6 +324,60 @@ public class GeneratedMarshallerTest {
 
       byte[] bytes2 = JsonUtils.fromCanonicalJSON(ctx, new StringReader(json));
       assertArrayEquals(bytes, bytes2);
+   }
+
+   @Test
+   public void testIterableFields() throws IOException{
+      var ctx = ProtobufUtil.newSerializationContext();
+      IterableModel.Schema.INSTANCE.registerSchema(ctx);
+      IterableModel.Schema.INSTANCE.registerMarshallers(ctx);
+
+      LinkedList<String> list = new LinkedList<>();
+      list.add("entry1");
+      list.add("entry2");
+      var ccf = new IterableModel.CustomCollectionFactory(list);
+      var bytes = ProtobufUtil.toWrappedByteArray(ctx, ccf);
+      IterableModel.CustomCollectionFactory unmarshalledCCF = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(list.size(), unmarshalledCCF.strings.size());
+      assertTrue(unmarshalledCCF.strings instanceof LinkedList);
+
+      var dc = new IterableModel.DefaultCollectionFactory(list);
+      bytes = ProtobufUtil.toWrappedByteArray(ctx, dc);
+      IterableModel.DefaultCollectionFactory unmarshalledDC = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(list.size(), unmarshalledDC.strings.size());
+      assertTrue(unmarshalledDC.strings instanceof ArrayList<String>);
+
+      var gs = new IterableModel.GetterSetter();
+      gs.setStrings(list);
+      bytes = ProtobufUtil.toWrappedByteArray(ctx, gs);
+      IterableModel.GetterSetter unmarshalledGS = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      int numEntries = 0;
+      for (String s : unmarshalledGS.getStrings()) numEntries++;
+      assertEquals(list.size(), numEntries);
+      assertTrue(unmarshalledGS.strings instanceof ArrayList<String>);
+
+      var factory = new IterableModel.IterableFactory(list);
+      bytes = ProtobufUtil.toWrappedByteArray(ctx, factory);
+      IterableModel.IterableFactory unmarshalledFactory = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(list.size(), unmarshalledFactory.strings.size());
+      assertTrue(unmarshalledFactory.strings instanceof ArrayList<String>);
+   }
+
+   @Test
+   public void testStreamFields() throws IOException {
+      var ctx = ProtobufUtil.newSerializationContext();
+      StreamModel.StreamSchema.INSTANCE.registerSchema(ctx);
+      StreamModel.StreamSchema.INSTANCE.registerMarshallers(ctx);
+
+      var factory = new StreamModel.Factory(Stream.of("entry1", "entry2"));
+      var bytes = ProtobufUtil.toWrappedByteArray(ctx, factory);
+      StreamModel.Factory unmarshalledFactory = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(2, unmarshalledFactory.strings.length);
+
+      var gs = new StreamModel.GetterSetter("entry1");
+      bytes = ProtobufUtil.toWrappedByteArray(ctx, gs);
+      StreamModel.GetterSetter unmarshalledGS = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(1, unmarshalledGS.strings.length);
    }
 
    private static void assertJson(String j1, String j2) throws IOException {

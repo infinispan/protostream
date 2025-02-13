@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
@@ -1043,7 +1044,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
          if (returnType.isArray()) {
             return returnType.getComponentType();
          }
-         if (returnType.isAssignableTo(Collection.class)) {
+         if (returnType.isAssignableTo(Collection.class) || returnType.isAssignableTo(Iterable.class) || returnType.isAssignableTo(Stream.class)) {
             List<? extends TypeMirror> typeArguments = ((DeclaredType) unwrapOptionalReturnType()).getTypeArguments();
             if (typeArguments.size() == 1) {
                TypeMirror arg = typeArguments.get(0);
