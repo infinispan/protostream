@@ -23,7 +23,6 @@ import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
-import org.infinispan.protostream.impl.TagWriterImpl;
 
 /**
  * @author anistor@readhat.com
@@ -712,7 +711,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          getUnknownFieldSetFieldStatement = "o.getUnknownFieldSet()";
       }
       if (!messageTypeMetadata.getFields().isEmpty() || getUnknownFieldSetFieldStatement != null) {
-         iw.printf("%s $out = (%s) $1.getWriter();\n", TagWriterImpl.class.getName(), TagWriterImpl.class.getName());
+         iw.print("var $out = $1.getWriter();\n");
          iw.printf("final %s o = (%s) $2;\n", messageTypeMetadata.getJavaClassName(), messageTypeMetadata.getJavaClassName());
          for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
             iw.println("{");
@@ -778,14 +777,12 @@ public abstract class AbstractMarshallerCodeGenerator {
                         mapFieldMetadata.getValue().getJavaTypeName(),
                         v
                   );
-                  iw.printf("try (NestedWriter $n = new NestedWriter($1, %d)) {\n", fieldMetadata.getNumber());
+                  iw.printf("try (var $n = $out.subWriter(%d, true)) {\n", fieldMetadata.getNumber());
                   iw.inc();
-                  iw.println("$out = $n.getWriter();");
-                  writeFieldValue(mapFieldMetadata.getKey(), iw, v + ".getKey()", "$out");
-                  writeMapFieldValue(mapFieldMetadata, mapFieldMetadata.getValue(), iw, v + ".getValue()", "$out");
+                  writeFieldValue(mapFieldMetadata.getKey(), iw, v + ".getKey()", "$n");
+                  writeMapFieldValue(mapFieldMetadata, mapFieldMetadata.getValue(), iw, v + ".getValue()", "$n");
                   iw.dec();
                   iw.println("}");
-                  iw.printf("$out = (%s) $1.getWriter();\n", TagWriterImpl.class.getName());
                } else {
                   if (useGenerics) {
                      iw.printf("for (java.util.Iterator<%s> it = %s.iterator(); it.hasNext(); ) {\n", fieldMetadata.getJavaTypeName(), f);
@@ -865,7 +862,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.println("{");
             iw.inc();
             String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-            iw.printf("writeNestedMessage(%s, %s, %d, %s);\n", mdField, out, fieldMetadata.getNumber(), v);
+            iw.printf("writeNestedMessage(%s, (WriteContext) %s, %d, %s);\n", mdField, out, fieldMetadata.getNumber(), v);
             iw.dec();
             iw.println("}");
             break;
@@ -892,7 +889,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.inc();
             fieldName = makeMarshallerDelegateFieldName(mapMetadata);
             mdField = initMarshallerDelegateField(iw, fieldName, fieldMetadata);
-            iw.printf("writeNestedMessage(%s, %s, %d, %s);\n", mdField, out, fieldMetadata.getNumber(), v);
+            iw.printf("writeNestedMessage(%s, (WriteContext) %s, %d, %s);\n", mdField, out, fieldMetadata.getNumber(), v);
             iw.dec();
             iw.println("}");
             break;

@@ -10,6 +10,7 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -118,6 +119,11 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    @Override
    public void flush() throws IOException {
       encoder.flush();
+   }
+
+   @Override
+   public void close() throws IOException {
+      encoder.close();
    }
 
    @Override
@@ -242,6 +248,16 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    @Override
+   public TagWriter subWriter(int number, boolean nested) throws IOException {
+      Encoder subEncoder = encoder.subEncoder(number);
+      if (subEncoder.canReuseWriter()) {
+         return this;
+      }
+      return nested ? new TagWriterImpl(this, subEncoder) :
+            new TagWriterImpl(serCtx, subEncoder);
+   }
+
+   @Override
    public SerializationContextImpl getSerializationContext() {
       return serCtx;
    }
@@ -292,11 +308,22 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
    //todo [anistor] need to provide a safety mechanism to limit message size in bytes and message nesting depth on write ops
    private abstract static class Encoder {
-
       /**
        * Commits the witten bytes after several write operations were performed. Updates counters, positions, whatever.
        */
       void flush() throws IOException {
+      }
+
+      boolean canReuseWriter() {
+         return false;
+      }
+
+      /**
+       * Method to be invoked when the encoder is no longer used. Data should be flushed and any resources are freed
+       * @throws IOException
+       */
+      void close() throws IOException {
+         flush();
       }
 
       // high level ops, writing fields
@@ -362,15 +389,127 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       abstract void writeBytes(byte[] value, int offset, int length) throws IOException;
 
       abstract void writeBytes(ByteBuffer value) throws IOException;
+
+      Encoder subEncoder(int number) throws IOException {
+         RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl();
+         return new WrappedEncoder(new OutputStreamRandomAccessEncoder(raos)) {
+            @Override
+            void close() throws IOException {
+               Encoder.this.writeBytes(number, raos.getByteBuffer());
+               super.close();
+            }
+         };
+      }
+   }
+
+   private static class WrappedEncoder extends Encoder {
+      private final Encoder innerEncoder;
+
+      private WrappedEncoder(Encoder parentEncoder) {
+         this.innerEncoder = parentEncoder;
+      }
+
+      @Override
+      void writeVarint32(int value) throws IOException {
+         innerEncoder.writeVarint32(value);
+      }
+
+      @Override
+      void writeVarint64(long value) throws IOException {
+         innerEncoder.writeVarint64(value);
+      }
+
+      @Override
+      void writeFixed32(int value) throws IOException {
+         innerEncoder.writeFixed32(value);
+      }
+
+      @Override
+      void writeFixed64(long value) throws IOException {
+         innerEncoder.writeFixed64(value);
+      }
+
+      @Override
+      void writeByte(byte value) throws IOException {
+         innerEncoder.writeByte(value);
+      }
+
+      @Override
+      void writeBytes(byte[] value, int offset, int length) throws IOException {
+         innerEncoder.writeBytes(value, offset, length);
+      }
+
+      @Override
+      void writeBytes(ByteBuffer value) throws IOException {
+         innerEncoder.writeBytes(value);
+      }
+
+      @Override
+      void writeUInt32Field(int fieldNumber, int value) throws IOException {
+         innerEncoder.writeUInt32Field(fieldNumber, value);
+      }
+
+      @Override
+      void writeUInt64Field(int fieldNumber, long value) throws IOException {
+         innerEncoder.writeUInt64Field(fieldNumber, value);
+      }
+
+      @Override
+      void writeFixed32Field(int fieldNumber, int value) throws IOException {
+         innerEncoder.writeFixed32Field(fieldNumber, value);
+      }
+
+      @Override
+      void writeFixed64Field(int fieldNumber, long value) throws IOException {
+         innerEncoder.writeFixed64Field(fieldNumber, value);
+      }
+
+      @Override
+      void writeBoolField(int fieldNumber, boolean value) throws IOException {
+         innerEncoder.writeBoolField(fieldNumber, value);
+      }
+
+      @Override
+      void writeLengthDelimitedField(int fieldNumber, int length) throws IOException {
+         innerEncoder.writeLengthDelimitedField(fieldNumber, length);
+      }
+
+      @Override
+      void writeBytes(int fieldNumber, ByteBuffer value) throws IOException {
+         innerEncoder.writeBytes(fieldNumber, value);
+      }
+
+      @Override
+      void writeBytes(int fieldNumber, byte[] value, int offset, int length) throws IOException {
+         innerEncoder.writeBytes(fieldNumber, value, offset, length);
+      }
+
+      @Override
+      void writeUTF8Field(int fieldNumber, String value) throws IOException {
+         innerEncoder.writeUTF8Field(fieldNumber, value);
+      }
+
+      @Override
+      void flush() throws IOException {
+         innerEncoder.flush();
+      }
+
+      @Override
+      void close() throws IOException {
+         innerEncoder.close();
+      }
    }
 
    /**
     * An encoder that just counts the bytes and does not write anything and does not allocate buffers.
     * Useful for computing message size.
     */
-   private static final class NoOpEncoder extends Encoder {
+   static class NoOpEncoder extends Encoder {
 
-      private int count = 0;
+      protected int count = 0;
+      protected int[] nestedPositions;
+      // This will always be one position higher than any encoder size position
+      protected int head;
 
       int getWrittenBytes() {
          return count;
@@ -381,6 +520,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
        */
       void reset() {
          count = 0;
+         head = 0;
       }
 
       @Override
@@ -428,6 +568,62 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       @Override
       void writeFixed64(long value) {
          count += FIXED_64_SIZE;
+      }
+
+      @Override
+      void writeUTF8Field(int fieldNumber, String s) {
+         writeVarint32(WireType.makeTag(fieldNumber, WireType.WIRETYPE_VARINT));
+         char c;
+         int i;
+         int count = s.length();
+         for (i = 0; i < count; i++) {
+            c = s.charAt(i);
+            if (c > 127) {
+               // TODO: do this without allocating the byte[]
+               count = s.getBytes(StandardCharsets.UTF_8).length;
+               break;
+            }
+         }
+         writeVarint32(count);
+         this.count += count;
+      }
+
+      @Override
+      Encoder subEncoder(int number) {
+         writeVarint32(WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
+         resize();
+         encoderStartPos(count);
+         return this;
+      }
+
+      void encoderStartPos(int size) {
+         nestedPositions[head++] = size;
+      }
+
+      void resize() {
+         if (nestedPositions == null) {
+            // We are guessing most objects won't have larger than 4 sub elements
+            nestedPositions = new int[10];
+         } else {
+            if (head == nestedPositions.length) {
+               nestedPositions = Arrays.copyOf(nestedPositions, nestedPositions.length + 10);
+            }
+         }
+      }
+
+      @Override
+      public void close() {
+         if (nestedPositions != null) {
+            if (head > 0) {
+               int lastSize = nestedPositions[--head];
+               writeVarint32(count - lastSize);
+            }
+         }
+      }
+
+      @Override
+      boolean canReuseWriter() {
+         return true;
       }
    }
 
@@ -938,6 +1134,8 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    private static class OutputStreamRandomAccessEncoder extends Encoder {
 
       final RandomAccessOutputStream out;
+      int fieldNumber = -1;
+      OutputStreamRandomAccessEncoder childEncoder = null;
 
       public OutputStreamRandomAccessEncoder(RandomAccessOutputStream out) {
          this.out = out;
@@ -1198,6 +1396,40 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
             value >>>= 7;
          }
          return i;
+      }
+
+      @Override
+      Encoder subEncoder(int number) {
+         // This code handles caching a child encoder for each encoder in the chain. For example if you had an object
+         // with repeated fields the child encoder will be "initialized" each time but reuses the same encoder
+         // underneath for the child objects. Note these encoders are also chained together which allows for caching
+         // as many layers down as we support context depth
+         if (childEncoder == null) {
+            childEncoder = new OutputStreamRandomAccessEncoder() {
+               @Override
+               void close() throws IOException {
+                  OutputStreamRandomAccessEncoder.this.writeLengthDelimitedField(fieldNumber, out.getPosition());
+                  if (out.getPosition() > 0) {
+                     // TODO: remove this array copy somehow
+                     OutputStreamRandomAccessEncoder.this.writeBytes(out.toByteArray(), 0, out.getPosition());
+                  }
+                  fieldNumber = -1;
+                  out.reset();
+               }
+            };
+         }
+         // This just asserts every childEncoder is properly closed
+         assert childEncoder.fieldNumber == -1;
+         childEncoder.fieldNumber = number;
+         return childEncoder;
+      }
+
+      @Override
+      void close() throws IOException {
+         // This method should only be invoked for outer encoders only!
+         assert fieldNumber == -1;
+         super.close();
+         out.reset();
       }
    }
 }
