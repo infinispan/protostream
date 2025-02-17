@@ -17,7 +17,8 @@ import org.infinispan.protostream.types.java.CommonTypes;
             MapOfLong.class,
             MapOfString.class,
             MapOfUUID.class,
-            MapOfMapOfUUID.class
+            MapOfMapOfUUID.class,
+            MapOverlappingMarshallerDelegate.class
       }
 )
 public interface MapSchema extends GeneratedSchema {

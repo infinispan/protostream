@@ -173,7 +173,11 @@ public abstract class AbstractMarshallerCodeGenerator {
     * Make field name for caching a marshaller delegate for a related message.
     */
    protected String makeMarshallerDelegateFieldName(ProtoFieldMetadata field) {
-      return "__md$" + field.getNumber() + (field.getJavaType().isEnum() ? "e" : "");
+      String name = "__md$" + field.getNumber();
+      if (field instanceof ProtoMapMetadata mapMetadata) {
+         field = mapMetadata.getValue();
+      }
+      return name + (field.getJavaType().isEnum() ? "e" : "");
    }
 
    /**
@@ -549,8 +553,8 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.println("int $len = $in.readUInt32();");
             iw.println("int $limit = $in.pushLimit($len);");
             iw.println("int $t = $in.readTag();");
-            String key = generateMapFieldReadMethod(mapMetadata.getKey(), iw, true);
-            String value = generateMapFieldReadMethod(mapMetadata.getValue(), iw, false);
+            String key = generateMapFieldReadMethod(mapMetadata, mapMetadata.getKey(), iw, true);
+            String value = generateMapFieldReadMethod(mapMetadata, mapMetadata.getValue(), iw, false);
             iw.printf("%s.put(%s, %s);\n", makeCollectionLocalVar(mapMetadata), key, value);
             iw.println("$in.checkLastTagWas(0);");
             iw.println("$in.popLimit($limit);");
@@ -563,7 +567,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.dec().println("}");
    }
 
-   private String generateMapFieldReadMethod(ProtoFieldMetadata fieldMetadata, IndentWriter iw, boolean readNext) {
+   private String generateMapFieldReadMethod(ProtoMapMetadata mapMetadata, ProtoFieldMetadata fieldMetadata, IndentWriter iw, boolean isKey) {
       final String v = "__mv$" + fieldMetadata.getNumber();
       iw.printf("%s %s = %s;\n", fieldMetadata.getJavaTypeName(), v, fieldMetadata.getProtobufType().getJavaType().defaultValueAsString());
       iw.printf("if ($t == %s) {\n", makeFieldTag(fieldMetadata.getNumber(), fieldMetadata.getProtobufType().getWireType()));
@@ -591,7 +595,10 @@ public abstract class AbstractMarshallerCodeGenerator {
             break;
          }
          case MESSAGE: {
-            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            // Type can only be MESSAGE for Map values
+            assert !isKey;
+            String fieldName = makeMarshallerDelegateFieldName(mapMetadata);
+            String mdField = initMarshallerDelegateField(iw, fieldName, fieldMetadata);
             iw.println("int length = $in.readUInt32();");
             iw.println("int oldLimit = $in.pushLimit(length);");
             iw.printf("%s = (%s) readMessage(%s, $1);\n", v, fieldMetadata.getJavaTypeName(), mdField);
@@ -600,7 +607,10 @@ public abstract class AbstractMarshallerCodeGenerator {
             break;
          }
          case ENUM: {
-            String mdField = initMarshallerDelegateField(iw, fieldMetadata);
+            // Type can only be ENUM for Map values
+            assert !isKey;
+            String fieldName = makeMarshallerDelegateFieldName(mapMetadata);
+            String mdField = initMarshallerDelegateField(iw, fieldName, fieldMetadata);
             iw.println("int enumVal = $in.readEnum();");
             iw.printf("%s = (%s) %s.getMarshaller().decode(enumVal);\n", v, fieldMetadata.getJavaTypeName(), mdField);
             break;
@@ -608,7 +618,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          default:
             throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
       }
-      if (readNext) {
+      if (isKey) {
          iw.println("$t = $in.readTag();");
       }
       iw.dec().println("}");
@@ -772,7 +782,7 @@ public abstract class AbstractMarshallerCodeGenerator {
                   iw.inc();
                   iw.println("$out = $n.getWriter();");
                   writeFieldValue(mapFieldMetadata.getKey(), iw, v + ".getKey()", "$out");
-                  writeFieldValue(mapFieldMetadata.getValue(), iw, v + ".getValue()", "$out");
+                  writeMapFieldValue(mapFieldMetadata, mapFieldMetadata.getValue(), iw, v + ".getValue()", "$out");
                   iw.dec();
                   iw.println("}");
                   iw.printf("$out = (%s) $1.getWriter();\n", TagWriterImpl.class.getName());
@@ -874,8 +884,38 @@ public abstract class AbstractMarshallerCodeGenerator {
       }
    }
 
+   private void writeMapFieldValue(ProtoMapMetadata mapMetadata, ProtoFieldMetadata fieldMetadata, IndentWriter iw, String v, String out) {
+      String fieldName, mdField;
+      switch (fieldMetadata.getProtobufType()) {
+         case MESSAGE:
+            iw.println("{");
+            iw.inc();
+            fieldName = makeMarshallerDelegateFieldName(mapMetadata);
+            mdField = initMarshallerDelegateField(iw, fieldName, fieldMetadata);
+            iw.printf("writeNestedMessage(%s, %s, %d, %s);\n", mdField, out, fieldMetadata.getNumber(), v);
+            iw.dec();
+            iw.println("}");
+            break;
+         case ENUM:
+            iw.println("{");
+            iw.inc();
+            fieldName = makeMarshallerDelegateFieldName(mapMetadata);
+            mdField = initMarshallerDelegateField(iw, fieldName, fieldMetadata);
+            iw.printf("%s.writeEnum(%d, %s.getMarshaller().encode(%s));\n", out, fieldMetadata.getNumber(), mdField, v);
+            iw.dec();
+            iw.println("}");
+            break;
+         default:
+            writeFieldValue(fieldMetadata, iw, v, out);
+      }
+   }
+
    private String initMarshallerDelegateField(IndentWriter iw, ProtoFieldMetadata fieldMetadata) {
       String fieldName = makeMarshallerDelegateFieldName(fieldMetadata);
+      return initMarshallerDelegateField(iw, fieldName, fieldMetadata);
+   }
+
+   private String initMarshallerDelegateField(IndentWriter iw, String fieldName, ProtoFieldMetadata fieldMetadata) {
       iw.printf("if (%s == null) %s = ", fieldName, fieldName);
       if (fieldMetadata.getJavaType().isEnum()) {
          iw.printf("(%s.impl.EnumMarshallerDelegate)", PROTOSTREAM_PACKAGE);
