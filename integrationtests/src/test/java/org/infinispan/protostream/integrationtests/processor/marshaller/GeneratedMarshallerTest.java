@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -31,6 +32,7 @@ import org.infinispan.protostream.integrationtests.processor.marshaller.model.Ma
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfMapOfUUID;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfString;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOfUUID;
+import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOverlappingMarshallerDelegate;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapSchema;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.ModelWithMap;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.NullTestModel;
@@ -97,6 +99,18 @@ public class GeneratedMarshallerTest {
       assertEquals(maps.getAdapterMap(), copy.getAdapterMap());
       assertEquals(maps.getSimpleMap(), copy.getSimpleMap());
       assertEquals(maps.getEnumMap(), copy.getEnumMap());
+   }
+
+   @Test
+   public void testMapsOverlappingMarshallerDelegate() throws IOException {
+      var ctx = ProtobufUtil.newSerializationContext();
+      MapSchema.INSTANCE.registerSchema(ctx);
+      MapSchema.INSTANCE.registerMarshallers(ctx);
+
+      var overlappingMap =  new MapOverlappingMarshallerDelegate(BigInteger.ONE, Map.of(1, UUID.randomUUID()));
+      var bytes = ProtobufUtil.toWrappedByteArray(ctx, overlappingMap);
+      var copy = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(overlappingMap, copy);
    }
 
    @Test

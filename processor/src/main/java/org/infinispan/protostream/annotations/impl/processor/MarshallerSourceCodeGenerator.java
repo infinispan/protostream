@@ -290,22 +290,28 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
    }
 
    private void addMarshallerDelegateField(IndentWriter iw, ProtoFieldMetadata fieldMetadata, Set<String> addedFields) {
+      String fieldName;
       switch (fieldMetadata.getProtobufType()) {
          case GROUP:
          case MESSAGE:
          case ENUM:
-            String fieldName = makeMarshallerDelegateFieldName(fieldMetadata);
-            // add the field only if it does not already exist. if there is more than one usage of a marshaller then we could try to add it twice
-            if (addedFields.add(fieldName)) {
-               Class<?> marshallerDelegateClass = fieldMetadata.getJavaType().isEnum() ? EnumMarshallerDelegate.class : BaseMarshallerDelegate.class;
-               iw.append("private ").append(marshallerDelegateClass.getName()).append(' ').append(fieldName).append(";\n\n");
-            }
+            fieldName = makeMarshallerDelegateFieldName(fieldMetadata);
+            addMarshallerDelegateField(iw, fieldName, fieldMetadata, addedFields);
             break;
          case MAP:
             ProtoMapMetadata mapMetadata = (ProtoMapMetadata) fieldMetadata;
-            addMarshallerDelegateField(iw, mapMetadata.getKey(), addedFields);
-            addMarshallerDelegateField(iw, mapMetadata.getValue(), addedFields);
+            fieldName = makeMarshallerDelegateFieldName(mapMetadata);
+            // No need to process delegate field for Map key as the protobuf spec stimulates it must be a Scalar type
+            addMarshallerDelegateField(iw, fieldName, mapMetadata.getValue(), addedFields);
             break;
+      }
+   }
+
+   private void addMarshallerDelegateField(IndentWriter iw, String fieldName, ProtoFieldMetadata fieldMetadata, Set<String> addedFields) {
+      // add the field only if it does not already exist. if there is more than one usage of a marshaller then we could try to add it twice
+      if (addedFields.add(fieldName)) {
+         Class<?> marshallerDelegateClass = fieldMetadata.getJavaType().isEnum() ? EnumMarshallerDelegate.class : BaseMarshallerDelegate.class;
+         iw.append("private ").append(marshallerDelegateClass.getName()).append(' ').append(fieldName).append(";\n\n");
       }
    }
 
