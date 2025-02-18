@@ -8,7 +8,9 @@ import java.nio.ByteBuffer;
  *
  * @author anistor@redhat.com
  * @since 4.0
+ * @deprecated since 5.0.14
  */
+@Deprecated(since = "5.0.14", forRemoval = true)
 public final class ByteArrayOutputStreamEx extends ByteArrayOutputStream {
 
    public ByteArrayOutputStreamEx() {
