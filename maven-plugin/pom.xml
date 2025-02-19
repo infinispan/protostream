@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>parent</artifactId>
-        <version>6.0.0-SNAPSHOT</version>
+        <version>6.0.0.Dev04</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
