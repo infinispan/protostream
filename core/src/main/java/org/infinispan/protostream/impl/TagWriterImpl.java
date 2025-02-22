@@ -1134,8 +1134,6 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    private static class OutputStreamRandomAccessEncoder extends Encoder {
 
       final RandomAccessOutputStream out;
-      int fieldNumber = -1;
-      OutputStreamRandomAccessEncoder childEncoder = null;
 
       public OutputStreamRandomAccessEncoder(RandomAccessOutputStream out) {
          this.out = out;
@@ -1363,7 +1361,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          return i;
       }
 
-      private int writeVarInt32Direct(int i, int value) throws IOException {
+      int writeVarInt32Direct(int i, int value) throws IOException {
          while (true) {
             if ((value & 0xFFFFFF80) == 0) {
                out.write(i++, (byte) value);
@@ -1389,47 +1387,53 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          return i;
       }
 
-      private static int varIntBytes(long value) {
-         int i = 1;
-         while ((value & 0xFFFFFFFFFFFFFF80L) != 0) {
-            ++i;
-            value >>>= 7;
-         }
-         return i;
+      @Override
+      Encoder subEncoder(int number) throws IOException {
+         // We assume worse case for tag and 1 byte for length
+         out.ensureCapacity(6);
+         int pos = out.getPosition();
+         pos = writeVarInt32Direct(pos, WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
+         out.setPosition(pos + 1);
+         // We just skip a byte, assuming the nested message is less than 128. If it isn't we will move it later
+         return new ChildOutputStreamRandomAccessEncoder(out);
       }
 
       @Override
-      Encoder subEncoder(int number) {
-         // This code handles caching a child encoder for each encoder in the chain. For example if you had an object
-         // with repeated fields the child encoder will be "initialized" each time but reuses the same encoder
-         // underneath for the child objects. Note these encoders are also chained together which allows for caching
-         // as many layers down as we support context depth
-         if (childEncoder == null) {
-            childEncoder = new OutputStreamRandomAccessEncoder() {
-               @Override
-               void close() throws IOException {
-                  OutputStreamRandomAccessEncoder.this.writeLengthDelimitedField(fieldNumber, out.getPosition());
-                  if (out.getPosition() > 0) {
-                     // TODO: remove this array copy somehow
-                     OutputStreamRandomAccessEncoder.this.writeBytes(out.toByteArray(), 0, out.getPosition());
-                  }
-                  fieldNumber = -1;
-                  out.reset();
-               }
-            };
-         }
-         // This just asserts every childEncoder is properly closed
-         assert childEncoder.fieldNumber == -1;
-         childEncoder.fieldNumber = number;
-         return childEncoder;
-      }
-
-      @Override
-      void close() throws IOException {
+      public void close() throws IOException {
          // This method should only be invoked for outer encoders only!
-         assert fieldNumber == -1;
          super.close();
          out.reset();
+      }
+   }
+
+   static int varIntBytes(long value) {
+      int i = 1;
+      while ((value & 0xFFFFFFFFFFFFFF80L) != 0) {
+         ++i;
+         value >>>= 7;
+      }
+      return i;
+   }
+
+   static class ChildOutputStreamRandomAccessEncoder extends OutputStreamRandomAccessEncoder {
+      private final int startPos;
+
+      private ChildOutputStreamRandomAccessEncoder(RandomAccessOutputStream raos) {
+         super(raos);
+         this.startPos = raos.getPosition();
+      }
+
+      @Override
+      public void close() throws IOException {
+         int posDifference = out.getPosition() - startPos;
+         if (posDifference < 128) {
+            out.write(startPos - 1, posDifference);
+         } else {
+            int bytesRequired = varIntBytes(posDifference);
+            out.move(startPos, posDifference, startPos + bytesRequired - 1);
+            writeVarInt32Direct(startPos - 1, posDifference);
+            out.setPosition(out.getPosition() + bytesRequired - 1);
+         }
       }
    }
 }

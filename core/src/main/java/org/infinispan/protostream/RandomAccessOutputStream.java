@@ -112,6 +112,14 @@ public interface RandomAccessOutputStream extends Closeable {
    void write(int position, byte[] b, int off, int len) throws IOException;
 
    /**
+    * Moves bytes forward in the internal data stream.
+    * @param startPos the starting position of the existing data
+    * @param length how many bytes to be moved
+    * @param newPos the new starting position of the data
+    */
+   void move(int startPos, int length, int newPos);
+
+   /**
     * Write all bytes in this stream to the provided {@link DataOutput} stream
     * @param output the stream to write this stream's bytes to
     */

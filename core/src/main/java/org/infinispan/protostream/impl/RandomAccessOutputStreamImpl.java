@@ -64,6 +64,13 @@ public class RandomAccessOutputStreamImpl extends OutputStream implements Random
    }
 
    @Override
+   public void move(int startPos, int length, int newPos) {
+      assert startPos < newPos;
+      ensureCapacity(newPos + length);
+      System.arraycopy(buf, startPos, buf, newPos, length);
+   }
+
+   @Override
    public void ensureCapacity(int capacity) {
       if (buf == null) {
          buf = new byte[Math.max(MIN_SIZE, capacity)];
