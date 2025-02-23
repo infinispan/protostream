@@ -60,7 +60,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parent, RandomAccessOutputStream output) {
-      return new TagWriterImpl((TagWriterImpl) parent, new OutputStreamRandomAccessEncoder(output));
+      return new TagWriterImpl((TagWriterImpl) parent, new ChildOutputStreamRandomAccessEncoder(output));
    }
 
    public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parent, OutputStream output) {
@@ -76,7 +76,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, RandomAccessOutputStream output) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamRandomAccessEncoder(output));
+      return new TagWriterImpl((SerializationContextImpl) serCtx, new ChildOutputStreamRandomAccessEncoder(output));
    }
 
    /**
@@ -1409,23 +1409,51 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    static class ChildOutputStreamRandomAccessEncoder extends OutputStreamRandomAccessEncoder {
-      private final int startPos;
+      private int[] positions;
+      private int head;
 
       private ChildOutputStreamRandomAccessEncoder(RandomAccessOutputStream raos) {
          super(raos);
-         this.startPos = raos.getPosition();
+      }
+
+      @Override
+      boolean canReuseWriter() {
+         return true;
+      }
+
+      @Override
+      Encoder subEncoder(int number, int maxDepth) throws IOException {
+         out.ensureCapacity(MAX_INT_VARINT_SIZE + 1);
+         int pos = out.getPosition();
+         pos = writeVarInt32Direct(pos, WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
+         out.setPosition(pos + 1);
+         if (positions == null) {
+            positions = new int[10];
+         } else if (head == positions.length) {
+            int newSize = Math.min(head + 10, maxDepth);
+            if (newSize == maxDepth) {
+               throw log.maxNestedMessageDepth(maxDepth, null);
+            }
+            positions = Arrays.copyOf(positions, newSize);
+         }
+         positions[head++] = pos + 1;
+         return this;
       }
 
       @Override
       public void close() throws IOException {
-         int posDifference = out.getPosition() - startPos;
+         if (positions == null || head == 0) {
+            return;
+         }
+         int storedPos = positions[--head];
+         int posDifference = out.getPosition() - storedPos;
          if (posDifference < 128) {
-            out.write(startPos - 1, posDifference);
+            out.write(storedPos - 1, posDifference);
          } else {
             // We have to precalculate the var int size to know how far to shift to avoid overwriting data
             int bytesRequired = varIntBytes(posDifference);
-            out.move(startPos, posDifference, startPos + bytesRequired - 1);
-            writeVarInt32Direct(startPos - 1, posDifference);
+            out.move(storedPos, posDifference, storedPos + bytesRequired - 1);
+            writeVarInt32Direct(storedPos - 1, posDifference);
             out.setPosition(out.getPosition() + bytesRequired - 1);
          }
       }
