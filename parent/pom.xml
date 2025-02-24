@@ -3,13 +3,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.jboss</groupId>
-        <artifactId>jboss-parent</artifactId>
-        <version>48</version>
-        <relativePath/>
-    </parent>
-
     <groupId>org.infinispan.protostream</groupId>
     <artifactId>parent</artifactId>
     <version>6.0.0-SNAPSHOT</version>
@@ -103,25 +96,23 @@
         <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/
         </jboss.snapshots.repo.url>
 
-        <!-- overwrite plugins version from jboss-parent -->
+        <!-- plugins version -->
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
         <version.antrun.plugin>3.1.0</version.antrun.plugin>
         <version.artifact.plugin>3.6.0</version.artifact.plugin>
-        <version.buildnumber.plugin>3.2.0</version.buildnumber.plugin>
+        <version.buildnumber.plugin>3.2.1</version.buildnumber.plugin>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
-        <version.compiler.plugin>3.12.1</version.compiler.plugin>
+        <version.compiler.plugin>3.14.0</version.compiler.plugin>
         <version.enforcer.plugin>3.5.0</version.enforcer.plugin>
         <version.install.plugin>3.1.3</version.install.plugin>
-        <version.jar.plugin>3.3.0</version.jar.plugin>
-        <version.javadoc.plugin>3.6.0</version.javadoc.plugin>
+        <version.jar.plugin>3.4.2</version.jar.plugin>
+        <version.javadoc.plugin>3.11.2</version.javadoc.plugin>
         <version.plugin.api>3.9.9</version.plugin.api>
         <version.scm.plugin>2.1.0</version.scm.plugin>
-        <version.source.plugin>3.3.0</version.source.plugin>
-        <version.surefire.plugin>3.1.2</version.surefire.plugin>
-
-        <!-- plugins version -->
-        <version.maven.javacc>3.0.1</version.maven.javacc>
+        <version.source.plugin>3.3.1</version.source.plugin>
+        <version.surefire.plugin>3.5.2</version.surefire.plugin>
+        <version.maven.javacc>3.1.0</version.maven.javacc>
         <version.maven.nexus-staging>1.7.0</version.maven.nexus-staging>
         <version.maven.gpg>3.2.7</version.maven.gpg>
         <version.maven.plugin-tools>3.15.1</version.maven.plugin-tools>
@@ -399,6 +390,7 @@
 
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${version.compiler.plugin}</version>
                     <configuration>
                         <release>${maven.compiler.target}</release>
                         <encoding>UTF-8</encoding>
@@ -518,6 +510,26 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${version.jar.plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${version.source.plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.javadoc.plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.xolstice.maven.plugins</groupId>
+                    <artifactId>protobuf-maven-plugin</artifactId>
+                    <version>${version.protobuf.plugin}</version>
+                </plugin>
 
             </plugins>
 
@@ -551,7 +563,7 @@
                                     <version>[${maven.compiler.target},)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>[3.6.0,)</version>
+                                    <version>[3.6.3,)</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
@@ -574,7 +586,6 @@
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-                <version>${version.protobuf.plugin}</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
