@@ -126,7 +126,7 @@
         <version.jcipannotations>1.0</version.jcipannotations>
         <version.jboss.logging>3.6.1.Final</version.jboss.logging>
         <version.jboss.logging.annotations>3.0.4.Final</version.jboss.logging.annotations>
-        <version.jboss.logging.processor>3.0.3.Final</version.jboss.logging.processor>
+        <version.jboss.logging.processor>3.0.4.Final</version.jboss.logging.processor>
         <version.log4j>2.24.3</version.log4j>
         <version.jboss.marshalling>2.2.2.Final</version.jboss.marshalling>
         <version.jackson>2.18.2</version.jackson>
