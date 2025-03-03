@@ -12,7 +12,6 @@ import org.infinispan.protostream.containers.IterableElementContainerAdapter;
 import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.EnumMarshallerDelegate;
-import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.TagReaderImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;
@@ -315,11 +314,9 @@ public final class WrappedMessage {
          if (t.getClass().isEnum()) {
             ((EnumMarshallerDelegate) marshallerDelegate).encode(WRAPPED_ENUM, (Enum<?>) t, out);
          } else {
-            RandomAccessOutputStream buffer = new RandomAccessOutputStreamImpl();
-            TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, buffer);
-            marshallerDelegate.marshall(nestedCtx, null, t);
-            nestedCtx.flush();
-            out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
+            try (TagWriter nestedWriter  = out.subWriter(WRAPPED_MESSAGE, false)) {
+               marshallerDelegate.marshall((ProtobufTagMarshaller.WriteContext) nestedWriter, null, t);
+            }
          }
       }
       out.flush();
@@ -339,25 +336,24 @@ public final class WrappedMessage {
       int containerSize = ((ElementContainerAdapter) containerMarshaller).getNumElements(container);
       out.writeUInt32(WRAPPED_CONTAINER_SIZE, containerSize);
 
-      RandomAccessOutputStream buffer = new RandomAccessOutputStreamImpl();
-      TagWriterImpl nestedCtx = TagWriterImpl.newInstance(ctx, buffer);
-      marshallerDelegate.marshall(nestedCtx, null, container);
-      nestedCtx.flush();
-      out.writeBytes(WRAPPED_CONTAINER_MESSAGE, buffer.getByteBuffer());
+      try (TagWriterImpl nestedCtx = (TagWriterImpl) out.subWriter(WRAPPED_CONTAINER_MESSAGE, false)) {
+         marshallerDelegate.marshall(nestedCtx, null, container);
+      }
+
 
       if (ctx.getConfiguration().wrapCollectionElements()) {
-         writeContainerWrappingElements(containerMarshaller, containerSize, container, ctx, out, buffer);
+         writeContainerWrappingElements(containerMarshaller, containerSize, container, ctx, out);
       } else {
          writeContainerWithoutWrappingElements(containerMarshaller, containerSize, container, ctx, out);
       }
    }
 
    private static void writeContainerWrappingElements(BaseMarshaller containerMarshaller, int containerSize, Object container,
-                                                      ImmutableSerializationContext ctx, TagWriter out, RandomAccessOutputStream buffer) throws IOException {
+                                                      ImmutableSerializationContext ctx, TagWriter out) throws IOException {
       if (containerMarshaller instanceof IterableElementContainerAdapter) {
          Iterator<?> elements = ((IterableElementContainerAdapter) containerMarshaller).getElements(container);
          for (int i = 0; i < containerSize; i++) {
-            writeContainerElementWrapped(ctx, out, buffer, elements.next());
+            writeContainerElementWrapped(ctx, out, elements.next());
          }
          if (elements.hasNext()) {
             throw new IllegalStateException("Container number of elements mismatch");
@@ -365,7 +361,7 @@ public final class WrappedMessage {
       } else if (containerMarshaller instanceof IndexedElementContainerAdapter) {
          IndexedElementContainerAdapter adapter = (IndexedElementContainerAdapter) containerMarshaller;
          for (int i = 0; i < containerSize; i++) {
-            writeContainerElementWrapped(ctx, out, buffer, adapter.getElement(container, i));
+            writeContainerElementWrapped(ctx, out, adapter.getElement(container, i));
          }
       } else {
          throw new IllegalStateException("Unknown container adapter kind : " + containerMarshaller.getJavaClass().getName());
@@ -392,15 +388,13 @@ public final class WrappedMessage {
       }
    }
 
-   private static void writeContainerElementWrapped(ImmutableSerializationContext ctx, TagWriter out, RandomAccessOutputStream buffer, Object e) throws IOException {
+   private static void writeContainerElementWrapped(ImmutableSerializationContext ctx, TagWriter out, Object e) throws IOException {
       if (tryWritePrimitive(out, e, true)) {
          return;
       }
-      buffer.reset();
-      TagWriterImpl elementWriter = TagWriterImpl.newInstance(ctx, buffer);
-      writeMessage(ctx, elementWriter, e, true);
-      elementWriter.flush();
-      out.writeBytes(WRAPPED_MESSAGE, buffer.getByteBuffer());
+      try (TagWriter elementWriter = out.subWriter(WRAPPED_MESSAGE, false)) {
+         writeMessage(ctx, elementWriter, e, true);
+      }
    }
 
    static <T> T read(ImmutableSerializationContext ctx, TagReader in) throws IOException {

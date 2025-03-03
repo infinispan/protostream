@@ -9,10 +9,15 @@ import org.infinispan.protostream.descriptors.WireType;
  * @author anistor@redhat.com
  * @since 4.4
  */
-public interface TagWriter {
+public interface TagWriter extends AutoCloseable {
 
    // start low level ops
    void flush() throws IOException;
+
+   @Override
+   default void close() throws IOException {
+      flush();
+   }
 
    void writeTag(int number, int wireType) throws IOException;
 
@@ -62,4 +67,14 @@ public interface TagWriter {
 
    void writeBytes(int number, byte[] value, int offset, int length) throws IOException;
    // end high level ops
+
+   /**
+    * Used to write a sub message that can be optimized by implementation. When the sub writer is complete, flush
+    * should also be invoked to ensure all data is pushed to the parent writer as necessary.
+    * @param number the field type number
+    * @param nested if the subWriter is nested in another message
+    * @return a writer that will handle the nested message writing
+    * @throws IOException if there is an exception while writing data
+    */
+   TagWriter subWriter(int number, boolean nested) throws IOException;
 }

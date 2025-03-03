@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl;
 
 import static org.infinispan.protostream.descriptors.WireType.FIXED_32_SIZE;
 import static org.infinispan.protostream.descriptors.WireType.FIXED_64_SIZE;
+import static org.infinispan.protostream.descriptors.WireType.MAX_INT_VARINT_SIZE;
 import static org.infinispan.protostream.descriptors.WireType.MAX_VARINT_SIZE;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,7 +60,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parent, RandomAccessOutputStream output) {
-      return new TagWriterImpl((TagWriterImpl) parent, new OutputStreamRandomAccessEncoder(output));
+      return new TagWriterImpl((TagWriterImpl) parent, new ChildOutputStreamRandomAccessEncoder(output));
    }
 
    public static TagWriterImpl newNestedInstance(ProtobufTagMarshaller.WriteContext parent, OutputStream output) {
@@ -74,7 +76,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, RandomAccessOutputStream output) {
-      return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamRandomAccessEncoder(output));
+      return new TagWriterImpl((SerializationContextImpl) serCtx, new ChildOutputStreamRandomAccessEncoder(output));
    }
 
    /**
@@ -118,6 +120,11 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    @Override
    public void flush() throws IOException {
       encoder.flush();
+   }
+
+   @Override
+   public void close() throws IOException {
+      encoder.close();
    }
 
    @Override
@@ -242,6 +249,16 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    }
 
    @Override
+   public TagWriter subWriter(int number, boolean nested) throws IOException {
+      Encoder subEncoder = encoder.subEncoder(number, serCtx.getConfiguration().maxNestedMessageDepth());
+      if (subEncoder.canReuseWriter()) {
+         return this;
+      }
+      return nested ? new TagWriterImpl(this, subEncoder) :
+            new TagWriterImpl(serCtx, subEncoder);
+   }
+
+   @Override
    public SerializationContextImpl getSerializationContext() {
       return serCtx;
    }
@@ -292,11 +309,22 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
    //todo [anistor] need to provide a safety mechanism to limit message size in bytes and message nesting depth on write ops
    private abstract static class Encoder {
-
       /**
        * Commits the witten bytes after several write operations were performed. Updates counters, positions, whatever.
        */
       void flush() throws IOException {
+      }
+
+      boolean canReuseWriter() {
+         return false;
+      }
+
+      /**
+       * Method to be invoked when the encoder is no longer used. Data should be flushed and any resources are freed
+       * @throws IOException
+       */
+      void close() throws IOException {
+         flush();
       }
 
       // high level ops, writing fields
@@ -362,15 +390,127 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       abstract void writeBytes(byte[] value, int offset, int length) throws IOException;
 
       abstract void writeBytes(ByteBuffer value) throws IOException;
+
+      Encoder subEncoder(int number, int maxDepth) throws IOException {
+         RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl();
+         return new WrappedEncoder(new OutputStreamRandomAccessEncoder(raos)) {
+            @Override
+            void close() throws IOException {
+               Encoder.this.writeBytes(number, raos.getByteBuffer());
+               super.close();
+            }
+         };
+      }
+   }
+
+   private static class WrappedEncoder extends Encoder {
+      private final Encoder innerEncoder;
+
+      private WrappedEncoder(Encoder parentEncoder) {
+         this.innerEncoder = parentEncoder;
+      }
+
+      @Override
+      void writeVarint32(int value) throws IOException {
+         innerEncoder.writeVarint32(value);
+      }
+
+      @Override
+      void writeVarint64(long value) throws IOException {
+         innerEncoder.writeVarint64(value);
+      }
+
+      @Override
+      void writeFixed32(int value) throws IOException {
+         innerEncoder.writeFixed32(value);
+      }
+
+      @Override
+      void writeFixed64(long value) throws IOException {
+         innerEncoder.writeFixed64(value);
+      }
+
+      @Override
+      void writeByte(byte value) throws IOException {
+         innerEncoder.writeByte(value);
+      }
+
+      @Override
+      void writeBytes(byte[] value, int offset, int length) throws IOException {
+         innerEncoder.writeBytes(value, offset, length);
+      }
+
+      @Override
+      void writeBytes(ByteBuffer value) throws IOException {
+         innerEncoder.writeBytes(value);
+      }
+
+      @Override
+      void writeUInt32Field(int fieldNumber, int value) throws IOException {
+         innerEncoder.writeUInt32Field(fieldNumber, value);
+      }
+
+      @Override
+      void writeUInt64Field(int fieldNumber, long value) throws IOException {
+         innerEncoder.writeUInt64Field(fieldNumber, value);
+      }
+
+      @Override
+      void writeFixed32Field(int fieldNumber, int value) throws IOException {
+         innerEncoder.writeFixed32Field(fieldNumber, value);
+      }
+
+      @Override
+      void writeFixed64Field(int fieldNumber, long value) throws IOException {
+         innerEncoder.writeFixed64Field(fieldNumber, value);
+      }
+
+      @Override
+      void writeBoolField(int fieldNumber, boolean value) throws IOException {
+         innerEncoder.writeBoolField(fieldNumber, value);
+      }
+
+      @Override
+      void writeLengthDelimitedField(int fieldNumber, int length) throws IOException {
+         innerEncoder.writeLengthDelimitedField(fieldNumber, length);
+      }
+
+      @Override
+      void writeBytes(int fieldNumber, ByteBuffer value) throws IOException {
+         innerEncoder.writeBytes(fieldNumber, value);
+      }
+
+      @Override
+      void writeBytes(int fieldNumber, byte[] value, int offset, int length) throws IOException {
+         innerEncoder.writeBytes(fieldNumber, value, offset, length);
+      }
+
+      @Override
+      void writeUTF8Field(int fieldNumber, String value) throws IOException {
+         innerEncoder.writeUTF8Field(fieldNumber, value);
+      }
+
+      @Override
+      void flush() throws IOException {
+         innerEncoder.flush();
+      }
+
+      @Override
+      void close() throws IOException {
+         innerEncoder.close();
+      }
    }
 
    /**
     * An encoder that just counts the bytes and does not write anything and does not allocate buffers.
     * Useful for computing message size.
     */
-   private static final class NoOpEncoder extends Encoder {
+   static class NoOpEncoder extends Encoder {
 
-      private int count = 0;
+      protected int count = 0;
+      protected int[] nestedPositions;
+      // This will always be one position higher than any encoder size position
+      protected int head;
 
       int getWrittenBytes() {
          return count;
@@ -381,6 +521,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
        */
       void reset() {
          count = 0;
+         head = 0;
       }
 
       @Override
@@ -428,6 +569,66 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       @Override
       void writeFixed64(long value) {
          count += FIXED_64_SIZE;
+      }
+
+      @Override
+      void writeUTF8Field(int fieldNumber, String s) {
+         writeVarint32(WireType.makeTag(fieldNumber, WireType.WIRETYPE_VARINT));
+         char c;
+         int i;
+         int count = s.length();
+         for (i = 0; i < count; i++) {
+            c = s.charAt(i);
+            if (c > 127) {
+               // TODO: do this without allocating the byte[]
+               count = s.getBytes(StandardCharsets.UTF_8).length;
+               break;
+            }
+         }
+         writeVarint32(count);
+         this.count += count;
+      }
+
+      @Override
+      Encoder subEncoder(int number, int maxDepth) {
+         writeVarint32(WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
+         resize(maxDepth);
+         encoderStartPos(count);
+         return this;
+      }
+
+      void encoderStartPos(int size) {
+         nestedPositions[head++] = size;
+      }
+
+      void resize(int maxDepth) {
+         if (nestedPositions == null) {
+            // We are guessing most objects won't have larger than 4 sub elements
+            nestedPositions = new int[10];
+         } else {
+            if (head == nestedPositions.length) {
+               int newLength = Math.min(nestedPositions.length + 10, maxDepth);
+               if (newLength == maxDepth) {
+                  throw log.maxNestedMessageDepth(maxDepth, null);
+               }
+               nestedPositions = Arrays.copyOf(nestedPositions, newLength);
+            }
+         }
+      }
+
+      @Override
+      public void close() {
+         if (nestedPositions != null) {
+            if (head > 0) {
+               int lastSize = nestedPositions[--head];
+               writeVarint32(count - lastSize);
+            }
+         }
+      }
+
+      @Override
+      boolean canReuseWriter() {
+         return true;
       }
    }
 
@@ -947,9 +1148,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       void writeUInt32Field(int fieldNumber, int value) throws IOException {
          int pos = out.getPosition();
          int tag = WireType.makeTag(fieldNumber, WireType.WIRETYPE_VARINT);
-         int tagLen = varIntBytes(tag);
-         int valueLen = varIntBytes(value);
-         out.ensureCapacity(pos + tagLen + valueLen);
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + MAX_INT_VARINT_SIZE);
 
          pos = writeVarInt32Direct(pos, tag);
          pos = writeVarInt32Direct(pos, value);
@@ -960,9 +1159,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       void writeUInt64Field(int fieldNumber, long value) throws IOException {
          int pos = out.getPosition();
          int tag = WireType.makeTag(fieldNumber, WireType.WIRETYPE_VARINT);
-         int tagLen = varIntBytes(tag);
-         int valueLen = varIntBytes(value);
-         out.ensureCapacity(pos + tagLen + valueLen);
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + MAX_VARINT_SIZE);
 
          pos = writeVarInt32Direct(pos, tag);
          pos = writeVarInt64Direct(pos, value);
@@ -973,8 +1170,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       void writeFixed32Field(int fieldNumber, int value) throws IOException {
          int pos = out.getPosition();
          int tag = WireType.makeTag(fieldNumber, WireType.WIRETYPE_FIXED32);
-         int tagLen = varIntBytes(tag);
-         out.ensureCapacity(pos + tagLen + FIXED_32_SIZE);
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + FIXED_32_SIZE);
 
          pos = writeVarInt32Direct(pos, tag);
          pos = writeFixed32Direct(pos, value);
@@ -985,8 +1181,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       void writeFixed64Field(int fieldNumber, long value) throws IOException {
          int pos = out.getPosition();
          int tag = WireType.makeTag(fieldNumber, WireType.WIRETYPE_FIXED64);
-         int tagLen = varIntBytes(tag);
-         out.ensureCapacity(pos + tagLen + FIXED_64_SIZE);
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + FIXED_64_SIZE);
 
          pos = writeVarInt32Direct(pos, tag);
          pos = writeFixed64Direct(pos, value);
@@ -997,8 +1192,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       void writeBoolField(int fieldNumber, boolean value) throws IOException {
          int pos = out.getPosition();
          int tag = WireType.makeTag(fieldNumber, WireType.WIRETYPE_VARINT);
-         int tagLen = varIntBytes(tag);
-         out.ensureCapacity(pos + tagLen + 1);
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + 1);
 
          pos = writeVarInt32Direct(pos, tag);
          out.write(pos++, (byte) (value ? 1 : 0));
@@ -1009,9 +1203,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       void writeLengthDelimitedField(int fieldNumber, int length) throws IOException {
          int pos = out.getPosition();
          int tag = WireType.makeTag(fieldNumber, WireType.WIRETYPE_LENGTH_DELIMITED);
-         int tagLen = varIntBytes(tag);
-         int valueLen = varIntBytes(length);
-         out.ensureCapacity(pos + tagLen + valueLen);
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + MAX_INT_VARINT_SIZE);
 
          pos = writeVarInt32Direct(pos, tag);
          pos = writeVarInt32Direct(pos, length);
@@ -1030,9 +1222,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
             int bbLen = bbPos + value.remaining();
 
             int tag = WireType.makeTag(fieldNumber, WireType.WIRETYPE_LENGTH_DELIMITED);
-            int tagLen = varIntBytes(tag);
-            int valueLen = varIntBytes(bbLen);
-            out.ensureCapacity(pos + tagLen + valueLen + bbLen);
+            out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + MAX_INT_VARINT_SIZE + bbLen);
 
             pos = writeVarInt32Direct(pos, tag);
             pos = writeVarInt32Direct(pos, bbLen);
@@ -1046,10 +1236,8 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       void writeBytes(int fieldNumber, byte[] value, int offset, int length) throws IOException {
          int pos = out.getPosition();
          int tag = WireType.makeTag(fieldNumber, WireType.WIRETYPE_LENGTH_DELIMITED);
-         int tagLen = varIntBytes(tag);
-         int valueLen = varIntBytes(length);
 
-         out.ensureCapacity(pos + tagLen + valueLen + length);
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + MAX_INT_VARINT_SIZE + length);
          pos = writeVarInt32Direct(pos, tag);
          pos = writeVarInt32Direct(pos, length);
          out.write(pos, value, offset, length);
@@ -1059,7 +1247,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       @Override
       void writeVarint32(int value) throws IOException {
          int pos = out.getPosition();
-         out.ensureCapacity(pos + varIntBytes(value));
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE);
          pos = writeVarInt32Direct(pos, value);
          out.setPosition(pos);
       }
@@ -1067,7 +1255,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       @Override
       void writeVarint64(long value) throws IOException {
          int pos = out.getPosition();
-         out.ensureCapacity(pos + varIntBytes(value));
+         out.ensureCapacity(pos + MAX_VARINT_SIZE);
          pos = writeVarInt64Direct(pos, value);
          out.setPosition(pos);
       }
@@ -1110,17 +1298,18 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       void writeUTF8Field(int number, String s) throws IOException {
          int strlen = s.length();
          int tag = WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED);
-         int varIntTagLen = varIntBytes(tag);
-         int varIntBytesLen = varIntBytes(strlen);
          int startPos = out.getPosition();
 
          // First optimize for 1 - 127 case
-         out.ensureCapacity(startPos + varIntTagLen + varIntBytesLen + strlen);
-         writeVarInt32Direct(startPos, tag);
+         // Just assume worse case for strLength and and tag and allocate 5 per
+         out.ensureCapacity(startPos + MAX_INT_VARINT_SIZE + MAX_INT_VARINT_SIZE + strlen);
+         startPos = writeVarInt32Direct(startPos, tag);
+         // Need to set position so the resize below will work if required
+         out.setPosition(startPos);
          // Note this will be overwritten if not all 1 - 127 characters below
-         writeVarInt32Direct(startPos + varIntTagLen, strlen);
+         int varIntBytesLen = writeVarInt32Direct(startPos, strlen) - startPos;
 
-         int localPos = startPos + varIntTagLen + varIntBytesLen;
+         int localPos = startPos + varIntBytesLen;
 
          int c;
          int i;
@@ -1131,18 +1320,18 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
             out.write(localPos++, (byte) c);
          }
 
-         out.setPosition(localPos);
          // All single byte characters
-         if (i == strlen)
+         if (i == strlen) {
+            out.setPosition(localPos);
             return;
+         }
 
          byte[] utf8buffer = s.getBytes(StandardCharsets.UTF_8);
-         varIntBytesLen = varIntBytes(utf8buffer.length);
-         out.ensureCapacity(startPos + varIntTagLen + varIntBytesLen + utf8buffer.length);
+         out.ensureCapacity(startPos + MAX_INT_VARINT_SIZE + utf8buffer.length);
 
-         writeVarInt32Direct(startPos + varIntTagLen, utf8buffer.length);
-         out.write(startPos + varIntTagLen + varIntBytesLen, utf8buffer);
-         out.setPosition(startPos + varIntTagLen + varIntBytesLen + utf8buffer.length);
+         startPos = writeVarInt32Direct(startPos, utf8buffer.length);
+         out.write(startPos, utf8buffer);
+         out.setPosition(startPos + utf8buffer.length);
       }
 
       private int writeFixed32Direct(int i, int value) throws IOException {
@@ -1165,7 +1354,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          return i;
       }
 
-      private int writeVarInt32Direct(int i, int value) throws IOException {
+      int writeVarInt32Direct(int i, int value) throws IOException {
          while (true) {
             if ((value & 0xFFFFFF80) == 0) {
                out.write(i++, (byte) value);
@@ -1191,13 +1380,82 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          return i;
       }
 
-      private static int varIntBytes(long value) {
-         int i = 1;
-         while ((value & 0xFFFFFFFFFFFFFF80L) != 0) {
-            ++i;
-            value >>>= 7;
+      @Override
+      Encoder subEncoder(int number, int maxDepth) throws IOException {
+         // We assume worse case for tag and 1 byte for length
+         out.ensureCapacity(MAX_INT_VARINT_SIZE + 1);
+         int pos = out.getPosition();
+         pos = writeVarInt32Direct(pos, WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
+         out.setPosition(pos + 1);
+         // We just skip a byte, assuming the nested message is less than 128. If it isn't we will move it later
+         return new ChildOutputStreamRandomAccessEncoder(out);
+      }
+
+      @Override
+      public void close() throws IOException {
+         // This method should only be invoked for outer encoders only!
+         super.close();
+         out.reset();
+      }
+   }
+
+   static int varIntBytes(long value) {
+      int i = 1;
+      while ((value & 0xFFFFFFFFFFFFFF80L) != 0) {
+         ++i;
+         value >>>= 7;
+      }
+      return i;
+   }
+
+   static class ChildOutputStreamRandomAccessEncoder extends OutputStreamRandomAccessEncoder {
+      private int[] positions;
+      private int head;
+
+      private ChildOutputStreamRandomAccessEncoder(RandomAccessOutputStream raos) {
+         super(raos);
+      }
+
+      @Override
+      boolean canReuseWriter() {
+         return true;
+      }
+
+      @Override
+      Encoder subEncoder(int number, int maxDepth) throws IOException {
+         out.ensureCapacity(MAX_INT_VARINT_SIZE + 1);
+         int pos = out.getPosition();
+         pos = writeVarInt32Direct(pos, WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
+         out.setPosition(pos + 1);
+         if (positions == null) {
+            positions = new int[10];
+         } else if (head == positions.length) {
+            int newSize = Math.min(head + 10, maxDepth);
+            if (newSize == maxDepth) {
+               throw log.maxNestedMessageDepth(maxDepth, null);
+            }
+            positions = Arrays.copyOf(positions, newSize);
          }
-         return i;
+         positions[head++] = pos + 1;
+         return this;
+      }
+
+      @Override
+      public void close() throws IOException {
+         if (positions == null || head == 0) {
+            return;
+         }
+         int storedPos = positions[--head];
+         int posDifference = out.getPosition() - storedPos;
+         if (posDifference < 128) {
+            out.write(storedPos - 1, posDifference);
+         } else {
+            // We have to precalculate the var int size to know how far to shift to avoid overwriting data
+            int bytesRequired = varIntBytes(posDifference);
+            out.move(storedPos, posDifference, storedPos + bytesRequired - 1);
+            writeVarInt32Direct(storedPos - 1, posDifference);
+            out.setPosition(out.getPosition() + bytesRequired - 1);
+         }
       }
    }
 }

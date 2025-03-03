@@ -523,4 +523,28 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
          fail("Invalid JSON found : " + json);
       }
    }
+
+   @Test
+   public void testLongNestedMessage() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+
+      User user = new User();
+      user.setId(1);
+      user.setName("John");
+      user.setSurname("Batman");
+      user.setGender(User.Gender.MALE);
+      user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
+      user.setAddresses(Arrays.asList(
+            new Address("Old Street", "XYZ42", -12),
+            // This address will serialize to be longer than 127 requiring more than 1 byte per size
+            new Address("Bond Street".repeat(12), "W23", 2),
+            new Address("Long Foo".repeat(20), "Y791", 23)
+      ));
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, user);
+
+      User userResult = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertEquals(user, userResult);
+   }
 }
