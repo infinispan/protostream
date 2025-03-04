@@ -44,7 +44,7 @@ public interface RandomAccessOutputStream extends Closeable {
    ByteBuffer getByteBuffer();
 
    /**
-    * @return a trimmed {@link byte[]} instance based upon the current {@link #getPosition()} of the array
+    * @return a trimmed <code>byte[]</code> instance based upon the current {@link #getPosition()} of the array
     */
    byte[] toByteArray();
 
