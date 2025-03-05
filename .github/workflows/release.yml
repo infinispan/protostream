@@ -35,7 +35,7 @@ jobs:
           mvn -B versions:set -DnewVersion=${{ github.event.inputs.version }} -DprocessAllModules=true
           mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
           sed -e "s/[0-9]\+\.[0-9]\+\.[0-9]\+\.Final/${{ github.event.inputs.version }}/g" README.md
-          git commit -a -m "Releasing ${{ github.event.inputs.version }}"
+          git commit -a -m "Releasing ${{ github.event.inputs.version }}" --no-verify
 
       - name: Set up Java for publishing to OSSRH
         uses: actions/setup-java@v4
@@ -63,7 +63,7 @@ jobs:
         run: |
           mvn -B versions:set -DnewVersion=${{ github.event.inputs.nextVersion }} -DprocessAllModules=true
           mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.nextVersion }}
-          git commit -a -m "Next version ${{ github.event.inputs.nextVersion }}"
+          git commit -a -m "Next version ${{ github.event.inputs.nextVersion }}" --no-verify
 
       - name: Push changes
         uses: ad-m/github-push-action@master
