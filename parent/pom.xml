@@ -85,8 +85,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-        <project.build.outputTimestamp>2025-02-19T09:57:51Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>${git.commit.time}</project.build.outputTimestamp>
 
         <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
         <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
@@ -101,10 +100,10 @@
         <maven.compiler.source>17</maven.compiler.source>
         <version.antrun.plugin>3.1.0</version.antrun.plugin>
         <version.artifact.plugin>3.6.0</version.artifact.plugin>
-        <version.buildnumber.plugin>3.2.1</version.buildnumber.plugin>
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
         <version.compiler.plugin>3.14.0</version.compiler.plugin>
         <version.enforcer.plugin>3.5.0</version.enforcer.plugin>
+        <version.git-commit-id.plugin>9.0.1</version.git-commit-id.plugin>
         <version.install.plugin>3.1.4</version.install.plugin>
         <version.jar.plugin>3.4.2</version.jar.plugin>
         <version.javadoc.plugin>3.11.2</version.javadoc.plugin>
@@ -353,11 +352,15 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>io.github.git-commit-id</groupId>
+                    <artifactId>git-commit-id-maven-plugin</artifactId>
+                    <version>${version.git-commit-id.plugin}</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-artifact-plugin</artifactId>
                     <version>${version.artifact.plugin}</version>
                 </plugin>
-
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-checkstyle-plugin</artifactId>
@@ -461,42 +464,6 @@
                     </configuration>
                 </plugin>
                 <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>buildnumber-maven-plugin</artifactId>
-                    <version>${version.buildnumber.plugin}</version>
-                    <executions>
-                        <execution>
-                            <phase>validate</phase>
-                            <goals>
-                                <goal>create</goal>
-                            </goals>
-                            <configuration>
-                                <doCheck>false</doCheck>
-                                <doUpdate>false</doUpdate>
-                                <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
-                                <timezone>UTC</timezone>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>io.github.git-commit-id</groupId>
-                    <artifactId>git-commit-id-maven-plugin</artifactId>
-                    <version>9.0.1</version>
-                    <executions>
-                        <execution>
-                            <id>get-the-git-infos</id>
-                            <goals>
-                                <goal>revision</goal>
-                            </goals>
-                            <phase>initialize</phase>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <dateFormatTimeZone>UTC</dateFormatTimeZone>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-plugin-plugin</artifactId>
                     <version>${version.maven.plugin-tools}</version>
@@ -536,6 +503,25 @@
         </pluginManagement>
 
         <plugins>
+            <plugin>
+                <groupId>io.github.git-commit-id</groupId>
+                <artifactId>git-commit-id-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>git</id>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <dateFormatTimeZone>UTC</dateFormatTimeZone>
+                    <runOnlyOnce>true</runOnlyOnce>
+                    <skipPoms>false</skipPoms>
+                    <useNativeGit>true</useNativeGit>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
@@ -586,14 +572,6 @@
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>io.github.git-commit-id</groupId>
-                <artifactId>git-commit-id-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
