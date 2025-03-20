@@ -1383,8 +1383,8 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       @Override
       Encoder subEncoder(int number, int maxDepth) throws IOException {
          // We assume worse case for tag and 1 byte for length
-         out.ensureCapacity(MAX_INT_VARINT_SIZE + 1);
          int pos = out.getPosition();
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + 1);
          pos = writeVarInt32Direct(pos, WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
          out.setPosition(pos + 1);
          // We just skip a byte, assuming the nested message is less than 128. If it isn't we will move it later
@@ -1423,8 +1423,8 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
       @Override
       Encoder subEncoder(int number, int maxDepth) throws IOException {
-         out.ensureCapacity(MAX_INT_VARINT_SIZE + 1);
          int pos = out.getPosition();
+         out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + 1);
          pos = writeVarInt32Direct(pos, WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
          out.setPosition(pos + 1);
          if (positions == null) {
