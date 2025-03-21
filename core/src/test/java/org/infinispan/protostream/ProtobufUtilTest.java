@@ -514,8 +514,8 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    private void assertValid(String json) {
-      try {
-         JsonParser parser = new JsonFactory().createParser(json);
+      assertTrue(json == null || !json.isEmpty());
+      try (JsonParser parser = new JsonFactory().createParser(json)) {
          while (parser.nextToken() != null) {
             // read all tokens and hope for no errors
          }

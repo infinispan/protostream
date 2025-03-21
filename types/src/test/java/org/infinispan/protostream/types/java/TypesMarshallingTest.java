@@ -11,6 +11,7 @@ import java.io.StringReader;
 import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -41,9 +43,9 @@ import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -69,7 +71,7 @@ public class TypesMarshallingTest {
             '}';
    }
 
-   @Parameterized.Parameters
+   @Parameterized.Parameters(name = "{0}")
    public static Object[][] marshallingMethods() {
       return Arrays.stream(MarshallingMethodType.values())
             .flatMap(t -> switch (t) {
@@ -80,10 +82,33 @@ public class TypesMarshallingTest {
                      new TestConfiguration(t, true, false, HashSet::new),
                      new TestConfiguration(t, true, false, LinkedHashSet::new),
                      new TestConfiguration(t, true, false, LinkedList::new),
+                     new TestConfiguration(t, true, false, LinkedList::new),
                      new TestConfiguration(t, true, false, TreeSet::new));
             })
             .map(t -> new Object[]{t})
             .toArray(Object[][]::new);
+   }
+
+   @Test
+   public void testNestedWrappedMessage() throws IOException {
+      WrappedMessage msg = new WrappedMessage(new WrappedMessage(UUID.randomUUID()));
+      testConfiguration.method.marshallAndUnmarshallTest(msg, context, false);
+   }
+
+   @Test
+   public void testNestedCollection() throws IOException {
+      WrappedMessage msg = new WrappedMessage(List.of(UUID.randomUUID(), UUID.randomUUID()));
+      testConfiguration.method.marshallAndUnmarshallTest(msg, context, false);
+   }
+
+   @Test
+   public void testInstant() throws IOException {
+      testConfiguration.method.marshallAndUnmarshallTest(Instant.EPOCH, context, false);
+   }
+
+   @Test
+   public void testDate() throws IOException {
+      testConfiguration.method.marshallAndUnmarshallTest(new Date(), context, false);
    }
 
    @Test
@@ -221,13 +246,18 @@ public class TypesMarshallingTest {
 
    @Test
    public void testMultipleAdaptersForInterface() throws IOException {
-      // Skip JSON test as WrappedMessage instances are not serialized/parsed with JSON correctly
-      // https://github.com/infinispan/protostream/issues/379
-      Assume.assumeFalse(testConfiguration.method == MarshallingMethodType.JSON);
       testConfiguration.method.marshallAndUnmarshallTest(Collections.emptyList(), context, false);
       testConfiguration.method.marshallAndUnmarshallTest(Collections.singletonList("1"), context, false);
       testConfiguration.method.marshallAndUnmarshallTest(List.of(), context, false);
-      testConfiguration.method.marshallAndUnmarshallTest(List.of(1), context, false);
+
+      // TODO: should it work without WrappedMessage? Singleton list works...
+      testConfiguration.method.marshallAndUnmarshallTest(List.of(new WrappedMessage(1)), context, false);
+   }
+
+   @Test
+   public void testSpecific() throws IOException {
+      testConfiguration.method.marshallAndUnmarshallTest(new WrappedMessage(1), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(List.of(new WrappedMessage(1)), context, false);
    }
 
    @FunctionalInterface
@@ -331,12 +361,11 @@ public class TypesMarshallingTest {
          @Override
          public void marshallAndUnmarshallTest(Object original, ImmutableSerializationContext ctx, boolean isArray) throws IOException {
             var bytes = ProtobufUtil.toWrappedByteArray(ctx, original, 512);
-
             var json = ProtobufUtil.toCanonicalJSON(ctx, bytes);
             var jsonBytes = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
-
             var copy = ProtobufUtil.fromWrappedByteArray(ctx, jsonBytes);
 
+            assertArrayEquals(bytes, jsonBytes);
             log.debugf("JSON: JSON bytes length=%s, JSON String=%s, original=%s, copy=%s", jsonBytes.length, json, original, copy);
             if (isArray) {
                assertArrayEquals((Object[]) original, (Object[]) copy);
