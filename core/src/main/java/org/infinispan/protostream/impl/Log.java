@@ -151,6 +151,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Incompatible @ProtoTypeId in '%s', from '%s' to '%s'", id = 40)
    String incompatibleTypeIds(String name, Integer t1, Integer t2);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to utilize more performant reflection based String serialization. Please pass `--add-opens java.base/java.lang=ALL-UNNAMED` to the JVM to enable", id = 41)
+   void unableToRetrieveMethodHandles(@Cause Throwable t);
+
    class LogFactory {
       public static Log getLog(Class<?> clazz) {
          return Logger.getMessageLogger(Log.class, clazz.getName());

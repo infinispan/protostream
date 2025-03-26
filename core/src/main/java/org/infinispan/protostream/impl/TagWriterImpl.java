@@ -309,6 +309,8 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
    //todo [anistor] need to provide a safety mechanism to limit message size in bytes and message nesting depth on write ops
    private abstract static class Encoder {
+
+      protected static final StringUtil.Utf8Helper utf8Helper = StringUtil.UTF8_HELPER;
       /**
        * Commits the witten bytes after several write operations were performed. Updates counters, positions, whatever.
        */
@@ -370,7 +372,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
 
       void writeUTF8Field(int fieldNumber, String value) throws IOException {
-         byte[] utf8buffer = value.getBytes(StandardCharsets.UTF_8);
+         byte[] utf8buffer = utf8Helper.getBytes(value);
          writeLengthDelimitedField(fieldNumber, utf8buffer.length);
          writeBytes(utf8buffer, 0, utf8buffer.length);
       }
@@ -1298,6 +1300,23 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
       @Override
       void writeUTF8Field(int number, String s) throws IOException {
+         if (utf8Helper.providesLatin1Bytes())
+            writeUTF8FieldRawBytes(number, s);
+         else
+            writeUTF8FieldWithRewind(number, s);
+      }
+
+      void writeUTF8FieldRawBytes(int number, String s) throws IOException {
+         byte[] bytes = utf8Helper.getBytes(s);
+         int startPos = out.getPosition();
+         out.ensureCapacity(startPos + MAX_INT_VARINT_SIZE + MAX_INT_VARINT_SIZE + bytes.length);
+         startPos = writeVarInt32Direct(startPos, WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED));
+         startPos = writeVarInt32Direct(startPos, bytes.length);
+         out.write(startPos, bytes);
+         out.setPosition(startPos + bytes.length);
+      }
+
+      void writeUTF8FieldWithRewind(int number, String s) throws IOException {
          int strlen = s.length();
          int tag = WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED);
          int startPos = out.getPosition();
