@@ -1173,8 +1173,8 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + FIXED_32_SIZE);
 
          pos = writeVarInt32Direct(pos, tag);
-         pos = writeFixed32Direct(pos, value);
-         out.setPosition(pos);
+         out.writeFixed32Direct(pos, value);
+         out.setPosition(pos + FIXED_32_SIZE);
       }
 
       @Override
@@ -1184,8 +1184,8 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          out.ensureCapacity(pos + MAX_INT_VARINT_SIZE + FIXED_64_SIZE);
 
          pos = writeVarInt32Direct(pos, tag);
-         pos = writeFixed64Direct(pos, value);
-         out.setPosition(pos);
+         out.writeFixed64Direct(pos, value);
+         out.setPosition(pos + FIXED_64_SIZE);
       }
 
       @Override
@@ -1262,18 +1262,20 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
       @Override
       void writeFixed32(int value) throws IOException {
-         int pos = out.getPosition();
-         out.ensureCapacity(pos + FIXED_32_SIZE);
-         pos = writeFixed32Direct(pos, value);
-         out.setPosition(pos);
+         var pos = out.getPosition();
+         var newPos = pos + FIXED_32_SIZE;
+         out.ensureCapacity(newPos);
+         out.writeFixed32Direct(pos, value);
+         out.setPosition(newPos);
       }
 
       @Override
       void writeFixed64(long value) throws IOException {
-         int pos = out.getPosition();
-         out.ensureCapacity(pos + FIXED_64_SIZE);
-         pos = writeFixed64Direct(pos, value);
-         out.setPosition(pos);
+         var pos = out.getPosition();
+         var newPos = pos + FIXED_64_SIZE;
+         out.ensureCapacity(newPos);
+         out.writeFixed64Direct(pos, value);
+         out.setPosition(newPos);
       }
 
       @Override
@@ -1332,26 +1334,6 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          startPos = writeVarInt32Direct(startPos, utf8buffer.length);
          out.write(startPos, utf8buffer);
          out.setPosition(startPos + utf8buffer.length);
-      }
-
-      private int writeFixed32Direct(int i, int value) throws IOException {
-         out.write(i++, (byte) (value & 0xFF));
-         out.write(i++, (byte) ((value >> 8) & 0xFF));
-         out.write(i++, (byte) ((value >> 16) & 0xFF));
-         out.write(i++, (byte) ((value >> 24) & 0xFF));
-         return i;
-      }
-
-      private int writeFixed64Direct(int i, long value) throws IOException {
-         out.write(i++, (byte) (value & 0xFF));
-         out.write(i++, (byte) ((value >> 8) & 0xFF));
-         out.write(i++, (byte) ((value >> 16) & 0xFF));
-         out.write(i++, (byte) ((value >> 24) & 0xFF));
-         out.write(i++, (byte) ((int) (value >> 32) & 0xFF));
-         out.write(i++, (byte) ((int) (value >> 40) & 0xFF));
-         out.write(i++, (byte) ((int) (value >> 48) & 0xFF));
-         out.write(i++, (byte) ((int) (value >> 56) & 0xFF));
-         return i;
       }
 
       int writeVarInt32Direct(int i, int value) throws IOException {

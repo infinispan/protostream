@@ -124,4 +124,42 @@ public interface RandomAccessOutputStream extends Closeable {
     * @param output the stream to write this stream's bytes to
     */
    void copyTo(DataOutput output) throws IOException;
+
+   /**
+    * Write a 32-bit value, starting into {@code position} using little endian byte order.
+    * <p>
+    * The implementation does not require updating the internal position as the caller should invoke
+    * {@link #setPosition(int)} at some point after this method invocation.
+    *
+    * @param position The position to start writing.
+    * @param value    The 32-bit value to write.
+    * @throws IOException if an IO error occurs.
+    */
+   default void writeFixed32Direct(int position, int value) throws IOException {
+      write(position, (byte) (value));
+      write(position + 1, (byte) (value >> 8));
+      write(position + 2, (byte) (value >> 16));
+      write(position + 3, (byte) (value >> 24));
+   }
+
+   /**
+    * Write a 64-bit value, starting into {@code position} using little endian byte order.
+    * <p>
+    * The implementation does not require updating the internal position as the caller should invoke
+    * {@link #setPosition(int)} at some point after this method invocation.
+    *
+    * @param position The position to start writing.
+    * @param value    The 64-bit value to write.
+    * @throws IOException if an IO error occurs.
+    */
+   default void writeFixed64Direct(int position, long value) throws IOException {
+      write(position, (byte) (value));
+      write(position + 1, (byte) (value >> 8));
+      write(position + 2, (byte) (value >> 16));
+      write(position + 3, (byte) (value >> 24));
+      write(position + 4, (byte) (value >> 32));
+      write(position + 5, (byte) (value >> 40));
+      write(position + 6, (byte) (value >> 48));
+      write(position + 7, (byte) (value >> 56));
+   }
 }
