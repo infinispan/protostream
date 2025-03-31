@@ -476,7 +476,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      byte[] getBufferArray() throws IOException {
+      byte[] getBufferArray() {
          return array;
       }
 
@@ -562,10 +562,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       @Override
       int readFixed32() throws IOException {
          try {
-            int value = (array[pos] & 0xFF)
-                  | ((array[pos + 1] & 0xFF) << 8)
-                  | ((array[pos + 2] & 0xFF) << 16)
-                  | ((array[pos + 3] & 0xFF) << 24);
+            int value = (int) VarHandlesUtil.INT.get(array, pos);
             pos += FIXED_32_SIZE;
             return value;
          } catch (ArrayIndexOutOfBoundsException e) {
@@ -576,14 +573,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       @Override
       long readFixed64() throws IOException {
          try {
-            long value = (array[pos] & 0xFFL)
-                  | ((array[pos + 1] & 0xFFL) << 8)
-                  | ((array[pos + 2] & 0xFFL) << 16)
-                  | ((array[pos + 3] & 0xFFL) << 24)
-                  | ((array[pos + 4] & 0xFFL) << 32)
-                  | ((array[pos + 5] & 0xFFL) << 40)
-                  | ((array[pos + 6] & 0xFFL) << 48)
-                  | ((array[pos + 7] & 0xFFL) << 56);
+            long value = (long) VarHandlesUtil.LONG.get(array, pos);
             pos += FIXED_64_SIZE;
             return value;
          } catch (ArrayIndexOutOfBoundsException e) {
@@ -690,7 +680,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      byte[] getBufferArray() throws IOException {
+      byte[] getBufferArray() {
          return buf.array();
       }
 
@@ -721,7 +711,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       ByteBuffer readRawByteBuffer(int length) throws IOException {
          if (length > 0 && length <= end - buf.position()) {
             // apparently redundant cast, needed just for Java 8 binary compat, not needed for 9+
-            ByteBuffer byteBuffer = (ByteBuffer) buf.slice().limit(length);
+            ByteBuffer byteBuffer = buf.slice().limit(length);
             buf.position(buf.position() + length);
             return byteBuffer;
          }

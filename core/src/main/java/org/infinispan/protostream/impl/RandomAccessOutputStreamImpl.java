@@ -114,4 +114,14 @@ public class RandomAccessOutputStreamImpl extends OutputStream implements Random
    public void copyTo(DataOutput output) throws IOException {
       output.write(buf, 0, pos);
    }
+
+   @Override
+   public void writeFixed32Direct(int position, int value) {
+      VarHandlesUtil.INT.set(buf, position, value);
+   }
+
+   @Override
+   public void writeFixed64Direct(int position, long value) {
+      VarHandlesUtil.LONG.set(buf, position, value);
+   }
 }
