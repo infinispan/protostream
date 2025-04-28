@@ -118,7 +118,7 @@
         <version.protobuf.plugin>0.6.1</version.protobuf.plugin>
 
         <version.infinispan.checkstyle>15.0.10.Final</version.infinispan.checkstyle>
-        <version.com.puppycrawl.tools.checkstyle>10.23.0</version.com.puppycrawl.tools.checkstyle>
+        <version.com.puppycrawl.tools.checkstyle>10.23.1</version.com.puppycrawl.tools.checkstyle>
         <version.junit>4.13.2</version.junit>
         <version.compile-testing>0.21</version.compile-testing>
         <version.mockito>5.17.0</version.mockito>
