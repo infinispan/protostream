@@ -3,6 +3,7 @@ package org.infinispan.protostream;
 import org.infinispan.protostream.containers.ElementContainerAdapter;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.ByteArrayOutputStreamEx;
@@ -13,8 +14,10 @@ import org.infinispan.protostream.impl.TagWriterImpl;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -44,6 +47,11 @@ import java.util.Objects;
  * @since 1.0
  */
 public final class WrappedMessage {
+
+   private static final Collection<Class<?>> WRAPPED_KNOWN_TYPES = List.of(
+         Instant.class,
+         Date.class
+   );
 
    /**
     * The fully qualified Protobuf type name of this message.
@@ -715,6 +723,14 @@ public final class WrappedMessage {
       }
       var elementReader = TagReaderImpl.newInstance(ctx, in.readByteArray());
       return readMessage(ctx, elementReader, true);
+   }
+
+   public static boolean knownWrappedDescriptor(ImmutableSerializationContext ctx, GenericDescriptor descriptor) {
+      return WRAPPED_KNOWN_TYPES.stream()
+            .filter(ctx::canMarshall)
+            .map(ctx::getMarshaller)
+            .filter(Objects::nonNull)
+            .anyMatch(m -> ctx.getDescriptorByName(m.getTypeName()) == descriptor);
    }
 
    /**
