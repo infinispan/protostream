@@ -4,6 +4,8 @@ import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.types.java.math.BigDecimalAdapter;
 import org.infinispan.protostream.types.java.math.BigIntegerAdapter;
+import org.infinispan.protostream.types.java.time.DateAdapter;
+import org.infinispan.protostream.types.java.time.InstantAdapter;
 import org.infinispan.protostream.types.java.time.LocalDateAdapter;
 import org.infinispan.protostream.types.java.time.LocalDateTimeAdapter;
 import org.infinispan.protostream.types.java.time.LocalTimeAdapter;
@@ -37,6 +39,8 @@ import org.infinispan.protostream.types.java.util.UUIDAdapter;
             LocalDateAdapter.class,
             LocalDateTimeAdapter.class,
             LocalTimeAdapter.class,
+            DateAdapter.class,
+            InstantAdapter.class,
             MonthAdapter.class,
             MonthDayAdapter.class,
             OffsetTimeAdapter.class,

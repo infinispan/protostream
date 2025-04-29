@@ -3,11 +3,14 @@ package org.infinispan.protostream.impl;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_CONTAINER_TYPE_NAME;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_DATE_MILLIS;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_DOUBLE;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_ENUM;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED32;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_FIXED64;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_FLOAT;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_INSTANT_NANOS;
+import static org.infinispan.protostream.WrappedMessage.WRAPPED_INSTANT_SECONDS;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_INT32;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_INT64;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_MESSAGE;
@@ -26,12 +29,14 @@ import java.io.IOException;
 import java.io.Reader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
+import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.ProtobufUtil;
@@ -269,7 +274,13 @@ public final class JsonUtils {
          }
       }
 
-      if (topLevel) {
+      if (WrappedMessage.knownWrappedDescriptor(ctx, messageDescriptor)) {
+         // Known types are here for backwards compatibility.
+         // These values are written manually, and as such we just write the bytes out.
+         nestedWriter.flush();
+         byte[] serialized = baos.toByteArray();
+         writer.writeRawBytes(serialized, 0, serialized.length);
+      } else if (topLevel) {
          Integer topLevelTypeId = messageDescriptor.getTypeId();
          if (topLevelTypeId == null) {
             writer.writeString(WRAPPED_TYPE_NAME, messageDescriptor.getFullName());
@@ -739,6 +750,31 @@ public final class JsonUtils {
                case WRAPPED_ENUM:
                   wrappedEnum = (Integer) tagValue;
                   break;
+
+               // Identifies a java.time.Instant object.
+               // These objects are here for backwards compatibility. They are hand-written by the WrappedMessage class.
+               case WRAPPED_INSTANT_NANOS:
+               case WRAPPED_INSTANT_SECONDS:
+                  if (wrappedContainerType == null) {
+                     GenericDescriptor descriptor = getProtoStreamDescriptor(ctx, Instant.class);
+                     wrappedContainerType = descriptor.getFullName();
+                     messageHandler.onStart(descriptor);
+                  }
+                  messageHandler.onTag(fieldNumber, fieldDescriptor, tagValue);
+                  break;
+
+               // Reads a java.util.Date object.
+               // This has the same reason as the Instant objects above.
+               case WRAPPED_DATE_MILLIS: {
+                  if (wrappedContainerType == null) {
+                     GenericDescriptor descriptor = getProtoStreamDescriptor(ctx, Date.class);
+                     wrappedContainerType = descriptor.getFullName();
+                     messageHandler.onStart(descriptor);
+                  }
+                  messageHandler.onTag(fieldNumber, fieldDescriptor, tagValue);
+                  break;
+               }
+
                case WRAPPED_CONTAINER_TYPE_NAME:
                   wrappedContainerType = (String) tagValue;
                   GenericDescriptor descriptorByName = ctx.getDescriptorByName(wrappedContainerType);
@@ -795,6 +831,14 @@ public final class JsonUtils {
       };
 
       ProtobufParser.INSTANCE.parse(wrapperHandler, wrapperDescriptor, bytes);
+   }
+
+   private static GenericDescriptor getProtoStreamDescriptor(ImmutableSerializationContext ctx, Class<?> clazz) {
+      BaseMarshaller<?> marshaller = ctx.getMarshaller(clazz);
+      if (marshaller == null)
+         throw new IllegalStateException(String.format("Unable to convert %s to JSON", clazz));
+
+      return ctx.getDescriptorByName(marshaller.getTypeName());
    }
 
    private static void writeEnumField(JsonParser parser, TagWriter writer, FieldDescriptor fd, int fieldNumber) throws IOException {
