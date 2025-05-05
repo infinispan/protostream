@@ -60,7 +60,7 @@ import com.fasterxml.jackson.core.JsonToken;
  * <p>
  * The canonical JSON must follow an expected format to serialize transform back into a byte array. The JSON must
  * be generated with the {@link JsonWriter} to create the correct format for the JSON. The requirements include:
- *
+ * </p>
  * <ul>
  *    <li>Explicit types: The root element must contain the type of the written object. This is done with the
  *    {@link JsonHelper#JSON_TYPE_FIELD} field. This must be the first field in the JSON.</li>
@@ -68,7 +68,6 @@ import com.fasterxml.jackson.core.JsonToken;
  *    <li>Value: Primitive values which are not contained by an outer object must write the value with the
  *    {@link JsonHelper#MAP_VALUE_FIELD} field.</li>
  * </ul>
- * </p>
  *
  * @author anistor@redhat.com
  * @author José Bolina

@@ -9,10 +9,11 @@ package org.infinispan.protostream;
  * <p>
  * You can also use the sub-interface {@link GeneratedSchema} instead, which provides methods to access the generated
  * schema file.
+ * </p>
  * <p>
- * Manually written implementations of these interfaces are allowed, but are of no special use with regard to
+ * Manually written implementations of these interfaces are allowed but are of no special use with regard to the
  * ProtoStream library.
- * <p>
+ * </p>
  *
  * @author anistor@redhat.com
  * @since 4.3

@@ -46,7 +46,9 @@ public final class CompilationUtils {
    }
 
    /**
-    * Compiles several Java source files that are represented by resource files found in classpath.
+    * Compiles several Java source files that are represented by resource files found in the classpath.
+    *
+    * @return a Compilation object that can be used to obtain information about the compilation outcome.
     */
    public static Compilation compile(String... resourceNames) {
       if (resourceNames == null || resourceNames.length == 0) {
@@ -64,7 +66,10 @@ public final class CompilationUtils {
    }
 
    /**
-    * Loads a resource file from classpath that is expected to be a Java source file and creates a JavaFileObject.
+    * Loads a resource file from a classpath that is expected to be a Java source file and creates a JavaFileObject.
+    *
+    * @param resourceName the name of the resource file. The file name must end with a '.java' suffix.
+    * @return a JavaFileObject representing the resource file.
     */
    private static JavaFileObject createJavaFileObject(String resourceName) {
       if (!resourceName.endsWith(JAVA_SUFFIX)) {

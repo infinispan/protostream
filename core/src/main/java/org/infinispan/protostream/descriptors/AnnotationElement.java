@@ -31,22 +31,47 @@ public abstract class AnnotationElement {
    private static final long COLUMNMASK = (1L << LINESHIFT) - 1;
 
    /**
-    * Text position, encoded in the form of a {@code long}. Upper half is the line number, lower half is the column.
+    * Text position, encoded in the form of a {@code long}. The upper half is the line number, the lower half is the column.
     */
    public final long position;
 
+   /**
+    * Returns the line number of the given position.
+    *
+    * @param pos the position, encoded as a {@code long} as described in {@link #position}
+    * @return the line number, or {@code -1} if the position is unknown
+    */
    public static int line(long pos) {
       return (int) (pos >>> LINESHIFT);
    }
 
+   /**
+    * Returns the column number of the given position.
+    *
+    * @param pos the position, encoded as a {@code long} as described in {@link #position}
+    * @return the column number, or {@code -1} if the position is unknown
+    */
    public static int column(long pos) {
       return (int) (pos & COLUMNMASK);
    }
 
+   /**
+    * Returns the position encoded as a {@code long}.
+    *
+    * @param line   the line number
+    * @param column the column number
+    * @return the position, encoded as a {@code long}
+    */
    public static long makePosition(int line, int column) {
       return ((long) line << LINESHIFT) + column;
    }
 
+   /**
+    * Returns a string representation of the given position. The string is of the form {@code line:column}.
+    *
+    * @param pos the position, encoded as a {@code long} as described in {@link #position}
+    * @return a string representation of the given position, or {@code "unknown"} if the position is unknown
+    */
    public static String positionToString(long pos) {
       return line(pos) + "," + column(pos);
    }
@@ -91,18 +116,38 @@ public abstract class AnnotationElement {
          this.attributes = attributes;
       }
 
+      /**
+       * Returns the name of the annotation.
+       *
+       * @return the name of the annotation.
+       */
       public String getName() {
          return name;
       }
 
+      /**
+       * Returns the package name of the annotation, or {@code null} if the annotation is in the default package.
+       *
+       * @return the package name of the annotation, or {@code null} if the annotation is in the default package.
+       */
       public String getPackageName() {
          return packageName;
       }
 
+      /**
+       * Returns the attributes of this annotation.
+       *
+       * @return a map of attribute names to {@link Attribute} instances. The map is unmodifiable.
+       */
       public Map<String, Attribute> getAttributes() {
          return attributes;
       }
 
+      /**
+       * Returns the {@link Annotation} itself. This is useful for {@link Visitor} implementations.
+       *
+       * @return the {@link Annotation} itself. This is useful for {@link Visitor} implementations.
+       */
       @Override
       public Annotation getValue() {
          return this;
@@ -156,6 +201,11 @@ public abstract class AnnotationElement {
          this.value = value;
       }
 
+      /**
+       * Returns the name of the attribute.
+       *
+       * @return the name of the attribute.
+       */
       public String getName() {
          return name;
       }
@@ -180,7 +230,7 @@ public abstract class AnnotationElement {
    }
 
    /**
-    * An identifier is a bit like a string literal but it does not have the quotation marks and it cannot contain white
+    * An identifier is a bit like a string literal, but it does not have the quotation marks, and it cannot contain white
     * space.
     */
    public static final class Identifier extends Value {
