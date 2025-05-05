@@ -28,17 +28,17 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
 
    protected String fullName;
 
-   /**
+   /*
     * The (optional) documentation comment.
     */
    protected final String documentation;
 
-   /**
+   /*
     * The annotations found in the documentation.
     */
    protected Map<String, AnnotationElement.Annotation> annotations = null;
 
-   /**
+   /*
     * The annotation metadata objects created by the {@link org.infinispan.protostream.AnnotationMetadataCreator} based
     * on the annotations found in the documentation text.
     */
@@ -69,7 +69,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
       return documentation;
    }
 
-   /**
+   /*
     * Extract annotations by parsing the documentation comment and run the configured {@link
     * AnnotationMetadataCreator}s.
     *
@@ -289,12 +289,9 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
       return getFileDescriptor().getConfiguration().annotationsConfig();
    }
 
-   /**
-    * Subclasses are responsible for fetching the {@link AnnotationConfiguration} from the appropriate config (it it
+   /*
+    * Subclasses are responsible for fetching the {@link AnnotationConfiguration} from the appropriate config (if it
     * exists) and to validate that the target is suitable.
-    *
-    * @return null if the annotation is not found
-    * @throws DescriptorParserException is the annotation target is not suitable for this descriptor
     */
    protected abstract AnnotationConfiguration getAnnotationConfig(AnnotationElement.Annotation annotation) throws DescriptorParserException;
 

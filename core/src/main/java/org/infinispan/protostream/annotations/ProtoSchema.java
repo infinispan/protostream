@@ -10,15 +10,16 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
- * Generates compile-time auto-implementations of {@link SerializationContextInitializer}. Annotate a class or interface
+ * <p>Generates compile-time auto-implementations of {@link SerializationContextInitializer}. Annotate a class or interface
  * extending from {@link SerializationContextInitializer} with this annotation and a new concrete public class named
  * based on {@link #className}, having a default no-arguments public constructor will be generated at compile time in
  * the same package. The implementations of the methods from {@link SerializationContextInitializer} will be generated
  * based on the information provided in the attributes of this annotation.
+ * </p>
  * <p>
  * This annotation is used at compile time annotation processing only and should not be relied upon at runtime, so its
  * retention is set to {@link RetentionPolicy#CLASS}.
- * <p>
+ * </p>
  *
  * @author anistor@redhat.com
  * @since 5.0

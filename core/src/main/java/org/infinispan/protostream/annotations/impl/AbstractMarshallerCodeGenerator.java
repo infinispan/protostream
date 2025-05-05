@@ -37,7 +37,7 @@ public abstract class AbstractMarshallerCodeGenerator {
 
    private final XTypeFactory typeFactory;
 
-   /**
+   /*
     * Do nullable fields that do not have a user defined default value get a default type specific value if missing
     * instead of just null? This is currently implemented just for arrays/collections. TODO Maybe numbers should also
     * receive a 0 default value and booleans a false value. But what about strings? Empty string does not sound like a
@@ -54,7 +54,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       this.protobufSchemaPackage = protobufSchemaPackage;
    }
 
-   /**
+   /*
     * Signature of generated method is:
     * <code>
     * public java.lang.Enum decode(int $1)
@@ -78,7 +78,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       return sw.toString();
    }
 
-   /**
+   /*
     * Signature of generated method is:
     * <code>
     * public int encode(java.lang.Enum $1)
@@ -102,7 +102,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       return sw.toString();
    }
 
-   /**
+   /*
     * Returns the protobuf qualified type name, including the package name.
     */
    protected String makeQualifiedTypeName(String fullName) {
@@ -112,7 +112,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       return fullName;
    }
 
-   /**
+   /*
     * Make boolean expression to test that at least one fields from a given collection of fields was not set.
     */
    private String makeTestFieldWasNotSet(Collection<ProtoFieldMetadata> fields, Map<String, Integer> trackedFields) {
@@ -135,7 +135,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       return sb.toString();
    }
 
-   /**
+   /*
     * Make boolean expression to test that a field was not set.
     */
    private String makeTestFieldWasNotSet(ProtoFieldMetadata field, Map<String, Integer> trackedFields) {
@@ -143,7 +143,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       return "((__bits$" + (fieldBitIndex >> 6) + " & " + (1L << fieldBitIndex) + "L) == 0)";
    }
 
-   /**
+   /*
     * Make statement to mark a field as set.
     */
    private String makeFieldWasSet(ProtoFieldMetadata field, Map<String, Integer> trackedFields) {
@@ -151,14 +151,14 @@ public abstract class AbstractMarshallerCodeGenerator {
       return "__bits$" + (fieldBitIndex >> 6) + " |= " + (1L << fieldBitIndex) + 'L';
    }
 
-   /**
+   /*
     * Make local variable name for a field.
     */
    private String makeFieldLocalVar(ProtoFieldMetadata field) {
       return "__v$" + field.getNumber();
    }
 
-   /**
+   /*
     * Make a collection local variable name for a repeatable/array field.
     */
    private String makeCollectionLocalVar(ProtoFieldMetadata field) {
@@ -169,14 +169,14 @@ public abstract class AbstractMarshallerCodeGenerator {
       return "__a$" + field.getNumber();
    }
 
-   /**
+   /*
     * Make field name for caching a marshaller delegate for a related message.
     */
    protected String makeMarshallerDelegateFieldName(ProtoFieldMetadata field) {
       return "__md$" + field.getNumber() + (field.getJavaType().isEnum() ? "e" : "");
    }
 
-   /**
+   /*
     * Signature of generated method is:
     * <code>
     * public java.lang.Object read(org.infinispan.protostream.ProtoStreamMarshaller.ReadContext $1,
@@ -619,7 +619,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             + PROTOSTREAM_PACKAGE + ".descriptors.WireType.WIRETYPE_" + wireType.name() + ")";
    }
 
-   /**
+   /*
     * Converts a given {@code value} instance to a Java language literal of type {@code javaType}. The input value is
     * expected to conform to the given type (no checks are performed).
     */
@@ -682,7 +682,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       }
    }
 
-   /**
+   /*
     * Signature of generated method is:
     * <code>
     * public void write(org.infinispan.protostream.ProtoStreamMarshaller.WriteContext $1,
@@ -900,7 +900,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       return (isWrite ? "write" : "read") + suffix;
    }
 
-   /**
+   /*
     * Cast the given value if necessary. This is usually needed for the types that we are forced to represent as 32-bit
     * integers because of Protobuf's lack of support for integral types of 8 and 16 bits.
     */
@@ -915,7 +915,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       return v;
    }
 
-   /**
+   /*
     * Return the corresponding 'boxed' Class given a Class, or {@code null} if no type change is required.
     */
    private XClass box(XClass clazz) {
@@ -940,7 +940,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       return null;
    }
 
-   /**
+   /*
     * Boxes a given value. The Class parameter can be {@code null} to indicate that no boxing should actually be
     * performed.
     */

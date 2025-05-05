@@ -41,6 +41,11 @@ public interface AnnotatedDescriptor {
     */
    String getDocumentation();
 
+   /**
+    * Return the annotations associated with this descriptor.
+    * @return a map of annotation name to annotation object
+    * @throws AnnotationParserException in case of parsing errors
+    */
    Map<String, AnnotationElement.Annotation> getAnnotations() throws AnnotationParserException;
 
    /**

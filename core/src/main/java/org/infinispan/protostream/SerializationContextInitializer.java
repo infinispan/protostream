@@ -11,12 +11,14 @@ import java.io.UncheckedIOException;
  * <p>
  * You can also use the sub-interface {@link GeneratedSchema} instead, which provides methods to access the generated
  * schema file.
+ * </p>
  * <p>
- * Manually written implementations of these interfaces are allowed, but are of no special use with regard to
+ * Manually written implementations of these interfaces are allowed but are of no special use with regard to the
  * ProtoStream library.
  * <p>
  * <em>NOTE:</em> Methods {@link #getProtoFileName()} and {@link #getProtoFile()} will be removed from this interface in
  * ver. 5 but will continue to exist in {@link GeneratedSchema}, which extends this interface.
+ * </p>
  *
  * @author anistor@redhat.com
  * @since 4.3
