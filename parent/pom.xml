@@ -69,7 +69,7 @@
         <version.scm.plugin>2.1.0</version.scm.plugin>
         <version.source.plugin>3.3.1</version.source.plugin>
         <version.surefire.plugin>3.5.2</version.surefire.plugin>
-        <version.maven.javacc>3.1.0</version.maven.javacc>
+        <version.maven.javacc>3.1.1</version.maven.javacc>
         <version.maven.sonatype.central>0.7.0</version.maven.sonatype.central>
         <version.maven.gpg>3.2.7</version.maven.gpg>
         <version.maven.plugin-tools>3.15.1</version.maven.plugin-tools>
