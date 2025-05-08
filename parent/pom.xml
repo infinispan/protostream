@@ -446,6 +446,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <autoPublish>true</autoPublish>
+                    <deploymentName>ProtoStream ${project.version}</deploymentName>
                     <publishingServerId>central</publishingServerId>
                 </configuration>
             </plugin>
