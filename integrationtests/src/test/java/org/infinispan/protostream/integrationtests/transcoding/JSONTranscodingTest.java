@@ -48,7 +48,7 @@ public class JSONTranscodingTest {
 
       byte[] proto = ProtobufUtil.toWrappedByteArray(context, play);
       String json = ProtobufUtil.toCanonicalJSON(context, proto);
-      assertThat(json).isEqualTo("{\"_type\":\"my.Play\",\"name\":\"game\",\"matches\":[\"one\",\"two\"]}");
+      assertThat(json).isEqualTo("{\"_type\":\"my.Play\",\"play_name\":\"game\",\"matches\":[\"one\",\"two\"]}");
 
       Play reloaded = ProtobufUtil.fromWrappedByteArray(context, proto);
       assertThat(reloaded).isEqualTo(play);

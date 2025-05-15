@@ -35,6 +35,7 @@ import org.infinispan.protostream.annotations.impl.types.XExecutable;
 import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMember;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
+import org.infinispan.protostream.annotations.impl.types.XRecordComponent;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.containers.IndexedElementContainer;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
@@ -249,8 +250,9 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", getAnnotatedClassName());
          }
 
-         // If we have a factory method / constructor, we must ensure its parameters match the declared fields
-         if (factory != null) {
+         // If we have a factory method / constructor, we must ensure its parameters match the declared fields.
+         // We can skip this for records, because their structure is defined by the constructor
+         if (factory != null && !javaClass.isRecord()) {
             String factoryKind = factory instanceof XConstructor ? "constructor" : (factory.isStatic() ? "static method" : "method");
             XClass[] parameterTypes = factory.getParameterTypes();
             int startPos = 0;
@@ -745,12 +747,12 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    private void discoverFieldsFromRecord(XClass clazz, Map<Integer, ProtoFieldMetadata> fieldsByNumber, Map<String, ProtoFieldMetadata> fieldsByName) {
       String[] parameterNames = factory.getParameterNames();
       XClass[] parameterTypes = factory.getParameterTypes();
+      Iterator<? extends XRecordComponent> components = clazz.getRecordComponents().iterator();
       for (int i = 0; i < factory.getParameterCount(); i++) {
          int fieldNumber = i + 1;
+         ProtoField annotation = components.next().getAnnotation(ProtoField.class);
          String fieldName = parameterNames[i];
          XClass javaType = parameterTypes[i];
-         ProtoField annotation = javaType.getAnnotation(ProtoField.class);
-
          Type protobufType = defaultType(annotation, javaType);
 
          XMethod getter = clazz.getMethod(fieldName);
@@ -835,7 +837,6 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          throw new ProtoSchemaBuilderException("Field numbers 19000 through 19999 are reserved for internal use by the protobuf specification: "
                + fieldMetadata.getLocation());
       }
-      // TODO [anistor] IPROTO-98 also check reserved numbers and names
    }
 
    protected XClass getCollectionImplementationFromAnnotation(ProtoField annotation) {
@@ -1261,12 +1262,13 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       String methodName = (isBoolean ? "is" : "get") + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
 
       XMethod getter;
+      String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
       if (isAdapter) {
          // lookup a java-bean style method first
          getter = annotatedClass.getMethod(methodName);
          if (getter == null && isBoolean) {
             // retry with 'get' instead of 'is'
-            methodName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+            methodName = getterName;
             getter = annotatedClass.getMethod(methodName, javaClass);
          }
          if (getter == null) {
@@ -1291,7 +1293,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
          getter = javaClass.getMethod(methodName);
          if (getter == null && isBoolean) {
             // retry with 'get' instead of 'is'
-            methodName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+            methodName = getterName;
             getter = javaClass.getMethod(methodName);
          }
          if (getter == null) {

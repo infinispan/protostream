@@ -75,6 +75,8 @@ public interface XClass extends XElement {
 
    Iterable<? extends XField> getDeclaredFields();
 
+   Iterable<? extends XRecordComponent> getRecordComponents();
+
    /**
     * Is it a local or anonymous class?
     */

@@ -4,8 +4,10 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.RecordComponent;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
@@ -95,6 +97,8 @@ public final class ReflectionTypeFactory implements XTypeFactory {
       private final Map<Method, ReflectionMethod> methodCache = new HashMap<>();
 
       private final Map<Field, ReflectionField> fieldCache = new HashMap<>();
+
+      private final Map<RecordComponent, ReflectionRecordComponent> recordComponentCache = new HashMap<>();
 
       ReflectionClass(Class<?> clazz) {
          this.clazz = clazz;
@@ -254,12 +258,7 @@ public final class ReflectionTypeFactory implements XTypeFactory {
          if (ctor == null) {
             return null;
          }
-         ReflectionConstructor xctor = constructorCache.get(ctor);
-         if (xctor == null) {
-            xctor = new ReflectionConstructor(this, ctor);
-            constructorCache.put(ctor, xctor);
-         }
-         return xctor;
+         return constructorCache.computeIfAbsent(ctor, k -> new ReflectionConstructor(this, k));
       }
 
       private ReflectionField cacheField(Field field) {
@@ -271,6 +270,11 @@ public final class ReflectionTypeFactory implements XTypeFactory {
             declaringClass.fieldCache.put(field, xfield);
          }
          return xfield;
+      }
+
+      private ReflectionRecordComponent cacheRecordComponent(RecordComponent component) {
+         ReflectionClass declaringClass = (ReflectionClass) fromClass(component.getDeclaringRecord());
+         return declaringClass.recordComponentCache.computeIfAbsent(component, c -> new ReflectionRecordComponent(declaringClass, c));
       }
 
       @Override
@@ -355,6 +359,15 @@ public final class ReflectionTypeFactory implements XTypeFactory {
             fields.add(cacheField(f));
          }
          return fields;
+      }
+
+      @Override
+      public Iterable<? extends XRecordComponent> getRecordComponents() {
+         List<XRecordComponent> recordComponents = new ArrayList<>();
+         for (RecordComponent c : clazz.getRecordComponents()) {
+            recordComponents.add(cacheRecordComponent(c));
+         }
+         return recordComponents;
       }
 
       @Override
@@ -781,6 +794,89 @@ public final class ReflectionTypeFactory implements XTypeFactory {
       @Override
       public String toString() {
          return field.toString();
+      }
+   }
+
+   private final class ReflectionRecordComponent implements XRecordComponent {
+
+      private final ReflectionClass declaringClass;
+
+      private final RecordComponent recordComponent;
+
+      ReflectionRecordComponent(ReflectionClass declaringClass, RecordComponent field) {
+         this.declaringClass = declaringClass;
+         this.recordComponent = field;
+      }
+
+      @Override
+      public XClass getType() {
+         return fromClass(recordComponent.getType());
+      }
+
+      @Override
+      public XClass determineRepeatedElementType() {
+         if (recordComponent.getType().isArray()) {
+            return fromClass(recordComponent.getType().getComponentType());
+         }
+         if (Collection.class.isAssignableFrom(recordComponent.getType())) {
+            Class<?> c = determineCollectionElementType(recordComponent.getGenericType());
+            if (c == null) {
+               throw new IllegalStateException("Failed to determine element type of collection class " + c);
+            }
+            return fromClass(c);
+         }
+         throw log.notRepeatableField(declaringClass.getName(), recordComponent.getName());
+      }
+
+      @Override
+      public String getName() {
+         return recordComponent.getName();
+      }
+
+      @Override
+      public int getModifiers() {
+         return Modifier.PUBLIC;
+      }
+
+      @Override
+      public XClass getDeclaringClass() {
+         return declaringClass;
+      }
+
+      @Override
+      public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
+         return recordComponent.getAnnotation(annotationClass);
+      }
+
+      @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return recordComponent.getAnnotationsByType(annotationClass);
+      }
+
+      @Override
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(recordComponent, false);
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (obj == this) {
+            return true;
+         }
+         if (obj == null || obj.getClass() != RecordComponent.class) {
+            return false;
+         }
+         return recordComponent.equals(((ReflectionRecordComponent) obj).recordComponent);
+      }
+
+      @Override
+      public int hashCode() {
+         return recordComponent.hashCode();
+      }
+
+      @Override
+      public String toString() {
+         return recordComponent.toString();
       }
    }
 }

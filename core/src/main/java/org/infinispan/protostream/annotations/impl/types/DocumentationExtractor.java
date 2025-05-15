@@ -3,6 +3,7 @@ package org.infinispan.protostream.annotations.impl.types;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.RecordComponent;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -65,6 +66,11 @@ public final class DocumentationExtractor {
    public static String getDocumentation(Field f, boolean fullyQualified) {
       StringBuilder docs = getDocumentation(f.getAnnotationsByType(ProtoComment.class));
       return getDocumentation(docs, f.getAnnotations(), fullyQualified);
+   }
+
+   public static String getDocumentation(RecordComponent c, boolean fullyQualified) {
+      StringBuilder docs = getDocumentation(c.getAnnotationsByType(ProtoComment.class));
+      return getDocumentation(docs, c.getAnnotations(), fullyQualified);
    }
 
    public static String getDocumentation(Class<?> clazz, boolean fullyQualified) {
