@@ -17,7 +17,7 @@ import org.infinispan.protostream.descriptors.Type;
  * @author anistor@redhat.com
  * @since 3.0
  */
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface ProtoField {

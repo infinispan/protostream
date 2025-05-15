@@ -54,7 +54,7 @@ final class AnnotatedClassScanner {
    private static final Log log = Log.LogFactory.getLog(AnnotatedClassScanner.class);
 
    /**
-    * Keep them sorted by FQN for predictable and repeatable order of processing.
+    * Keep them sorted by FQN for a predictable and repeatable order of processing.
     */
    private TreeMap<String, TypeMirror> classes;
 
@@ -135,7 +135,7 @@ final class AnnotatedClassScanner {
       classes = new TreeMap<>();
 
       if (includedClasses.isEmpty()) {
-         // No explicit list of classes is specified so we gather all relevant @ProtoXyz annotated classes from source
+         // No explicit list of classes is specified, so we gather all relevant @ProtoXyz annotated classes from the source
          // path and filter them based on the specified packages and also exclude the explicitly excluded classes.
 
          // Scan the elements in RoundEnv first.
@@ -216,9 +216,9 @@ final class AnnotatedClassScanner {
 
    private void visitProtoField(Element e) {
       Element enclosingElement = e.getEnclosingElement();
-      if (e.getKind() != ElementKind.METHOD && e.getKind() != ElementKind.FIELD
-            || enclosingElement.getKind() != ElementKind.CLASS && enclosingElement.getKind() != ElementKind.INTERFACE) {
-         throw new AnnotationProcessingException(e, "@ProtoField can only be applied to fields and methods.");
+      if (e.getKind() != ElementKind.METHOD && e.getKind() != ElementKind.FIELD && e.getKind() != ElementKind.RECORD_COMPONENT
+            || enclosingElement.getKind() != ElementKind.CLASS && enclosingElement.getKind() != ElementKind.RECORD && enclosingElement.getKind() != ElementKind.INTERFACE) {
+         throw new AnnotationProcessingException(e, "@ProtoField can only be applied to fields, methods or record components.");
       }
       collectClasses((TypeElement) enclosingElement);
    }
@@ -370,7 +370,7 @@ final class AnnotatedClassScanner {
    }
 
    /**
-    * Checks if the type is included by given set of packages and is visible to the initializer and adds it to collected
+    * Checks if the type is included by a given set of packages and is visible to the initializer and adds it to collected
     * classes Map if it satisfies all conditions.
     */
    private void collectClasses(TypeElement typeElement) {
@@ -418,7 +418,7 @@ final class AnnotatedClassScanner {
          if (e == null || e.getKind() == ElementKind.PACKAGE) {
             break;
          }
-         if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE && e.getKind() != ElementKind.ENUM) {
+         if (e.getKind() != ElementKind.CLASS && e.getKind() != ElementKind.INTERFACE && e.getKind() != ElementKind.ENUM && e.getKind() != ElementKind.RECORD) {
             return false;
          }
       }

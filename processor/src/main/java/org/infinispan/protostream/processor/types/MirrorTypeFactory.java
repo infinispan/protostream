@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ import org.infinispan.protostream.annotations.impl.types.XConstructor;
 import org.infinispan.protostream.annotations.impl.types.XEnumConstant;
 import org.infinispan.protostream.annotations.impl.types.XField;
 import org.infinispan.protostream.annotations.impl.types.XMethod;
+import org.infinispan.protostream.annotations.impl.types.XRecordComponent;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.impl.Log;
 
@@ -429,6 +431,11 @@ public final class MirrorTypeFactory implements XTypeFactory {
       }
 
       @Override
+      public Iterable<? extends XRecordComponent> getRecordComponents() {
+         return Collections.emptyList();
+      }
+
+      @Override
       public boolean isLocal() {
          return false;
       }
@@ -476,6 +483,8 @@ public final class MirrorTypeFactory implements XTypeFactory {
       private final Map<ExecutableElement, MirrorMethod> methodCache = new HashMap<>();
 
       private final Map<VariableElement, MirrorField> fieldCache = new HashMap<>();
+
+      private final Map<VariableElement, MirrorRecordComponent> recordComponentCache = new HashMap<>();
 
       private final int modifiers;
 
@@ -688,7 +697,15 @@ public final class MirrorTypeFactory implements XTypeFactory {
          return typeElement.getEnclosedElements().stream()
                .filter(e -> e.getKind() == ElementKind.FIELD)
                .map(e -> cacheField((VariableElement) e))
-               .collect(Collectors.toList());
+               .toList();
+      }
+
+      @Override
+      public Iterable<? extends XRecordComponent> getRecordComponents() {
+         return typeElement.getEnclosedElements().stream()
+               .filter(e -> e.getKind() == ElementKind.RECORD_COMPONENT)
+               .map(e -> cacheRecordComponent((VariableElement) e))
+               .toList();
       }
 
       @Override
@@ -763,6 +780,16 @@ public final class MirrorTypeFactory implements XTypeFactory {
             declaringClass.fieldCache.put(field, xfield);
          }
          return xfield;
+      }
+
+      private MirrorRecordComponent cacheRecordComponent(VariableElement field) {
+         MirrorClass declaringClass = (MirrorClass) fromTypeMirror(field.getEnclosingElement().asType());
+         MirrorRecordComponent xrecordComponent = declaringClass.recordComponentCache.get(field);
+         if (xrecordComponent == null) {
+            xrecordComponent = new MirrorRecordComponent(declaringClass, field);
+            declaringClass.recordComponentCache.put(field, xrecordComponent);
+         }
+         return xrecordComponent;
       }
 
       @Override
@@ -964,6 +991,11 @@ public final class MirrorTypeFactory implements XTypeFactory {
 
       @Override
       public Iterable<? extends XField> getDeclaredFields() {
+         return null;
+      }
+
+      @Override
+      public Iterable<? extends XRecordComponent> getRecordComponents() {
          return null;
       }
 
@@ -1369,6 +1401,101 @@ public final class MirrorTypeFactory implements XTypeFactory {
       @Override
       public String toString() {
          return field.toString();
+      }
+   }
+
+   private final class MirrorRecordComponent implements XRecordComponent {
+
+      private final MirrorClass c;
+
+      private final VariableElement component;
+
+
+      private final int modifiers;
+
+      MirrorRecordComponent(MirrorClass c, VariableElement component) {
+         this.c = c;
+         this.component = component;
+         this.modifiers = getModifiersOfElement(component);
+      }
+
+      @Override
+      public XClass getType() {
+         return fromTypeMirror(component.asType());
+      }
+
+      @Override
+      public XClass determineRepeatedElementType() {
+         if (getType().isArray()) {
+            return getType().getComponentType();
+         }
+         if (getType().isAssignableTo(Collection.class)) {
+            List<? extends TypeMirror> typeArguments = ((DeclaredType) component.asType()).getTypeArguments();
+            if (typeArguments.size() == 1) {
+               TypeMirror arg = typeArguments.get(0);
+               return fromTypeMirror(arg);
+            }
+         }
+         if (getType().isAssignableTo(Map.class)) {
+            List<? extends TypeMirror> typeArguments = ((DeclaredType) component.asType()).getTypeArguments();
+            if (typeArguments.size() == 2) {
+               return fromTypeMirror(typeArguments.get(1));
+            }
+         }
+         throw log.notRepeatableField(c.getName(), component.getSimpleName().toString());
+      }
+
+      @Override
+      public XClass getTypeArgument(int i) {
+         List<? extends TypeMirror> typeArguments = ((DeclaredType) component.asType()).getTypeArguments();
+         return fromTypeMirror(typeArguments.get(i));
+      }
+
+      @Override
+      public String getName() {
+         return component.getSimpleName().toString();
+      }
+
+      @Override
+      public int getModifiers() {
+         return modifiers;
+      }
+
+      @Override
+      public XClass getDeclaringClass() {
+         return c;
+      }
+
+      @Override
+      public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
+         return component.getAnnotation(annotationClass);
+      }
+
+      @Override
+      public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
+         return component.getAnnotationsByType(annotationClass);
+      }
+
+      @Override
+      public String getDocumentation() {
+         return DocumentationExtractor.getDocumentation(component, fullyQualifiedAnnotations);
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (o == null || getClass() != o.getClass()) return false;
+         MirrorRecordComponent that = (MirrorRecordComponent) o;
+         return Objects.equals(component, that.component);
+      }
+
+      @Override
+      public int hashCode() {
+         return Objects.hashCode(component);
+      }
+
+      @Override
+      public String toString() {
+         return component.toString();
       }
    }
 }

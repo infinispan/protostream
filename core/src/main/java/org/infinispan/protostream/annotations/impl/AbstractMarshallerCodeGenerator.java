@@ -441,7 +441,8 @@ public abstract class AbstractMarshallerCodeGenerator {
          }
          iw.print('(');
          boolean first = true;
-         for (String paramName : factory.getParameterNames()) {
+         for (int i = 0; i < factory.getParameterCount(); i++) {
+            String paramName = factory.getParameterNames()[i];
             if (first) {
                first = false;
                if (messageTypeMetadata.isContainer()) {
@@ -451,23 +452,25 @@ public abstract class AbstractMarshallerCodeGenerator {
             } else {
                iw.append(", ");
             }
-            boolean found = false;
-            for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
-               if (fieldMetadata.getPropertyName().equals(paramName)) {
-                  String var = fieldMetadata.isRepeated() ?
-                        (fieldMetadata.isArray() ?
-                              makeArrayLocalVar(fieldMetadata) : makeCollectionLocalVar(fieldMetadata))
-                        : makeFieldLocalVar(fieldMetadata);
-                  iw.append(var);
-                  if (fieldMetadata.isStream())
-                     iw.append(".stream()");
-                  found = true;
-                  break;
-               }
+            Optional<ProtoFieldMetadata> fieldMetadata;
+            if (messageTypeMetadata.javaClass.isRecord()) {
+               // For Record fields we use the position
+               fieldMetadata = messageTypeMetadata.getFields().values().stream().skip(i).findFirst();
+            } else {
+               // For other classes, we look up by name
+               fieldMetadata = messageTypeMetadata.getFields().values().stream().filter(f -> f.getPropertyName().equals(paramName)).findFirst();
             }
-            if (!found) {
+            fieldMetadata.ifPresentOrElse(fm -> {
+               String var = fm.isRepeated() ?
+                     (fm.isArray() ?
+                           makeArrayLocalVar(fm) : makeCollectionLocalVar(fm))
+                     : makeFieldLocalVar(fm);
+               iw.append(var);
+               if (fm.isStream())
+                  iw.append(".stream()");
+            }, () -> {
                throw new ProtoSchemaBuilderException("Parameter '" + paramName + "' of factory " + factory + " does not map to any Protobuf field");
-            }
+            });
          }
          iw.println(");");
       }
