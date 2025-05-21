@@ -79,7 +79,7 @@
         <version.com.puppycrawl.tools.checkstyle>10.23.1</version.com.puppycrawl.tools.checkstyle>
         <version.junit>4.13.2</version.junit>
         <version.compile-testing>0.21</version.compile-testing>
-        <version.mockito>5.17.0</version.mockito>
+        <version.mockito>5.18.0</version.mockito>
         <version.jcipannotations>1.0</version.jcipannotations>
         <version.jboss.logging>3.6.1.Final</version.jboss.logging>
         <version.jboss.logging.annotations>3.0.4.Final</version.jboss.logging.annotations>
