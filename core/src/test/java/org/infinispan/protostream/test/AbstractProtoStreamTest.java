@@ -12,7 +12,6 @@ import org.infinispan.protostream.domain.marshallers.MarshallerRegistration;
  * @author anistor@redhat.com
  */
 public abstract class AbstractProtoStreamTest {
-   public static final String PROTO3_SYNTAX = "syntax = \"proto3\";\n";
 
    protected SerializationContext createContext() throws IOException, DescriptorParserException {
       return createContext(Configuration.builder());

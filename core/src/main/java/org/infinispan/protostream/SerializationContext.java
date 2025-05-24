@@ -55,6 +55,8 @@ public interface SerializationContext extends ImmutableSerializationContext {
    @Deprecated
    void unregisterMarshallerProvider(MarshallerProvider marshallerProvider);
 
+   <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> typeName);
+
    /**
     * Interface to be implemented for dynamic lookup of marshallers. The marshaller instances returned by the provider
     * are never cached internally by ProtoStream and a new invocation is performed each time the marshaller for a type

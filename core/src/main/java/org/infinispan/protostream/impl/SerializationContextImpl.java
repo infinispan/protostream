@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.locks.StampedLock;
 
 import org.infinispan.protostream.BaseMarshaller;
+import org.infinispan.protostream.BaseMarshallerDelegate;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -36,32 +37,23 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private static final Log log = Log.LogFactory.getLog(SerializationContextImpl.class);
 
-   /**
+   /*
     * All descriptor related mutable internal state is protected by this RW lock.
     */
    private final StampedLock descriptorLock = new StampedLock();
-
    private final Configuration configuration;
-
    private final ProtostreamProtoParser parser;
-
    private final Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<>();
-
    private final Map<Integer, GenericDescriptor> typeIds = new HashMap<>();
-
    private final Map<String, GenericDescriptor> genericDescriptors = new HashMap<>();
-
    private final Map<String, EnumValueDescriptor> enumValueDescriptors = new HashMap<>();
 
-   /**
+   /*
     * All marshaller related mutable internal state is protected by this RW lock.
     */
    private final StampedLock manifestLock = new StampedLock();
-
    private final Map<String, Registration> marshallersByName = new HashMap<>();
-
    private final Map<Class<?>, Registration> marshallersByClass = new HashMap<>();
-
    private final List<MarshallerProvider> legacyMarshallerProviders = new ArrayList<>();
 
    public SerializationContextImpl(Configuration configuration) {
@@ -500,6 +492,7 @@ public final class SerializationContextImpl implements SerializationContext {
       }
    }
 
+   @Override
    public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> javaClass) {
       long stamp = manifestLock.readLock();
       try {

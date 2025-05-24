@@ -3,6 +3,7 @@ package org.infinispan.protostream.impl;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.Set;
 
 import org.infinispan.protostream.DescriptorParserException;
@@ -22,7 +23,7 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "IPROTO")
 public interface Log extends BasicLogger {
-   Log LOG = Logger.getMessageLogger(Log.class, "org.infinispan.PROTOSTREAM");
+   Log LOG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, "org.infinispan.PROTOSTREAM");
 
    @LogMessage(level = WARN)
    @Message(value = "Field %s was read out of sequence leading to sub-optimal performance", id = 1)
@@ -157,7 +158,7 @@ public interface Log extends BasicLogger {
 
    class LogFactory {
       public static Log getLog(Class<?> clazz) {
-         return Logger.getMessageLogger(Log.class, clazz.getName());
+         return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
       }
    }
 }

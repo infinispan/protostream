@@ -32,12 +32,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.auto.service</groupId>
-            <artifactId>auto-service</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -58,11 +52,7 @@
                     <execution>
                         <id>default-compile</id>
                         <configuration>
-                            <annotationProcessors>
-                                <annotationProcessor>
-                                    com.google.auto.service.processor.AutoServiceProcessor
-                                </annotationProcessor>
-                            </annotationProcessors>
+                            <proc>none</proc>
                         </configuration>
                     </execution>
                     <execution>
@@ -70,7 +60,7 @@
                         <configuration>
                             <annotationProcessors>
                                 <annotationProcessor>
-                                    org.infinispan.protostream.annotations.impl.processor.AutoProtoSchemaBuilderAnnotationProcessor
+                                    org.infinispan.protostream.processor.ProtoSchemaAnnotationProcessor
                                 </annotationProcessor>
                             </annotationProcessors>
                         </configuration>

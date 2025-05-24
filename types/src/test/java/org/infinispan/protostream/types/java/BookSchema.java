@@ -8,7 +8,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
                 Book.class
         },
         schemaFileName = "book.proto",
-        schemaFilePath = "proto/",
+        schemaFilePath = "org/infinispan/protostream/types",
         schemaPackageName = "library")
 public interface BookSchema extends GeneratedSchema {
 }

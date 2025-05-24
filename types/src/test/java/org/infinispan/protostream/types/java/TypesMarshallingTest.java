@@ -48,7 +48,7 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.Log;
+import org.jboss.logging.Logger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -56,7 +56,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class TypesMarshallingTest {
 
-   private static final Log log = Log.LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getName());
 
    private final TestConfiguration testConfiguration;
    private final ImmutableSerializationContext context;

@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             SingletonListAdapter.class
       },
       schemaFileName = "list.proto",
-      schemaFilePath = "proto/",
+      schemaFilePath = "org/infinispan/protostream/types/",
       schemaPackageName = "collections")
 public interface ListSchema extends GeneratedSchema {
 }

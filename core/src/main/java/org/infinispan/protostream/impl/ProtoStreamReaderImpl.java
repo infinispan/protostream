@@ -13,6 +13,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.protostream.BaseMarshallerDelegate;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.MessageMarshaller;

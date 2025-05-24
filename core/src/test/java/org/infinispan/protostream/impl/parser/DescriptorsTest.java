@@ -1,7 +1,6 @@
 package org.infinispan.protostream.impl.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.protostream.test.AbstractProtoStreamTest.PROTO3_SYNTAX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -35,6 +34,8 @@ import org.junit.rules.ExpectedException;
 public class DescriptorsTest {
 
    private final Configuration config = Configuration.builder().build();
+
+   public static final String PROTO3_SYNTAX = "syntax = \"proto3\";\n";
 
    @org.junit.Rule
    public ExpectedException exception = ExpectedException.none();

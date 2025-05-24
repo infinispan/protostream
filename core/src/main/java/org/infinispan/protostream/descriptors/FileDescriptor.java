@@ -1,5 +1,6 @@
 package org.infinispan.protostream.descriptors;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,7 +40,7 @@ public final class FileDescriptor {
       }
    }
 
-   private static final Log log = Log.LogFactory.getLog(FileDescriptor.class);
+   private static final Log log = Log.LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final Syntax syntax;
 

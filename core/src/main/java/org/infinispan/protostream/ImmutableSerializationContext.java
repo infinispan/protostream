@@ -1,5 +1,6 @@
 package org.infinispan.protostream;
 
+import java.time.LocalTime;
 import java.util.Map;
 
 import org.infinispan.protostream.config.Configuration;
@@ -142,4 +143,6 @@ public interface ImmutableSerializationContext {
     * @throws IllegalArgumentException if the given type name is not known to this context
     */
    GenericDescriptor getDescriptorByName(String fullTypeName);
+
+   <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> typeName);
 }
