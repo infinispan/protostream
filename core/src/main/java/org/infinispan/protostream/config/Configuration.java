@@ -2,6 +2,7 @@ package org.infinispan.protostream.config;
 
 import java.util.Map;
 
+import org.infinispan.protostream.GeneratedMarshallerBase;
 import org.infinispan.protostream.config.impl.ConfigurationImpl;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
@@ -37,7 +38,7 @@ public interface Configuration {
    boolean logOutOfSequenceWrites();
 
    /**
-    * The max nested message depth to apply to all {@link org.infinispan.protostream.annotations.impl.GeneratedMarshallerBase}s.
+    * The max nested message depth to apply to all {@link GeneratedMarshallerBase}s.
     * This value is used as way to avoid recurring on circular dependencies without the need to maintain the list of already visited entities.
     * Default to {@link #DEFAULT_MAX_NESTED_DEPTH}
     */

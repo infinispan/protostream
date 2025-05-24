@@ -5,10 +5,11 @@
 
 package org.infinispan.protostream.domain.schema;
 
+import org.infinispan.protostream.GeneratedMarshallerBase;
 import org.infinispan.protostream.domain.Item;
 
 @SuppressWarnings("all")
-public final class ItemMarshaller extends org.infinispan.protostream.annotations.impl.GeneratedMarshallerBase implements org.infinispan.protostream.ProtobufTagMarshaller<Item> {
+public final class ItemMarshaller extends GeneratedMarshallerBase implements org.infinispan.protostream.ProtobufTagMarshaller<Item> {
 
    @Override
    public Class<Item> getJavaClass() { return Item.class; }

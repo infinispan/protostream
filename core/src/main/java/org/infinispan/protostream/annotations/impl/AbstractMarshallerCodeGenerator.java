@@ -917,7 +917,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       if (fieldMetadata.getJavaType().isEnum()) {
          iw.printf("(%s.impl.EnumMarshallerDelegate)", PROTOSTREAM_PACKAGE);
       }
-      iw.printf("((%s.impl.SerializationContextImpl) $1.getSerializationContext()).getMarshallerDelegate(%s.class);\n", PROTOSTREAM_PACKAGE, fieldMetadata.getJavaTypeName());
+      iw.printf("$1.getSerializationContext().getMarshallerDelegate(%s.class);\n", fieldMetadata.getJavaTypeName());
       return fieldName;
    }
 

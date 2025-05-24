@@ -29,7 +29,7 @@ import org.infinispan.protostream.types.java.util.UUIDAdapter;
 @ProtoSchema(
       className = "CommonTypesSchema",
       schemaFileName = "common-java-types.proto",
-      schemaFilePath = "/protostream",
+      schemaFilePath = "/org/infinispan/protostream/types",
       schemaPackageName = "org.infinispan.protostream.commons",
       includeClasses = {
             UUIDAdapter.class,

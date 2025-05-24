@@ -46,9 +46,10 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>protostream-processor</artifactId>
+            <artifactId>protostream-processor-tests</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -115,7 +116,7 @@
                         <configuration>
                             <annotationProcessors>
                                 <annotationProcessor>
-                                    org.infinispan.protostream.annotations.impl.processor.AutoProtoSchemaBuilderAnnotationProcessor
+                                    org.infinispan.protostream.processor.ProtoSchemaAnnotationProcessor
                                 </annotationProcessor>
                             </annotationProcessors>
                         </configuration>

@@ -11,7 +11,7 @@ import java.util.List;
 import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 
-import org.infinispan.protostream.annotations.impl.processor.AutoProtoSchemaBuilderAnnotationProcessor;
+import org.infinispan.protostream.processor.ProtoSchemaAnnotationProcessor;
 
 import com.google.common.io.Resources;
 import com.google.testing.compile.Compilation;
@@ -61,7 +61,7 @@ public final class CompilationUtils {
       }
 
       return javac()
-            .withProcessors(new AutoProtoSchemaBuilderAnnotationProcessor())
+            .withProcessors(new ProtoSchemaAnnotationProcessor())
             .compile(files);
    }
 

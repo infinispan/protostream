@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.impl.BaseMarshallerDelegate;
 import org.infinispan.protostream.impl.JsonUtils;
 import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;

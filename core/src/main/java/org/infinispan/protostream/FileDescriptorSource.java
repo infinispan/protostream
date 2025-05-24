@@ -8,8 +8,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.infinispan.protostream.impl.ResourceUtils;
-
 /**
  * Aggregator for source proto files to be passed to {@link SerializationContext#registerProtoFiles(FileDescriptorSource)}.
  * The files are guaranteed to be processed in the order they were added (for better predictability or error reporting).

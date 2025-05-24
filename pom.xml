@@ -31,6 +31,7 @@
         <module>parent</module>
         <module>core</module>
         <module>processor</module>
+        <module>processor-tests</module>
         <module>types</module>
         <module>integrationtests</module>
         <module>maven-plugin</module>

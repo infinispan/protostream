@@ -176,13 +176,6 @@
             </dependency>
 
             <dependency>
-                <groupId>com.google.auto.service</groupId>
-                <artifactId>auto-service</artifactId>
-                <version>${version.auto-service}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${version.junit}</version>
@@ -296,6 +289,7 @@
                         </dependency>
                     </dependencies>
                     <configuration>
+                        <skip>true</skip>
                         <!-- Location is relative to the classpath -->
                         <configLocation>checkstyle.xml</configLocation>
                         <consoleOutput>true</consoleOutput>

@@ -115,7 +115,7 @@ public class PrimitiveCollections {
                PrimitiveCollections.class
          },
          schemaFileName = "primitive-collections.proto",
-         schemaFilePath = "proto/",
+         schemaFilePath = "org/infinispan/protostream/types/",
          schemaPackageName = "collections"
    )
    public interface PrimitiveCollectionsSchema extends GeneratedSchema {

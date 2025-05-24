@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.protostream.BaseMarshallerDelegate;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;

@@ -2,6 +2,7 @@ package org.infinispan.protostream.impl;
 
 import java.io.IOException;
 
+import org.infinispan.protostream.BaseMarshallerDelegate;
 import org.infinispan.protostream.Message;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufTagMarshaller;
