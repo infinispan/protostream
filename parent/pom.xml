@@ -12,7 +12,7 @@
 
     <groupId>org.infinispan.protostream</groupId>
     <artifactId>parent</artifactId>
-    <version>5.0.14-SNAPSHOT</version>
+    <version>5.0.14.Final</version>
     <packaging>pom</packaging>
 
     <name>ProtoStream - parent</name>
@@ -59,7 +59,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <project.build.outputTimestamp>2025-01-23T13:55:58Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2025-05-29T12:43:54Z</project.build.outputTimestamp>
 
         <!-- overwrite plugins version from jboss-parent -->
         <maven.compiler.target>17</maven.compiler.target>
