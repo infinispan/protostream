@@ -70,7 +70,7 @@
         <version.source.plugin>3.3.1</version.source.plugin>
         <version.surefire.plugin>3.5.3</version.surefire.plugin>
         <version.maven.javacc>3.1.1</version.maven.javacc>
-        <version.maven.sonatype.central>0.7.0</version.maven.sonatype.central>
+        <version.maven.sonatype.central>0.8.0</version.maven.sonatype.central>
         <version.maven.gpg>3.2.7</version.maven.gpg>
         <version.maven.plugin-tools>3.15.1</version.maven.plugin-tools>
         <version.protobuf.plugin>0.6.1</version.protobuf.plugin>
