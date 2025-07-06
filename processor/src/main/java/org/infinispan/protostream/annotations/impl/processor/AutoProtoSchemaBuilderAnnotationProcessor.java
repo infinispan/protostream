@@ -478,7 +478,7 @@ public final class AutoProtoSchemaBuilderAnnotationProcessor extends AbstractPro
       addGeneratedClassHeader(iw, classes);
       addSchemaBuilderAnnotation(iw, initializerClassName, fileName, annotation, protobufPackageName, classes, serCtxInitDeps, schemaSrc == null);
 
-      iw.append("@SuppressWarnings(\"all\")\n");
+      iw.append("@SuppressWarnings(\"unchecked\")\n");
       iw.append("public class ").append(initializerClassName);
       if (annotatedElement.getKind() == ElementKind.PACKAGE) {
          iw.append(" implements ").append(schemaSrc == null ? SerializationContextInitializer.class.getName() : GeneratedSchema.class.getName());
