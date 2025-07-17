@@ -8,6 +8,8 @@ import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class ProtoBufSchemaTest {
    private static final Log log = Log.LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
@@ -87,6 +89,14 @@ public class ProtoBufSchemaTest {
                .addReserved("dont_wanna_say")
             .build();
       validateParsing(schema);
+   }
+
+   @Test
+   public void createByContentTest() {
+      Schema schema = Schema.buildFromStringContent("schema1", "contentschema");
+      assertThat(schema).isNotNull();
+      assertThat(schema.getName()).isEqualTo("schema1");
+      assertThat(schema.toString()).isEqualTo("contentschema");
    }
 
    private static void validateParsing(Schema schema) {

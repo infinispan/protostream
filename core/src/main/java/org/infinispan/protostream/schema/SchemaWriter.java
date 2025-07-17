@@ -24,7 +24,7 @@ class SchemaWriter {
       this(2);
    }
 
-   public void write(Writer w, Schema s) throws IOException {
+   public void write(Writer w, SchemaByBuilder s) throws IOException {
       w.write("syntax = \"");
       w.write(s.getSyntax().toString());
       w.write("\";\n");

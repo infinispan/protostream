@@ -1,5 +1,7 @@
 package org.infinispan.protostream;
 
+import org.infinispan.protostream.schema.Schema;
+
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
@@ -14,7 +16,17 @@ import java.io.UncheckedIOException;
  * @author anistor@redhat.com
  * @since 4.3.4
  */
-public interface GeneratedSchema extends SerializationContextInitializer {
+public interface GeneratedSchema extends SerializationContextInitializer, Schema {
+
+   @Override
+   default String getName() {
+      return getProtoFileName();
+   }
+
+   @Override
+   default String getContent() {
+      return getProtoFile();
+   }
 
    /**
     * Returns the name of the proto file. The name is allowed to contain slashes so it can look like an absolute
