@@ -25,6 +25,18 @@ class SchemaWriter {
    }
 
    public void write(Writer w, Schema s) throws IOException {
+      if (s instanceof SchemaByBuilder sbb) {
+         write(w, sbb);
+         return;
+      }
+      if (s instanceof SchemaByString sbs) {
+         w.write(sbs.getContent());
+      }
+
+      throw new IllegalArgumentException("Unknown schema type: " + s);
+   }
+
+   private void write(Writer w, SchemaByBuilder s) throws IOException {
       w.write("syntax = \"");
       w.write(s.getSyntax().toString());
       w.write("\";\n");
