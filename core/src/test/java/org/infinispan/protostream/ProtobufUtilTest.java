@@ -547,4 +547,32 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
 
       assertEquals(user, userResult);
    }
+
+   @Test
+   public void testJsonSerializationWithoutMarshaller() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition =
+            """
+                  syntax = "proto2";
+                  message Person {
+                     optional string _type = 1;
+                     optional string name = 2;
+
+                     message Address {
+                       optional string _type = 1;
+                       optional string street = 2;
+                       optional string city = 3;
+                       optional string zip = 4;
+                     }
+
+                     optional Address address = 3;
+                  }""";
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
+
+      String json = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Person.Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+   }
 }

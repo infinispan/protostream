@@ -17,6 +17,8 @@ final class JsonHelper {
    static final String JSON_WHITESPACE = "   ";
 
    static boolean isContainerAdapter(ImmutableSerializationContext ctx, GenericDescriptor descriptor) {
-      return descriptor != null && ctx.getMarshaller(descriptor.getFullName()) instanceof ElementContainerAdapter<?>;
+      return descriptor != null
+            && ctx.canMarshall(descriptor.getFullName())
+            && ctx.getMarshaller(descriptor.getFullName()) instanceof ElementContainerAdapter<?>;
    }
 }

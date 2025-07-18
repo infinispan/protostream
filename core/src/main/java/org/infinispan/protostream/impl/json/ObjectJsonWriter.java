@@ -62,14 +62,16 @@ class ObjectJsonWriter extends BaseJsonWriter {
       }
 
       // This means it is missing the comma, the field name, and then it can start the nested object.
+      boolean written = false;
       if (JsonToken.followedByComma(lastToken())) {
          pushToken(JsonToken.COMMA);
          pushToken(JsonTokenWriter.string(fieldDescriptor.getName()));
          pushToken(JsonToken.COLON);
+         written = true;
       }
 
       pushToken(JsonToken.LEFT_BRACE);
-      if (complexObject) {
+      if (complexObject && !written) {
          writeType(fieldDescriptor);
       }
    }
