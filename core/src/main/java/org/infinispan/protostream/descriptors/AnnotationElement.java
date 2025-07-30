@@ -80,7 +80,7 @@ public abstract class AnnotationElement {
       this.position = position;
    }
 
-   public static abstract class Value extends AnnotationElement {
+   public abstract static class Value extends AnnotationElement {
 
       protected Value(long pos) {
          super(pos);

@@ -220,7 +220,7 @@ public class SerializationContextImplTest {
       ctx.registerMarshallerProvider(new SerializationContext.MarshallerProvider() {
          @Override
          public BaseMarshaller<?> getMarshaller(String typeName) {
-            if (typeName.equals("test.X")) {
+            if ("test.X".equals(typeName)) {
                return makeMarshaller();
             }
             return null;
