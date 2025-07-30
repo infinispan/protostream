@@ -6,6 +6,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -555,6 +556,32 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
             """
                   syntax = "proto2";
                   message Person {
+                     optional string name = 1;
+
+                     message Address {
+                       optional string street = 1;
+                       optional string city = 2;
+                       optional string zip = 3;
+                     }
+
+                     optional Address address = 2;
+                  }""";
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
+
+      String json = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Person.Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+   }
+
+   @Test
+   public void testSchemaWithReservedJsonFieldsRoot() {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition =
+            """
+                  syntax = "proto2";
+                  message Person {
                      optional string _type = 1;
                      optional string name = 2;
 
@@ -570,9 +597,38 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
 
       String json = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Person.Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
-      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
-      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
-      assertValid(converted);
-      assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+      String message = assertThrows(IllegalStateException.class, () -> ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json)))
+            .getMessage();
+
+      assertTrue("Does not contain:\n" + message, message.contains("Message for 'Person'"));
+      assertTrue("Does not contain:\n" + message, message.contains("Field number '1' has reserved name '_type'"));
+   }
+
+   @Test
+   public void testSchemaWithReservedJsonFieldsNested() {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition =
+            """
+                  syntax = "proto2";
+                  message Person {
+                     optional string name = 1;
+
+                     message Address {
+                       optional string street = 1;
+                       optional string _type = 2;
+                       optional string city = 3;
+                       optional string zip = 4;
+                     }
+
+                     optional Address address = 2;
+                  }""";
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
+
+      String json = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Person.Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
+      String message = assertThrows(IllegalStateException.class, () -> ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json)))
+            .getMessage();
+
+      assertTrue("Does not contain:\n" + message, message.contains("Message for 'Person.Address'"));
+      assertTrue("Does not contain:\n" + message, message.contains("Field number '2' has reserved name '_type'"));
    }
 }
