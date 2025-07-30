@@ -144,6 +144,7 @@ public final class JsonReader {
    }
 
    private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber, boolean topLevel) throws IOException {
+      assertDescriptorField(messageDescriptor);
       RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
       TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, raos);
       boolean isContainerAdapter = JsonHelper.isContainerAdapter(ctx, messageDescriptor);
@@ -673,6 +674,22 @@ public final class JsonReader {
    private static void expectField(String expectedFieldName, String actualFieldName) {
       if (!expectedFieldName.equals(actualFieldName)) {
          throw new IllegalStateException(String.format("Expected field '%s' but it was '%s'", expectedFieldName, actualFieldName));
+      }
+   }
+
+   private static void assertDescriptorField(Descriptor descriptor) {
+      if (descriptor == null) return;
+
+      boolean invalidFields = descriptor.getFields().stream()
+            .anyMatch(f -> JSON_TYPE_FIELD.equals(f.getName()) || JSON_VALUE_FIELD.equals(f.getName()));
+      if (invalidFields) {
+         StringBuilder sb = new StringBuilder();
+         for (FieldDescriptor f : descriptor.getFields()) {
+            if (JSON_TYPE_FIELD.equals(f.getName()) || JSON_VALUE_FIELD.equals(f.getName())) {
+               sb.append("Field number '").append(f.getNumber()).append("' has reserved name '").append(f.getName()).append("'").append(System.lineSeparator());
+            }
+         }
+         throw new IllegalStateException(String.format("Message for '%s' has reserved fields that makes conversion illegal: %n%s", descriptor.getFullName(), sb));
       }
    }
 }
