@@ -183,7 +183,7 @@ final class GenericObject {
       return sb.append("}\n\n").toString();
    }
 
-   final static class ObjectProperty<T> {
+   static final class ObjectProperty<T> {
 
       final String name;
 

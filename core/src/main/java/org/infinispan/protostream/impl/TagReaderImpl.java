@@ -283,7 +283,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    }
 
    //todo [anistor] need to provide a safety mechanism to limit message size in bytes and message nesting depth on read ops
-   private static abstract class Decoder {
+   private abstract static class Decoder {
 
       protected int globalLimit = Integer.MAX_VALUE;
 
