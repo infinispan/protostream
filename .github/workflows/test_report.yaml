@@ -7,17 +7,47 @@ on:
 jobs:
   report:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [17, 21, 25-ea]
     steps:
-      - uses: dorny/test-reporter@v2
+      - name: Download Surefire Report Artifact
+        uses: actions/download-artifact@v4.2.1
         with:
-          artifact: jdk17-test-results
-          name: JDK 17 Tests
-          path: '**/*.xml'
-          reporter: java-junit
+          name: ${{ matrix.jdk }}-test-results
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          path: ${{ matrix.jdk }}
 
-      - uses: dorny/test-reporter@v2
+      - uses: rigazilla/action-surefire-report@summary
         with:
-          artifact: jdk21-test-results
-          name: JDK 21 Tests
-          path: '**/*.xml'
-          reporter: java-junit
+          fail_on_test_failures: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          check_name: Test Report ${{ matrix.jdk }}
+          commit: ${{ github.event.workflow_run.head_sha }}
+          ignore_flaky_tests: true
+          summary: "Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
+          report_paths: |
+            ${{ matrix.jdk }}/**/*-reports*/**/TEST-*.xml
+  report-summary:
+    runs-on: ubuntu-latest
+    needs: report
+    if: always()
+    steps:
+      - name: Check matrix job outcomes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          STATUS="success"
+          MESSAGE="All test report jobs succeeded."
+          if [[ "${{ needs.report.result }}" != "success" ]]; then
+            STATUS="failure"
+            MESSAGE="One or more test report jobs failed."
+          fi
+          curl -s -X POST -H "Authorization: token $GH_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\": \"Test Report Summary\", \"head_sha\": \"$SHA\", \"status\": \"completed\",\
+               \"conclusion\": \"$STATUS\", \"output\": {\"title\": \"$MESSAGE\", \
+               \"summary\":\"\", \"text\":\"\"}}" \
+            "https://api.github.com/repos/${{ github.repository }}/check-runs"
