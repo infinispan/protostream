@@ -9,68 +9,42 @@ on:
       - main
 
 jobs:
-  jdk17:
+  jdk:
+    name: JDK Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [17, 21, 25-ea]
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: ${{ matrix.jdk }}
           distribution: 'temurin'
           cache: maven
 
-      - name: JDK 17 Tests
+      - name: JDK Tests ${{ matrix.jdk }}
         run: ./mvnw -B clean install artifact:compare -Dmaven.test.failure.ignore=true -Dansi.strip=true
 
       - name: Test Logs
         uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
-          name: jdk17-test-results
+          name: ${{ matrix.jdk }}-test-results
           path: "**/target/*-reports*/**/TEST-*.xml"
-
-  jdk21:
+  jdk-summary:
+    name: JDK Build Summary
     runs-on: ubuntu-latest
+    needs: jdk
+    if: always()
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: JDK 21 Tests
-        run: ./mvnw -B clean install artifact:compare -Dmaven.test.failure.ignore=true -Dansi.strip=true
-
-      - name: Test Logs
-        uses: actions/upload-artifact@v4
-        if: success() || failure()
-        with:
-          name: jdk21-test-results
-          path: "**/target/*-reports*/**/TEST-*.xml"
-
-  jdk-ea:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '24-ea'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: JDK EA Tests
-        run: ./mvnw -B clean install artifact:compare -Dmaven.test.failure.ignore=true -Dansi.strip=true
-
-      - name: Test Logs
-        uses: actions/upload-artifact@v4
-        if: success() || failure()
-        with:
-          name: jdk-ea-test-results
-          path: "**/target/*-reports*/**/TEST-*.xml"
+      - name: Check matrix job outcomes
+        run: |
+          if [[ "${{ needs.jdk.result }}" != "success" ]]; then
+            echo "One or more matrix jobs failed."
+            exit 1
+          else
+            echo "All matrix jobs succeeded."
+          fi
