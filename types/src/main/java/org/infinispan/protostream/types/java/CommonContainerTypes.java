@@ -32,7 +32,7 @@ import org.infinispan.protostream.types.java.collections.TreeSetAdapter;
 @ProtoSchema(
       className = "CommonContainerTypesSchema",
       schemaFileName = "common-java-container-types.proto",
-      schemaFilePath = "/org/infinispan/protostream/types",
+      schemaFilePath = "/org/infinispan/protostream/types/java",
       schemaPackageName = "org.infinispan.protostream.commons",
       includeClasses = {
             // collections

@@ -1,16 +1,16 @@
 package org.infinispan.protostream.types.protobuf;
 
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 /**
  * @author anistor@redhat.com
  * @since 4.4
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       schemaFileName = "empty.proto",
-      schemaFilePath = "/protostream/google/protobuf",
+      schemaFilePath = "org/infinispan/protostream/types/protobuf",
       schemaPackageName = "google.protobuf",
       includeClasses = EmptySchema.Empty.class
 )
