@@ -105,7 +105,7 @@
          "_type": "org.infinispan.protostream.WrappedMessage",
          "wrappedEnum": {
             "_type": "org.infinispan.protostream.commons.Month",
-            "wrappedEnum": "SEPTEMBER"
+            "_value": "SEPTEMBER"
          }
       }
    ]

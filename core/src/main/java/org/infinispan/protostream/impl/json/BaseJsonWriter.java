@@ -253,7 +253,7 @@ abstract class BaseJsonWriter implements FieldAwareTagHandler {
                child.onTag(fieldNumber, fieldDescriptor, enumConstantName);
                child.onEnd();
             } else {
-               writeValue(fieldDescriptor, tagValue);
+               writeValue(fieldDescriptor, tagValue, true);
             }
 
             break;
@@ -307,7 +307,7 @@ abstract class BaseJsonWriter implements FieldAwareTagHandler {
                delegate.onTag(fieldNumber, fieldDescriptor, tagValue);
                break;
             }
-            writeValue(fieldDescriptor, tagValue);
+            writeValue(fieldDescriptor, tagValue, false);
             break;
 
          // Reads a java.util.Date object.
@@ -320,7 +320,7 @@ abstract class BaseJsonWriter implements FieldAwareTagHandler {
                delegate.onTag(fieldNumber, fieldDescriptor, tagValue);
                break;
             }
-            writeValue(fieldDescriptor, tagValue);
+            writeValue(fieldDescriptor, tagValue, false);
             break;
          }
 
@@ -379,10 +379,10 @@ abstract class BaseJsonWriter implements FieldAwareTagHandler {
             return;
          }
       }
-      writeValue(fieldDescriptor, tagValue);
+      writeValue(fieldDescriptor, tagValue, false);
    }
 
-   private void writeValue(FieldDescriptor fieldDescriptor, Object tagValue) {
+   private void writeValue(FieldDescriptor fieldDescriptor, Object tagValue, boolean forceValueField) {
       // Type is already written, now we write the comma and the value.
       if (JsonToken.followedByComma(lastToken()))
          pushToken(JsonToken.COMMA);
@@ -390,7 +390,7 @@ abstract class BaseJsonWriter implements FieldAwareTagHandler {
       // Writing a primitive from the root means this is just a primitive wrapped value, i.e., it is not contained by an object.
       // Therefore, we need to use the reserved field "_value" to write the primitive value.
       // In any other case, this field is contained by an object, we can use the field name to write the value.
-      String name = isRoot() ? JSON_VALUE_FIELD : fieldDescriptor.getName();
+      String name = forceValueField || isRoot() ? JSON_VALUE_FIELD : fieldDescriptor.getName();
       pushToken(JsonTokenWriter.string(name));
       pushToken(JsonToken.COLON);
       writeTagValue(fieldDescriptor, tagValue);
