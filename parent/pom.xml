@@ -75,7 +75,7 @@
         <version.maven.plugin-tools>3.15.1</version.maven.plugin-tools>
         <version.protobuf.plugin>0.6.1</version.protobuf.plugin>
 
-        <version.infinispan.checkstyle>16.0.0.Dev02</version.infinispan.checkstyle>
+        <version.infinispan.checkstyle>16.0.0.Dev03</version.infinispan.checkstyle>
         <version.com.puppycrawl.tools.checkstyle>11.0.0</version.com.puppycrawl.tools.checkstyle>
         <version.junit>4.13.2</version.junit>
         <version.compile-testing>0.21</version.compile-testing>
