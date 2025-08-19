@@ -3,6 +3,9 @@ package org.infinispan.plugins.proto.compatibility;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -120,9 +123,11 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
          return;
       }
 
+      Proxy proxy = configureProxy();
       for (String file : remoteLockFiles.split(",")) {
          getLog().info(String.format("Checking backwards compatibility check against remote file '%s'", file));
-         try (InputStream is = new URL(file).openStream()) {
+         URL url = new URL(file);
+         try (InputStream is = url.openConnection(proxy).getInputStream()) {
             ProtoLock remoteLockFile = ProtoLock.readLockFile(is);
             remoteLockFile.checkCompatibility(currentState, true);
          }
@@ -132,5 +137,27 @@ public class ProtoCompatibilityMojo extends AbstractMojo {
 
    private boolean remoteCheck() {
       return remoteLockFiles != null && !remoteLockFiles.isEmpty();
+   }
+
+   private Proxy configureProxy() {
+      String proxy = getEnvVarValue("http_proxy");
+      if (proxy == null) {
+         proxy = getEnvVarValue("https_proxy");
+      }
+
+      if (proxy == null) {
+         return Proxy.NO_PROXY;
+      }
+
+      URI uri = URI.create(proxy);
+      return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(uri.getHost(), uri.getPort()));
+   }
+
+   private String getEnvVarValue(String name) {
+      String value = System.getenv(name);
+      if (value == null || value.isBlank()) {
+         value = System.getenv(name.toUpperCase());
+      }
+      return value;
    }
 }
