@@ -9,6 +9,7 @@ import java.util.Map;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.impl.Log;
+import org.infinispan.protostream.impl.SmallIntMap;
 
 /**
  * @author anistor@redhat.com
@@ -22,7 +23,7 @@ public class ResolutionContext {
 
    private final Map<String, FileDescriptor> fileDescriptorMap;
 
-   private final Map<Integer, GenericDescriptor> allTypeIds;
+   private final SmallIntMap<GenericDescriptor> allTypeIds;
 
    private final Map<Integer, GenericDescriptor> typeIds = new HashMap<>();
 
@@ -37,7 +38,7 @@ public class ResolutionContext {
    public ResolutionContext(FileDescriptorSource.ProgressCallback progressCallback,
                             Map<String, FileDescriptor> fileDescriptorMap,
                             Map<String, GenericDescriptor> allGlobalTypes,
-                            Map<Integer, GenericDescriptor> allTypeIds,
+                            SmallIntMap<GenericDescriptor> allTypeIds,
                             Map<String, EnumValueDescriptor> allEnumValueDescriptors) {
       this.progressCallback = progressCallback;
       this.fileDescriptorMap = fileDescriptorMap;
@@ -150,7 +151,12 @@ public class ResolutionContext {
       }
    }
 
-   private <K, V> V lookup(Map<K, V> first, Map<K, V> second, K k) {
+   private static <K, V> V lookup(Map<K, V> first, Map<K, V> second, K k) {
+      V v = first.get(k);
+      return v != null ? v : second.get(k);
+   }
+
+   private static <V> V lookup(Map<Integer, V> first, SmallIntMap<V> second, int k) {
       V v = first.get(k);
       return v != null ? v : second.get(k);
    }

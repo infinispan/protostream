@@ -44,7 +44,7 @@ public final class SerializationContextImpl implements SerializationContext {
    private final Configuration configuration;
    private final ProtostreamProtoParser parser;
    private final Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<>();
-   private final Map<Integer, GenericDescriptor> typeIds = new HashMap<>();
+   private final SmallIntMap<GenericDescriptor> typeIds = new SmallIntMap<>();
    private final Map<String, GenericDescriptor> genericDescriptors = new HashMap<>();
    private final Map<String, EnumValueDescriptor> enumValueDescriptors = new HashMap<>();
 
@@ -54,6 +54,7 @@ public final class SerializationContextImpl implements SerializationContext {
    private final StampedLock manifestLock = new StampedLock();
    private final Map<String, Registration> marshallersByName = new HashMap<>();
    private final Map<Class<?>, Registration> marshallersByClass = new HashMap<>();
+   private final SmallIntMap<Registration> marshallersByTypeId = new SmallIntMap<>();
    private final List<MarshallerProvider> legacyMarshallerProviders = new ArrayList<>();
 
    public SerializationContextImpl(Configuration configuration) {
@@ -202,27 +203,17 @@ public final class SerializationContextImpl implements SerializationContext {
       return (EnumDescriptor) descriptor;
    }
 
-   private static final class Registration {
-
-      final BaseMarshallerDelegate<?> marshallerDelegate;
-      final InstanceMarshallerProvider<?> marshallerProvider;
+   private record Registration(BaseMarshallerDelegate<?> marshallerDelegate,
+                               InstanceMarshallerProvider<?> marshallerProvider, Integer id) {
 
       // Used on both java and protobuf side when a single marshaller is given and no marshallerProvider
-      Registration(BaseMarshallerDelegate<?> marshallerDelegate) {
-         this.marshallerDelegate = marshallerDelegate;
-         this.marshallerProvider = null;
-      }
-
-      // Used on protobuf side when a marshallerProvider is given
-      Registration(BaseMarshallerDelegate<?> marshallerDelegate, InstanceMarshallerProvider<?> marshallerProvider) {
-         this.marshallerDelegate = marshallerDelegate;
-         this.marshallerProvider = marshallerProvider;
+      Registration(BaseMarshallerDelegate<?> marshallerDelegate, Integer id) {
+         this(marshallerDelegate, null, id);
       }
 
       // Used on java side when a marshallerProvider is given
       Registration(InstanceMarshallerProvider<?> marshallerProvider) {
-         this.marshallerDelegate = null;
-         this.marshallerProvider = marshallerProvider;
+         this(null, marshallerProvider, null);
       }
    }
 
@@ -271,9 +262,13 @@ public final class SerializationContextImpl implements SerializationContext {
          }
          if (existingByClass != null) {
             marshallersByName.remove(existingByClass.marshallerDelegate.getMarshaller().getTypeName());
+            if (existingByClass.id != null) {
+               marshallersByTypeId.remove(existingByClass.id);
+            }
          }
 
-         Registration registration = new Registration(makeMarshallerDelegate(marshaller));
+         Integer typeId = getTypeIdByName(marshaller.getTypeName());
+         Registration registration = new Registration(makeMarshallerDelegate(marshaller), typeId);
          // If the Class associated with the marshaller is an interface, then we only add the subClassName implementations
          if (!isInterface)
             marshallersByClass.put(marshaller.getJavaClass(), registration);
@@ -281,6 +276,9 @@ public final class SerializationContextImpl implements SerializationContext {
          marshallersByName.put(marshaller.getTypeName(), registration);
          for (Class<?> subClass : subClasses) {
             marshallersByClass.put(subClass, registration);
+         }
+         if (typeId != null) {
+            marshallersByTypeId.put(typeId, registration);
          }
       } finally {
          manifestLock.unlockWrite(stamp);
@@ -330,6 +328,9 @@ public final class SerializationContextImpl implements SerializationContext {
          }
          marshallersByName.remove(marshaller.getTypeName());
          marshallersByClass.remove(marshaller.getJavaClass());
+         if (existingByName.id != null) {
+            marshallersByTypeId.remove(existingByName.id);
+         }
       } finally {
          manifestLock.unlockWrite(stamp);
       }
@@ -386,7 +387,12 @@ public final class SerializationContextImpl implements SerializationContext {
          marshallersByClass.put(marshallerProvider.getJavaClass(), new Registration(marshallerProvider));
          for (String typeName : marshallerProvider.getTypeNames()) {
             BaseMarshaller<?> marshaller = marshallerProvider.getMarshaller(typeName);
-            marshallersByName.put(typeName, new Registration(makeMarshallerDelegate(marshaller), marshallerProvider));
+            Integer typeId = getTypeIdByName(typeName);
+            Registration registration = new Registration(makeMarshallerDelegate(marshaller), marshallerProvider, typeId);
+            marshallersByName.put(typeName, registration);
+            if (typeId != null) {
+               marshallersByTypeId.put(typeId, registration);
+            }
          }
       } finally {
          manifestLock.unlockWrite(stamp);
@@ -406,7 +412,12 @@ public final class SerializationContextImpl implements SerializationContext {
             throw new IllegalArgumentException("The given InstanceMarshallerProvider was not previously registered with this SerializationContext");
          }
          marshallersByClass.remove(marshallerProvider.getJavaClass());
-         marshallersByName.keySet().removeAll(marshallerProvider.getTypeNames());
+         for (String typeName : marshallerProvider.getTypeNames()) {
+            Registration registration = marshallersByName.remove(typeName);
+            if (registration != null && registration.id != null) {
+               marshallersByTypeId.remove(registration.id);
+            }
+         }
       } finally {
          manifestLock.unlockWrite(stamp);
       }
@@ -487,6 +498,26 @@ public final class SerializationContextImpl implements SerializationContext {
          }
          //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
          return makeMarshallerDelegate(marshaller);
+      } finally {
+         manifestLock.unlockRead(stamp);
+      }
+   }
+
+   @Override
+   public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(int typeId) {
+      // Try first without locking as this class is thread safe
+      Registration registration = marshallersByTypeId.get(typeId);
+      if (registration != null) {
+         return (BaseMarshallerDelegate<T>) registration.marshallerDelegate;
+      }
+
+      long stamp = manifestLock.readLock();
+      try {
+         GenericDescriptor descriptor = typeIds.get(typeId);
+         if (descriptor == null) {
+            throw new IllegalArgumentException("No marshaller registered for Protobuf type id " + typeId);
+         }
+         return getMarshallerDelegate(descriptor.getFullName());
       } finally {
          manifestLock.unlockRead(stamp);
       }

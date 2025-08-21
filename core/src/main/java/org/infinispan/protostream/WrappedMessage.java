@@ -518,7 +518,7 @@ public final class WrappedMessage {
 
    private static <T> T readCustomObject(int tag, ImmutableSerializationContext ctx, TagReader in) throws IOException {
       String typeName = null;
-      Integer typeId = null;
+      int typeId = -1;
       int enumValue = -1;
       ByteBuffer messageBytes = null;
       Object value = null;
@@ -573,7 +573,7 @@ public final class WrappedMessage {
          }
       } while ((tag = in.readTag()) != 0);
 
-      if (value == null && typeName == null && typeId == null && messageBytes == null) {
+      if (value == null && typeName == null && typeId == -1 && messageBytes == null) {
          return null;
       }
 
@@ -584,14 +584,13 @@ public final class WrappedMessage {
          return (T) value;
       }
 
-      if (typeName == null && typeId == null || typeName != null && typeId != null || fieldCount != 2) {
+      if (typeName == null && typeId == -1 || typeName != null && typeId >= 0 || fieldCount != 2) {
          throw new IOException("Invalid WrappedMessage encoding.");
       }
 
-      if (typeId != null) {
-         typeName = ctx.getDescriptorByTypeId(typeId).getFullName();
-      }
-      BaseMarshallerDelegate<T> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(typeName);
+      BaseMarshallerDelegate<T> marshallerDelegate = typeId >= 0 ?
+            ctx.getMarshallerDelegate(typeId) :
+            ((SerializationContextImpl) ctx).getMarshallerDelegate(typeName);
       if (messageBytes != null) {
          // it's a Message type
          TagReaderImpl nestedInput = TagReaderImpl.newInstance(ctx, messageBytes);
@@ -602,7 +601,7 @@ public final class WrappedMessage {
          T e = (T) marshaller.decode(enumValue);
          if (e == null) {
             // Unknown enum value cause by schema evolution. We cannot handle data loss here so we throw!
-            throw new IOException("Unknown enum value " + enumValue + " for Protobuf enum type " + typeName);
+            throw new IOException("Unknown enum value " + enumValue + " for Protobuf enum type " + marshaller.getTypeName());
          }
          return e;
       }
@@ -611,7 +610,7 @@ public final class WrappedMessage {
    private static Object readContainer(ImmutableSerializationContext ctx, TagReader in, int tag) throws IOException {
       int containerSize = -1;
       String containerTypeName = null;
-      Integer containerTypeId = null;
+      int containerTypeId = -1;
       ByteBuffer containerMessage = null;
 
       int fieldCount = 0;
@@ -644,15 +643,14 @@ public final class WrappedMessage {
       }
 
       if (fieldCount != 3 || containerSize < 0 || containerMessage == null
-            || containerTypeId == null && containerTypeName == null
-            || containerTypeId != null && containerTypeName != null) {
+            || containerTypeId == -1 && containerTypeName == null
+            || containerTypeId >= 0 && containerTypeName != null) {
          throw new IOException("Invalid WrappedMessage encoding.");
       }
 
-      if (containerTypeId != null) {
-         containerTypeName = ctx.getDescriptorByTypeId(containerTypeId).getFullName();
-      }
-      BaseMarshallerDelegate<?> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(containerTypeName);
+      BaseMarshallerDelegate<?> marshallerDelegate = containerTypeId >= 0 ?
+            ctx.getMarshallerDelegate(containerTypeId) :
+            ((SerializationContextImpl) ctx).getMarshallerDelegate(containerTypeName);
 
       BaseMarshaller<?> containerMarshaller = marshallerDelegate.getMarshaller();
       if (!(containerMarshaller instanceof ElementContainerAdapter)) {

@@ -145,4 +145,6 @@ public interface ImmutableSerializationContext {
    GenericDescriptor getDescriptorByName(String fullTypeName);
 
    <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> typeName);
+
+   <T> BaseMarshallerDelegate<T> getMarshallerDelegate(int typeId);
 }
