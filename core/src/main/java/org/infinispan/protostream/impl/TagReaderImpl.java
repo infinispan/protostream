@@ -48,16 +48,22 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    @Deprecated
    private ProtoStreamReaderImpl reader = null;
 
+   // This is to detect the original starting position of the decoder, so we can support elements such as
+   // wrapped ByteBuffer instances.
+   private final int startingPos;
+
    private TagReaderImpl(TagReaderImpl parent, Decoder decoder) {
       this.parent = parent;
       this.serCtx = parent.serCtx;
       this.decoder = decoder;
+      this.startingPos = decoder.getPos();
    }
 
    private TagReaderImpl(SerializationContextImpl serCtx, Decoder decoder) {
       this.parent = null;
       this.serCtx = serCtx;
       this.decoder = decoder;
+      this.startingPos = decoder.getPos();
    }
 
    public static TagReaderImpl newNestedInstance(ProtobufTagMarshaller.ReadContext parent, InputStream input) {
@@ -66,6 +72,13 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
    public static TagReaderImpl newNestedInstance(ProtobufTagMarshaller.ReadContext parent, byte[] buf) {
       return new TagReaderImpl((TagReaderImpl) parent, new ByteArrayDecoder(buf, 0, buf.length));
+   }
+
+   public static TagReaderImpl newNestedInstance(ProtobufTagMarshaller.ReadContext parent, ByteBuffer buf) {
+      Decoder decoder = buf.hasArray()
+            ? new ByteArrayDecoder(buf.array(), buf.arrayOffset() + buf.position(), buf.remaining())
+            : new ByteBufferDecoder(buf);
+      return new TagReaderImpl((TagReaderImpl) parent, decoder);
    }
 
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, InputStream input) {
@@ -247,7 +260,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    public byte[] fullBufferArray() throws IOException {
       checkBufferUnused("fullBufferArray");
 
-      return decoder.getBufferArray();
+      return decoder.getBufferArray(startingPos);
    }
 
    @Override
@@ -255,14 +268,17 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       checkBufferUnused("fullBufferInputStream");
 
       if (isInputStream()) {
+         if (startingPos != 0) {
+            throw new IllegalStateException("fullBufferInputStream in marshaller can only be used on an unprocessed buffer");
+         }
          return ((InputStreamDecoder) decoder).getInputStream();
       } else {
-         return new ByteArrayInputStream(decoder.getBufferArray());
+         return new ByteArrayInputStream(decoder.getBufferArray(startingPos));
       }
    }
 
    private void checkBufferUnused(String methodName) {
-      if (decoder.getPos() > 0) {
+      if (decoder.getPos() > startingPos) {
          throw new IllegalStateException(methodName + " in marshaller can only be used on an unprocessed buffer");
       }
    }
@@ -293,7 +309,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
       abstract int getPos();
 
-      abstract byte[] getBufferArray() throws IOException;
+      abstract byte[] getBufferArray(int offset) throws IOException;
 
       abstract boolean isAtEnd() throws IOException;
 
@@ -476,8 +492,11 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      byte[] getBufferArray() {
-         return array;
+      byte[] getBufferArray(int offset) {
+         if (offset == 0) {
+            return array;
+         }
+         return Arrays.copyOfRange(array, offset, array.length);
       }
 
       @Override
@@ -680,8 +699,12 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      byte[] getBufferArray() {
-         return buf.array();
+      byte[] getBufferArray(int offset) {
+         byte[] array = buf.array();
+         if (offset == 0) {
+            return array;
+         }
+         return Arrays.copyOfRange(array, offset, array.length);
       }
 
 
@@ -966,7 +989,10 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
 
       @Override
-      byte[] getBufferArray() throws IOException {
+      byte[] getBufferArray(int offset) throws IOException {
+         if (offset != 0) {
+            throw new IllegalArgumentException("getBufferArray not supported with a non 0 offset, received " + offset);
+         }
          if (globalLimit == Integer.MAX_VALUE) {
             pos = Integer.MAX_VALUE;
             return in.readAllBytes();
