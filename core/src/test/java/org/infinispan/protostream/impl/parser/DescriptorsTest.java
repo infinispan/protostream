@@ -28,6 +28,7 @@ import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.ResolutionContext;
 import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.impl.SmallIntMap;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -1102,7 +1103,7 @@ public class DescriptorsTest {
    public static void resolve(Map<String, FileDescriptor> fileDescriptorMap) {
       // resolve imports and types
       ResolutionContext resolutionContext = new ResolutionContext(null, fileDescriptorMap,
-            new HashMap<>(), new HashMap<>(), new HashMap<>());
+            new HashMap<>(), new SmallIntMap<>(), new HashMap<>());
       resolutionContext.resolve();
    }
 
