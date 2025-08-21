@@ -38,7 +38,7 @@ jobs:
           git commit -a -m "Releasing ${{ github.event.inputs.version }}" --no-verify
 
       - name: Set up Java for publishing to Sonatype Central
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
