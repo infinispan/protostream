@@ -1,6 +1,7 @@
 package org.infinispan.protostream;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
@@ -519,7 +520,7 @@ public final class WrappedMessage {
       String typeName = null;
       Integer typeId = null;
       int enumValue = -1;
-      byte[] messageBytes = null;
+      ByteBuffer messageBytes = null;
       Object value = null;
       int fieldCount = 0;
       int expectedFieldCount;
@@ -551,7 +552,7 @@ public final class WrappedMessage {
             }
             case WRAPPED_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
                expectedFieldCount = 2;
-               messageBytes = in.readByteArray();
+               messageBytes = in.readByteBuffer();
                break;
             }
             case WRAPPED_INSTANT_SECONDS << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
@@ -611,7 +612,7 @@ public final class WrappedMessage {
       int containerSize = -1;
       String containerTypeName = null;
       Integer containerTypeId = null;
-      byte[] containerMessage = null;
+      ByteBuffer containerMessage = null;
 
       int fieldCount = 0;
       while (tag != 0) {
@@ -628,7 +629,7 @@ public final class WrappedMessage {
                break;
             }
             case WRAPPED_CONTAINER_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED:
-               containerMessage = in.readByteArray();
+               containerMessage = in.readByteBuffer();
                break;
             default:
                throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : "
@@ -716,7 +717,7 @@ public final class WrappedMessage {
          throw new IllegalStateException("Unexpected tag : " + tag + " (Field number : "
                  + WireType.getTagFieldNumber(tag) + ", Wire type : " + WireType.getTagWireType(tag) + ")");
       }
-      var elementReader = TagReaderImpl.newInstance(ctx, in.readByteArray());
+      var elementReader = TagReaderImpl.newInstance(ctx, in.readByteBuffer());
       return readMessage(ctx, elementReader, true);
    }
 
