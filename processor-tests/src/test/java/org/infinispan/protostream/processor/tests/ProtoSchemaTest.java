@@ -40,6 +40,7 @@ import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.processor.tests.testdomain.Inheritance;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleEnum;
+import org.infinispan.protostream.processor.tests.testdomain.SimpleMarshalledObject;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleRecord;
 import org.junit.Test;
 
@@ -145,6 +146,7 @@ public class ProtoSchemaTest {
                EmbeddedMetadata.EmbeddedLifespanExpirableMetadata.class,
                SimpleEnum.class,
                SimpleRecord.class,
+               SimpleMarshalledObject.class,
 //               String.class,
                X.class
          }

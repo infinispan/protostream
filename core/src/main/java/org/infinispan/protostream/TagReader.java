@@ -21,6 +21,12 @@ public interface TagReader {
    int readTag() throws IOException;
 
    /**
+    * Reads a tag and returns it or returns 0 in case the input data is finished. Only to be used when
+    * a reader knows the tag is always one byte
+    */
+   byte readByteTag() throws IOException;
+
+   /**
     * Checks that the previously read tag is the last tag of a message or group. The expected tag should be either 0 or
     * an end group tag.
     */

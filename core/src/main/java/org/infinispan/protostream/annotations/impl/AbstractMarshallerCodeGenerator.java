@@ -288,34 +288,67 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.println(";");
          }
       }
-      iw.println("boolean done = false;");
-      iw.println("while (!done) {");
-      iw.inc();
-      iw.println("final int tag = $in.readTag();");
-      iw.println("switch (tag) {");
-      iw.inc();
-      iw.println("case 0: {");
-      iw.inc();
-      iw.println("done = true;");
-      iw.println("break;");
-      iw.dec();
-      iw.println("}");
-      for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
-         generateFieldReadMethod(messageTypeMetadata, fieldMetadata, iw, noFactory, trackedFields, getUnknownFieldSetFieldStatement, setUnknownFieldSetFieldStatement);
-      }
-      iw.println("default: {");
-      iw.inc();
-      if (getUnknownFieldSetFieldStatement != null) {
-         iw.printf("%s.UnknownFieldSet u = %s;\n", PROTOSTREAM_PACKAGE, getUnknownFieldSetFieldStatement);
-         iw.printf("if (u == null) u = new %s.impl.UnknownFieldSetImpl();\n", PROTOSTREAM_PACKAGE);
-         iw.println("if (!u.readSingleField(tag, $in)) done = true;");
-         iw.printf("if (!u.isEmpty()) %s;\n", setUnknownFieldSetFieldStatement);
+      if (messageTypeMetadata.isOrderedMarshallable()) {
+         int previousFieldNumber = 0;
+         iw.println("byte tag = readByteTag($in);");
+         for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
+            int fieldNumber = fieldMetadata.getNumber();
+            // Skip any field we don't know the type for
+            for (int i = previousFieldNumber + 1; i < fieldNumber; ++i) {
+               // By only reading the next tag if it is skipped means that all the rest of the if statements will
+               // be false and the while (tag != 0) loop below will also break
+               iw.printf("if (%s.descriptors.WireType.getFieldNumber(tag) == %d && $in.skipField(tag)) {\n", PROTOSTREAM_PACKAGE, i);
+               iw.inc();
+               iw.println("tag = readByteTag($in);");
+               iw.dec();
+               iw.println("}");
+            }
+            iw.printf("if (tag == %s) {\n", makeFieldTagPrecedence(fieldNumber, fieldMetadata.getProtobufType().getWireType()));
+            iw.inc();
+            generateFieldReadInnerMethod(messageTypeMetadata, fieldMetadata, iw, noFactory, trackedFields, getUnknownFieldSetFieldStatement, setUnknownFieldSetFieldStatement);
+            iw.println("tag = readByteTag($in);");
+            iw.dec();
+            iw.println("}");
+
+            previousFieldNumber = fieldNumber;
+         }
+         iw.println("// Ignore any additional tags we may run into");
+         iw.println("while (tag != 0) {");
+         iw.inc();
+         iw.println("if (!$in.skipField(tag)) break;");
+         iw.println("tag = readByteTag($in);");
+         iw.dec();
+         iw.println("}");
       } else {
-         iw.println("if (!$in.skipField(tag)) done = true;");
+         iw.println("boolean done = false;");
+         iw.println("while (!done) {");
+         iw.inc();
+         iw.println("final int tag = $in.readTag();");
+         iw.println("switch (tag) {");
+         iw.inc();
+         iw.println("case 0: {");
+         iw.inc();
+         iw.println("done = true;");
+         iw.println("break;");
+         iw.dec();
+         iw.println("}");
+         for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
+            generateFieldReadMethod(messageTypeMetadata, fieldMetadata, iw, noFactory, trackedFields, getUnknownFieldSetFieldStatement, setUnknownFieldSetFieldStatement);
+         }
+         iw.println("default: {");
+         iw.inc();
+         if (getUnknownFieldSetFieldStatement != null) {
+            iw.printf("%s.UnknownFieldSet u = %s;\n", PROTOSTREAM_PACKAGE, getUnknownFieldSetFieldStatement);
+            iw.printf("if (u == null) u = new %s.impl.UnknownFieldSetImpl();\n", PROTOSTREAM_PACKAGE);
+            iw.println("if (!u.readSingleField(tag, $in)) done = true;");
+            iw.printf("if (!u.isEmpty()) %s;\n", setUnknownFieldSetFieldStatement);
+         } else {
+            iw.println("if (!$in.skipField(tag)) done = true;");
+         }
+         iw.dec().println("}");
+         iw.dec().println("}");
+         iw.dec().println("}");
       }
-      iw.dec().println("}");
-      iw.dec().println("}");
-      iw.dec().println("}");
 
       // assign defaults to missing fields
       if (BaseProtoSchemaGenerator.generateMarshallerDebugComments) {
@@ -477,9 +510,15 @@ public abstract class AbstractMarshallerCodeGenerator {
    }
 
    private void generateFieldReadMethod(ProtoMessageTypeMetadata messageTypeMetadata, ProtoFieldMetadata fieldMetadata, IndentWriter iw, boolean noFactory, Map<String, Integer> trackedFields, String getUnknownFieldSetFieldStatement, String setUnknownFieldSetFieldStatement) {
-      final String v = makeFieldLocalVar(fieldMetadata);
       iw.printf("case %s: {\n", makeFieldTag(fieldMetadata.getNumber(), fieldMetadata.getProtobufType().getWireType()));
       iw.inc();
+      generateFieldReadInnerMethod(messageTypeMetadata, fieldMetadata, iw, noFactory, trackedFields, getUnknownFieldSetFieldStatement, setUnknownFieldSetFieldStatement);
+      iw.println("break;");
+      iw.dec().println("}");
+   }
+
+   private void generateFieldReadInnerMethod(ProtoMessageTypeMetadata messageTypeMetadata, ProtoFieldMetadata fieldMetadata, IndentWriter iw, boolean noFactory, Map<String, Integer> trackedFields, String getUnknownFieldSetFieldStatement, String setUnknownFieldSetFieldStatement) {
+      final String v = makeFieldLocalVar(fieldMetadata);
       if (BaseProtoSchemaGenerator.generateMarshallerDebugComments) {
          iw.printf("// type = %s, name = %s\n", fieldMetadata.getProtobufType(), fieldMetadata.getName());
       }
@@ -565,8 +604,6 @@ public abstract class AbstractMarshallerCodeGenerator {
          default:
             throw new IllegalStateException("Unknown field type : " + fieldMetadata.getProtobufType());
       }
-      iw.println("break;");
-      iw.dec().println("}");
    }
 
    private String generateMapFieldReadMethod(ProtoMapMetadata mapMetadata, ProtoFieldMetadata fieldMetadata, IndentWriter iw, boolean isKey) {
@@ -630,6 +667,12 @@ public abstract class AbstractMarshallerCodeGenerator {
    private static String makeFieldTag(int fieldNumber, WireType wireType) {
       return "(" + fieldNumber + " << "
             + PROTOSTREAM_PACKAGE + ".descriptors.WireType.TAG_TYPE_NUM_BITS | "
+            + PROTOSTREAM_PACKAGE + ".descriptors.WireType.WIRETYPE_" + wireType.name() + ")";
+   }
+
+   private static String makeFieldTagPrecedence(int fieldNumber, WireType wireType) {
+      return "((" + fieldNumber + " << "
+            + PROTOSTREAM_PACKAGE + ".descriptors.WireType.TAG_TYPE_NUM_BITS) | "
             + PROTOSTREAM_PACKAGE + ".descriptors.WireType.WIRETYPE_" + wireType.name() + ")";
    }
 

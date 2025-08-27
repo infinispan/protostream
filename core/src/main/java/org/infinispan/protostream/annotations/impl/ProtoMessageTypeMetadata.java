@@ -70,6 +70,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final boolean isIterableContainer;
 
+   private final boolean isOrderedMarshallable;
+
    private XExecutable factory;
 
    private XField unknownFieldSetField;
@@ -88,6 +90,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       this.isAdapter = javaClass != annotatedClass;
       this.isIndexedContainer = annotatedClass.isAssignableTo(isAdapter ? IndexedElementContainerAdapter.class : IndexedElementContainer.class);
       this.isIterableContainer = annotatedClass.isAssignableTo(isAdapter ? IterableElementContainerAdapter.class : IterableElementContainer.class);
+      this.isOrderedMarshallable = annotatedClass.getAnnotation(OrderedMarshaller.class) != null;
 
       checkInstantiability();
 
@@ -124,6 +127,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    public boolean isContainer() {
       return isIterableContainer || isIndexedContainer;
+   }
+
+   public boolean isOrderedMarshallable() {
+      return isOrderedMarshallable;
    }
 
    public XExecutable getFactory() {
@@ -248,6 +255,11 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
             //todo avoid this warning in case where not necessary
             // TODO [anistor] remove the "The class should be either annotated or it should have a custom marshaller" part after MessageMarshaller is removed in 5
             log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", getAnnotatedClassName());
+         } else if (isOrderedMarshallable && !fieldsByNumber.tailMap(16).isEmpty()) {
+            throw Log.LOG.orderedMarshallerIdTooLarge(annotatedClass);
+         }
+         if (isOrderedMarshallable && fieldsByName.values().stream().anyMatch(e -> e.isRepeated() | e.isArray() | e.isStream() | e.isMap() | e.isIterable())) {
+            throw Log.LOG.orederdMarshallerRepeatField(annotatedClass);
          }
 
          // If we have a factory method / constructor, we must ensure its parameters match the declared fields.
