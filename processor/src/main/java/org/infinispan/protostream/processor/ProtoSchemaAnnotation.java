@@ -23,6 +23,7 @@ class ProtoSchemaAnnotation {
    private final String[] value;
    private final Annotation annotation;
    private final String annotationName;
+   private final boolean orderedMarshallers;
 
    public ProtoSchemaAnnotation(AutoProtoSchemaBuilder annotation) {
       this.annotation = annotation;
@@ -37,6 +38,7 @@ class ProtoSchemaAnnotation {
       syntax = annotation.syntax();
       allowNullFields = false;
       value = annotation.value();
+      orderedMarshallers = false;
    }
 
    public ProtoSchemaAnnotation(ProtoSchema annotation) {
@@ -52,6 +54,7 @@ class ProtoSchemaAnnotation {
       syntax = annotation.syntax();
       allowNullFields = annotation.allowNullFields();
       value = annotation.value();
+      orderedMarshallers = annotation.orderedMarshallers();
    }
 
    public String[] basePackages() {
@@ -124,5 +127,9 @@ class ProtoSchemaAnnotation {
 
    public String getAnnotationName() {
       return annotationName;
+   }
+
+   public boolean orderedMarshallers() {
+      return orderedMarshallers;
    }
 }

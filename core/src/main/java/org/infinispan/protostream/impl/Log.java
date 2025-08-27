@@ -9,6 +9,7 @@ import java.util.Set;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.MalformedProtobufException;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
+import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.exception.ProtoStreamException;
 import org.jboss.logging.BasicLogger;
