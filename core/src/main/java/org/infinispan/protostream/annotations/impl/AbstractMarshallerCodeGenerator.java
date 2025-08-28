@@ -179,6 +179,21 @@ public abstract class AbstractMarshallerCodeGenerator {
       return name + (field.getJavaType().isEnum() ? "e" : "");
    }
 
+   private static void writeField16Transition(IndentWriter iw) {
+      iw.println("else if ((tag & 0x80) != 0) {");
+      iw.inc();
+      iw.println("// Must use readInt32 as readTag can fail since we read the first 7 bytes of the tag");
+      iw.println("tag = ($in.readInt32() << 7) | tag & 0x7F;");
+      iw.dec().println("}");
+   }
+
+   private static String readStringForField(int fieldNumber) {
+      if (fieldNumber < 15) {
+         return "readByteTag($in)";
+      }
+      return "$in.readTag()";
+   }
+
    /*
     * Signature of generated method is:
     * <code>
@@ -290,23 +305,30 @@ public abstract class AbstractMarshallerCodeGenerator {
       }
       if (messageTypeMetadata.isOrderedMarshallable()) {
          int previousFieldNumber = 0;
-         iw.println("byte tag = readByteTag($in);");
+         iw.println("int tag = readByteTag($in);");
          for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
             int fieldNumber = fieldMetadata.getNumber();
-            // Skip any field we don't know the type for
+            // On field 16 we have to swap to reading a VarInt32 tag. If the field 15 didn't exist we have to
+            // read the rest of the bytes
+            if (fieldNumber == 16) {
+               writeField16Transition(iw);
+            }
             for (int i = previousFieldNumber + 1; i < fieldNumber; ++i) {
+               if (i == 16) {
+                  writeField16Transition(iw);
+               }
                // By only reading the next tag if it is skipped means that all the rest of the if statements will
                // be false and the while (tag != 0) loop below will also break
-               iw.printf("if (%s.descriptors.WireType.getFieldNumber(tag) == %d && $in.skipField(tag)) {\n", PROTOSTREAM_PACKAGE, i);
+               iw.printf("if (%d == %s.descriptors.WireType.getTagFieldNumber(tag) && $in.skipField(tag)) {\n", i, PROTOSTREAM_PACKAGE);
                iw.inc();
-               iw.println("tag = readByteTag($in);");
+               iw.printf("tag = %s;\n", readStringForField(i));
                iw.dec();
                iw.println("}");
             }
             iw.printf("if (tag == %s) {\n", makeFieldTagPrecedence(fieldNumber, fieldMetadata.getProtobufType().getWireType()));
             iw.inc();
             generateFieldReadInnerMethod(messageTypeMetadata, fieldMetadata, iw, noFactory, trackedFields, getUnknownFieldSetFieldStatement, setUnknownFieldSetFieldStatement);
-            iw.println("tag = readByteTag($in);");
+            iw.printf("tag = %s;\n", readStringForField(fieldNumber));
             iw.dec();
             iw.println("}");
 
@@ -316,7 +338,7 @@ public abstract class AbstractMarshallerCodeGenerator {
          iw.println("while (tag != 0) {");
          iw.inc();
          iw.println("if (!$in.skipField(tag)) break;");
-         iw.println("tag = readByteTag($in);");
+         iw.println("tag = $in.readTag();");
          iw.dec();
          iw.println("}");
       } else {

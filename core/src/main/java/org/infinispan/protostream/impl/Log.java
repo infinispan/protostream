@@ -157,10 +157,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to utilize more performant reflection based String serialization. Please pass `--add-opens java.base/java.lang=ALL-UNNAMED` to the JVM to enable", id = 41)
    void unableToRetrieveMethodHandles(@Cause Throwable t);
 
-   @Message(value = "@OrderedMarshaller annotated %s contains a field with an id greater than 15", id = 42)
-   ProtoSchemaBuilderException orderedMarshallerIdTooLarge(XClass klass);
-
-   @Message(value = "@OrderedMarshaller annotated %s contains a repeated field of some sort", id = 43)
+   @Message(value = "@OrderedMarshaller annotated %s contains a repeated field of some sort", id = 42)
    ProtoSchemaBuilderException orederdMarshallerRepeatField(XClass klass);
 
    class LogFactory {

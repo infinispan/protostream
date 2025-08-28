@@ -350,17 +350,11 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
          byte tag = readRawByte();
          lastTag = tag;
-         if (tag < 0) {
-            throw new MalformedProtobufException("Found a protobuf tag (" + tag + ") that is negative for a single byte");
-         }
 
          // validate wire type
          WireType.fromTag(lastTag);
 
-         if (WireType.getTagFieldNumber(lastTag) >= 1) {
-            return tag;
-         }
-         throw new MalformedProtobufException("Found an invalid protobuf tag (" + lastTag + ") having a field number smaller than 1");
+         return tag;
       }
 
       final void checkLastTagWas(int expectedTag) throws IOException {

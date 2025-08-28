@@ -15,15 +15,17 @@ public class SimpleMarshalledObject {
    private final String string;
    private final boolean bool;
    private final byte[] bytes;
-//   private final SimpleEnum simpleEnum;
+   private final SimpleEnum simpleEnum;
+   private final long aLong;
 
    @ProtoFactory
-   public SimpleMarshalledObject(int integer, String string, boolean bool, byte[] bytes/*, SimpleEnum simpleEnum*/) {
+   public SimpleMarshalledObject(int integer, String string, boolean bool, byte[] bytes, SimpleEnum simpleEnum, long aLong) {
       this.integer = integer;
       this.string = string;
       this.bool = bool;
       this.bytes = bytes;
-//      this.simpleEnum = simpleEnum;
+      this.simpleEnum = simpleEnum;
+      this.aLong = aLong;
    }
 
    @ProtoField(value = 1, defaultValue = "0")
@@ -47,10 +49,15 @@ public class SimpleMarshalledObject {
    }
 
    // This doesn't work.. seems like a different bug
-//   @ProtoField(6)
-//   public SimpleEnum getEnum() {
-//      return simpleEnum;
-//   }
+   @ProtoField(14)
+   public SimpleEnum getSimpleEnum() {
+      return simpleEnum;
+   }
+
+   @ProtoField(value = 18, defaultValue = "0")
+   public long getALong() {
+      return aLong;
+   }
 
    @Override
    public boolean equals(Object o) {

@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.processor.tests.testdomain.SimpleEnum;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleMarshalledObject;
 import org.junit.Test;
 
@@ -21,7 +22,7 @@ public class SimpleMarshallerTest {
 
       assertTrue(ctx.canMarshall(SimpleMarshalledObject.class));
 
-      SimpleMarshalledObject obj = new SimpleMarshalledObject(23, "super-fast", false, new byte[] { 0x1F, 0xA});
+      SimpleMarshalledObject obj = new SimpleMarshalledObject(23, "super-fast", false, new byte[] { 0x1F, 0xA}, SimpleEnum.A, 19);
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, obj);
 
       assertEquals(obj, ProtobufUtil.fromWrappedByteArray(ctx, bytes));

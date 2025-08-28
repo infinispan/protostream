@@ -48,7 +48,7 @@ public enum WireType {
     * bit is currently not used as field numbers are greater than 0. If required it may be possible to use unsigned int
     * to allow fields to support 5 bits.
     */
-   public static final int FIELD_NUMBER_BIT_MASK = 0x7FFF ^ TAG_TYPE_BIT_MASK;
+   public static final int FIELD_NUMBER_BIT_MASK = 0x7FFFFFFF ^ TAG_TYPE_BIT_MASK;
 
    /**
     * The protobuf protocol wire type.
@@ -96,13 +96,6 @@ public enum WireType {
     */
    public static int getTagWireType(int tag) {
       return tag & TAG_TYPE_BIT_MASK;
-   }
-
-   /**
-    * Given a tag value, returns the field number (the upper 4 bits excluding most significant.
-    */
-   public static int getFieldNumber(int tag) {
-      return (tag & FIELD_NUMBER_BIT_MASK) >> 3;
    }
 
    /**

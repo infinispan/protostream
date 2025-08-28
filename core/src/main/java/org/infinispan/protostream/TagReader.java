@@ -22,7 +22,8 @@ public interface TagReader {
 
    /**
     * Reads a tag and returns it or returns 0 in case the input data is finished. Only to be used when
-    * a reader knows the tag is always one byte
+    * a reader knows the tag is always one byte. Note that if the tag is greater than one byte a negative number
+    * is returned to signify that.
     */
    byte readByteTag() throws IOException;
 
