@@ -149,7 +149,7 @@ public class ProtoSchemaTest {
                SimpleMarshalledObject.class,
 //               String.class,
                X.class
-         }
+         }, orderedMarshallers = true
    )
    interface TestSerializationContextInitializer extends GeneratedSchema {
    }

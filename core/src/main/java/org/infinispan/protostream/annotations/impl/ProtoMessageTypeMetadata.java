@@ -90,7 +90,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       this.isAdapter = javaClass != annotatedClass;
       this.isIndexedContainer = annotatedClass.isAssignableTo(isAdapter ? IndexedElementContainerAdapter.class : IndexedElementContainer.class);
       this.isIterableContainer = annotatedClass.isAssignableTo(isAdapter ? IterableElementContainerAdapter.class : IterableElementContainer.class);
-      this.isOrderedMarshallable = annotatedClass.getAnnotation(OrderedMarshaller.class) != null;
+      this.isOrderedMarshallable = protoSchemaGenerator.orderedMarshaller();
 
       checkInstantiability();
 

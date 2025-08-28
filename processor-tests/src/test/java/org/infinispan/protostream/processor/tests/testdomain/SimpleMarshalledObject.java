@@ -6,10 +6,8 @@ import java.util.Objects;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.protostream.annotations.impl.OrderedMarshaller;
 
 @ProtoTypeId(23)
-@OrderedMarshaller
 public class SimpleMarshalledObject {
    private final int integer;
    private final String string;
