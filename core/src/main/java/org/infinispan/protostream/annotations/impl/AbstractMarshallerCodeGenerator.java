@@ -179,8 +179,11 @@ public abstract class AbstractMarshallerCodeGenerator {
       return name + (field.getJavaType().isEnum() ? "e" : "");
    }
 
-   private static void writeField16Transition(IndentWriter iw) {
-      iw.println("else if ((tag & 0x80) != 0) {");
+   private static void writeField16Transition(IndentWriter iw, boolean field15repeatable) {
+      if (!field15repeatable) {
+         iw.print("else ");
+      }
+      iw.println("if ((tag & 0x80) != 0) {");
       iw.inc();
       iw.println("// Must use readInt32 as readTag can fail since we read the first 7 bytes of the tag");
       iw.println("tag = ($in.readInt32() << 7) | tag & 0x7F;");
@@ -311,21 +314,27 @@ public abstract class AbstractMarshallerCodeGenerator {
             // On field 16 we have to swap to reading a VarInt32 tag. If the field 15 didn't exist we have to
             // read the rest of the bytes
             if (fieldNumber == 16) {
-               writeField16Transition(iw);
+               // if previousFieldNumber was not 15 that means we didn't have a 15 and thus we treat it as repeated
+               writeField16Transition(iw, previousFieldNumber != 15 || messageTypeMetadata.getFields().get(15).isRepeated());
             }
             for (int i = previousFieldNumber + 1; i < fieldNumber; ++i) {
                if (i == 16) {
-                  writeField16Transition(iw);
+                  writeField16Transition(iw, previousFieldNumber != 15  || messageTypeMetadata.getFields().get(15).isRepeated());
                }
                // By only reading the next tag if it is skipped means that all the rest of the if statements will
                // be false and the while (tag != 0) loop below will also break
-               iw.printf("if (%d == %s.descriptors.WireType.getTagFieldNumber(tag) && $in.skipField(tag)) {\n", i, PROTOSTREAM_PACKAGE);
+               // NOTE: this must be a while since if we are given a field we don't know it may repeat itself
+               iw.printf("while (%d == %s.descriptors.WireType.getTagFieldNumber(tag) && $in.skipField(tag)) {\n", i, PROTOSTREAM_PACKAGE);
                iw.inc();
-               iw.printf("tag = %s;\n", readStringForField(i));
+               // Field 15 when reading itself still needs to use readByteTag
+               iw.printf("tag = %s;\n", readStringForField(i - 1));
                iw.dec();
                iw.println("}");
             }
-            iw.printf("if (tag == %s) {\n", makeFieldTagPrecedence(fieldNumber, fieldMetadata.getProtobufType().getWireType()));
+            // For any type that is repeated we have to loop over it, so use a while loop otherwise any single
+            // field values an if is good
+            String fieldClause = fieldMetadata.isRepeated() ? "while" : "if";
+            iw.printf("%s (tag == %s) {\n", fieldClause, makeFieldTagPrecedence(fieldNumber, fieldMetadata.getProtobufType().getWireType()));
             iw.inc();
             generateFieldReadInnerMethod(messageTypeMetadata, fieldMetadata, iw, noFactory, trackedFields, getUnknownFieldSetFieldStatement, setUnknownFieldSetFieldStatement);
             iw.printf("tag = %s;\n", readStringForField(fieldNumber));
