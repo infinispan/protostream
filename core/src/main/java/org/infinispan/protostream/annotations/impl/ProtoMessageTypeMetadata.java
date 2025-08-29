@@ -70,6 +70,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final boolean isIterableContainer;
 
+   private final boolean isOrderedMarshallable;
+
    private XExecutable factory;
 
    private XField unknownFieldSetField;
@@ -88,6 +90,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       this.isAdapter = javaClass != annotatedClass;
       this.isIndexedContainer = annotatedClass.isAssignableTo(isAdapter ? IndexedElementContainerAdapter.class : IndexedElementContainer.class);
       this.isIterableContainer = annotatedClass.isAssignableTo(isAdapter ? IterableElementContainerAdapter.class : IterableElementContainer.class);
+      this.isOrderedMarshallable = protoSchemaGenerator.orderedMarshaller();
 
       checkInstantiability();
 
@@ -124,6 +127,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    public boolean isContainer() {
       return isIterableContainer || isIndexedContainer;
+   }
+
+   public boolean isOrderedMarshallable() {
+      return isOrderedMarshallable;
    }
 
    public XExecutable getFactory() {

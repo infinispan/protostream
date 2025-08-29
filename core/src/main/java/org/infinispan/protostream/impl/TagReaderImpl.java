@@ -111,6 +111,11 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    }
 
    @Override
+   public byte readByteTag() throws IOException {
+      return decoder.readByteTag();
+   }
+
+   @Override
    public void checkLastTagWas(int tag) throws IOException {
       decoder.checkLastTagWas(tag);
    }
@@ -157,7 +162,11 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
    @Override
    public boolean readBool() throws IOException {
-      return decoder.readVarint64() != 0L;
+      byte val = decoder.readRawByte();
+      if ((val & 0xFE) != 0) {
+         throw new MalformedProtobufException("Boolean byte contained a bit other than least significant set, was " + val);
+      }
+      return val != 0L;
    }
 
    @Override
@@ -331,6 +340,21 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
             return lastTag;
          }
          throw new MalformedProtobufException("Found an invalid protobuf tag (" + lastTag + ") having a field number smaller than 1");
+      }
+
+      final byte readByteTag() throws IOException {
+         if (isAtEnd()) {
+            lastTag = 0;
+            return 0;
+         }
+
+         byte tag = readRawByte();
+         lastTag = tag;
+
+         // validate wire type
+         WireType.fromTag(lastTag);
+
+         return tag;
       }
 
       final void checkLastTagWas(int expectedTag) throws IOException {
