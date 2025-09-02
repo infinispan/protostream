@@ -9,6 +9,7 @@ import java.util.Arrays;
 import org.infinispan.protostream.RandomAccessOutputStream;
 
 import net.jcip.annotations.NotThreadSafe;
+import org.infinispan.protostream.impl.jfr.JfrEventPublisher;
 
 @NotThreadSafe
 public class RandomAccessOutputStreamImpl extends OutputStream implements RandomAccessOutputStream {
@@ -27,6 +28,7 @@ public class RandomAccessOutputStreamImpl extends OutputStream implements Random
       if (capacity < 0)
          throw new IllegalArgumentException("Negative initial capacity: " + capacity);
       this.buf = new byte[capacity];
+      JfrEventPublisher.bufferAllocateEvent(capacity);
    }
 
    @Override
@@ -73,11 +75,16 @@ public class RandomAccessOutputStreamImpl extends OutputStream implements Random
    @Override
    public void ensureCapacity(int capacity) {
       if (buf == null) {
-         buf = new byte[Math.max(MIN_SIZE, capacity)];
+         int cap = Math.max(MIN_SIZE, capacity);
+         buf = new byte[cap];
+         JfrEventPublisher.bufferAllocateEvent(cap);
       } else if (capacity > buf.length) {
-         byte[] newbuf = new byte[getNewBufferSize(buf.length, capacity)];
+         int before = buf.length;
+         int cap = getNewBufferSize(buf.length, capacity);
+         byte[] newbuf = new byte[cap];
          System.arraycopy(buf, 0, newbuf, 0, pos);
          buf = newbuf;
+         JfrEventPublisher.bufferResizeEvent(before, cap);
       }
    }
 
@@ -100,6 +107,7 @@ public class RandomAccessOutputStreamImpl extends OutputStream implements Random
 
    @Override
    public byte[] toByteArray() {
+      JfrEventPublisher.bufferAllocateEvent(pos);
       return Arrays.copyOf(buf, pos);
    }
 

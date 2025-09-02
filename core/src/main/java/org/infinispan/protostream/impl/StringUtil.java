@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.infinispan.protostream.impl.jfr.JfrEventPublisher;
 import sun.misc.Unsafe;
 
 class StringUtil {
@@ -52,7 +53,9 @@ class StringUtil {
 
          @Override
          public byte[] getBytes(String s) {
-            return s.getBytes(StandardCharsets.UTF_8);
+            byte[] b = s.getBytes(StandardCharsets.UTF_8);
+            JfrEventPublisher.bufferAllocateEvent(b.length);
+            return b;
          }
       };
    }

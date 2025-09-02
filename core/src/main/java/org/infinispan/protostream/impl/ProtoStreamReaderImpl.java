@@ -27,6 +27,7 @@ import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
+import org.infinispan.protostream.impl.jfr.JfrEventPublisher;
 import org.jboss.logging.Logger;
 
 /**
@@ -187,6 +188,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    public int[] readInts(String fieldName) throws IOException {
       List<Integer> values = readCollection(fieldName, new ArrayList<>(), Integer.class);
       int[] result = new int[values.size()];
+      JfrEventPublisher.intBufferAllocateEvent(result.length);
       for (int i = 0; i < values.size(); i++) {
          result[i] = values.get(i);
       }
@@ -202,6 +204,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    public long[] readLongs(String fieldName) throws IOException {
       List<Long> values = readCollection(fieldName, new ArrayList<>(), Long.class);
       long[] result = new long[values.size()];
+      JfrEventPublisher.longBufferAllocateEvent(result.length);
       for (int i = 0; i < values.size(); i++) {
          result[i] = values.get(i);
       }
@@ -229,6 +232,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    public float[] readFloats(String fieldName) throws IOException {
       List<Float> values = readCollection(fieldName, new ArrayList<>(), Float.class);
       float[] result = new float[values.size()];
+      JfrEventPublisher.floatBufferAllocateEvent(result.length);
       for (int i = 0; i < values.size(); i++) {
          result[i] = values.get(i);
       }
@@ -244,6 +248,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    public double[] readDoubles(String fieldName) throws IOException {
       List<Double> values = readCollection(fieldName, new ArrayList<>(), Double.class);
       double[] result = new double[values.size()];
+      JfrEventPublisher.doubleBufferAllocateEvent(result.length);
       for (int i = 0; i < values.size(); i++) {
          result[i] = values.get(i);
       }
@@ -259,6 +264,7 @@ public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStrea
    public boolean[] readBooleans(String fieldName) throws IOException {
       List<Boolean> values = readCollection(fieldName, new ArrayList<>(), Boolean.class);
       boolean[] result = new boolean[values.size()];
+      JfrEventPublisher.bufferAllocateEvent(result.length);
       for (int i = 0; i < values.size(); i++) {
          result[i] = values.get(i);
       }

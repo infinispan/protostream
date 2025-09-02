@@ -20,6 +20,7 @@ import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.RandomAccessOutputStream;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.WireType;
+import org.infinispan.protostream.impl.jfr.JfrEventPublisher;
 
 /**
  * @author anistor@redhat.com
@@ -584,6 +585,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
             if (c > 127) {
                // TODO: do this without allocating the byte[]
                count = s.getBytes(StandardCharsets.UTF_8).length;
+               JfrEventPublisher.bufferAllocateEvent(count);
                break;
             }
          }
@@ -607,13 +609,16 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          if (nestedPositions == null) {
             // We are guessing most objects won't have larger than 4 sub elements
             nestedPositions = new int[10];
+            JfrEventPublisher.intBufferAllocateEvent(nestedPositions.length);
          } else {
             if (head == nestedPositions.length) {
+               int before = nestedPositions.length;
                int newLength = Math.min(nestedPositions.length + 10, maxDepth);
                if (newLength == maxDepth) {
                   throw log.maxNestedMessageDepth(maxDepth, null);
                }
                nestedPositions = Arrays.copyOf(nestedPositions, newLength);
+               JfrEventPublisher.intBufferResizeEvent(before, newLength);
             }
          }
       }
@@ -1007,6 +1012,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          if (value.hasArray()) {
             out.write(value.array(), value.arrayOffset(), value.remaining());
          } else {
+            JfrEventPublisher.bufferAllocateEvent(value.remaining());
             byte[] buffer = new byte[value.remaining()];
             value.get(buffer, value.position(), value.remaining());
             out.write(buffer);
@@ -1035,6 +1041,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          // least their length varint should fit.
          bufferSize = Math.max(bufferSize, MAX_VARINT_SIZE * 2);
          buffer = new ByteArrayEncoder(new byte[bufferSize], 0, bufferSize);
+         JfrEventPublisher.bufferAllocateEvent(bufferSize);
          this.out = out;
       }
 
@@ -1348,6 +1355,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          }
 
          byte[] utf8buffer = s.getBytes(StandardCharsets.UTF_8);
+         JfrEventPublisher.bufferAllocateEvent(utf8buffer.length);
          out.ensureCapacity(startPos + MAX_INT_VARINT_SIZE + utf8buffer.length);
 
          startPos = writeVarInt32Direct(startPos, utf8buffer.length);
@@ -1430,12 +1438,14 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
          out.setPosition(pos + 1);
          if (positions == null) {
             positions = new int[10];
+            JfrEventPublisher.intBufferAllocateEvent(positions.length);
          } else if (head == positions.length) {
             int newSize = Math.min(head + 10, maxDepth);
             if (newSize == maxDepth) {
                throw log.maxNestedMessageDepth(maxDepth, null);
             }
             positions = Arrays.copyOf(positions, newSize);
+            JfrEventPublisher.intBufferResizeEvent(head, newSize);
          }
          positions[head++] = pos + 1;
          return this;
