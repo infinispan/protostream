@@ -48,6 +48,7 @@ import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;
+import org.infinispan.protostream.impl.jfr.JfrEventPublisher;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -349,6 +350,7 @@ public final class JsonReader {
                         token = parser.nextToken();
                      }
 
+                     JfrEventPublisher.bufferAllocateEvent(result.size());
                      byte[] binary = new byte[result.size()];
                      for (int i = 0; i < result.size(); i++) {
                         binary[i] = result.get(i);

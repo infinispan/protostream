@@ -20,6 +20,7 @@ import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.descriptors.WireType;
+import org.infinispan.protostream.impl.jfr.JfrEventPublisher;
 import org.jboss.logging.Logger;
 
 /**
@@ -452,10 +453,12 @@ final class ProtoStreamWriterImpl implements MessageMarshaller.ProtoStreamWriter
       int len = 0;
       List<byte[]> chunks = new LinkedList<>();
       int bufLen;
+      JfrEventPublisher.bufferAllocateEvent(CHUNK_SIZE);
       byte[] buffer = new byte[CHUNK_SIZE];
       while ((bufLen = input.read(buffer)) != -1) {
          chunks.add(buffer);
          len += bufLen;
+         JfrEventPublisher.bufferAllocateEvent(CHUNK_SIZE);
          buffer = new byte[CHUNK_SIZE];
       }
       input.close();
