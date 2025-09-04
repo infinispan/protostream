@@ -45,4 +45,8 @@ public class GeneratedMarshallerBase {
          marshallerDelegate.marshall((ProtobufTagMarshaller.WriteContext) nestedWriter, null, message);
       }
    }
+
+   protected final byte readByteTag(TagReader reader) throws IOException {
+      return reader.readByteTag();
+   }
 }
