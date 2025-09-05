@@ -58,15 +58,17 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+      <surefire.argline/>
+
       <version.java>1.8</version.java>
-      <version.maven.compiler>3.8.1</version.maven.compiler>
+      <version.maven.compiler>3.14.0</version.maven.compiler>
       <version.maven.jar>3.2.0</version.maven.jar>
       <version.maven.javadoc>3.2.0</version.maven.javadoc>
       <version.maven.source>3.2.0</version.maven.source>
       <version.maven.resources>3.1.0</version.maven.resources>
       <version.maven.antrun>3.0.0</version.maven.antrun>
       <version.maven.nexus-staging>1.6.8</version.maven.nexus-staging>
-      <version.maven.surefire>3.0.0-M5</version.maven.surefire>
+      <version.maven.surefire>3.5.3</version.maven.surefire>
       <version.maven.bundle>5.1.9</version.maven.bundle>
       <version.maven.buildhelper>3.0.0</version.maven.buildhelper>
       <version.maven.animalsniffer>1.18</version.maven.animalsniffer>
@@ -90,7 +92,7 @@
       <version.jboss.logging.processor>2.1.0.Final</version.jboss.logging.processor>
       <version.log4j>2.13.2</version.log4j>
       <version.jboss.marshalling>2.0.9.Final</version.jboss.marshalling>
-      <version.javassist>3.26.0-GA</version.javassist>
+      <version.javassist>3.30.2-GA</version.javassist>
       <version.osgi>4.3.1</version.osgi>
       <version.commons-cli>1.2</version.commons-cli>
       <version.gson>2.9.1</version.gson>
@@ -338,6 +340,15 @@
 
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-surefire-plugin</artifactId>
+               <version>${version.maven.surefire}</version>
+               <configuration>
+                  <argLine>${surefire.argline}</argLine>
+               </configuration>
+            </plugin>
+
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-surefire-report-plugin</artifactId>
                <version>${version.maven.surefire}</version>
                <executions>
@@ -502,6 +513,15 @@
                </plugin>
             </plugins>
          </build>
+      </profile>
+      <profile>
+         <id>jigsaw</id>
+         <activation>
+            <jdk>[9,</jdk>
+         </activation>
+         <properties>
+            <surefire.argline>--add-opens java.base/java.lang=ALL-UNNAMED</surefire.argline>
+         </properties>
       </profile>
    </profiles>
 </project>
