@@ -1,18 +1,14 @@
-package org.infinispan.protostream.impl;
+package org.infinispan.protostream;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.protostream.BaseMarshallerDelegate;
-import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.ProtobufTagMarshaller;
-import org.infinispan.protostream.TagReader;
-import org.infinispan.protostream.TagWriter;
-import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.impl.ProtoStreamReaderImpl;
+import org.infinispan.protostream.impl.TagReaderImpl;
 
 /**
  * @author anistor@redhat.com
@@ -24,7 +20,7 @@ public final class EnumMarshallerDelegate<T extends Enum<T>> extends BaseMarshal
 
    private final Set<Integer> definedValues;
 
-   EnumMarshallerDelegate(EnumMarshaller<T> enumMarshaller, EnumDescriptor enumDescriptor) {
+   public EnumMarshallerDelegate(EnumMarshaller<T> enumMarshaller, EnumDescriptor enumDescriptor) {
       this.enumMarshaller = enumMarshaller;
       definedValues = new HashSet<>();
       for (EnumValueDescriptor evd : enumDescriptor.getValues()) {
