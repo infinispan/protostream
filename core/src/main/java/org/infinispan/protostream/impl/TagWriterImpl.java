@@ -104,6 +104,10 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       return new TagWriterImpl((SerializationContextImpl) serCtx, new NoOpEncoder());
    }
 
+   public static TagWriterImpl newInstanceSizeEstimate(ImmutableSerializationContext serCtx) {
+      return new TagWriterImpl((SerializationContextImpl) serCtx, new OverEstimateEncoder());
+   }
+
    /**
     * @deprecated since 5.0.10 Please use {@link #newInstance(ImmutableSerializationContext, OutputStream)}
     */
@@ -114,7 +118,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
    public int getWrittenBytes() {
       // the CCE here will signal misuse; let it happen
-      return ((NoOpEncoder) encoder).getWrittenBytes();
+      return ((OverEstimateEncoder) encoder).getWrittenBytes();
    }
 
    @Override
@@ -503,27 +507,19 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       }
    }
 
-   /**
-    * An encoder that just counts the bytes and does not write anything and does not allocate buffers.
-    * Useful for computing message size.
-    */
-   static class NoOpEncoder extends Encoder {
+   static class OverEstimateEncoder extends Encoder {
 
       protected int count = 0;
-      protected int[] nestedPositions;
-      // This will always be one position higher than any encoder size position
-      protected int head;
-
-      int getWrittenBytes() {
-         return count;
-      }
 
       /**
        * Resets the written bytes counter. Needed if we intend to reuse this to count the size of another message.
        */
       void reset() {
          count = 0;
-         head = 0;
+      }
+
+      int getWrittenBytes() {
+         return count;
       }
 
       @Override
@@ -539,6 +535,67 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       @Override
       void writeBytes(ByteBuffer value) {
          count += value.remaining();
+      }
+
+      @Override
+      void writeVarint32(int value) {
+         count += MAX_INT_VARINT_SIZE;
+      }
+
+      @Override
+      void writeVarint64(long value) {
+         count += MAX_VARINT_SIZE;
+      }
+
+      @Override
+      void writeFixed32(int value) {
+         count += FIXED_32_SIZE;
+      }
+
+      @Override
+      void writeFixed64(long value) {
+         count += FIXED_64_SIZE;
+      }
+
+      @Override
+      void writeUTF8Field(int fieldNumber, String s) {
+         count += s.length() << 2;
+      }
+
+      @Override
+      Encoder subEncoder(int number, int maxDepth) {
+         // We don't care about the number
+         writeVarint32(1);
+         return this;
+      }
+
+      @Override
+      public void close() { }
+
+      @Override
+      boolean canReuseWriter() {
+         return true;
+      }
+   }
+
+   /**
+    * An encoder that just counts the bytes and does not write anything and does not allocate buffers.
+    * Useful for computing message size.
+    */
+   static class NoOpEncoder extends OverEstimateEncoder {
+
+      protected int[] nestedPositions;
+      // This will always be one position higher than any encoder size position
+      protected int head;
+
+      /**
+       * Resets the written bytes counter. Needed if we intend to reuse this to count the size of another message.
+       */
+      @Override
+      void reset() {
+         super.reset();
+         nestedPositions = null;
+         head = 0;
       }
 
       @Override
@@ -561,16 +618,6 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
             }
             value >>>= 7;
          }
-      }
-
-      @Override
-      void writeFixed32(int value) {
-         count += FIXED_32_SIZE;
-      }
-
-      @Override
-      void writeFixed64(long value) {
-         count += FIXED_64_SIZE;
       }
 
       @Override
@@ -626,11 +673,6 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
                writeVarint32(count - lastSize);
             }
          }
-      }
-
-      @Override
-      boolean canReuseWriter() {
-         return true;
       }
    }
 

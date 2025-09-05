@@ -55,12 +55,18 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       int expectedMessageSize = ProtobufUtil.toByteArray(ctx, user).length;
 
       int messageSize = ProtobufUtil.computeMessageSize(ctx, user);
+      int estimateSize = ProtobufUtil.estimateMessageSize(ctx, user);
+
+      assertTrue("Estimate was: " + estimateSize + " and actual is: " + messageSize, estimateSize >= messageSize);
 
       assertEquals(expectedMessageSize, messageSize);
 
       expectedMessageSize = ProtobufUtil.toWrappedByteArray(ctx, user).length;
 
       messageSize = ProtobufUtil.computeWrappedMessageSize(ctx, user);
+      estimateSize = ProtobufUtil.estimateMessageSize(ctx, user);
+
+      assertTrue("Estimate was: " + estimateSize + " and actual is: " + messageSize, estimateSize >= messageSize);
 
       assertEquals(expectedMessageSize, messageSize);
    }
