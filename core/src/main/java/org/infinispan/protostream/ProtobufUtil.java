@@ -55,8 +55,20 @@ public final class ProtobufUtil {
       return out.getWrittenBytes();
    }
 
+   public static <A> int estimateSize(ImmutableSerializationContext ctx, A t) throws IOException {
+      TagWriterImpl out = TagWriterImpl.newInstanceSizeEstimate(ctx);
+      write(ctx, out, t);
+      return out.getWrittenBytes();
+   }
+
    public static <A> int computeWrappedMessageSize(ImmutableSerializationContext ctx, A t) throws IOException {
       TagWriterImpl out = TagWriterImpl.newInstance(ctx);
+      WrappedMessage.write(ctx, out, t);
+      return out.getWrittenBytes();
+   }
+
+   public static <A> int estimateMessageSize(ImmutableSerializationContext ctx, A t) throws IOException {
+      TagWriterImpl out = TagWriterImpl.newInstanceSizeEstimate(ctx);
       WrappedMessage.write(ctx, out, t);
       return out.getWrittenBytes();
    }
