@@ -3,6 +3,8 @@ package org.infinispan.protostream;
 import java.io.IOException;
 import java.io.Serializable;
 
+import org.infinispan.protostream.impl.UnknownFieldSetImpl;
+
 /**
  * {@code UnknownFieldSet} keeps track of fields seen during parsing of a protocol message but whose field numbers are
  * not recognized by the user provided marshallers (are never requested by them). This usually occurs when new fields
@@ -21,6 +23,10 @@ import java.io.Serializable;
  * @since 1.0
  */
 public interface UnknownFieldSet extends Serializable {
+
+   static UnknownFieldSet newInstance() {
+      return new UnknownFieldSetImpl();
+   }
 
    /**
     * Checks if there are any fields in this set.

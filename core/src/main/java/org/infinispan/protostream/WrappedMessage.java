@@ -16,7 +16,6 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.WireType;
-import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.TagReaderImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;

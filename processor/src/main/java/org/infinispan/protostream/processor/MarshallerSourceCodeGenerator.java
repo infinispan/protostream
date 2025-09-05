@@ -14,25 +14,25 @@ import java.util.stream.Collectors;
 
 import javax.lang.model.element.Element;
 
+import org.infinispan.protostream.BaseMarshallerDelegate;
 import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.EnumMarshallerDelegate;
+import org.infinispan.protostream.GeneratedMarshallerBase;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerator;
-import org.infinispan.protostream.GeneratedMarshallerBase;
 import org.infinispan.protostream.annotations.impl.IndentWriter;
 import org.infinispan.protostream.annotations.impl.ProtoEnumTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoFieldMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoMapMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoMessageTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
-import org.infinispan.protostream.processor.types.HasModelElement;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
-import org.infinispan.protostream.BaseMarshallerDelegate;
-import org.infinispan.protostream.impl.EnumMarshallerDelegate;
 import org.infinispan.protostream.impl.Log;
+import org.infinispan.protostream.processor.types.HasModelElement;
 
 /**
  * Generates source code for the marshaller.
