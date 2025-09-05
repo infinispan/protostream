@@ -13,6 +13,7 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.BaseMarshallerDelegate;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.EnumMarshallerDelegate;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufTagMarshaller;

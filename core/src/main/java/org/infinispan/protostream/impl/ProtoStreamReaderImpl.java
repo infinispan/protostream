@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.protostream.BaseMarshallerDelegate;
+import org.infinispan.protostream.EnumMarshallerDelegate;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.MessageMarshaller;
@@ -31,7 +32,7 @@ import org.jboss.logging.Logger;
 /**
  * @author anistor@redhat.com
  */
-final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader {
+public final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader {
 
    private static final Log log = Log.LogFactory.getLog(ProtoStreamReaderImpl.class);
 
@@ -88,7 +89,7 @@ final class ProtoStreamReaderImpl implements MessageMarshaller.ProtoStreamReader
       messageContext = messageContext.getParentContext();
    }
 
-   UnknownFieldSet getUnknownFieldSet() {
+   public UnknownFieldSet getUnknownFieldSet() {
       return messageContext.unknownFieldSet;
    }
 

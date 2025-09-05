@@ -307,7 +307,7 @@ public abstract class AbstractMarshallerCodeGenerator {
       iw.inc();
       if (getUnknownFieldSetFieldStatement != null) {
          iw.printf("%s.UnknownFieldSet u = %s;\n", PROTOSTREAM_PACKAGE, getUnknownFieldSetFieldStatement);
-         iw.printf("if (u == null) u = new %s.impl.UnknownFieldSetImpl();\n", PROTOSTREAM_PACKAGE);
+         iw.printf("if (u == null) u = %s.UnknownFieldSet.newInstance();\n", PROTOSTREAM_PACKAGE);
          iw.println("if (!u.readSingleField(tag, $in)) done = true;");
          iw.printf("if (!u.isEmpty()) %s;\n", setUnknownFieldSetFieldStatement);
       } else {
@@ -540,7 +540,7 @@ public abstract class AbstractMarshallerCodeGenerator {
             if (getUnknownFieldSetFieldStatement != null) {
                iw.inc();
                iw.printf("%s.UnknownFieldSet u = %s;\n", PROTOSTREAM_PACKAGE, getUnknownFieldSetFieldStatement);
-               iw.printf("if (u == null) { u = new %s.impl.UnknownFieldSetImpl(); %s; }\n", PROTOSTREAM_PACKAGE, setUnknownFieldSetFieldStatement);
+               iw.printf("if (u == null) { u = %s.UnknownFieldSet.newInstance(); %s; }\n", PROTOSTREAM_PACKAGE, setUnknownFieldSetFieldStatement);
                iw.printf("u.putVarintField(%d, enumVal);\n", fieldMetadata.getNumber());
                iw.dec();
             }
@@ -854,9 +854,9 @@ public abstract class AbstractMarshallerCodeGenerator {
             iw.println("{");
             iw.inc();
             String mdField = initMarshallerDelegateField(iw, fieldMetadata);
-            iw.printf("%s.writeTag(%d, %s.impl.WireFormat.WIRETYPE_START_GROUP);\n", out, fieldMetadata.getNumber(), PROTOSTREAM_PACKAGE);
+            iw.printf("%s.writeTag(%d, %s.descriptors.WireType.WIRETYPE_START_GROUP);\n", out, fieldMetadata.getNumber(), PROTOSTREAM_PACKAGE);
             iw.printf("writeMessage(%s, %s, %s);\n", mdField, out, v);
-            iw.printf("%s.writeTag(%d, %s.impl.WireFormat.WIRETYPE_END_GROUP);\n", out, fieldMetadata.getNumber(), PROTOSTREAM_PACKAGE);
+            iw.printf("%s.writeTag(%d, %s.descriptors.WireType.WIRETYPE_END_GROUP);\n", out, fieldMetadata.getNumber(), PROTOSTREAM_PACKAGE);
             iw.dec();
             iw.println("}");
             break;
@@ -918,7 +918,7 @@ public abstract class AbstractMarshallerCodeGenerator {
    private String initMarshallerDelegateField(IndentWriter iw, String fieldName, ProtoFieldMetadata fieldMetadata) {
       iw.printf("if (%s == null) %s = ", fieldName, fieldName);
       if (fieldMetadata.getJavaType().isEnum()) {
-         iw.printf("(%s.impl.EnumMarshallerDelegate)", PROTOSTREAM_PACKAGE);
+         iw.printf("(%s.EnumMarshallerDelegate)", PROTOSTREAM_PACKAGE);
       }
       iw.printf("$1.getSerializationContext().getMarshallerDelegate(%s.class);\n", fieldMetadata.getJavaTypeName());
       return fieldName;
