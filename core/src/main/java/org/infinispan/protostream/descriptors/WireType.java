@@ -29,7 +29,7 @@ public enum WireType {
 
    public static final int FIXED_32_SIZE = 4;
    public static final int FIXED_64_SIZE = 8;
-   public static final int MAX_VARINT_SIZE = 10;
+   public static final int MAX_VARINT_SIZE = 9;
    // Similar to MAX_VARINT_SIZE except to be used for fields that are only ever used as Java primitive int values
    public static final int MAX_INT_VARINT_SIZE = 5;
 

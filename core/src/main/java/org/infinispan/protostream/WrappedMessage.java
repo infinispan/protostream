@@ -520,6 +520,8 @@ public final class WrappedMessage {
       int typeId = -1;
       int enumValue = -1;
       ByteBuffer messageBytes = null;
+      // For some reason our tests return a null for a value.. is this legitimate?
+      boolean valueProvided = false;
       Object value = null;
       int fieldCount = 0;
       int expectedFieldCount;
@@ -551,7 +553,17 @@ public final class WrappedMessage {
             }
             case WRAPPED_MESSAGE << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
                expectedFieldCount = 2;
-               messageBytes = in.readByteBuffer();
+               if (typeId > 0 || typeName != null) {
+                  // Already received type info - immediately unmarshall to avoid allocations
+                  int length = in.readInt32();
+                  int oldLimit = in.pushLimit(length);
+                  BaseMarshallerDelegate<T> marshallerDelegate = delegateForType((SerializationContextImpl) ctx, typeId, typeName);
+                  value = marshallerDelegate.unmarshall((ProtobufTagMarshaller.ReadContext) in, null);
+                  in.popLimit(oldLimit);
+                  valueProvided = true;
+               } else {
+                  messageBytes = in.readByteBuffer();
+               }
                break;
             }
             case WRAPPED_INSTANT_SECONDS << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_VARINT: {
@@ -576,7 +588,7 @@ public final class WrappedMessage {
          return null;
       }
 
-      if (value != null) {
+      if (valueProvided || value != null) {
          if (fieldCount != expectedFieldCount) {
             throw new IOException("Invalid WrappedMessage encoding.");
          }
@@ -587,9 +599,7 @@ public final class WrappedMessage {
          throw new IOException("Invalid WrappedMessage encoding.");
       }
 
-      BaseMarshallerDelegate<T> marshallerDelegate = typeId >= 0 ?
-            ctx.getMarshallerDelegate(typeId) :
-            ((SerializationContextImpl) ctx).getMarshallerDelegate(typeName);
+      BaseMarshallerDelegate<T> marshallerDelegate = delegateForType((SerializationContextImpl) ctx, typeId, typeName);
       if (messageBytes != null) {
          // it's a Message type
          TagReaderImpl nestedInput = TagReaderImpl.newInstance(ctx, messageBytes);
@@ -604,6 +614,10 @@ public final class WrappedMessage {
          }
          return e;
       }
+   }
+
+   private static <T> BaseMarshallerDelegate<T> delegateForType(SerializationContextImpl ctx, int typeId, String typeName) {
+      return typeId >= 0 ? ctx.getMarshallerDelegate(typeId) : ctx.getMarshallerDelegate(typeName);
    }
 
    private static Object readContainer(ImmutableSerializationContext ctx, TagReader in, int tag) throws IOException {
