@@ -79,10 +79,11 @@ public abstract class BaseProtoSchemaGenerator {
    private final Map<String, ProtoTypeMetadata> metadataByTypeName = new HashMap<>();
    private final ProtoSyntax syntax;
    private final boolean allowNullFields;
+   private final boolean orderedMarshaller;
 
    protected BaseProtoSchemaGenerator(XTypeFactory typeFactory, SerializationContext serializationContext,
                                       String generator, String fileName, String packageName, Set<XClass> classes,
-                                      ProtoSyntax syntax, boolean allowNullFields) {
+                                      ProtoSyntax syntax, boolean allowNullFields, boolean orderedMarshaller) {
       if (fileName == null) {
          throw new ProtoSchemaBuilderException("fileName cannot be null");
       }
@@ -95,10 +96,15 @@ public abstract class BaseProtoSchemaGenerator {
       this.classes = classes;
       this.syntax = syntax;
       this.allowNullFields = allowNullFields;
+      this.orderedMarshaller = orderedMarshaller;
    }
 
    public boolean allowNullFields() {
       return allowNullFields;
+   }
+
+   public boolean orderedMarshaller() {
+      return orderedMarshaller;
    }
 
    public ProtoSyntax syntax() {

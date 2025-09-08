@@ -38,6 +38,8 @@ import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.processor.tests.testdomain.Inheritance;
+import org.infinispan.protostream.processor.tests.testdomain.MarshalledNo15GreaterThan;
+import org.infinispan.protostream.processor.tests.testdomain.MarshalledYes15GreaterThan;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleEnum;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleRecord;
@@ -145,9 +147,12 @@ public class ProtoSchemaTest {
                EmbeddedMetadata.EmbeddedLifespanExpirableMetadata.class,
                SimpleEnum.class,
                SimpleRecord.class,
+               MarshalledNo15GreaterThan.class,
+               MarshalledYes15GreaterThan.class,
 //               String.class,
                X.class
          }
+         , orderedMarshallers = true
    )
    interface TestSerializationContextInitializer extends GeneratedSchema {
    }

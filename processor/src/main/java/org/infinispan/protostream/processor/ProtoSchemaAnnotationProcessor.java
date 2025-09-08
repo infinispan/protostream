@@ -258,7 +258,7 @@ public final class ProtoSchemaAnnotationProcessor extends AbstractProcessor {
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
             initializerPackageName, protobufFileName, protobufPackageName, dependencies.marshalledClasses, xclasses,
-            builderAnnotation.syntax(), builderAnnotation.allowNullFields(), classScanner);
+            builderAnnotation.syntax(), builderAnnotation.allowNullFields(), classScanner, builderAnnotation.orderedMarshallers());
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
       writeSerializationContextInitializer(packageElement, packageElement.getQualifiedName().toString(), builderAnnotation,
@@ -303,7 +303,7 @@ public final class ProtoSchemaAnnotationProcessor extends AbstractProcessor {
 
       CompileTimeProtoSchemaGenerator protoSchemaGenerator = new CompileTimeProtoSchemaGenerator(typeFactory, generatedFilesWriter, serCtx,
             typeElement.getQualifiedName().toString(), protobufFileName, protobufPackageName, dependencies.marshalledClasses,
-            xclasses, annotation.syntax(), annotation.allowNullFields(), classScanner);
+            xclasses, annotation.syntax(), annotation.allowNullFields(), classScanner, annotation.orderedMarshallers());
 
       String schemaSrc = protoSchemaGenerator.generateAndRegister();
 
