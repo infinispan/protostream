@@ -134,4 +134,16 @@ public @interface ProtoSchema {
     * only protobuf library in use.
     */
    boolean allowNullFields() default false;
+
+   /**
+    * The marshallers generated for this schema will be implemented using a read order optimization. This implies that
+    * data unmarshalled must be in a format where all fields must be written in order. There may be lapses in fields.
+    * <p>
+    * This marshaller type should perform faster as long as data has most fields provided. Note that Java instances
+    * with primitive types will always be provided in the marshalled data.
+    * <p>
+    * WARNING: Failure to ensure all field data is ordered may cause this marshaller to lose some fields or even
+    * the data to no longer be unmarshallable and assumed to be corrupted.
+    */
+   boolean orderedMarshallers() default false;
 }
