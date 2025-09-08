@@ -109,8 +109,16 @@ public final class ProtobufUtil {
       return marshallerDelegate.unmarshall(in, null);
    }
 
+   /**
+    * @deprecated Please use {@link #readFrom(ImmutableSerializationContext, InputStream, int, Class)} instead
+    * as we need to know how many bytes in the stream to read from
+    */
    public static <A> A readFrom(ImmutableSerializationContext ctx, InputStream in, Class<A> clazz) throws IOException {
       return readFrom(TagReaderImpl.newInstance(ctx, in), clazz);
+   }
+
+   public static <A> A readFrom(ImmutableSerializationContext ctx, InputStream in, int length, Class<A> clazz) throws IOException {
+      return readFrom(TagReaderImpl.newInstance(ctx, in, length), clazz);
    }
 
    public static <A> A fromByteArray(ImmutableSerializationContext ctx, byte[] bytes, Class<A> clazz) throws IOException {
@@ -147,9 +155,18 @@ public final class ProtobufUtil {
       return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, byteBuffer));
    }
 
+   /**
+    * @deprecated Please use {@link #fromWrappedStream(ImmutableSerializationContext, InputStream, int)} instead
+    * as we need to know how many bytes in the stream to read from
+    */
    public static <A> A fromWrappedStream(ImmutableSerializationContext ctx, InputStream in) throws IOException {
       return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, in));
    }
+
+   public static <A> A fromWrappedStream(ImmutableSerializationContext ctx, InputStream in, int exactSize) throws IOException {
+      return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, in, exactSize));
+   }
+
 
    //todo [anistor] should make it possible to plug in a custom wrapping strategy instead of the default one
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {

@@ -150,7 +150,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       }
 
       try (InputStream in = new ByteArrayInputStream(userBytes1)) {
-         User user1 = ProtobufUtil.fromWrappedStream(ctx, in);
+         User user1 = ProtobufUtil.fromWrappedStream(ctx, in, userBytes1.length);
          assertEquals(user, user1);
       }
    }
