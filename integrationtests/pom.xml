@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>protostream-integrationtests</artifactId>
+    <version>4.3.7-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>ProtoStream - integration tests</name>

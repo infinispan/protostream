@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>sample-domain-definition</artifactId>
+    <version>4.3.7-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
     <name>ProtoStream - sample protobuf domain model definition</name>
