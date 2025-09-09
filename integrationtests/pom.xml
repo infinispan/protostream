@@ -6,12 +6,12 @@
     <parent>
         <groupId>org.infinispan.protostream</groupId>
         <artifactId>parent</artifactId>
-        <version>4.3.7.Final</version>
+        <version>4.3.8-SNAPSHOT</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
     <artifactId>protostream-integrationtests</artifactId>
-    <version>4.3.7.Final</version>
+    <version>4.3.8-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>ProtoStream - integration tests</name>
