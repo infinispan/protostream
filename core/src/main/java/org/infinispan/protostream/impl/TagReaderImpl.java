@@ -21,6 +21,7 @@ import org.infinispan.protostream.MalformedProtobufException;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.descriptors.WireType;
+import org.infinispan.protostream.impl.jfr.JfrEventPublisher;
 
 /**
  * @author anistor@redhat.com
@@ -520,6 +521,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          if (offset == 0) {
             return array;
          }
+         JfrEventPublisher.bufferAllocateEvent(array.length - offset);
          return Arrays.copyOfRange(array, offset, array.length);
       }
 
@@ -532,6 +534,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       String readString() throws IOException {
          int length = readVarint32();
          if (length > 0 && length <= end - pos) {
+            JfrEventPublisher.bufferAllocateEvent(length);
             String value = new String(array, pos, length, UTF8);
             pos += length;
             return value;
@@ -638,6 +641,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          if (length > 0 && length <= end - pos) {
             int from = pos;
             pos += length;
+            JfrEventPublisher.bufferAllocateEvent(pos - from);
             return Arrays.copyOfRange(array, from, pos);
          }
          if (length == 0) {
@@ -728,6 +732,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          if (offset == 0) {
             return array;
          }
+         JfrEventPublisher.bufferAllocateEvent(array.length - offset);
          return Arrays.copyOfRange(array, offset, array.length);
       }
 
@@ -741,6 +746,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       String readString() throws IOException {
          int length = readVarint32();
          if (length > 0 && length <= end - buf.position()) {
+            JfrEventPublisher.bufferAllocateEvent(length);
             byte[] bytes = new byte[length];
             buf.get(bytes);
             return new String(bytes, 0, length, UTF8);
@@ -842,6 +848,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       @Override
       byte[] readRawByteArray(int length) throws IOException {
          if (length > 0 && length <= end - buf.position()) {
+            JfrEventPublisher.bufferAllocateEvent(length);
             byte[] bytes = new byte[length];
             buf.get(bytes);
             return bytes;
@@ -1085,6 +1092,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
             }
             int readTotal = 0;
             int readAmount;
+            JfrEventPublisher.bufferAllocateEvent(length);
             byte[] array = new byte[length];
             while ((readAmount = in.read(array, readTotal, length - readTotal)) != -1) {
                readTotal += readAmount;

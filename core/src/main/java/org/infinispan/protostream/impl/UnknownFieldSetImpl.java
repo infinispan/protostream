@@ -16,6 +16,7 @@ import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.UnknownFieldSet;
 import org.infinispan.protostream.descriptors.WireType;
+import org.infinispan.protostream.impl.jfr.JfrEventPublisher;
 
 /**
  * {@link UnknownFieldSet} implementation. This is not thread-safe. This class should never be directly instantiated by
@@ -208,6 +209,7 @@ public final class UnknownFieldSetImpl implements UnknownFieldSet, Externalizabl
    @Override
    public void readExternal(ObjectInput in) throws IOException {
       int len = in.readInt();
+      JfrEventPublisher.bufferAllocateEvent(len);
       byte[] bytes = new byte[len];
       in.readFully(bytes);
       readAllFields(TagReaderImpl.newInstance(null, bytes));

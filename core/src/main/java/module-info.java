@@ -6,6 +6,7 @@ module org.infinispan.protostream.core {
    requires static jcip.annotations;
    requires org.jboss.logging;
    requires static org.jboss.logging.annotations;
+   requires jdk.jfr;
    opens org.infinispan.protostream;
    exports org.infinispan.protostream;
    exports org.infinispan.protostream.annotations;
