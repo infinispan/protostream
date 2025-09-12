@@ -314,8 +314,7 @@ public class TypesMarshallingTest {
    }
 
    private static void register(GeneratedSchema schema, SerializationContext context) {
-      schema.registerSchema(context);
-      schema.registerMarshallers(context);
+      schema.register(context);
    }
 
    private static Collection<Object> stringCollection(Supplier<Collection<Object>> supplier) {

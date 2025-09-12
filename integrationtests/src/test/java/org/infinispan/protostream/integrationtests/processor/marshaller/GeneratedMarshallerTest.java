@@ -52,8 +52,7 @@ public class GeneratedMarshallerTest {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       GeneratedSchema generatedSchema = new FootballSchemaImpl();
-      generatedSchema.registerSchema(ctx);
-      generatedSchema.registerMarshallers(ctx);
+      generatedSchema.register(ctx);
 
       assertTrue(generatedSchema.getProtoFile().contains("message Player"));
 
@@ -71,18 +70,14 @@ public class GeneratedMarshallerTest {
    @Test
    public void testRegisterTwice() {
       var ctx = ProtobufUtil.newSerializationContext();
-      MapSchema.INSTANCE.registerSchema(ctx);
-      MapSchema.INSTANCE.registerMarshallers(ctx);
-
-      MapSchema.INSTANCE.registerSchema(ctx);
-      MapSchema.INSTANCE.registerMarshallers(ctx);
+      MapSchema.INSTANCE.register(ctx);
+      MapSchema.INSTANCE.register(ctx);
    }
 
    @Test
    public void testMaps() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
-      MapSchema.INSTANCE.registerSchema(ctx);
-      MapSchema.INSTANCE.registerMarshallers(ctx);
+      MapSchema.INSTANCE.register(ctx);
 
       var adapter = Map.of("a", UUID.randomUUID());
       var simple = Map.of("b", 1);
@@ -104,8 +99,7 @@ public class GeneratedMarshallerTest {
    @Test
    public void testMapsOverlappingMarshallerDelegate() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
-      MapSchema.INSTANCE.registerSchema(ctx);
-      MapSchema.INSTANCE.registerMarshallers(ctx);
+      MapSchema.INSTANCE.register(ctx);
 
       var overlappingMap =  new MapOverlappingMarshallerDelegate(BigInteger.ONE, Map.of(1, UUID.randomUUID()));
       var bytes = ProtobufUtil.toWrappedByteArray(ctx, overlappingMap);
@@ -116,8 +110,7 @@ public class GeneratedMarshallerTest {
    @Test
    public void proto2NullFields() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
-      FootballSchema.INSTANCE.registerSchema(ctx);
-      FootballSchema.INSTANCE.registerMarshallers(ctx);
+      FootballSchema.INSTANCE.register(ctx);
 
       var bytes = ProtobufUtil.toWrappedByteArray(ctx, new Player(null, null, null, 0, null));
       Player player = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
@@ -136,8 +129,7 @@ public class GeneratedMarshallerTest {
    public void proto3AllowNullFields() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
       var schema = new NullsAllowedSchemaImpl();
-      schema.registerSchema(ctx);
-      schema.registerMarshallers(ctx);
+      schema.register(ctx);
 
       var bytes = ProtobufUtil.toWrappedByteArray(ctx, new NullTestModel());
       NullTestModel model = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
@@ -157,8 +149,7 @@ public class GeneratedMarshallerTest {
    public void proto3NoNullFields() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
       var schema = new NoNullsSchemaImpl();
-      schema.registerSchema(ctx);
-      schema.registerMarshallers(ctx);
+      schema.register(ctx);
 
       var bytes = ProtobufUtil.toWrappedByteArray(ctx, new NullTestModel());
       NullTestModel model = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
@@ -206,8 +197,7 @@ public class GeneratedMarshallerTest {
    @Test
    public void testMapOfStringToJson() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
-      MapSchema.INSTANCE.registerSchema(ctx);
-      MapSchema.INSTANCE.registerMarshallers(ctx);
+      MapSchema.INSTANCE.register(ctx);
 
       var m = new MapOfString();
       m.data = Map.of("1", "2", "3", "4");
@@ -230,8 +220,7 @@ public class GeneratedMarshallerTest {
    @Test
    public void testMapOfUUIDToJson() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
-      MapSchema.INSTANCE.registerSchema(ctx);
-      MapSchema.INSTANCE.registerMarshallers(ctx);
+      MapSchema.INSTANCE.register(ctx);
 
       var m = new MapOfUUID();
       m.data = Map.of("1", uuid, "3", uuid);
@@ -252,8 +241,7 @@ public class GeneratedMarshallerTest {
    @Test
    public void testMapOfMapOfUUIDToJson() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
-      MapSchema.INSTANCE.registerSchema(ctx);
-      MapSchema.INSTANCE.registerMarshallers(ctx);
+      MapSchema.INSTANCE.register(ctx);
 
       var m = new MapOfUUID();
       m.data = Map.of("1", uuid, "3", uuid);
@@ -290,8 +278,7 @@ public class GeneratedMarshallerTest {
    @Test
    public void testMapOfLong() throws Exception {
       var ctx = ProtobufUtil.newSerializationContext();
-      MapSchema.INSTANCE.registerSchema(ctx);
-      MapSchema.INSTANCE.registerMarshallers(ctx);
+      MapSchema.INSTANCE.register(ctx);
 
       var key = "1";
       var value = (Long) 1L;
@@ -305,8 +292,7 @@ public class GeneratedMarshallerTest {
    @Test
    public void testMapOfMapToJson() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
-      MapSchema.INSTANCE.registerSchema(ctx);
-      MapSchema.INSTANCE.registerMarshallers(ctx);
+      MapSchema.INSTANCE.register(ctx);
 
       var adapter = Map.of("a", uuid);
       var simple = Map.of("b", 2);
@@ -343,8 +329,7 @@ public class GeneratedMarshallerTest {
    @Test
    public void testIterableFields() throws IOException{
       var ctx = ProtobufUtil.newSerializationContext();
-      IterableModel.Schema.INSTANCE.registerSchema(ctx);
-      IterableModel.Schema.INSTANCE.registerMarshallers(ctx);
+      IterableModel.Schema.INSTANCE.register(ctx);
 
       LinkedList<String> list = new LinkedList<>();
       list.add("entry1");
@@ -380,8 +365,7 @@ public class GeneratedMarshallerTest {
    @Test
    public void testStreamFields() throws IOException {
       var ctx = ProtobufUtil.newSerializationContext();
-      StreamModel.StreamSchema.INSTANCE.registerSchema(ctx);
-      StreamModel.StreamSchema.INSTANCE.registerMarshallers(ctx);
+      StreamModel.StreamSchema.INSTANCE.register(ctx);
 
       var factory = new StreamModel.Factory(Stream.of("entry1", "entry2"));
       var bytes = ProtobufUtil.toWrappedByteArray(ctx, factory);
