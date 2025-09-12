@@ -21,14 +21,25 @@ package org.infinispan.protostream;
 public interface SerializationContextInitializer {
 
    /**
-    * Registers schema files to the given {@link SerializationContext}. This is always invoked before
+    * Registers schema files to the given {@link SerializationContext}.
+    * This is always invoked before
     * {@link #registerMarshallers}.
+    * Use {@link #register(SerializationContext)} to perform both operations in the correct order.
     */
    void registerSchema(SerializationContext serCtx);
 
    /**
-    * Registers marshallers to the given {@link SerializationContext}.This is always invoked after
-    * {@link #registerSchema}.
+    * Registers marshallers to the given {@link SerializationContext}.
+    * This is always invoked after {@link #registerSchema(SerializationContext)}.
+    * Use {@link #register(SerializationContext)} to perform both operations in the correct order.
     */
    void registerMarshallers(SerializationContext serCtx);
+
+   /**
+    * Registers schema files and marshallers to the given {@link SerializationContext}
+    */
+   default void register(SerializationContext serCtx) {
+      registerSchema(serCtx);
+      registerMarshallers(serCtx);
+   }
 }

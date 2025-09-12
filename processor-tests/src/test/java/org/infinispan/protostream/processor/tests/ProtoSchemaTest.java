@@ -162,8 +162,7 @@ public class ProtoSchemaTest {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       TestSerializationContextInitializer serCtxInitializer = new TestSerializationContextInitializerImpl();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       assertTrue(ctx.canMarshall(Note.class));
       assertTrue(ctx.canMarshall("firstTestPackage.NoteMsg"));
@@ -180,12 +179,10 @@ public class ProtoSchemaTest {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       GeneratedSchema schema1 = new ParentClassSCIImpl();
-      schema1.registerSchema(ctx);
-      schema1.registerMarshallers(ctx);
+      schema1.register(ctx);
 
       GeneratedSchema schema2 = new ChildClassSCIImpl();
-      schema2.registerSchema(ctx);
-      schema2.registerMarshallers(ctx);
+      schema2.register(ctx);
       assertFalse(schema2.getProtoFile().contains("ParentType"));
    }
 
@@ -311,8 +308,7 @@ public class ProtoSchemaTest {
       assertNotNull("DependentInitializer implementation not found by ServiceLoader", dependentInitializer);
 
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
-      dependentInitializer.registerSchema(ctx);
-      dependentInitializer.registerMarshallers(ctx);
+      dependentInitializer.register(ctx);
 
       assertTrue(ctx.canMarshall(ReusableInitializer.A.class));
       assertTrue(ctx.canMarshall(ReusableInitializer.B.class));
@@ -862,8 +858,7 @@ public class ProtoSchemaTest {
    public void testAllFieldTypes() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       AllFieldTypesInitializer serCtxInitializer = new AllFieldTypesInitializerImpl();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       assertTrue(ctx.canMarshall(MessageWithAllFieldTypes.class));
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new MessageWithAllFieldTypes());
@@ -987,8 +982,7 @@ public class ProtoSchemaTest {
    public void testNonNullRepeatedFields() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       NonNullRepeatedFieldsInitializer serCtxInitializer = new NonNullRepeatedFieldsInitializerImpl();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new MessageWithRepeatedFields());
       MessageWithRepeatedFields o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
@@ -1116,8 +1110,7 @@ public class ProtoSchemaTest {
    public void testFactoryMethod() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       ImmutableMessageTestInitializer serCtxInitializer = new ImmutableMessageTestInitializerImpl();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       assertTrue(serCtxInitializer.getProtoFile().contains("message RGBColor"));
       assertTrue(serCtxInitializer.getProtoFile().contains("message ImmutableColor"));
@@ -1143,8 +1136,7 @@ public class ProtoSchemaTest {
    public void testNoAnnotatedFields() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       TestInitializer serCtxInitializer = new TestInitializer();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       assertTrue(serCtxInitializer.getProtoFile(), serCtxInitializer.getProtoFile().contains("message NoFields {\n}\n"));
 
@@ -1182,8 +1174,7 @@ public class ProtoSchemaTest {
    public void testNonStandardPropertyAccessors() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       TestInitializer serCtxInitializer = new TestInitializer();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       assertTrue(serCtxInitializer.getProtoFile().contains("message NonStandardPropertyAccessors"));
 
@@ -1274,8 +1265,7 @@ public class ProtoSchemaTest {
    public void testCustomMap() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       TestInitializer serCtxInitializer = new TestInitializer();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       assertTrue(serCtxInitializer.getProtoFile().contains("message CustomMap"));
 
@@ -1346,8 +1336,7 @@ public class ProtoSchemaTest {
    public void testOptional() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       TestInitializer serCtxInitializer = new TestInitializer();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       assertTrue(serCtxInitializer.getProtoFile().contains("message Optionals"));
 
@@ -1405,8 +1394,7 @@ public class ProtoSchemaTest {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       GeneratedSchema generatedSchema = new TestGenericMessageSerializationContextInitializerImpl();
-      generatedSchema.registerSchema(ctx);
-      generatedSchema.registerMarshallers(ctx);
+      generatedSchema.register(ctx);
 
       assertTrue(generatedSchema.getProtoFile().contains("message GenericMessage"));
 
@@ -1457,8 +1445,7 @@ public class ProtoSchemaTest {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       GeneratedSchema generatedSchema = new TestBareMessageSerializationContextInitializerImpl();
-      generatedSchema.registerSchema(ctx);
-      generatedSchema.registerMarshallers(ctx);
+      generatedSchema.register(ctx);
 
       assertTrue(generatedSchema.getProtoFile().contains("message BareMessage"));
       Descriptor message = (Descriptor) ctx.getDescriptorByName("BareMessage");

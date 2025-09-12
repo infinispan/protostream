@@ -17,8 +17,7 @@ public class JSONTranscodingTest {
    public void listOfStrings_rootObject() throws Exception {
       SerializationContext context = ProtobufUtil.newSerializationContext();
 
-      new CommonContainerTypesSchema().registerSchema(context);
-      new CommonContainerTypesSchema().registerMarshallers(context);
+      new CommonContainerTypesSchema().register(context);
 
       ArrayList<String> matches = new ArrayList<>();
       matches.add("one");
@@ -36,10 +35,8 @@ public class JSONTranscodingTest {
    public void listOfStrings_asField() throws Exception {
       SerializationContext context = ProtobufUtil.newSerializationContext();
 
-      new CommonContainerTypesSchema().registerSchema(context);
-      new CommonContainerTypesSchema().registerMarshallers(context);
-      new PlaySchemaImpl().registerSchema(context);
-      new PlaySchemaImpl().registerMarshallers(context);
+      new CommonContainerTypesSchema().register(context);
+      new PlaySchemaImpl().register(context);
 
       ArrayList<String> matches = new ArrayList<>();
       matches.add("one");

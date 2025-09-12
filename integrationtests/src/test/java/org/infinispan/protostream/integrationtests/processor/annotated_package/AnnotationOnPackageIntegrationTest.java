@@ -42,8 +42,7 @@ public class AnnotationOnPackageIntegrationTest {
 
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
 
-      generatedSchema.registerSchema(serCtx);
-      generatedSchema.registerMarshallers(serCtx);
+      generatedSchema.register(serCtx);
 
       assertTrue(serCtx.canMarshall(TestMessage.class));
    }
@@ -52,8 +51,7 @@ public class AnnotationOnPackageIntegrationTest {
    public void testUserWithLotsOfFields() throws IOException {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
 
-      UserSerializationContextInitializer.INSTANCE.registerSchema(serCtx);
-      UserSerializationContextInitializer.INSTANCE.registerMarshallers(serCtx);
+      UserSerializationContextInitializer.INSTANCE.register(serCtx);
 
       User user = new User();
       user.setName("T");
@@ -89,8 +87,7 @@ public class AnnotationOnPackageIntegrationTest {
       assertNotNull("DependentInitializer implementation not found by ServiceLoader", dependentInitializer);
 
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
-      dependentInitializer.registerSchema(ctx);
-      dependentInitializer.registerMarshallers(ctx);
+      dependentInitializer.register(ctx);
 
       assertTrue(ctx.canMarshall(ReusableInitializer.A.class));
       assertTrue(ctx.canMarshall(ReusableInitializer.B.class));
