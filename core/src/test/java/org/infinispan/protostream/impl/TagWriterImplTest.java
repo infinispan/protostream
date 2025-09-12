@@ -106,8 +106,8 @@ public class TagWriterImplTest {
          }
 
          @Override
-         public TagReader newReader(SerializationContext ctx) {
-            return TagReaderImpl.newInstance(ctx, new ByteArrayInputStream(baos.toByteArray()));
+         public TagReader newReader(SerializationContext ctx) throws IOException {
+            return TagReaderImpl.newInstance(ctx, new ByteArrayInputStream(baos.toByteArray()), baos.size());
          }
       });
    }
@@ -122,7 +122,7 @@ public class TagWriterImplTest {
             }
 
             @Override
-            public TagReader newReader(SerializationContext ctx) {
+            public TagReader newReader(SerializationContext ctx) throws IOException {
                return TagReaderImpl.newInstance(ctx, new ByteArrayInputStream(out.toByteArray()));
             }
          });
