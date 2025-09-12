@@ -1,16 +1,15 @@
 package org.infinispan.protostream.impl;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -39,14 +38,14 @@ public class FullBufferReadTest {
       ctx.registerProtoFiles(fileDescriptorSource);
 
       class MockMarshallerFuncs implements MarshallerFuncs<X> {
-         public byte[] actualBytes = null;
          public boolean isInputStream = false;
+         byte[] receivedBytes;
 
          @Override
          public X read(ReadContext rc) throws IOException {
             TagReader r = rc.getReader();
             isInputStream = r.isInputStream();
-            actualBytes = r.fullBufferArray();
+            receivedBytes = r.fullBufferArray();
             return null;
          }
 
@@ -65,13 +64,13 @@ public class FullBufferReadTest {
 
       ProtobufUtil.fromWrappedByteArray(ctx, fullMsgBytes);
 
-      assertNotNull(mockMarshallerFuncs.actualBytes);
-      assertEquals(6, mockMarshallerFuncs.actualBytes.length);
+      assertNotNull(mockMarshallerFuncs.receivedBytes);
+      assertEquals(6, mockMarshallerFuncs.receivedBytes.length);
       assertFalse(mockMarshallerFuncs.isInputStream);
 
       byte[] expectedBytes = {8, -46, 9, 16, -31, 33};
       assertNotNull(expectedBytes);
-      assertTrue(Arrays.equals(mockMarshallerFuncs.actualBytes, expectedBytes));
+      assertArrayEquals(mockMarshallerFuncs.receivedBytes, expectedBytes);
    }
 
    @Test
@@ -82,14 +81,16 @@ public class FullBufferReadTest {
       ctx.registerProtoFiles(fileDescriptorSource);
 
       class MockMarshallerFuncs implements MarshallerFuncs<X> {
-         public InputStream actualStream = null;
-         public boolean isInputStream = false;
+         byte[] receivedBytes;
+         int readAmount;
 
          @Override
          public X read(ReadContext rc) throws IOException {
             TagReader r = rc.getReader();
-            isInputStream = r.isInputStream();
-            actualStream = r.fullBufferInputStream();
+            InputStream stream = r.fullBufferInputStream();
+
+            receivedBytes = new byte[stream.available()];
+            readAmount = stream.read(receivedBytes);
             return null;
          }
 
@@ -109,16 +110,10 @@ public class FullBufferReadTest {
 
       ProtobufUtil.fromWrappedStream(ctx, in);
 
-      assertNotNull(mockMarshallerFuncs.actualStream);
-      assertEquals(6, mockMarshallerFuncs.actualStream.available());
-      //assertTrue(mockMarshallerFuncs.isInputStream); // Currently always false - the InputStream appears to be converted to a byte array decoder after WrappedMessage processed
-
-      byte[] actualBytes = new byte[mockMarshallerFuncs.actualStream.available()];
-      mockMarshallerFuncs.actualStream.read(actualBytes);
-
+      assertEquals(6, mockMarshallerFuncs.readAmount);
       byte[] expectedBytes = {8, -46, 9, 16, -31, 33};
       assertNotNull(expectedBytes);
-      assertTrue(Arrays.equals(actualBytes, expectedBytes));
+      assertArrayEquals(mockMarshallerFuncs.receivedBytes, expectedBytes);
    }
 
    @Test

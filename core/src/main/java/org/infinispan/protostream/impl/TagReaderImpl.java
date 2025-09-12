@@ -5,6 +5,7 @@ import static org.infinispan.protostream.descriptors.WireType.FIXED_64_SIZE;
 import static org.infinispan.protostream.descriptors.WireType.MAX_VARINT_SIZE;
 
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
@@ -50,7 +51,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
    // This is to detect the original starting position of the decoder, so we can support elements such as
    // wrapped ByteBuffer instances.
-   private final int startingPos;
+   private int startingPos;
 
    private TagReaderImpl(TagReaderImpl parent, Decoder decoder) {
       this.parent = parent;
@@ -81,8 +82,17 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       return new TagReaderImpl((TagReaderImpl) parent, decoder);
    }
 
-   public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, InputStream input) {
+   /**
+    * @deprecated since 6.0. Please use {@link #newInstance(ImmutableSerializationContext, InputStream, int)} instead
+    * as the size of the message should be known for proper processing.
+    */
+   public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, InputStream input) throws IOException {
       return new TagReaderImpl((SerializationContextImpl) serCtx, new InputStreamDecoder(input));
+   }
+
+   public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, InputStream input, int length) throws IOException {
+      Decoder decoder = new LimitedInputStreamDecoder(input, length);
+      return new TagReaderImpl((SerializationContextImpl) serCtx, decoder);
    }
 
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, ByteBuffer buf) {
@@ -222,6 +232,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
    @Override
    public int pushLimit(int limit) throws IOException {
+      startingPos = decoder.getPos();
       return decoder.pushLimit(limit);
    }
 
@@ -277,9 +288,6 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       checkBufferUnused("fullBufferInputStream");
 
       if (isInputStream()) {
-         if (startingPos != 0) {
-            throw new IllegalStateException("fullBufferInputStream in marshaller can only be used on an unprocessed buffer");
-         }
          return ((InputStreamDecoder) decoder).getInputStream();
       } else {
          return new ByteArrayInputStream(decoder.getBufferArray(startingPos));
@@ -517,10 +525,11 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
       @Override
       byte[] getBufferArray(int offset) {
-         if (offset == 0) {
+         pos = end;
+         if (offset == 0 && end == limit) {
             return array;
          }
-         return Arrays.copyOfRange(array, offset, array.length);
+         return Arrays.copyOfRange(array, offset, end);
       }
 
       @Override
@@ -1032,40 +1041,12 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
       @Override
       boolean isAtEnd() throws IOException {
-         if (pos == limit) {
-            return true;
-         }
-         if (in.available() > 0) {
-            return false;
-         }
-         if (in instanceof PushbackInputStream) {
-            return isPushbackDone();
-         }
-         return isMarkDone();
+         return pos == limit || in.available() <= 0;
       }
-
-      private boolean isPushbackDone() throws IOException {
-         int intVal = in.read();
-         if (intVal < 0) {
-            return true;
-         }
-         ((PushbackInputStream) in).unread(intVal);
-         return false;
-      }
-
-      private boolean isMarkDone() throws IOException {
-         in.mark(1);
-         if (in.read() < 0) {
-            return true;
-         }
-         in.reset();
-         return false;
-      }
-
 
       @Override
       byte readRawByte() throws IOException {
-         if (pos == limit) {
+         if (pos >= limit) {
             throw log.messageTruncated();
          }
          int byteValue = in.read();
@@ -1140,4 +1121,237 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       }
    }
 
+   /**
+    * An InputStream based decoder that reads chunks of data into a single allocated buffer for smaller
+    * values. Anything larger will be copied directly to the result first retrieving from the existing
+    * buffer if bytes are present in it.
+    */
+   private static final class LimitedInputStreamDecoder extends Decoder {
+
+      private final InputStream in;
+      private final byte[] buffer = new byte[64];
+      private int bufferPos = 0;
+      private int bufferSize = 0;
+
+      /**
+       * Current position.
+       */
+      private int pos;
+
+      /**
+       * Absolute position (from start of input data) of the last byte we are allowed to read by last pushLimit.
+       */
+      private int limit;
+
+      private LimitedInputStreamDecoder(InputStream in, int length) {
+         if (in == null) {
+            throw new IllegalArgumentException("input stream cannot be null");
+         }
+         this.in = in;
+         this.limit = length;
+      }
+
+      @Override
+      String readString() throws IOException {
+         int length = readVarint32();
+         if (length > 0 && length <= limit - pos) {
+            byte[] bytes = readRawByteArray(length);
+            return new String(bytes, 0, length, UTF8);
+         }
+         if (length == 0) {
+            return "";
+         }
+         if (length < 0) {
+            throw log.negativeLength();
+         }
+         throw log.messageTruncated();
+      }
+
+      @Override
+      ByteBuffer readRawByteBuffer(int length) throws IOException {
+         if (length == 0) {
+            return EMPTY_BUFFER;
+         }
+         byte[] bytes = readRawByteArray(length);
+         return ByteBuffer.wrap(bytes);
+      }
+
+      @Override
+      protected void skipVarint() throws IOException {
+         for (int i = 0; i < MAX_VARINT_SIZE; i++) {
+            if (readRawByte() >= 0) {
+               return;
+            }
+         }
+         throw log.malformedVarint();
+      }
+
+      @Override
+      long readVarint64() throws IOException {
+         long value = 0;
+         for (int i = 0; i < 64; i += 7) {
+            byte b = readRawByte();
+            value |= (long) (b & 0x7F) << i;
+            if (b >= 0) {
+               return value;
+            }
+         }
+         throw log.malformedVarint();
+      }
+
+      @Override
+      int readFixed32() throws IOException {
+         if (limit - pos < FIXED_32_SIZE) {
+            throw log.messageTruncated();
+         }
+         return (readRawByte() & 0xFF)
+               | ((readRawByte() & 0xFF) << 8)
+               | ((readRawByte() & 0xFF) << 16)
+               | ((readRawByte() & 0xFF) << 24);
+      }
+
+      @Override
+      long readFixed64() throws IOException {
+         if (limit - pos < FIXED_64_SIZE) {
+            throw log.messageTruncated();
+         }
+         return (readRawByte() & 0xFFL)
+               | ((readRawByte() & 0xFFL) << 8)
+               | ((readRawByte() & 0xFFL) << 16)
+               | ((readRawByte() & 0xFFL) << 24)
+               | ((readRawByte() & 0xFFL) << 32)
+               | ((readRawByte() & 0xFFL) << 40)
+               | ((readRawByte() & 0xFFL) << 48)
+               | ((readRawByte() & 0xFFL) << 56);
+      }
+
+      @Override
+      int setGlobalLimit(int globalLimit) {
+         if (globalLimit < 0) {
+            throw new IllegalArgumentException("Global limit cannot be negative: " + globalLimit);
+         }
+         int oldGlobalLimit = this.globalLimit;
+         this.globalLimit = globalLimit;
+         return oldGlobalLimit;
+      }
+
+      @Override
+      int pushLimit(int limit) throws IOException {
+         if (limit < 0) {
+            throw log.negativeLength();
+         }
+         limit = pos + limit;
+         int oldLimit = this.limit;
+         if (limit > oldLimit) {
+            // the end of a nested message cannot go beyond the end of the outer message
+            throw log.messageTruncated();
+         }
+         this.limit = limit;
+         return oldLimit;
+      }
+
+      @Override
+      void popLimit(int oldLimit) {
+         limit = oldLimit;
+      }
+
+      @Override
+      int getEnd() {
+         return limit;
+      }
+
+      @Override
+      int getPos() {
+         return pos;
+      }
+
+      @Override
+      byte[] getBufferArray(int offset) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      boolean isAtEnd() {
+         return pos == limit;
+      }
+
+      @Override
+      byte readRawByte() throws IOException {
+         if (pos >= limit) {
+            throw log.messageTruncated();
+         }
+         if (bufferPos == bufferSize) {
+            int toRead = Math.min(buffer.length, limit - pos);
+            if (toRead == 0) {
+               throw log.messageTruncated();
+            }
+            bufferSize = in.read(buffer, 0, toRead);
+            if (bufferSize == -1) {
+               throw log.messageTruncated();
+            }
+            bufferPos = 0;
+         }
+         pos++;
+         return buffer[bufferPos++];
+      }
+
+      @Override
+      byte[] readRawByteArray(int length) throws IOException {
+         if (length > 0 && length <= limit - pos) {
+            byte[] array = new byte[length];
+            int bytesRead = 0;
+            int bufferRemaining = bufferSize - bufferPos;
+            if (bufferRemaining > 0) {
+               int toCopy = Math.min(length, bufferRemaining);
+               System.arraycopy(buffer, bufferPos, array, 0, toCopy);
+               bufferPos += toCopy;
+               bytesRead += toCopy;
+            }
+
+            if (bytesRead < length) {
+               int read = in.readNBytes(array, bytesRead, length - bytesRead);
+               if (read != length - bytesRead) {
+                  throw log.messageTruncated();
+               }
+            }
+            pos += length;
+            if (pos > globalLimit) {
+               throw log.globalLimitExceeded();
+            }
+            return array;
+         }
+         if (length == 0) {
+            return EMPTY;
+         }
+         if (length < 0) {
+            throw log.negativeLength();
+         }
+         throw log.messageTruncated();
+      }
+
+      @Override
+      protected void skipRawBytes(int length) throws IOException {
+         if (length <= limit - pos && length >= 0) {
+            int bufferRemaining = bufferSize - bufferPos;
+            if (length <= bufferRemaining) {
+               bufferPos += length;
+            } else {
+               bufferPos = 0;
+               bufferSize = 0;
+               long toSkip = length - bufferRemaining;
+               try {
+                  in.skipNBytes(toSkip);
+               } catch (EOFException e) {
+                  throw log.messageTruncated();
+               }
+            }
+            pos += length;
+         } else {
+            if (length < 0) {
+               throw log.negativeLength();
+            }
+            throw log.messageTruncated();
+         }
+      }
+   }
 }
