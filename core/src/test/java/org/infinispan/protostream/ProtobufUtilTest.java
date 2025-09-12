@@ -203,8 +203,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    @Test
    public void testJsonBytesWithIntArray() throws Exception {
       SerializationContext context = createContext();
-      Item.ItemSchema.INSTANCE.registerSchema(context);
-      Item.ItemSchema.INSTANCE.registerMarshallers(context);
+      Item.ItemSchema.INSTANCE.register(context);
 
       Item java = new Item("c7", new byte[]{7, 7, 7}, new float[]{1.1f, 1.1f, 1.1f}, new int[]{7, 7, 7}, "bla bla bla");
       byte[] proto = ProtobufUtil.toWrappedByteArray(context, java);

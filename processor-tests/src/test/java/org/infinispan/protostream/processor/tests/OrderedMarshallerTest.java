@@ -19,8 +19,7 @@ public class OrderedMarshallerTest {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       ProtoSchemaTest.TestSerializationContextInitializer serCtxInitializer = new TestSerializationContextInitializerImpl();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       assertTrue(ctx.canMarshall(MarshalledNo15GreaterThan.class));
 
@@ -35,8 +34,7 @@ public class OrderedMarshallerTest {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       ProtoSchemaTest.TestSerializationContextInitializer serCtxInitializer = new TestSerializationContextInitializerImpl();
-      serCtxInitializer.registerSchema(ctx);
-      serCtxInitializer.registerMarshallers(ctx);
+      serCtxInitializer.register(ctx);
 
       assertTrue(ctx.canMarshall(MarshalledYes15GreaterThan.class));
 
