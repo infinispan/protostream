@@ -6,12 +6,12 @@
    <parent>
       <groupId>org.infinispan.protostream</groupId>
       <artifactId>parent</artifactId>
-      <version>4.4.5-SNAPSHOT</version>
+      <version>4.4.5.Final</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
    <artifactId>protostream</artifactId>
-   <version>4.4.5-SNAPSHOT</version>
+   <version>4.4.5.Final</version>
    <packaging>jar</packaging>
 
    <name>ProtoStream - core</name>
