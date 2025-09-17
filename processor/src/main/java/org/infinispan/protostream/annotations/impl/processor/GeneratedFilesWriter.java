@@ -151,7 +151,8 @@ final class GeneratedFilesWriter {
    }
 
    public void addMarshallerSourceFile(String className, String source, Element originatingElement) throws IOException {
-      addGeneratedFile(className, new SourceFile(isEnabled, className, source, originatingElement));
+      SourceFile sourceFile = originatingElement != null ? new SourceFile(isEnabled, className, source, originatingElement): new SourceFile(isEnabled, className, source);
+      addGeneratedFile(className, sourceFile);
    }
 
    public void addInitializerSourceFile(String className, String source, Element[] originatingElements) throws IOException {

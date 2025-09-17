@@ -1,58 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.infinispan.protostream</groupId>
-        <artifactId>parent</artifactId>
-        <version>4.4.5-SNAPSHOT</version>
-        <relativePath>../parent/pom.xml</relativePath>
-    </parent>
+   <parent>
+      <groupId>org.infinispan.protostream</groupId>
+      <artifactId>parent</artifactId>
+      <version>4.4.5-SNAPSHOT</version>
+      <relativePath>../parent/pom.xml</relativePath>
+   </parent>
 
-    <artifactId>protostream-types</artifactId>
-    <packaging>jar</packaging>
+   <artifactId>protostream-types</artifactId>
+   <version>4.4.5-SNAPSHOT</version>
+   <packaging>jar</packaging>
 
-    <name>ProtoStream - builtin types</name>
-    <description>
-        Builtin protobuf types and default marshalling for some common Java types.
-    </description>
+   <name>ProtoStream - builtin types</name>
+   <description>
+      Builtin protobuf types and default marshalling for some common Java types.
+   </description>
 
-    <dependencies>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>protostream</artifactId>
-        </dependency>
+   <dependencies>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>protostream</artifactId>
+      </dependency>
 
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>protostream-processor</artifactId>
-        </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>protostream-processor</artifactId>
+      </dependency>
 
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-        </dependency>
-    </dependencies>
+      <dependency>
+         <groupId>javax.annotation</groupId>
+         <artifactId>javax.annotation-api</artifactId>
+      </dependency>
+   </dependencies>
 
-    <build>
-        <resources>
-            <resource>
-                <directory>${project.basedir}/src/main/resources</directory>
-                <includes>
-                    <include>**/*</include>
-                </includes>
-            </resource>
-        </resources>
+   <build>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <includes>
+               <include>**/*</include>
+            </includes>
+         </resource>
+      </resources>
 
-        <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
+      <plugins>
+         <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+         </plugin>
 
-            <plugin>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+         <plugin>
+            <artifactId>maven-surefire-report-plugin</artifactId>
+         </plugin>
+      </plugins>
+   </build>
 </project>

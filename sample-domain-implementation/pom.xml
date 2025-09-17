@@ -1,45 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.infinispan.protostream</groupId>
-        <artifactId>parent</artifactId>
-        <version>4.4.5-SNAPSHOT</version>
-        <relativePath>../parent/pom.xml</relativePath>
-    </parent>
+   <parent>
+      <groupId>org.infinispan.protostream</groupId>
+      <artifactId>parent</artifactId>
+      <version>4.4.5-SNAPSHOT</version>
+      <relativePath>../parent/pom.xml</relativePath>
+   </parent>
 
-    <artifactId>sample-domain-implementation</artifactId>
-    <packaging>jar</packaging>
+   <artifactId>sample-domain-implementation</artifactId>
+   <version>4.4.5-SNAPSHOT</version>
+   <packaging>jar</packaging>
 
-    <name>ProtoStream - sample domain model implementation</name>
-    <description>
-        Defines the Java entities corresponding to the sample schema defined in the sample-domain-definition module and
-        the MessageMarshaller/EnumMarshaller implementations for them.
-    </description>
+   <name>ProtoStream - sample domain model implementation</name>
+   <description>
+      Defines the Java entities corresponding to the sample schema defined in the sample-domain-definition module and
+      the MessageMarshaller/EnumMarshaller implementations for them.
+   </description>
 
-    <dependencies>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>protostream</artifactId>
-        </dependency>
+   <dependencies>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>protostream</artifactId>
+      </dependency>
 
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>sample-domain-definition</artifactId>
-        </dependency>
-    </dependencies>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>sample-domain-definition</artifactId>
+      </dependency>
+   </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+         </plugin>
 
-            <plugin>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+         <plugin>
+            <artifactId>maven-surefire-report-plugin</artifactId>
+         </plugin>
+      </plugins>
+   </build>
 </project>
