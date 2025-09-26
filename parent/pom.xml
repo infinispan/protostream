@@ -66,7 +66,7 @@
         <version.jar.plugin>3.4.2</version.jar.plugin>
         <version.javadoc.plugin>3.12.0</version.javadoc.plugin>
         <version.plugin.api>3.9.11</version.plugin.api>
-        <version.scm.plugin>2.1.0</version.scm.plugin>
+        <version.scm.plugin>2.2.1</version.scm.plugin>
         <version.source.plugin>3.3.1</version.source.plugin>
         <version.surefire.plugin>3.5.4</version.surefire.plugin>
         <version.maven.javacc>3.1.1</version.maven.javacc>
