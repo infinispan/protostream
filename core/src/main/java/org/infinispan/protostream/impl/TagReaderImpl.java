@@ -91,7 +91,18 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    }
 
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, InputStream input, int length) throws IOException {
-      Decoder decoder = new LimitedInputStreamDecoder(input, length);
+      Decoder decoder;
+      if (length < 512) {
+         // For smaller values it is faster to just copy it into a byte[] and use the regular ByteArrayDecoder.
+         // Otherwise the limit stream decoder uses a chunk based approach as necessary
+         byte[] bytes = input.readNBytes(length);
+         if (bytes.length != length) {
+            throw log.messageTruncated();
+         }
+         decoder = new ByteArrayDecoder(bytes, 0, length);
+      } else {
+         decoder = new LimitedInputStreamDecoder(input, length);
+      }
       return new TagReaderImpl((SerializationContextImpl) serCtx, decoder);
    }
 
@@ -1129,7 +1140,8 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
    private static final class LimitedInputStreamDecoder extends Decoder {
 
       private final InputStream in;
-      private final byte[] buffer = new byte[64];
+      private final byte[] buffer;
+      private final int fullLimit;
       private int bufferPos = 0;
       private int bufferSize = 0;
 
@@ -1148,15 +1160,52 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
             throw new IllegalArgumentException("input stream cannot be null");
          }
          this.in = in;
+         this.fullLimit = length;
          this.limit = length;
+         this.buffer = new byte[Math.min(1024, length)];
+      }
+
+      private void ensureAvailable(int required) throws IOException {
+         int bufferRemaining = bufferSize - bufferPos;
+         if (bufferRemaining < required) {
+            byte[] buffer = this.buffer;
+            // First shift all content to the beginning of the buffer
+            if (bufferRemaining > 0) {
+               System.arraycopy(buffer, bufferPos, buffer, 0, bufferRemaining);
+            }
+            bufferPos = 0;
+
+            // Now read in additional bytes - note that we use fullLimit so it can read outer message
+            // information if we are currently nested
+            int toRead = Math.min(buffer.length - bufferRemaining, fullLimit - (pos + bufferRemaining));
+            while (toRead > 0) {
+               int bytesRead = in.read(buffer, bufferRemaining, toRead);
+               if (bytesRead == -1) {
+                  break;
+               }
+               bufferRemaining += bytesRead;
+               toRead -= bytesRead;
+            }
+            bufferSize = bufferRemaining;
+         }
       }
 
       @Override
       String readString() throws IOException {
          int length = readVarint32();
          if (length > 0 && length <= limit - pos) {
-            byte[] bytes = readRawByteArray(length);
-            return new String(bytes, 0, length, UTF8);
+            if (length > buffer.length) {
+               byte[] bytes = readRawByteArray(length);
+               return new String(bytes, 0, length, UTF8);
+            }
+            ensureAvailable(length);
+            if (bufferPos + length > bufferSize) {
+               throw log.messageTruncated();
+            }
+            String s = new String(buffer, bufferPos, length, UTF8);
+            bufferPos += length;
+            pos += length;
+            return s;
          }
          if (length == 0) {
             return "";
@@ -1188,11 +1237,23 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
 
       @Override
       long readVarint64() throws IOException {
+         ensureAvailable(MAX_VARINT_SIZE);
          long value = 0;
+         int pos = this.pos;
+         int bufferPos = this.bufferPos;
          for (int i = 0; i < 64; i += 7) {
-            byte b = readRawByte();
+            if (pos >= limit) {
+               throw log.messageTruncated();
+            }
+            if (bufferPos == bufferSize) {
+               throw log.messageTruncated();
+            }
+            pos++;
+            byte b = buffer[bufferPos++];
             value |= (long) (b & 0x7F) << i;
             if (b >= 0) {
+               this.pos = pos;
+               this.bufferPos = bufferPos;
                return value;
             }
          }
@@ -1204,10 +1265,11 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          if (limit - pos < FIXED_32_SIZE) {
             throw log.messageTruncated();
          }
-         return (readRawByte() & 0xFF)
-               | ((readRawByte() & 0xFF) << 8)
-               | ((readRawByte() & 0xFF) << 16)
-               | ((readRawByte() & 0xFF) << 24);
+         ensureAvailable(FIXED_32_SIZE);
+         int value = (int) VarHandlesUtil.INT.get(buffer, bufferPos);
+         bufferPos += FIXED_32_SIZE;
+         pos += FIXED_32_SIZE;
+         return value;
       }
 
       @Override
@@ -1215,14 +1277,11 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          if (limit - pos < FIXED_64_SIZE) {
             throw log.messageTruncated();
          }
-         return (readRawByte() & 0xFFL)
-               | ((readRawByte() & 0xFFL) << 8)
-               | ((readRawByte() & 0xFFL) << 16)
-               | ((readRawByte() & 0xFFL) << 24)
-               | ((readRawByte() & 0xFFL) << 32)
-               | ((readRawByte() & 0xFFL) << 40)
-               | ((readRawByte() & 0xFFL) << 48)
-               | ((readRawByte() & 0xFFL) << 56);
+         ensureAvailable(FIXED_64_SIZE);
+         long value = (long) VarHandlesUtil.LONG.get(buffer, bufferPos);
+         bufferPos += FIXED_64_SIZE;
+         pos += FIXED_64_SIZE;
+         return value;
       }
 
       @Override
@@ -1280,16 +1339,9 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
          if (pos >= limit) {
             throw log.messageTruncated();
          }
+         ensureAvailable(1);
          if (bufferPos == bufferSize) {
-            int toRead = Math.min(buffer.length, limit - pos);
-            if (toRead == 0) {
-               throw log.messageTruncated();
-            }
-            bufferSize = in.read(buffer, 0, toRead);
-            if (bufferSize == -1) {
-               throw log.messageTruncated();
-            }
-            bufferPos = 0;
+            throw log.messageTruncated();
          }
          pos++;
          return buffer[bufferPos++];

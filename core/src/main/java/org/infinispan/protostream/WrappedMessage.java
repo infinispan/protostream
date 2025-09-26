@@ -520,6 +520,7 @@ public final class WrappedMessage {
       int typeId = -1;
       int enumValue = -1;
       ByteBuffer messageBytes = null;
+      // For some reason our tests return a null for a value.. is this legitimate?
       boolean valueProvided = false;
       Object value = null;
       int fieldCount = 0;

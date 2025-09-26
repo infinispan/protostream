@@ -17,8 +17,8 @@ public class RandomAccessOutputStreamImpl extends OutputStream implements Random
 
    static final int DEFAULT_DOUBLING_SIZE = 4 * 1024 * 1024; // 4MB
 
-   byte[] buf;
-   int pos = 0;
+   protected byte[] buf;
+   protected int pos = 0;
 
    public RandomAccessOutputStreamImpl() {
    }
