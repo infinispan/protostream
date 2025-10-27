@@ -29,7 +29,7 @@ jobs:
         run: ./mvnw -B clean install artifact:compare -Dmaven.test.failure.ignore=true -Dansi.strip=true
 
       - name: Test Logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: success() || failure()
         with:
           name: ${{ matrix.jdk }}-test-results
