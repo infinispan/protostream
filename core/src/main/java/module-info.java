@@ -3,7 +3,7 @@ module org.infinispan.protostream.core {
    requires jdk.unsupported;
    requires com.fasterxml.jackson.core;
    requires static com.fasterxml.jackson.databind;
-   requires static jcip.annotations;
+   requires static com.google.errorprone.annotations;
    requires org.jboss.logging;
    requires static org.jboss.logging.annotations;
    opens org.infinispan.protostream;
