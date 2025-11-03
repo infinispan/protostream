@@ -8,9 +8,6 @@ import java.util.Arrays;
 
 import org.infinispan.protostream.RandomAccessOutputStream;
 
-import net.jcip.annotations.NotThreadSafe;
-
-@NotThreadSafe
 public class RandomAccessOutputStreamImpl extends OutputStream implements RandomAccessOutputStream {
 
    static final int MIN_SIZE = 32;

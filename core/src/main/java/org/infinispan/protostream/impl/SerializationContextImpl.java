@@ -27,7 +27,7 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.ResolutionContext;
 import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * @author anistor@redhat.com
