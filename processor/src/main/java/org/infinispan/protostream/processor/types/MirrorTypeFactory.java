@@ -30,7 +30,6 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-import org.infinispan.protostream.processor.ProtoSchemaAnnotationProcessor;
 import org.infinispan.protostream.annotations.impl.types.DocumentationExtractor;
 import org.infinispan.protostream.annotations.impl.types.ReflectionTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
@@ -41,6 +40,7 @@ import org.infinispan.protostream.annotations.impl.types.XMethod;
 import org.infinispan.protostream.annotations.impl.types.XRecordComponent;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.impl.Log;
+import org.infinispan.protostream.processor.ProtoSchemaAnnotationProcessor;
 
 /**
  * Implementation relying primarily on {@link javax.lang.model.type.TypeMirror}, but also capable to use reflection
@@ -587,7 +587,7 @@ public final class MirrorTypeFactory implements XTypeFactory {
       @Override
       public XClass getEnclosingClass() {
          Element enclosingElement = typeElement.getEnclosingElement();
-         return enclosingElement.getKind() == ElementKind.CLASS ? fromTypeMirror(enclosingElement.asType()) : null;
+         return (enclosingElement.getKind() == ElementKind.CLASS || enclosingElement.getKind() == ElementKind.RECORD) ? fromTypeMirror(enclosingElement.asType()) : null;
       }
 
       @Override
