@@ -326,10 +326,6 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       if (annotatedClass.getEnclosingClass() != null && !annotatedClass.isStatic()) {
          throw Log.LOG.nonStaticInnerClass(getAnnotatedClassName());
       }
-      if (javaClass.isRecord()) {
-         Iterable<? extends XConstructor> declaredConstructors = javaClass.getDeclaredConstructors();
-         factory = declaredConstructors.iterator().next();
-      }
 
       for (XConstructor c : annotatedClass.getDeclaredConstructors()) {
          if (c.getAnnotation(ProtoFactory.class) != null) {
@@ -362,14 +358,18 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       }
 
       if (factory == null) {
-         if (isAdapter || isContainer()) {
+         if (javaClass.isRecord()) {
+            Iterable<? extends XConstructor> declaredConstructors = javaClass.getDeclaredConstructors();
+            factory = declaredConstructors.iterator().next();
+         } else if (isAdapter || isContainer()) {
             throw new ProtoSchemaBuilderException("The class " + getJavaClassName() +
                   " must be instantiable using an accessible @ProtoFactory annotated method defined by " + getAnnotatedClassName());
-         }
-         // If no factory method/constructor was found we need to ensure the class has an accessible no-argument constructor
-         XConstructor ctor = javaClass.getDeclaredConstructor();
-         if (ctor == null || ctor.isPrivate()) {
-            throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
+         } else {
+            // If no factory method/constructor was found we need to ensure the class has an accessible no-argument constructor
+            XConstructor ctor = javaClass.getDeclaredConstructor();
+            if (ctor == null || ctor.isPrivate()) {
+               throw new ProtoSchemaBuilderException("The class " + getJavaClassName() + " must be instantiable using an accessible no-argument constructor.");
+            }
          }
       }
    }
