@@ -24,8 +24,6 @@ import org.infinispan.protostream.impl.Log;
  */
 public final class ProtoEnumTypeMetadata extends ProtoTypeMetadata {
 
-   private static final Log log = Log.LogFactory.getLog(ProtoEnumTypeMetadata.class);
-
    private final XClass annotatedEnumClass;
 
    private final boolean isAdapter;

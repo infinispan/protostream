@@ -40,6 +40,7 @@ import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.processor.tests.testdomain.Inheritance;
 import org.infinispan.protostream.processor.tests.testdomain.MarshalledNo15GreaterThan;
 import org.infinispan.protostream.processor.tests.testdomain.MarshalledYes15GreaterThan;
+import org.infinispan.protostream.processor.tests.testdomain.OuterRecord;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleEnum;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleRecord;
@@ -145,6 +146,7 @@ public class ProtoSchemaTest {
                ByteBufferImpl.class,
 //               EmbeddedMetadata.class,
                EmbeddedMetadata.EmbeddedLifespanExpirableMetadata.class,
+               OuterRecord.class,
                SimpleEnum.class,
                SimpleRecord.class,
                MarshalledNo15GreaterThan.class,
@@ -169,6 +171,9 @@ public class ProtoSchemaTest {
       ProtobufUtil.toWrappedByteArray(ctx, new Note());
 
       assertTrue(ctx.canMarshall(SimpleClass.class));
+      assertTrue(ctx.canMarshall(OuterRecord.class));
+      assertTrue(ctx.canMarshall("firstTestPackage.OuterRecord.InnerEnum"));
+      assertFalse(ctx.canMarshall("firstTestPackage.InnerEnum"));
 
       String protoFile = serCtxInitializer.getProtoFile();
       assertTrue(protoFile.contains("@MyCustomAnnotation("));
