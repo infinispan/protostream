@@ -5,7 +5,7 @@
 
     <groupId>org.infinispan.protostream</groupId>
     <artifactId>parent</artifactId>
-    <version>6.0.2-SNAPSHOT</version>
+    <version>6.0.2</version>
     <packaging>pom</packaging>
 
     <name>ProtoStream - parent</name>
@@ -51,7 +51,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <project.build.outputTimestamp>2025-11-03T16:41:53Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2025-11-12T20:47:10Z</project.build.outputTimestamp>
 
         <!-- plugins version -->
         <maven.compiler.target>17</maven.compiler.target>
