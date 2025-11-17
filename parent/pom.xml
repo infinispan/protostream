@@ -63,7 +63,7 @@
         <version.enforcer.plugin>3.6.2</version.enforcer.plugin>
         <version.git-commit-id.plugin>9.0.2</version.git-commit-id.plugin>
         <version.install.plugin>3.1.4</version.install.plugin>
-        <version.jar.plugin>3.4.2</version.jar.plugin>
+        <version.jar.plugin>3.5.0</version.jar.plugin>
         <version.javadoc.plugin>3.12.0</version.javadoc.plugin>
         <version.plugin.api>3.9.11</version.plugin.api>
         <version.scm.plugin>2.2.1</version.scm.plugin>
