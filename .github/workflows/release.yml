@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.branch }}
           ssh-key: ${{ secrets.INFINISPAN_RELEASE_PRIVATE_KEY }}
