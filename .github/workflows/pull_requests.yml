@@ -16,7 +16,7 @@ jobs:
       matrix:
         jdk: [17, 21, 25-ea]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Java
         uses: actions/setup-java@v5
