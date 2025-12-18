@@ -365,6 +365,32 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    @Test
+   public void testLatin1EncodedString() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+
+      // String with Latin-1 specific characters
+      String latin1String = "Grüße aus München und Zürich!";
+
+      byte[] marshalled = ProtobufUtil.toWrappedByteArray(ctx, latin1String);
+      String unmarshalledString = ProtobufUtil.fromWrappedByteArray(ctx, marshalled);
+
+      assertEquals(latin1String, unmarshalledString);
+   }
+
+   @Test
+   public void testUtf8EncodedString() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+
+      // String with UTF-8 specific characters (e.g., emojis, characters from other languages)
+      String utf8String = "你好世界! 👋 This is a test with UTF-8 characters.";
+
+      byte[] marshalled = ProtobufUtil.toWrappedByteArray(ctx, utf8String);
+      String unmarshalledString = ProtobufUtil.fromWrappedByteArray(ctx, marshalled);
+
+      assertEquals(utf8String, unmarshalledString);
+   }
+
+   @Test
    public void testArrayOfEnum() throws Exception {
       Account account = createAccount();
       SerializationContext context = createContext();
