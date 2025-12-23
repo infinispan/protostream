@@ -382,7 +382,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       ImmutableSerializationContext ctx = createContext();
 
       // String with UTF-8 specific characters (e.g., emojis, characters from other languages)
-      String utf8String = "你好世界! 👋 This is a test with UTF-8 characters.";
+      String utf8String = "你好世界! This is a test with UTF-8 characters. 👋";
 
       byte[] marshalled = ProtobufUtil.toWrappedByteArray(ctx, utf8String);
       String unmarshalledString = ProtobufUtil.fromWrappedByteArray(ctx, marshalled);

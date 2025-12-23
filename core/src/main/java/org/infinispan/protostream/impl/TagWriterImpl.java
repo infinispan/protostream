@@ -314,6 +314,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    //todo [anistor] need to provide a safety mechanism to limit message size in bytes and message nesting depth on write ops
    private abstract static class Encoder {
 
+      protected static final StringUtil.Utf8Helper utf8Helper = StringUtil.UTF8_HELPER;
       /**
        * Commits the witten bytes after several write operations were performed. Updates counters, positions, whatever.
        */
@@ -1341,7 +1342,77 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
 
       @Override
       void writeUTF8Field(int number, String s) throws IOException {
-         writeUTF8FieldWithRewind(number, s);
+         byte[] bytes;
+         if (utf8Helper.containsLatin1Bytes(s) && (bytes = utf8Helper.getBytes(s)) != null) {
+            writeLatin1RawBytes(number, bytes);
+         } else {
+            writeUTF8FieldWithRewind(number, s);
+         }
+      }
+
+      void writeLatin1RawBytes(int number, byte[] bytes) throws IOException {
+         int byteLen = bytes.length;
+         int tag = WireType.makeTag(number, WireType.WIRETYPE_LENGTH_DELIMITED);
+         int startPos = out.getPosition();
+
+         // Assume worst case of all characters larger than unsigned byte 127
+         out.ensureCapacity(startPos + MAX_INT_VARINT_SIZE + MAX_INT_VARINT_SIZE + (byteLen * 2));
+
+         startPos = writeVarInt32Direct(startPos, tag);
+         int lengthPos = startPos;
+         int dataStartPos = writeVarInt32Direct(startPos, byteLen);
+         int localPos = dataStartPos;
+
+         int i = 0;
+         for (; i <= byteLen - 8; i += 8) {
+            long batch = (long) VarHandlesUtil.LONG.get(bytes, i);
+            if ((batch & 0x8080808080808080L) == 0) {
+               out.writeFixed64Direct(localPos, batch);
+               localPos += 8;
+            } else {
+               for (int k = 0; k < 8; k++) {
+                  byte b = bytes[i + k];
+                  localPos = writeLatin1Char(localPos, b);
+               }
+            }
+         }
+
+         for (; i < byteLen; i++) {
+            byte b = bytes[i];
+            localPos = writeLatin1Char(localPos, b);
+         }
+
+         // If we had any multi byte characters we have the wrong size written originally
+         // so we have to update and move the bytes if necessary.
+         updatePositionFromMultiByte(byteLen, lengthPos, dataStartPos, localPos);
+      }
+
+      private void updatePositionFromMultiByte(int originalByteLen, int lengthPos, int dataStartPos, int localPos) throws IOException {
+         int newByteLen = localPos - dataStartPos;
+         int oldLengthVarIntBytes = varIntBytes(originalByteLen);
+         int newLengthVarIntBytes = varIntBytes(newByteLen);
+
+         if (oldLengthVarIntBytes != newLengthVarIntBytes) {
+            // The length varint size has changed, so we need to move the data
+            out.move(dataStartPos, newByteLen, dataStartPos + (newLengthVarIntBytes - oldLengthVarIntBytes));
+            writeVarInt32Direct(lengthPos, newByteLen);
+            out.setPosition(localPos + (newLengthVarIntBytes - oldLengthVarIntBytes));
+         } else {
+            // Length varint size is the same, just update the length and set position
+            writeVarInt32Direct(lengthPos, newByteLen);
+            out.setPosition(localPos);
+         }
+      }
+
+      private int writeLatin1Char(int localPos, byte b) throws IOException {
+         if (b >= 0) {
+            out.write(localPos++, b);
+         } else {
+            int c = b & 0xFF;
+            out.write(localPos++, (byte) (0xC0 | (c >> 6)));
+            out.write(localPos++, (byte) (0x80 | (c & 0x3F)));
+         }
+         return localPos;
       }
 
       void writeUTF8FieldWithRewind(int number, String s) throws IOException {
