@@ -7,4 +7,5 @@ module org.infinispan.protostream.types {
    opens org.infinispan.protostream.types.protobuf;
    exports org.infinispan.protostream.types.java;
    exports org.infinispan.protostream.types.protobuf;
+   exports org.infinispan.protostream.types.java.arrays;
 }
