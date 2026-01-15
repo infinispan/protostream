@@ -5,6 +5,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
+
 /**
  * A byte output stream that exposes positional arguments in order to allow existing bytes in the stream to be overwritten.
  *
@@ -161,5 +163,9 @@ public interface RandomAccessOutputStream extends Closeable {
       write(position + 5, (byte) (value >> 40));
       write(position + 6, (byte) (value >> 48));
       write(position + 7, (byte) (value >> 56));
+   }
+
+   static RandomAccessOutputStream withCapacity(int capacity) {
+      return new RandomAccessOutputStreamImpl(capacity);
    }
 }
