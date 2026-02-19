@@ -31,13 +31,20 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -139,6 +146,46 @@ public class TypesMarshallingTest {
             new HashMap<>()
       );
       testConfiguration.method.marshallAndUnmarshallTest(msg, context, false);
+   }
+
+   @Test
+   public void testManyMaps() throws IOException {
+      assumeTrue(testConfiguration.runTest);
+      testConfiguration.method.marshallAndUnmarshallTest(new HashMap<>(Map.of("key", "value")), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(new ConcurrentHashMap<>(Map.of("key", "value")), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(new LinkedHashMap<>(Map.of("key", "value")), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(new TreeMap<>(Map.of("key", "value")), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(new WeakHashMap<>(Map.of("key", "value")), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(new ConcurrentSkipListMap<>(Map.of("key", "value")), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(new Hashtable<>(Map.of("key", "value")), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(Collections.singletonMap("key", "value"), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(Collections.emptyMap(), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(Map.of(), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(Map.of("k", "v"), context, false);
+      testConfiguration.method.marshallAndUnmarshallTest(Map.of("k", "v", "k1", "v1"), context, false);
+   }
+
+   @Test
+   public void testPropertiesMap() throws IOException {
+      assumeTrue(testConfiguration.runTest);
+      var props = new Properties();
+      props.setProperty("key1", "value1");
+      props.setProperty("key2", "value2");
+      testConfiguration.method.marshallAndUnmarshallTest(props, context, false);
+   }
+
+   @Test
+   public void testMapWithComplexTypes() throws IOException {
+      assumeTrue(testConfiguration.runTest);
+      var bookMap = new HashMap<String, Book>();
+      bookMap.put("book1", new Book("Title1", "Desc1", 2020));
+      bookMap.put("book2", new Book("Title2", "Desc2", 2021));
+      testConfiguration.method.marshallAndUnmarshallTest(bookMap, context, false);
+
+      var nestedMap = new HashMap<Integer, List<String>>();
+      nestedMap.put(1, List.of("a", "b", "c"));
+      nestedMap.put(2, List.of("d", "e", "f"));
+      testConfiguration.method.marshallAndUnmarshallTest(nestedMap, context, false);
    }
 
    @Test
