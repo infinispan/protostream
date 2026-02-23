@@ -321,10 +321,19 @@ public final class JsonReader {
                processArray(ctx, parser, writer, type, field, fieldNumber);
                break;
             case START_OBJECT: {
-               Descriptor d = (Descriptor) ctx.getDescriptorByName(type);
+               Descriptor parentDescriptor = (Descriptor) ctx.getDescriptorByName(type);
+               FieldDescriptor fd = parentDescriptor != null ? parentDescriptor.findFieldByName(field) : null;
+               Descriptor elementType = fd != null ? fd.getMessageType() : null;
                RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
                TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, raos);
-               processSingleDocument(ctx, parser, nestedWriter, d, fieldNumber);
+               if (elementType != null) {
+                  // Element type is known from the schema: processObject handles both _type-present
+                  // and _type-absent cases, and correctly bundles all fields
+                  processObject(ctx, parser, nestedWriter, elementType, fieldNumber, false);
+               } else {
+                  // Element type is unknown (e.g. container adapter): fall back to reading _type.
+                  processSingleDocument(ctx, parser, nestedWriter, parentDescriptor, fieldNumber);
+               }
                nestedWriter.flush();
 
                byte[] value = raos.toByteArray();

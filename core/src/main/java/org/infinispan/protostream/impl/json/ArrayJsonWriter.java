@@ -42,6 +42,7 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 final class ArrayJsonWriter extends BaseJsonWriter {
    private ObjectJsonWriter delegate = null;
    private boolean done;
+   private boolean isMessageType;
 
    ArrayJsonWriter(ImmutableSerializationContext ctx, List<JsonTokenWriter> ast, FieldDescriptor descriptor) {
       super(ctx, ast, descriptor);
@@ -68,17 +69,23 @@ final class ArrayJsonWriter extends BaseJsonWriter {
          pushToken(JsonToken.LEFT_BRACKET);
       }
 
-      // Only write types when the object is complex. This avoids writing extra information when it is possible to
-      // infer the type from the field descriptor when parsing the JSON back into bytes.
       delegate = (ObjectJsonWriter) objectWriter(fieldNumber, fieldDescriptor);
-      if (delegate.isComplexObject())
+      isMessageType = fieldDescriptor.getMessageType() != null;
+      if (isMessageType) {
+         // For message types, always open a proper JSON object.
          delegate.onStartNested(fieldNumber, fieldDescriptor);
+         // For simple messages (≤1 field), _type was not written by the delegate; write it
+         // explicitly so the JSON remains round-trippable.
+         if (!delegate.isComplexObject()) {
+            writeType(fieldDescriptor);
+         }
+      }
    }
 
    @Override
    public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
       Objects.requireNonNull(delegate, "Handling tag without starting nested");
-      if (delegate.isComplexObject()) {
+      if (delegate.isComplexObject() || isMessageType) {
          delegate.onTag(fieldNumber, fieldDescriptor, tagValue);
          return;
       }
@@ -88,7 +95,7 @@ final class ArrayJsonWriter extends BaseJsonWriter {
 
    @Override
    public void onEnd() {
-      if (delegate.isComplexObject())
+      if (delegate.isComplexObject() || isMessageType)
          delegate.onEnd();
 
       if (!isDone())
@@ -97,7 +104,7 @@ final class ArrayJsonWriter extends BaseJsonWriter {
 
    @Override
    public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
-      if (delegate.isComplexObject())
+      if (delegate.isComplexObject() || isMessageType)
          delegate.onEndNested(fieldNumber, fieldDescriptor);
 
       pushToken(JsonToken.RIGHT_BRACKET);
