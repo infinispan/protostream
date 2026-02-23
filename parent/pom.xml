@@ -68,7 +68,7 @@
         <version.plugin.api>3.9.12</version.plugin.api>
         <version.scm.plugin>2.2.1</version.scm.plugin>
         <version.source.plugin>3.4.0</version.source.plugin>
-        <version.surefire.plugin>3.5.4</version.surefire.plugin>
+        <version.surefire.plugin>3.5.5</version.surefire.plugin>
         <version.maven.javacc>3.2.0</version.maven.javacc>
         <version.maven.sonatype.central>0.10.0</version.maven.sonatype.central>
         <version.maven.gpg>3.2.8</version.maven.gpg>
