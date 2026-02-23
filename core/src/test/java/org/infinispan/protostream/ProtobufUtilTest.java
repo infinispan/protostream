@@ -14,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -578,6 +579,108 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       User userResult = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
       assertEquals(user, userResult);
+   }
+
+   @Test
+   public void testSchemaWithRepeatedFields() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition =
+            """
+                  syntax = "proto2";
+                  message ParentEntity {
+                      required string value=1;
+                      repeated ChildEntity childs=2;
+                  }
+                  message ChildEntity {
+                     required string name=1;
+                  }
+                  """;
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("parent_child_definition.proto", protoDefinition));
+
+      final String jsonWithNestedWithType = """
+                  {
+                     "_type": "ParentEntity",
+                     "value": "Rosa",
+                     "childs": [
+                        {
+                           "_type": "ChildEntity", 
+                           "name":"Rosita"
+                        }
+                     ]
+                  }""";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(jsonWithNestedWithType));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(jsonWithNestedWithType.replaceAll("[\\s\\n]+", ""), converted);
+
+      final String jsonWithNestedWithTypeWithoutType = """
+                   {
+                     "_type": "ParentEntity",
+                     "value": "Rosa",
+                     "childs": [
+                        {
+                           "name":"Rosita"
+                        }
+                     ]
+                  }""";
+      protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(jsonWithNestedWithTypeWithoutType));
+      converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(jsonWithNestedWithType.replaceAll("[\\s\\n]+", ""), converted);
+   }
+
+   @Test
+   public void testSchemaWithRepeatedFieldsSameNames() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition =
+            """
+                  syntax = "proto2";
+                  message ParentEntity {
+                      required string value=1;
+                      repeated ChildEntity child=2;
+                  }
+                  message ChildEntity {
+                     required string child=1;
+                     required string name=2;
+                     required string surname=3;
+                  }
+                  """;
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("parent_child_definition.proto", protoDefinition));
+
+      final String jsonWithNestedWithType = """
+                  {
+                     "_type": "ParentEntity",
+                     "value": "Rosa",
+                     "child": [
+                        {
+                           "_type": "ChildEntity", 
+                           "child":"Rosita",
+                           "name": "Rosa",
+                           "surname":"Rosae"
+                        }
+                     ]
+                  }""";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(jsonWithNestedWithType));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(jsonWithNestedWithType.replaceAll("[\\s\\n]+", ""), converted);
+
+      final String jsonWithNestedWithTypeWithoutType = """
+                   {
+                     "_type": "ParentEntity",
+                     "value": "Rosa",
+                     "child": [
+                        {
+                           "child":"Rosita",
+                           "name": "Rosa",
+                           "surname":"Rosae"
+                        }
+                     ]
+                  }""";
+      protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(jsonWithNestedWithTypeWithoutType));
+      converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(jsonWithNestedWithType.replaceAll("[\\s\\n]+", ""), converted);
    }
 
    @Test
