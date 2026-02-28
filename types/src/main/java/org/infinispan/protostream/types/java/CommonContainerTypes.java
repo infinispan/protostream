@@ -22,6 +22,8 @@ import org.infinispan.protostream.types.java.collections.HashSetAdapter;
 import org.infinispan.protostream.types.java.collections.LinkedHashSetAdapter;
 import org.infinispan.protostream.types.java.collections.LinkedListAdapter;
 import org.infinispan.protostream.types.java.collections.TreeSetAdapter;
+import org.infinispan.protostream.types.java.util.MapAdapters;
+import org.infinispan.protostream.types.java.util.MapEntryAdapter;
 
 /**
  * Support for marshalling various {@link java.util.Collection} implementations and array or primitives.
@@ -56,7 +58,21 @@ import org.infinispan.protostream.types.java.collections.TreeSetAdapter;
             BoxedFloatArrayAdapter.class,
             BoxedDoubleArrayAdapter.class,
             StringArrayAdapter.class,
-            ObjectArrayAdapter.class
+            ObjectArrayAdapter.class,
+
+            // maps
+            MapEntryAdapter.class,
+            MapAdapters.HashMapAdapter.class,
+            MapAdapters.ConcurrentHashMapAdapter.class,
+            MapAdapters.LinkedHashMapAdapter.class,
+            MapAdapters.TreeMapAdapter.class,
+            MapAdapters.WeakHashMapAdapter.class,
+            MapAdapters.IdentityHashMapAdapter.class,
+            MapAdapters.ConcurrentSkipListMapAdapter.class,
+            MapAdapters.HashtableAdapter.class,
+            MapAdapters.PropertiesAdapter.class,
+            MapAdapters.CollectionsEmptyMap.class,
+            MapAdapters.CollectionSingletonMap.class,
       }
 )
 public interface CommonContainerTypes extends GeneratedSchema {
