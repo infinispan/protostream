@@ -315,6 +315,29 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    private abstract static class Encoder {
 
       protected static final StringUtil.Utf8Helper utf8Helper = StringUtil.UTF8_HELPER;
+
+      /**
+       * Calculate the UTF-8 byte count for a String without allocating a byte array.
+       * This is faster than calling s.getBytes(StandardCharsets.UTF_8).length.
+       */
+      protected static int calculateUtf8ByteCount(String s) {
+         int count = 0;
+         int len = s.length();
+         for (int i = 0; i < len; i++) {
+            int c = s.charAt(i);
+            if (c < 0x80) {
+               count++;
+            } else if (c < 0x800) {
+               count += 2;
+            } else if (Character.isHighSurrogate((char) c)) {
+               count += 4;
+               i++; // Skip low surrogate
+            } else {
+               count += 3;
+            }
+         }
+         return count;
+      }
       /**
        * Commits the witten bytes after several write operations were performed. Updates counters, positions, whatever.
        */
@@ -623,19 +646,54 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       @Override
       void writeUTF8Field(int fieldNumber, String s) {
          writeVarint32(WireType.makeTag(fieldNumber, WireType.WIRETYPE_VARINT));
-         char c;
-         int i;
-         int count = s.length();
-         for (i = 0; i < count; i++) {
-            c = s.charAt(i);
-            if (c > 127) {
-               // TODO: do this without allocating the byte[]
-               count = s.getBytes(StandardCharsets.UTF_8).length;
-               break;
+         int byteCount;
+         byte[] bytes;
+
+         // Due to intrinsics this is faster to just allocate the byte[] to collect the size
+         if (s.length() < 128) {
+            byteCount = s.getBytes(StandardCharsets.UTF_8).length;
+         } else if (utf8Helper.containsLatin1Bytes(s) && (bytes = utf8Helper.getBytes(s)) != null) {
+            // Try to use Latin-1 optimization if available
+            byteCount = calculateLatin1Utf8ByteCount(bytes);
+         } else {
+            // Non-Latin1 string, calculate UTF-8 byte count without allocation
+            byteCount = calculateUtf8ByteCount(s);
+         }
+
+         writeVarint32(byteCount);
+         this.count += byteCount;
+      }
+
+      /**
+       * Calculate UTF-8 byte count for Latin-1 encoded byte array using SIMD-like batch processing.
+       * This is faster than iterating character by character.
+       */
+      private int calculateLatin1Utf8ByteCount(byte[] bytes) {
+         int byteLen = bytes.length;
+         int utf8Count = 0;
+         int i = 0;
+
+         // Process 8 bytes at a time for better performance
+         for (; i <= byteLen - 8; i += 8) {
+            long batch = (long) VarHandlesUtil.LONG.get(bytes, i);
+            // Check if all 8 bytes are ASCII (no high bit set)
+            if ((batch & 0x8080808080808080L) == 0) {
+               // All ASCII: each byte is 1 UTF-8 byte
+               utf8Count += 8;
+            } else {
+               // At least one non-ASCII, count each byte individually
+               for (int k = 0; k < 8; k++) {
+                  utf8Count += (bytes[i + k] >= 0) ? 1 : 2;
+               }
             }
          }
-         writeVarint32(count);
-         this.count += count;
+
+         // Process remaining bytes
+         for (; i < byteLen; i++) {
+            utf8Count += (bytes[i] >= 0) ? 1 : 2;
+         }
+
+         return utf8Count;
       }
 
       @Override
