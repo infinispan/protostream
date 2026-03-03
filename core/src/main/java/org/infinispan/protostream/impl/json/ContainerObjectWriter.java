@@ -29,6 +29,7 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
 final class ContainerObjectWriter extends BaseJsonWriter {
 
    private int containerFields = 1;
+   private boolean writtenElements = false;
 
    ContainerObjectWriter(ImmutableSerializationContext ctx, List<JsonTokenWriter> ast, FieldDescriptor descriptor) {
       super(ctx, ast, descriptor);
@@ -99,6 +100,7 @@ final class ContainerObjectWriter extends BaseJsonWriter {
             GenericDescriptor descriptor = ctx.getDescriptorByTypeId(WrappedMessage.PROTOBUF_TYPE_ID);
             TagHandler delegate = new RootJsonWriter(ctx, ast);
             delegate.onStart(descriptor);
+            writtenElements |= lastToken() == JsonToken.LEFT_BRACKET;
             delegate.onTag(fieldNumber, fieldDescriptor, tagValue);
             delegate.onEnd();
          }
@@ -111,6 +113,7 @@ final class ContainerObjectWriter extends BaseJsonWriter {
    }
 
    private void writePrimitiveContainer(FieldDescriptor fieldDescriptor, Object tagValue) {
+      writtenElements = true;
       pushToken(JsonToken.LEFT_BRACE);
       pushToken(JsonTokenWriter.string(fieldDescriptor.getTypeName()));
       pushToken(JsonToken.COLON);
@@ -120,6 +123,7 @@ final class ContainerObjectWriter extends BaseJsonWriter {
 
    @Override
    public void onEnd() {
-      pushToken(JsonToken.RIGHT_BRACKET);
+      if (writtenElements)
+         pushToken(JsonToken.RIGHT_BRACKET);
    }
 }
