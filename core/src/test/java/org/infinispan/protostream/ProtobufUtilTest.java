@@ -14,7 +14,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -568,10 +567,10 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       user.setGender(User.Gender.MALE);
       user.setAccountIds(new HashSet<>(Arrays.asList(1, 3)));
       user.setAddresses(Arrays.asList(
-            new Address("Old Street", "XYZ42", -12),
-            // This address will serialize to be longer than 127 requiring more than 1 byte per size
-            new Address("Bond Street".repeat(12), "W23", 2),
-            new Address("Long Foo".repeat(20), "Y791", 23)
+         new Address("Old Street", "XYZ42", -12),
+         // This address will serialize to be longer than 127 requiring more than 1 byte per size
+         new Address("Bond Street".repeat(12), "W23", 2),
+         new Address("Long Foo".repeat(20), "Y791", 23)
       ));
 
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, user);
@@ -585,121 +584,316 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    public void testSchemaWithRepeatedFields() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       final String protoDefinition =
-            """
-                  syntax = "proto2";
-                  message ParentEntity {
-                      required string value=1;
-                      repeated ChildEntity childs=2;
-                  }
-                  message ChildEntity {
-                     required string name=1;
-                  }
-                  """;
+         """
+            syntax = "proto2";
+            message ParentEntity {
+                required string value=1;
+                repeated ChildEntity childs=2;
+            }
+            message ChildEntity {
+               required string name=1;
+            }
+            """;
       ctx.registerProtoFiles(FileDescriptorSource.fromString("parent_child_definition.proto", protoDefinition));
 
       final String jsonWithNestedWithType = """
-                  {
-                     "_type": "ParentEntity",
-                     "value": "Rosa",
-                     "childs": [
-                        {
-                           "_type": "ChildEntity", 
-                           "name":"Rosita"
-                        }
-                     ]
-                  }""";
+         {
+            "_type": "ParentEntity",
+            "value": "Rosa",
+            "childs": [
+               {
+                  "_type": "ChildEntity",
+                  "name":"Rosita"
+               }
+            ]
+         }""";
       byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(jsonWithNestedWithType));
       String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
       assertValid(converted);
       assertEquals(jsonWithNestedWithType.replaceAll("[\\s\\n]+", ""), converted);
 
       final String jsonWithNestedWithTypeWithoutType = """
-                   {
-                     "_type": "ParentEntity",
-                     "value": "Rosa",
-                     "childs": [
-                        {
-                           "name":"Rosita"
-                        }
-                     ]
-                  }""";
+          {
+            "_type": "ParentEntity",
+            "value": "Rosa",
+            "childs": [
+               {
+                  "name":"Rosita"
+               }
+            ]
+         }""";
       protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(jsonWithNestedWithTypeWithoutType));
       converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
       assertValid(converted);
       assertEquals(jsonWithNestedWithType.replaceAll("[\\s\\n]+", ""), converted);
+   }
+
+   @Test
+   public void testSchemaWithRepeatedFields2() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition = """
+         syntax = "proto2";
+         message Outer {
+             optional string name=1;
+             repeated Middle middle=2;
+         }
+         message Middle {
+            optional string name=1;
+            repeated Inner inner=2;
+         }
+         message Inner {
+            optional string name=1;
+         }""";
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("multilevel.proto", protoDefinition));
+
+      final String json = """
+         {
+            "_type": "Outer",
+            "name": "outside",
+            "middle": [
+               {
+                  "_type": "Middle",
+                  "name": "between",
+                  "inner": [
+                     {
+                        "_type": "Inner",
+                        "name": "inside"
+                     }
+                  ]
+               }
+            ]
+         }""";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+   }
+
+   @Test
+   public void testNestedRepeatedFieldsMultipleElements() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition = """
+         syntax = "proto2";
+         message Outer {
+             optional string name=1;
+             repeated Middle middle=2;
+         }
+         message Middle {
+            optional string name=1;
+            repeated Inner inner=2;
+         }
+         message Inner {
+            optional string name=1;
+         }""";
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("multilevel.proto", protoDefinition));
+
+      final String json = """
+         {
+            "_type": "Outer",
+            "name": "outside",
+            "middle": [
+               {
+                  "_type": "Middle",
+                  "name": "first",
+                  "inner": [
+                     {
+                        "_type": "Inner",
+                        "name": "a"
+                     },
+                     {
+                        "_type": "Inner",
+                        "name": "b"
+                     }
+                  ]
+               },
+               {
+                  "_type": "Middle",
+                  "name": "second",
+                  "inner": [
+                     {
+                        "_type": "Inner",
+                        "name": "c"
+                     }
+                  ]
+               }
+            ]
+         }""";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+   }
+
+   @Test
+   public void testThreeLevelNestedRepeatedSameFieldNumber() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition = """
+         syntax = "proto2";
+         message L1 {
+             optional string name=1;
+             repeated L2 items=2;
+         }
+         message L2 {
+            optional string name=1;
+            repeated L3 items=2;
+         }
+         message L3 {
+            optional string name=1;
+            repeated L4 items=2;
+         }
+         message L4 {
+            optional string name=1;
+         }""";
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("deep_nesting.proto", protoDefinition));
+
+      final String json = """
+         {
+            "_type": "L1",
+            "name": "level1",
+            "items": [
+               {
+                  "_type": "L2",
+                  "name": "level2",
+                  "items": [
+                     {
+                        "_type": "L3",
+                        "name": "level3",
+                        "items": [
+                           {
+                              "_type": "L4",
+                              "name": "level4"
+                           }
+                        ]
+                     }
+                  ]
+               }
+            ]
+         }""";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+   }
+
+   @Test
+   public void testNestedRepeatedWithPrimitiveSibling() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition = """
+         syntax = "proto2";
+         message Parent {
+             optional string name=1;
+             repeated Child children=2;
+         }
+         message Child {
+            optional string name=1;
+            repeated Grandchild grandchildren=2;
+            repeated string tags=3;
+         }
+         message Grandchild {
+            optional string name=1;
+         }""";
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("mixed_repeated.proto", protoDefinition));
+
+      final String json = """
+         {
+            "_type": "Parent",
+            "name": "root",
+            "children": [
+               {
+                  "_type": "Child",
+                  "name": "child1",
+                  "grandchildren": [
+                     {
+                        "_type": "Grandchild",
+                        "name": "gc1"
+                     },
+                     {
+                        "_type": "Grandchild",
+                        "name": "gc2"
+                     }
+                  ],
+                  "tags": ["x","y"]
+               }
+            ]
+         }""";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
    }
 
    @Test
    public void testSchemaWithRepeatedFieldsSameNames() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       final String protoDefinition =
-            """
-                  syntax = "proto2";
-                  message ParentEntity {
-                      required string value=1;
-                      repeated ChildEntity child=2;
-                  }
-                  message ChildEntity {
-                     required string child=1;
-                     required string name=2;
-                     required string surname=3;
-                  }
-                  """;
+         """
+            syntax = "proto2";
+            message ParentEntity {
+                required string value=1;
+                repeated ChildEntity child=2;
+            }
+            message ChildEntity {
+               required string child=1;
+               required string name=2;
+               required string surname=3;
+            }
+            """;
       ctx.registerProtoFiles(FileDescriptorSource.fromString("parent_child_definition.proto", protoDefinition));
 
       final String jsonWithNestedWithType = """
-                  {
-                     "_type": "ParentEntity",
-                     "value": "Rosa",
-                     "child": [
-                        {
-                           "_type": "ChildEntity", 
-                           "child":"Rosita",
-                           "name": "Rosa",
-                           "surname":"Rosae"
-                        }
-                     ]
-                  }""";
+         {
+            "_type": "ParentEntity",
+            "value": "Rosa",
+            "child": [
+               {
+                  "_type": "ChildEntity",
+                  "child":"Rosita",
+                  "name": "Rosa",
+                  "surname":"Rosae"
+               }
+            ]
+         }""";
       byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(jsonWithNestedWithType));
       String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
       assertValid(converted);
       assertEquals(jsonWithNestedWithType.replaceAll("[\\s\\n]+", ""), converted);
 
       final String jsonWithNestedWithTypeWithoutType = """
-                   {
-                     "_type": "ParentEntity",
-                     "value": "Rosa",
-                     "child": [
-                        {
-                           "child":"Rosita",
-                           "name": "Rosa",
-                           "surname":"Rosae"
-                        }
-                     ]
-                  }""";
+          {
+            "_type": "ParentEntity",
+            "value": "Rosa",
+            "child": [
+               {
+                  "child":"Rosita",
+                  "name": "Rosa",
+                  "surname":"Rosae"
+               }
+            ]
+         }""";
       protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(jsonWithNestedWithTypeWithoutType));
       converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
       assertValid(converted);
       assertEquals(jsonWithNestedWithType.replaceAll("[\\s\\n]+", ""), converted);
    }
 
+
    @Test
    public void testJsonSerializationWithoutMarshaller() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       final String protoDefinition =
-            """
-                  syntax = "proto2";
-                  message Person {
-                     optional string name = 1;
-
-                     message Address {
-                       optional string street = 1;
-                       optional string city = 2;
-                       optional string zip = 3;
-                     }
-
-                     optional Address address = 2;
-                  }""";
+         """
+            syntax = "proto2";
+            message Person {
+               optional string name = 1;
+            
+               message Address {
+                 optional string street = 1;
+                 optional string city = 2;
+                 optional string zip = 3;
+               }
+            
+               optional Address address = 2;
+            }""";
       ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
 
       String json = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Person.Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
@@ -713,26 +907,26 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    public void testSchemaWithReservedJsonFieldsRoot() {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       final String protoDefinition =
-            """
-                  syntax = "proto2";
-                  message Person {
-                     optional string _type = 1;
-                     optional string name = 2;
-
-                     message Address {
-                       optional string _type = 1;
-                       optional string street = 2;
-                       optional string city = 3;
-                       optional string zip = 4;
-                     }
-
-                     optional Address address = 3;
-                  }""";
+         """
+            syntax = "proto2";
+            message Person {
+               optional string _type = 1;
+               optional string name = 2;
+            
+               message Address {
+                 optional string _type = 1;
+                 optional string street = 2;
+                 optional string city = 3;
+                 optional string zip = 4;
+               }
+            
+               optional Address address = 3;
+            }""";
       ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
 
       String json = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Person.Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
       String message = assertThrows(IllegalStateException.class, () -> ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json)))
-            .getMessage();
+         .getMessage();
 
       assertTrue("Does not contain:\n" + message, message.contains("Message for 'Person'"));
       assertTrue("Does not contain:\n" + message, message.contains("Field number '1' has reserved name '_type'"));
@@ -742,27 +936,167 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    public void testSchemaWithReservedJsonFieldsNested() {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       final String protoDefinition =
-            """
-                  syntax = "proto2";
-                  message Person {
-                     optional string name = 1;
-
-                     message Address {
-                       optional string street = 1;
-                       optional string _type = 2;
-                       optional string city = 3;
-                       optional string zip = 4;
-                     }
-
-                     optional Address address = 2;
-                  }""";
+         """
+            syntax = "proto2";
+            message Person {
+               optional string name = 1;
+            
+               message Address {
+                 optional string street = 1;
+                 optional string _type = 2;
+                 optional string city = 3;
+                 optional string zip = 4;
+               }
+            
+               optional Address address = 2;
+            }""";
       ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
 
       String json = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Person.Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
       String message = assertThrows(IllegalStateException.class, () -> ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json)))
-            .getMessage();
+         .getMessage();
 
       assertTrue("Does not contain:\n" + message, message.contains("Message for 'Person.Address'"));
       assertTrue("Does not contain:\n" + message, message.contains("Field number '2' has reserved name '_type'"));
+   }
+
+   @Test
+   public void testStructuredObject() throws IOException {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition = """
+         syntax = "proto2";
+         package mypackage;
+         message Commands {
+            optional string verify = 1;
+            optional string decrypt = 2;
+         }
+         message Mail {
+            optional int64 id = 1;
+            optional Authentication authentication = 2;
+            optional Recipients recipients = 3;
+            optional Template template = 4;
+         }
+         message Authentication {
+            optional string senderName = 1;
+            optional string senderEmailId = 2;
+            optional string senderPassword = 3;
+            optional string emailSmtpServer = 4;
+            optional string emailServerPort = 5;
+            required bool ssl = 6;
+         }
+         message CONFIGURATIONS {
+            repeated Mail mails = 1;
+            optional Commands commands = 2;
+            optional int32 ttl1 = 3;
+            optional int32 ttl2 = 4;
+            optional Output output = 5;
+         }
+         message Output {
+            optional string path = 1;
+            optional int32 timeToLive = 2;
+            optional string tempFilePath = 3;
+            optional int32 maxRecordCount = 4;
+         }
+         message Template {
+            optional string description = 1;
+            optional string subject = 2;
+            optional string body = 3;
+         }
+         message Recipients {
+            repeated string recipients = 1;
+            repeated string recipientsCc = 2;
+         }""";
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("configuration.proto", protoDefinition));
+
+      String json = """
+         {
+           "_type": "mypackage.CONFIGURATIONS",
+           "mails": [
+             {
+               "id": 1,
+               "authentication": {
+                 "senderName": "sender",
+                 "senderEmailId": "user@domain.tld",
+                 "senderPassword": "",
+                 "emailSmtpServer": "smtp.domain.tld",
+                 "emailServerPort": "25",
+                 "ssl": false
+               },
+               "template": {
+                 "description": "This is a test",
+                 "subject": "This is a test",
+                 "body": "This is a test"
+               }
+             },
+             {
+               "id": 2,
+               "authentication": {
+                 "senderName": "sender",
+                 "senderEmailId": "user@domain.tld",
+                 "senderPassword": "",
+                 "emailSmtpServer": "smtp.domain.tld",
+                 "emailServerPort": "25",
+                 "ssl": false
+               },
+               "template": {
+                 "description": "This is a test",
+                 "subject": "This is a test",
+                 "body": "This is a test"
+               }
+             },
+             {
+               "id": 3,
+               "authentication": {
+                 "senderName": "sender",
+                 "senderEmailId": "user@domain.tld",
+                 "senderPassword": "",
+                 "emailSmtpServer": "smtp.domain.tld",
+                 "emailServerPort": "25",
+                 "ssl": false
+               },
+               "recipients": {
+                 "recipients": [
+                   "recipient@domain.tld"
+                 ]
+               },
+               "template": {
+                 "description": "This is a test",
+                 "subject": "This is a test",
+                 "body": "This is a test"
+               }
+             },
+             {
+               "id": 4,
+               "authentication": {
+                 "senderName": "sender",
+                 "senderEmailId": "user@domain.tld",
+                 "senderPassword": "",
+                 "emailSmtpServer": "smtp.domain.tld",
+                 "emailServerPort": "25",
+                 "ssl": false
+               },
+               "template": {
+                 "description": "This is a test",
+                 "subject": "This is a test",
+                 "body": "This is a test"
+               }
+             }
+           ],
+           "commands": {
+             "verify": "verify-command",
+             "decrypt": "decrypt-command"
+           },
+           "ttl1": 540,
+           "ttl2": 30,
+           "output": {
+             "path": "/report",
+             "timeToLive": 540,
+             "tempFilePath": "/report/temp",
+             "maxRecordCount": 5000000
+           }
+         }""";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
    }
 }

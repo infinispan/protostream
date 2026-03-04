@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.impl.Log;
 
 /**
  * Writer specialized for repeated fields.
@@ -50,8 +51,15 @@ final class ArrayJsonWriter extends BaseJsonWriter {
 
    @Override
    public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
+      // If this field belongs to a nested message handled by our delegate (different descriptor),
+      // pass it through rather than treating it as another element of this array.
+      if (delegate != null && fieldDescriptor != null && fieldDescriptor != descriptor) {
+         delegate.onStartNested(fieldNumber, fieldDescriptor);
+         return;
+      }
+
       if (fieldNumber != field())
-         throw new IllegalStateException("Array handling incorrect field");
+         throw Log.LOG.incorrectArrayField(fieldNumber, fieldDescriptor);
 
       // This happens when the end nested was invoked but there are additional elements in the stream.
       if (delegate != null && delegate.field() == fieldNumber) {
@@ -104,6 +112,20 @@ final class ArrayJsonWriter extends BaseJsonWriter {
 
    @Override
    public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
+      // Ignore cleanup calls after the array is already closed (e.g. from createDelegate).
+      if (done)
+         return;
+
+      // For message-type arrays: if the descriptor doesn't match, this is a nested message
+      // ending inside the current element (e.g., authentication ending inside a Mail element).
+      // Delegate to the element's writer without closing the array.
+      // For primitive arrays (isMessageType=false), onEndNested is only called during cleanup
+      // from verifyDelegate, so we fall through to close the array normally.
+      if (isMessageType && delegate != null && fieldDescriptor != null && fieldDescriptor != descriptor) {
+         delegate.onEndNested(fieldNumber, fieldDescriptor);
+         return;
+      }
+
       if (delegate.isComplexObject() || isMessageType)
          delegate.onEndNested(fieldNumber, fieldDescriptor);
 
