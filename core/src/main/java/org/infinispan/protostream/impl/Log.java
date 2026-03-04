@@ -9,7 +9,7 @@ import java.util.Set;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.MalformedProtobufException;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
-import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.exception.ProtoStreamException;
 import org.jboss.logging.BasicLogger;
@@ -156,6 +156,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to utilize more performant reflection based String serialization. Please pass `--add-opens java.base/java.lang=ALL-UNNAMED` to the JVM to enable", id = 41)
    void unableToRetrieveMethodHandles(@Cause Throwable t);
+
+   @Message(value = "Incorrect array field type. Number=%d Field=%s", id =42)
+   IllegalStateException incorrectArrayField(int fieldNumber, FieldDescriptor fieldDescriptor);
 
    class LogFactory {
       public static Log getLog(Class<?> clazz) {
