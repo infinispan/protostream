@@ -34,7 +34,7 @@ jobs:
         run: |
           ./mvnw -B versions:set -DnewVersion=${{ github.event.inputs.version }} -DprocessAllModules=true
           ./mvnw -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
-          sed -e "s/[0-9]\+\.[0-9]\+\.[0-9]\+\.Final/${{ github.event.inputs.version }}/g" README.md
+          sed -i "s/\(protostream[^0-9]*\)[0-9]\+\.[0-9]\+\.[0-9]\+/\1${{ github.event.inputs.version }}/g" README.md README-Kotlin.md
           git commit -a -m "Releasing ${{ github.event.inputs.version }}" --no-verify
 
       - name: Set up Java for publishing to Sonatype Central

@@ -18,6 +18,8 @@ public final class DocumentationExtractor {
 
    public static final String PROTOSTREAM_ANNOTATIONS_PREFIX = "@org.infinispan.protostream.annotations";
 
+   private static final String KOTLIN_ANNOTATIONS_PREFIX = "@kotlin.";
+
    /**
     * Collect and concatenate the description text from the {@code @ProtoDoc.value} of the given ProtoDoc annotations
     * (that were previously obtained either from an AnnotatedElement or an AnnotatedConstruct). Each annotation value is
@@ -92,7 +94,7 @@ public final class DocumentationExtractor {
    }
 
    private static StringBuilder annotationToString(StringBuilder docs, String s, boolean fullyQualified) {
-      if (!s.startsWith(PROTOSTREAM_ANNOTATIONS_PREFIX)) {
+      if (!s.startsWith(PROTOSTREAM_ANNOTATIONS_PREFIX) && !s.startsWith(KOTLIN_ANNOTATIONS_PREFIX)) {
          if (docs == null) {
             docs = new StringBuilder();
          } else {
