@@ -1326,10 +1326,15 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private XMethod findSetter(String propertyName, XClass propertyType) {
       String methodName = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+      boolean isBoolean = propertyType == typeFactory.fromClass(boolean.class) || propertyType == typeFactory.fromClass(Boolean.class);
       XMethod setter;
       if (isAdapter) {
          // lookup a java-bean style method first
          setter = annotatedClass.getMethod(methodName, javaClass, propertyType);
+         if (setter == null && isBoolean && propertyName.length() > 2 && propertyName.startsWith("is")) {
+            // Kotlin-style: property "isActive" has setter "setActive" instead of "setIsActive"
+            setter = annotatedClass.getMethod("set" + propertyName.substring(2), javaClass, propertyType);
+         }
          if (setter == null) {
             // try the property name directly
             setter = annotatedClass.getMethod(propertyName, javaClass, propertyType);
@@ -1346,6 +1351,10 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       } else {
          // lookup a java-bean style method first
          setter = javaClass.getMethod(methodName, propertyType);
+         if (setter == null && isBoolean && propertyName.length() > 2 && propertyName.startsWith("is")) {
+            // Kotlin-style: property "isActive" has setter "setActive" instead of "setIsActive"
+            setter = javaClass.getMethod("set" + propertyName.substring(2), propertyType);
+         }
          if (setter == null) {
             // try the property name directly
             setter = javaClass.getMethod(propertyName, propertyType);

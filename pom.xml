@@ -32,6 +32,7 @@
         <module>core</module>
         <module>processor</module>
         <module>processor-tests</module>
+        <module>processor-tests-kotlin</module>
         <module>types</module>
         <module>integrationtests</module>
         <module>maven-plugin</module>
