@@ -10,13 +10,11 @@ import java.util.List;
 public final class OneOfDescriptor {
 
    private final String name;
-   private final String documentation;
    private final List<FieldDescriptor> fields;
    private Descriptor containingMessage;
 
-   private OneOfDescriptor(String name, String documentation, List<FieldDescriptor> fields) {
+   private OneOfDescriptor(String name, List<FieldDescriptor> fields) {
       this.name = name;
-      this.documentation = documentation;
       this.fields = List.copyOf(fields);
    }
 
@@ -24,8 +22,12 @@ public final class OneOfDescriptor {
       return name;
    }
 
+   /**
+    * @deprecated Documentation is no longer retained.
+    */
+   @Deprecated(forRemoval = true)
    public String getDocumentation() {
-      return documentation;
+      return null;
    }
 
    public List<FieldDescriptor> getFields() {
@@ -73,7 +75,7 @@ public final class OneOfDescriptor {
       }
 
       public OneOfDescriptor build() {
-         return new OneOfDescriptor(name, documentation, fields);
+         return new OneOfDescriptor(name, fields);
       }
    }
 }

@@ -2,7 +2,7 @@ package org.infinispan.protostream.impl;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,9 +29,9 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
    protected String fullName;
 
    /*
-    * The (optional) documentation comment.
+    * The (optional) documentation comment. Cleared after annotation parsing to reduce memory footprint.
     */
-   protected final String documentation;
+   private String documentation;
 
    /*
     * The annotations found in the documentation.
@@ -64,9 +64,10 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
       return fullName;
    }
 
+   @Deprecated(forRemoval = true)
    @Override
    public final String getDocumentation() {
-      return documentation;
+      return null;
    }
 
    /*
@@ -75,12 +76,22 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
     *
     * @throws AnnotationParserException if annotation parsing fails
     */
-   private void processAnnotations() throws AnnotationParserException {
-      // we are lazily processing the annotations, if there is a documentation text attached to this element
+   protected void processAnnotations() throws AnnotationParserException {
       if (annotations == null) {
          if (documentation != null) {
             AnnotationParser parser = new AnnotationParser(documentation, true);
-            List<AnnotationElement.Annotation> parsedAnnotations = parser.parse();
+            List<AnnotationElement.Annotation> parsedAnnotations;
+            try {
+               parsedAnnotations = parser.parse();
+            } catch (AnnotationParserException e) {
+               // Documentation contains annotation-like syntax that cannot be parsed.
+               // This can happen for annotations intended for compile-time processing only.
+               log.debugf("Failed to parse annotations on %s: %s", fullName, e.getMessage());
+               annotations = Collections.emptyMap();
+               processedAnnotations = Collections.emptyMap();
+               documentation = null;
+               return;
+            }
             Map<String, AnnotationElement.Annotation> _annotations = new LinkedHashMap<>();
             Map<String, AnnotationElement.Annotation> _containers = new LinkedHashMap<>();
             for (AnnotationElement.Annotation annotation : parsedAnnotations) {
@@ -101,7 +112,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
                      if (annotationConfig.repeatable() != null) {
                         AnnotationElement.Annotation container = _containers.get(annotation.getName());
                         if (container == null) {
-                           List<AnnotationElement.Value> values = new LinkedList<>();
+                           List<AnnotationElement.Value> values = new ArrayList<>();
                            values.add(_annotations.remove(annotation.getName()));
                            values.add(annotation);
                            AnnotationElement.Attribute value = new AnnotationElement.Attribute(annotation.position, AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE, new AnnotationElement.Array(annotation.position, values));
@@ -146,6 +157,7 @@ public abstract class AnnotatedDescriptorImpl implements AnnotatedDescriptor {
             annotations = Collections.emptyMap();
             processedAnnotations = Collections.emptyMap();
          }
+         documentation = null;
       }
    }
 

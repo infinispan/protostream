@@ -118,6 +118,7 @@ public class FieldDescriptor extends AnnotatedDescriptorImpl implements Annotate
 
    void setFileDescriptor(FileDescriptor fileDescriptor) {
       this.fileDescriptor = fileDescriptor;
+      processAnnotations();
    }
 
    @Override

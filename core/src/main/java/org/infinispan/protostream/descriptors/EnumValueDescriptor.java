@@ -18,7 +18,6 @@ public final class EnumValueDescriptor {
    private String fullName;
    private String scopedName; // the name of this enum value constant in its scope
    private final int number;
-   private final String documentation;
    private final List<Option> options;
    private EnumDescriptor enumDescriptor;
    private FileDescriptor fileDescriptor;
@@ -26,7 +25,6 @@ public final class EnumValueDescriptor {
    private EnumValueDescriptor(Builder builder) {
       this.name = builder.name;
       this.number = builder.number;
-      this.documentation = builder.documentation;
       this.options = List.copyOf(builder.options);
    }
 
@@ -38,8 +36,12 @@ public final class EnumValueDescriptor {
       return number;
    }
 
+   /**
+    * @deprecated Documentation is no longer retained.
+    */
+   @Deprecated(forRemoval = true)
    public String getDocumentation() {
-      return documentation;
+      return null;
    }
 
    public List<Option> getOptions() {

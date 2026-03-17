@@ -90,6 +90,7 @@
         <version.assertj>3.27.7</version.assertj>
         <version.errorprone>2.48.0</version.errorprone>
         <version.protobuf>4.34.0</version.protobuf>
+        <version.jol>0.17</version.jol>
     </properties>
 
     <dependencyManagement>
@@ -228,6 +229,13 @@
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${version.protobuf}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openjdk.jol</groupId>
+                <artifactId>jol-core</artifactId>
+                <version>${version.jol}</version>
                 <scope>test</scope>
             </dependency>
 

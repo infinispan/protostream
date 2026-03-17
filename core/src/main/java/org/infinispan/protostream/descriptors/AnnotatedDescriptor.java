@@ -37,8 +37,11 @@ public interface AnnotatedDescriptor {
    /**
     * Return the documentation text associated with this descriptor.
     *
-    * @return the documentation text or {@code null} if not present
+    * @return always {@code null}, documentation is no longer retained after annotation parsing
+    * @deprecated Documentation is no longer retained. Use {@link #getAnnotations()} or
+    * {@link #getProcessedAnnotation(String)} to access parsed annotation data.
     */
+   @Deprecated(forRemoval = true)
    String getDocumentation();
 
    /**
