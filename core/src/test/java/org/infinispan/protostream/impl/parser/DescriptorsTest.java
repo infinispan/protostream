@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.hamcrest.core.StringStartsWith;
-import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.config.Configuration;
@@ -766,8 +765,8 @@ public class DescriptorsTest {
       assertNotNull(typeX);
       assertEquals(1, typeX.getFields().size());
       FieldDescriptor field1 = typeX.getFields().get(0);
-      assertEquals("some doc text \nsome more doc text", typeX.getDocumentation().trim());
-      assertEquals("field doc text", field1.getDocumentation().trim());
+      assertNull(typeX.getDocumentation());
+      assertNull(field1.getDocumentation());
    }
 
    @Test
@@ -811,11 +810,11 @@ public class DescriptorsTest {
       assertNotNull(typeX);
       assertEquals(1, typeX.getFields().size());
       FieldDescriptor field1 = typeX.getFields().get(0);
-      assertEquals("@Foo(fooValue) \nsome more doc text", typeX.getDocumentation().trim());
+      assertNull(typeX.getDocumentation());
       Map<String, AnnotationElement.Annotation> typeAnnotations = typeX.getAnnotations();
       assertEquals("fooValue", typeAnnotations.get("Foo").getDefaultAttributeValue().getValue());
       assertEquals("fooValue", typeX.getProcessedAnnotation("Foo"));
-      assertEquals("@Bar(barValue)", field1.getDocumentation().trim());
+      assertNull(field1.getDocumentation());
       Map<String, AnnotationElement.Annotation> fieldAnnotations = field1.getAnnotations();
       assertEquals("barValue", fieldAnnotations.get("Bar").getDefaultAttributeValue().getValue());
       assertEquals("barValue", field1.getProcessedAnnotation("Bar"));
@@ -840,7 +839,7 @@ public class DescriptorsTest {
       Descriptor userMessageType = messageTypes.get(0);
       assertEquals("sample_bank_account.User", userMessageType.getFullName());
       assertEquals(Boolean.TRUE, userMessageType.getProcessedAnnotation("Indexed"));
-      assertEquals("CommentOne\n@CommentTwo\n@Field(store = Store.YES)\n@SortableField\n", userMessageType.getFields().get(0).getDocumentation());
+      assertNull(userMessageType.getFields().get(0).getDocumentation());
 
       Descriptor accountMessageType = messageTypes.get(1);
       assertEquals("sample_bank_account.Account", accountMessageType.getFullName());
@@ -849,7 +848,7 @@ public class DescriptorsTest {
 
    @Test
    public void testDuplicateAnnotation() {
-      exception.expect(AnnotationParserException.class);
+      exception.expect(DescriptorParserException.class);
       exception.expectMessage("Error: 1,8: duplicate annotation definition \"Field\"");
 
       Configuration config = Configuration.builder().annotationsConfig()
@@ -867,10 +866,7 @@ public class DescriptorsTest {
             }""";
 
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
-      Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
-
-      //todo [anistor] this is waaay too lazy
-      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      parseAndResolve(fileDescriptorSource, config);
    }
 
    @Test
@@ -933,9 +929,6 @@ public class DescriptorsTest {
 
    @Test
    public void testBrokenUndefinedAnnotation() {
-      exception.expect(AnnotationParserException.class);
-      exception.expectMessage("Error: 2,23: ')' expected");
-
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
@@ -954,8 +947,9 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
       Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
 
-      //todo [anistor] The processing of annotations is waaay too lazy
-      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      // Syntax errors in documentation annotations are silently ignored during eager parsing
+      Map<String, AnnotationElement.Annotation> fieldAnnotations = descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      assertTrue(fieldAnnotations.isEmpty());
    }
 
    @Test

@@ -23,3 +23,5 @@ out
 *~
 # OS X generated file
 .DS_Store
+# Claude Code
+CLAUDE.md

@@ -118,6 +118,11 @@ public final class Descriptor extends ReservableDescriptor implements GenericDes
       for (FieldDescriptor fieldDescriptor : fields) {
          fieldDescriptor.setFileDescriptor(fileDescriptor);
       }
+      for (OneOfDescriptor oneOf : oneofs) {
+         for (FieldDescriptor fieldDescriptor : oneOf.getFields()) {
+            fieldDescriptor.setFileDescriptor(fileDescriptor);
+         }
+      }
       for (Descriptor nested : nestedMessageTypes) {
          nested.setFileDescriptor(fileDescriptor);
       }

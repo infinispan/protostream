@@ -10,7 +10,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
+
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -80,7 +81,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private XMethod unknownFieldSetSetter;
 
-   private final Map<XClass, ProtoTypeMetadata> innerTypes = new HashMap<>();
+   private final List<ProtoTypeMetadata> innerTypes = new ArrayList<>();
 
    protected ProtoMessageTypeMetadata(BaseProtoSchemaGenerator protoSchemaGenerator, XClass annotatedClass, XClass javaClass) {
       super(getProtoName(annotatedClass, javaClass), javaClass);
@@ -159,7 +160,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
    }
 
    protected void addInnerType(ProtoTypeMetadata typeMetadata) {
-      innerTypes.put(typeMetadata.getJavaClass(), typeMetadata);
+      innerTypes.add(typeMetadata);
    }
 
    @Override
@@ -192,13 +193,13 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
       reserved.generate(iw);
 
-      for (ProtoTypeMetadata t : innerTypes.values()) {
+      for (ProtoTypeMetadata t : innerTypes) {
          t.generateProto(iw, syntax);
       }
 
-      LinkedList<ProtoFieldMetadata> unprocessedFields = new LinkedList<>(fieldsByNumber.values());
+      List<ProtoFieldMetadata> unprocessedFields = new ArrayList<>(fieldsByNumber.values());
       while (!unprocessedFields.isEmpty()) {
-         ProtoFieldMetadata f = unprocessedFields.remove();
+         ProtoFieldMetadata f = unprocessedFields.remove(0);
          if (f.getOneof() == null) {
             f.generateProto(iw, syntax);
          } else {
