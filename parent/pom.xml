@@ -61,7 +61,7 @@
         <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
         <version.compiler.plugin>3.15.0</version.compiler.plugin>
         <version.enforcer.plugin>3.6.2</version.enforcer.plugin>
-        <version.git-commit-id.plugin>9.2.0</version.git-commit-id.plugin>
+        <version.git-commit-id.plugin>10.0.0</version.git-commit-id.plugin>
         <version.install.plugin>3.1.4</version.install.plugin>
         <version.jar.plugin>3.5.0</version.jar.plugin>
         <version.javadoc.plugin>3.12.0</version.javadoc.plugin>
