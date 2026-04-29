@@ -418,6 +418,10 @@ abstract class BaseJsonWriter implements FieldAwareTagHandler {
             writeRawPrimitive(fieldDescriptor, tagValue);
             break;
          default:
+            if (fieldDescriptor != null && fieldDescriptor.getMessageType() == null) {
+               writeRawPrimitive(fieldDescriptor, tagValue);
+               break;
+            }
             if (dispatcher == null)
                throw new IllegalStateException("Dispatcher required to handle field: " + fieldDescriptor);
 

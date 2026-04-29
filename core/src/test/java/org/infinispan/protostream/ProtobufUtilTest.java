@@ -823,6 +823,29 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    }
 
    @Test
+   public void testRepeatedPrimitiveHighFieldNumber() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      final String protoDefinition = """
+         syntax = "proto2";
+         message TestEntity {
+             optional string name=1;
+             repeated int64 partnerMarketIds=92;
+         }""";
+      ctx.registerProtoFiles(FileDescriptorSource.fromString("test_high_field.proto", protoDefinition));
+
+      final String json = """
+         {
+            "_type": "TestEntity",
+            "name": "test",
+            "partnerMarketIds": [9144708688613475102,1234567890123456789]
+         }""";
+      byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+      String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+      assertValid(converted);
+      assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+   }
+
+   @Test
    public void testSchemaWithRepeatedFieldsSameNames() throws Exception {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       final String protoDefinition =
