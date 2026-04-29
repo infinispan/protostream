@@ -8,21 +8,24 @@ on:
         required: true
         default: "main"
       version:
-        description: "Release version"
-        required: true
+        description: "Release version (blank = derive from pom.xml, only if micro > 0)"
+        required: false
       nextVersion:
-        description: "Next version"
-        required: true
+        description: "Next version (blank = next micro SNAPSHOT)"
+        required: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
+      nextVersion: ${{ steps.resolve-versions.outputs.NEXT_VERSION }}
 
     steps:
       - name: Checkout Source
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ inputs.branch }}
           ssh-key: ${{ secrets.INFINISPAN_RELEASE_PRIVATE_KEY }}
 
       - name: Configure Git User
@@ -30,12 +33,45 @@ jobs:
           git config user.email "infinispan@infinispan.org"
           git config user.name "Infinispan"
 
+      - name: Resolve versions
+        id: resolve-versions
+        run: |
+          POM_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "POM version: $POM_VERSION"
+
+          RELEASE_VERSION="${{ inputs.version }}"
+          if [ -z "$RELEASE_VERSION" ]; then
+            if [[ "$POM_VERSION" != *-SNAPSHOT ]]; then
+              echo "::error::POM version '$POM_VERSION' is not a SNAPSHOT version"
+              exit 1
+            fi
+            RELEASE_VERSION="${POM_VERSION%-SNAPSHOT}"
+            MICRO=$(echo "$RELEASE_VERSION" | cut -d. -f3)
+            if [ "$MICRO" = "0" ]; then
+              echo "::error::Cannot derive release version from '$POM_VERSION' (micro is 0). Please specify 'Release version' explicitly."
+              exit 1
+            fi
+          fi
+
+          NEXT_VERSION="${{ inputs.nextVersion }}"
+          if [ -z "$NEXT_VERSION" ]; then
+            MAJOR=$(echo "$RELEASE_VERSION" | cut -d. -f1)
+            MINOR=$(echo "$RELEASE_VERSION" | cut -d. -f2)
+            MICRO=$(echo "$RELEASE_VERSION" | cut -d. -f3)
+            NEXT_MICRO=$((MICRO + 1))
+            NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_MICRO}-SNAPSHOT"
+          fi
+
+          echo "Release version: $RELEASE_VERSION"
+          echo "Next version: $NEXT_VERSION"
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+          echo "NEXT_VERSION=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
       - name: Set release version
         run: |
-          ./mvnw -B versions:set -DnewVersion=${{ github.event.inputs.version }} -DprocessAllModules=true
-          ./mvnw -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
-          sed -i "s/\(protostream[^0-9]*\)[0-9]\+\.[0-9]\+\.[0-9]\+/\1${{ github.event.inputs.version }}/g" README.md README-Kotlin.md
-          git commit -a -m "Releasing ${{ github.event.inputs.version }}" --no-verify
+          ./mvnw -B versions:set -DnewVersion=${{ steps.resolve-versions.outputs.RELEASE_VERSION }} -DprocessAllModules=true
+          sed -i "s/\(protostream[^0-9]*\)[0-9]\+\.[0-9]\+\.[0-9]\+/\1${{ steps.resolve-versions.outputs.RELEASE_VERSION }}/g" README.md README-Kotlin.md
+          git commit -a -m "Releasing ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}" --no-verify
 
       - name: Set up Java for publishing to Sonatype Central
         uses: actions/setup-java@v5
@@ -57,23 +93,33 @@ jobs:
 
       - name: Tag Release
         run: |
-          git tag ${{ github.event.inputs.version }}
+          git tag ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
 
       - name: Next Version
         run: |
-          ./mvnw -B versions:set -DnewVersion=${{ github.event.inputs.nextVersion }} -DprocessAllModules=true
-          ./mvnw -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.nextVersion }}
-          git commit -a -m "Next version ${{ github.event.inputs.nextVersion }}" --no-verify
+          ./mvnw -B versions:set -DnewVersion=${{ steps.resolve-versions.outputs.NEXT_VERSION }} -DprocessAllModules=true
+          git commit -a -m "Next version ${{ steps.resolve-versions.outputs.NEXT_VERSION }}" --no-verify
 
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.event.inputs.branch }}
+          branch: ${{ inputs.branch }}
           tags: true
           ssh: true
 
       - name: Create Release
-        run: gh release create ${{ github.event.inputs.version }} --generate-notes
+        run: gh release create ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  published:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: GOSCHEN/http-status-code@v1.1.0
+        with:
+          url: https://repo1.maven.org/maven2/org/infinispan/protostream/protostream/${{ needs.release.outputs.version }}/protostream-${{ needs.release.outputs.version }}.pom
+          code: 200
+          timeout: 10800000
+          interval: 1200
