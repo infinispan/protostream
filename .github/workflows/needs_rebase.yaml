@@ -1,0 +1,20 @@
+name: Needs Rebase Check
+
+on:
+  pull_request_target:
+    types:
+      - synchronize
+  push:
+    branches:
+      - '*.0.x'
+      - 'main'
+jobs:
+  triage:
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: eps1lon/actions-label-merge-conflict@releases/2.x
+        with:
+          dirtyLabel: "pr/needs rebase"
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
