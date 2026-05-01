@@ -239,7 +239,6 @@ public final class FileDescriptor {
          }
 
          status = Status.RESOLVED;
-         resolutionContext.flush();
          resolutionContext.handleSuccess(this);
       } catch (DescriptorParserException dpe) {
          resolutionContext.handleError(this, dpe);

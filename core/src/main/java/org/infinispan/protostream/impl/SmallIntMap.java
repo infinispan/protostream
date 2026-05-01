@@ -3,7 +3,7 @@ package org.infinispan.protostream.impl;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.StampedLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A map-like data structure that uses a copy-on-write array for keys up to a certain threshold 
@@ -16,17 +16,22 @@ public class SmallIntMap<V> {
 
    private static final int DEFAULT_ARRAY_THRESHOLD = 4096;
 
-   private volatile V[] array;
-   private Map<Integer, V> map;
+   private volatile State<V> state;
 
-   private final StampedLock lock = new StampedLock();
+   private final ReentrantLock lock = new ReentrantLock();
 
    public SmallIntMap() {
       this(DEFAULT_ARRAY_THRESHOLD);
    }
 
    public SmallIntMap(int arrayThreshold) {
-      this.array = (V[]) new Object[arrayThreshold];
+      this.state = new State<>(allocate(arrayThreshold), null);
+   }
+
+   public SmallIntMap(SmallIntMap<V> other) {
+      V[] arr = Arrays.copyOf(other.state.array, other.state.array.length);
+      Map<Integer, V> map = other.state.map != null ? new HashMap<>(other.state.map) : null;
+      this.state = new State<>(arr, map);
    }
 
    /**
@@ -37,24 +42,25 @@ public class SmallIntMap<V> {
     * @return the previous value associated with the key, or {@code null} if there was no mapping for the key
     */
    public V put(int key, V value) {
-      long stamp = lock.writeLock();
+      lock.lock();
       try {
-         if (key >= 0 && key < array.length) {
-            V oldValue = array[key];
+         State<V> s = state;
+         if (key >= 0 && key < s.array.length) {
+            V oldValue = s.array[key];
             if (oldValue == value) {
                return oldValue;
             }
-            V[] newArray = Arrays.copyOf(array, array.length);
+            V[] newArray = Arrays.copyOf(s.array, s.array.length);
             newArray[key] = value;
-            this.array = newArray;
+            state = new State<>(newArray, s.map);
             return oldValue;
          }
-         if (map == null) {
-            map = new HashMap<>();
-         }
-         return map.put(key, value);
+         Map<Integer, V> newMap = s.map != null ? new HashMap<>(s.map) : new HashMap<>();
+         V old = newMap.put(key, value);
+         state = new State<>(s.array, newMap);
+         return old;
       } finally {
-         lock.unlockWrite(stamp);
+         lock.unlock();
       }
    }
 
@@ -64,33 +70,33 @@ public class SmallIntMap<V> {
     * @param m mappings to be stored in this map
     */
    public void putAll(Map<? extends Integer, ? extends V> m) {
-      long stamp = lock.writeLock();
+      lock.lock();
       try {
+         State<V> s = state;
          V[] newArray = null;
+         Map<Integer, V> newMap = null;
          for (Map.Entry<? extends Integer, ? extends V> e : m.entrySet()) {
             int key = e.getKey();
             V value = e.getValue();
 
-            if (key >= 0 && key < array.length) {
+            if (key >= 0 && key < s.array.length) {
                if (newArray == null) {
-                  newArray = Arrays.copyOf(array, array.length);
+                  newArray = Arrays.copyOf(s.array, s.array.length);
                }
-               V oldValue = newArray[key];
-               if (oldValue != value) {
-                  newArray[key] = value;
-               }
+               newArray[key] = value;
             } else {
-               if (map == null) {
-                  map = new HashMap<>();
+               if (newMap == null) {
+                  newMap = s.map != null ? new HashMap<>(s.map) : new HashMap<>();
                }
-               map.put(key, value);
+               newMap.put(key, value);
             }
          }
-         if (newArray != null) {
-            this.array = newArray;
-         }
+
+         state = new State<>(
+               newArray != null ? newArray : s.array,
+               newMap != null ? newMap : s.map);
       } finally {
-         lock.unlockWrite(stamp);
+         lock.unlock();
       }
    }
 
@@ -101,18 +107,7 @@ public class SmallIntMap<V> {
     * @return the value to which the specified key is mapped, or {@code null} if this map contains no mapping for the key
     */
    public V get(int key) {
-      if (key >= 0 && key < array.length) {
-         return array[key];
-      }
-      long stamp = lock.readLock();
-      try {
-         if (map == null) {
-            return null;
-         }
-         return map.get(key);
-      } finally {
-         lock.unlockRead(stamp);
-      }
+      return state.get(key);
    }
 
    /**
@@ -122,24 +117,25 @@ public class SmallIntMap<V> {
     * @return the previous value associated with the key, or {@code null} if there was no mapping for the key
     */
    public V remove(int key) {
-      long stamp = lock.writeLock();
+      lock.lock();
       try {
-         if (key >= 0 && key < array.length) {
-            V oldValue = array[key];
+         State<V> s = state;
+         if (key >= 0 && key < s.array.length) {
+            V oldValue = s.array[key];
             if (oldValue == null) {
                return null;
             }
-            V[] newArray = Arrays.copyOf(array, array.length);
+            V[] newArray = Arrays.copyOf(s.array, s.array.length);
             newArray[key] = null;
-            this.array = newArray;
+            state = new State<>(newArray, s.map);
             return oldValue;
          }
-         if (map == null) {
-            return null;
-         }
-         return map.remove(key);
+         Map<Integer, V> newMap = s.map != null ? new HashMap<>(s.map) : new HashMap<>();
+         V oldValue = newMap.remove(key);
+         state = new State<>(s.array, newMap);
+         return oldValue;
       } finally {
-         lock.unlockWrite(stamp);
+         lock.unlock();
       }
    }
 
@@ -147,14 +143,30 @@ public class SmallIntMap<V> {
     * Removes all of the mappings from this map.
     */
    public void clear() {
-      long stamp = lock.writeLock();
+      lock.lock();
       try {
-         this.array = (V[]) new Object[array.length];
-         if (map != null) {
-            map.clear();
-         }
+         V[] newArray = allocate(state.array.length);
+         Map<Integer, V> newMap = state.map != null
+               ? new HashMap<>()
+               : null;
+         state = new State<>(newArray, newMap);
       } finally {
-         lock.unlockWrite(stamp);
+         lock.unlock();
       }
+   }
+
+   private record State<V>(V[] array, Map<Integer, V> map) {
+      public V get(int key) {
+         if (key >= 0 && key < array.length) {
+            return array[key];
+         }
+
+         return map != null ? map.get(key) : null;
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   private static <T> T[] allocate(int size) {
+      return (T[]) new Object[size];
    }
 }

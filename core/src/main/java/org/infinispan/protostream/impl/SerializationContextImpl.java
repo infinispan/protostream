@@ -2,12 +2,13 @@ package org.infinispan.protostream.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.StampedLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.BaseMarshallerDelegate;
@@ -27,8 +28,6 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.ResolutionContext;
 import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
 
-import com.google.errorprone.annotations.concurrent.GuardedBy;
-
 /**
  * @author anistor@redhat.com
  * @since 1.0
@@ -38,25 +37,20 @@ public final class SerializationContextImpl implements SerializationContext {
 
    private static final Log log = Log.LogFactory.getLog(SerializationContextImpl.class);
 
-   /*
-    * All descriptor related mutable internal state is protected by this RW lock.
-    */
-   private final StampedLock descriptorLock = new StampedLock();
    private final Configuration configuration;
    private final ProtostreamProtoParser parser;
-   private final Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<>();
-   private final SmallIntMap<GenericDescriptor> typeIds = new SmallIntMap<>();
-   private final Map<String, GenericDescriptor> genericDescriptors = new HashMap<>();
-   private final Map<String, EnumValueDescriptor> enumValueDescriptors = new HashMap<>();
 
    /*
-    * All marshaller related mutable internal state is protected by this RW lock.
+    * All descriptor related mutable internal state is protected by this write lock.
     */
-   private final StampedLock manifestLock = new StampedLock();
-   private final Map<String, Registration> marshallersByName = new HashMap<>();
-   private final Map<Class<?>, Registration> marshallersByClass = new HashMap<>();
-   private final SmallIntMap<Registration> marshallersByTypeId = new SmallIntMap<>();
-   private final List<MarshallerProvider> legacyMarshallerProviders = new ArrayList<>();
+   private final ReentrantLock descriptorWriteLock = new ReentrantLock();
+   private volatile DescriptorSnapshot descriptors = DescriptorSnapshot.EMPTY;
+
+   /*
+    * All marshaller related mutable internal state is protected by this write lock.
+    */
+   private final ReentrantLock marshallerWriteLock = new ReentrantLock();
+   private volatile MarshallerSnapshot marshallers = MarshallerSnapshot.EMPTY;
 
    public SerializationContextImpl(Configuration configuration) {
       if (configuration == null) {
@@ -73,22 +67,14 @@ public final class SerializationContextImpl implements SerializationContext {
 
    @Override
    public Map<String, FileDescriptor> getFileDescriptors() {
-      long stamp = descriptorLock.readLock();
-      try {
-         return Map.copyOf(fileDescriptors);
-      } finally {
-         descriptorLock.unlockRead(stamp);
-      }
+      DescriptorSnapshot ds = descriptors;
+      return Map.copyOf(ds.fileDescriptors);
    }
 
    @Override
    public Map<String, GenericDescriptor> getGenericDescriptors() {
-      long stamp = descriptorLock.readLock();
-      try {
-         return Map.copyOf(genericDescriptors);
-      } finally {
-         descriptorLock.unlockRead(stamp);
-      }
+      DescriptorSnapshot ds = descriptors;
+      return Map.copyOf(ds.genericDescriptors);
    }
 
    @Override
@@ -97,8 +83,13 @@ public final class SerializationContextImpl implements SerializationContext {
          log.debugf("Registering proto files : %s", source.getFiles().keySet());
       }
       Map<String, FileDescriptor> fileDescriptorMap = parser.parse(source);
-      long stamp = descriptorLock.writeLock();
+      descriptorWriteLock.lock();
       try {
+         Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<>(descriptors.fileDescriptors);
+         Map<String, GenericDescriptor> genericDescriptors = new HashMap<>(descriptors.genericDescriptors);
+         Map<String, EnumValueDescriptor> enumDescriptors = new HashMap<>(descriptors.enumDescriptors);
+         SmallIntMap<GenericDescriptor> typeIds = new SmallIntMap<>(descriptors.typeIds);
+
          // validate all proto files before doing anything else
          if (configuration.schemaValidation() != Configuration.SchemaValidation.UNRESTRICTED) {
             List<String> errors = new ArrayList<>();
@@ -117,55 +108,87 @@ public final class SerializationContextImpl implements SerializationContext {
          for (String fileName : fileDescriptorMap.keySet()) {
             FileDescriptor oldFileDescriptor = fileDescriptors.get(fileName);
             if (oldFileDescriptor != null) {
-               unregisterFileDescriptorTypes(oldFileDescriptor);
+               unregisterFileDescriptorTypes(oldFileDescriptor, genericDescriptors, enumDescriptors, typeIds);
             }
          }
          fileDescriptors.putAll(fileDescriptorMap);
 
          // resolve imports and types for all files
-         ResolutionContext resolutionContext = new ResolutionContext(source.getProgressCallback(), fileDescriptors, genericDescriptors, typeIds, enumValueDescriptors);
-         resolutionContext.resolve();
+         ResolutionContext resolutionContext = new ResolutionContext(
+               source.getProgressCallback(),
+               // Utilized for imports resolution.
+               fileDescriptors,
+               // Read-only view of snapshot for uniqueness checks.
+               Collections.unmodifiableMap(genericDescriptors),
+               typeIds,
+               Collections.unmodifiableMap(enumDescriptors));
+
+         try {
+            // Resolution will try to resolve the file but might throw.
+            // We should still include the files, even with failures, to the context.
+            // This allows to keep track of failed resolutions.
+            resolutionContext.resolve();
+         } finally {
+            genericDescriptors.putAll(resolutionContext.getResolvedTypes());
+            enumDescriptors.putAll(resolutionContext.getResolvedEnumValues());
+            typeIds.putAll(resolutionContext.getResolvedTypeIds());
+            descriptors = new DescriptorSnapshot(fileDescriptors, genericDescriptors, enumDescriptors, typeIds);
+         }
       } finally {
-         descriptorLock.unlockWrite(stamp);
+         descriptorWriteLock.unlock();
       }
    }
 
    @Override
    public void unregisterProtoFile(String fileName) {
       log.debugf("Unregistering proto file : %s", fileName);
-      long stamp = descriptorLock.writeLock();
+      descriptorWriteLock.lock();
       try {
+         Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<>(descriptors.fileDescriptors);
+         Map<String, GenericDescriptor> genericDescriptors = new HashMap<>(descriptors.genericDescriptors);
+         Map<String, EnumValueDescriptor> enumDescriptors = new HashMap<>(descriptors.enumDescriptors);
+         SmallIntMap<GenericDescriptor> typeIds = new SmallIntMap<>(descriptors.typeIds);
+
          FileDescriptor fileDescriptor = fileDescriptors.remove(fileName);
          if (fileDescriptor != null) {
-            unregisterFileDescriptorTypes(fileDescriptor);
+            unregisterFileDescriptorTypes(fileDescriptor, genericDescriptors, enumDescriptors, typeIds);
          } else {
             throw new IllegalArgumentException("File " + fileName + " does not exist");
          }
+
+         descriptors = new DescriptorSnapshot(fileDescriptors, genericDescriptors, enumDescriptors, typeIds);
       } finally {
-         descriptorLock.unlockWrite(stamp);
+         descriptorWriteLock.unlock();
       }
    }
 
    @Override
    public void unregisterProtoFiles(Set<String> fileNames) {
       log.debugf("Unregistering proto files : %s", fileNames);
-      long stamp = descriptorLock.writeLock();
+      descriptorWriteLock.lock();
       try {
+         Map<String, FileDescriptor> fileDescriptors = new LinkedHashMap<>(descriptors.fileDescriptors);
+         Map<String, GenericDescriptor> genericDescriptors = new HashMap<>(descriptors.genericDescriptors);
+         Map<String, EnumValueDescriptor> enumDescriptors = new HashMap<>(descriptors.enumDescriptors);
+         SmallIntMap<GenericDescriptor> typeIds = new SmallIntMap<>(descriptors.typeIds);
+
          for (String fileName : fileNames) {
             FileDescriptor fileDescriptor = fileDescriptors.remove(fileName);
             if (fileDescriptor != null) {
-               unregisterFileDescriptorTypes(fileDescriptor);
+               unregisterFileDescriptorTypes(fileDescriptor, genericDescriptors, enumDescriptors, typeIds);
             } else {
                throw new IllegalArgumentException("File " + fileName + " does not exist");
             }
          }
+
+         descriptors = new DescriptorSnapshot(fileDescriptors, genericDescriptors, enumDescriptors, typeIds);
       } finally {
-         descriptorLock.unlockWrite(stamp);
+         descriptorWriteLock.unlock();
       }
    }
 
-   @GuardedBy("descriptorLock")
-   private void unregisterFileDescriptorTypes(FileDescriptor fileDescriptor) {
+   private void unregisterFileDescriptorTypes(FileDescriptor fileDescriptor, Map<String, GenericDescriptor> genericDescriptors,
+                                              Map<String, EnumValueDescriptor> enumDescriptors, SmallIntMap<GenericDescriptor> typeIds) {
       if (fileDescriptor.isResolved()) {
          for (GenericDescriptor d : fileDescriptor.getTypes().values()) {
             Integer typeId = d.getTypeId();
@@ -174,7 +197,7 @@ public final class SerializationContextImpl implements SerializationContext {
             }
             if (d instanceof EnumDescriptor) {
                for (EnumValueDescriptor ev : ((EnumDescriptor) d).getValues()) {
-                  enumValueDescriptors.remove(ev.getScopedName());
+                  enumDescriptors.remove(ev.getScopedName());
                }
             }
          }
@@ -182,7 +205,7 @@ public final class SerializationContextImpl implements SerializationContext {
          fileDescriptor.markUnresolved();
       }
       for (FileDescriptor fd : fileDescriptor.getDependants().values()) {
-         unregisterFileDescriptorTypes(fd);
+         unregisterFileDescriptorTypes(fd, genericDescriptors, enumDescriptors, typeIds);
       }
    }
 
@@ -224,9 +247,14 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshaller argument cannot be null");
       }
 
-      long stamp = manifestLock.writeLock();
+      marshallerWriteLock.lock();
       try {
-         var isInterface = marshaller.getJavaClass().isInterface();
+         MarshallerSnapshot ms = marshallers;
+         Map<String, Registration> marshallersByName = new HashMap<>(ms.byName);
+         Map<Class<?>, Registration> marshallersByClass = new HashMap<>(ms.byClass);
+         SmallIntMap<Registration> marshallersByTypeId = new SmallIntMap<>(ms.typeIds);
+
+         boolean isInterface = marshaller.getJavaClass().isInterface();
          Registration existingByName = marshallersByName.get(marshaller.getTypeName());
          Registration existingByClass = marshallersByClass.get(marshaller.getJavaClass());
          if (existingByName != null && existingByName.marshallerProvider != null ||
@@ -281,8 +309,10 @@ public final class SerializationContextImpl implements SerializationContext {
          if (typeId != null) {
             marshallersByTypeId.put(typeId, registration);
          }
+
+         marshallers = new MarshallerSnapshot(marshallersByName, marshallersByClass, marshallersByTypeId, ms.legacyProviders);
       } finally {
-         manifestLock.unlockWrite(stamp);
+         marshallerWriteLock.unlock();
       }
    }
 
@@ -318,8 +348,13 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshaller argument cannot be null");
       }
 
-      long stamp = manifestLock.writeLock();
+      marshallerWriteLock.lock();
       try {
+         MarshallerSnapshot ms = marshallers;
+         Map<String, Registration> marshallersByName = new HashMap<>(ms.byName);
+         Map<Class<?>, Registration> marshallersByClass = new HashMap<>(ms.byClass);
+         SmallIntMap<Registration> marshallersByTypeId = ms.typeIds;
+
          Registration existingByName = marshallersByName.get(marshaller.getTypeName());
          if (existingByName == null || existingByName.marshallerDelegate.getMarshaller() != marshaller) {
             throw new IllegalArgumentException("The given marshaller was not previously registered with this SerializationContext");
@@ -330,10 +365,13 @@ public final class SerializationContextImpl implements SerializationContext {
          marshallersByName.remove(marshaller.getTypeName());
          marshallersByClass.remove(marshaller.getJavaClass());
          if (existingByName.id != null) {
+            marshallersByTypeId = new SmallIntMap<>(marshallersByTypeId);
             marshallersByTypeId.remove(existingByName.id);
          }
+
+         marshallers = new MarshallerSnapshot(marshallersByName, marshallersByClass, marshallersByTypeId, ms.legacyProviders);
       } finally {
-         manifestLock.unlockWrite(stamp);
+         marshallerWriteLock.unlock();
       }
    }
 
@@ -343,12 +381,14 @@ public final class SerializationContextImpl implements SerializationContext {
       if (marshallerProvider == null) {
          throw new IllegalArgumentException("marshallerProvider argument cannot be null");
       }
-
-      long stamp = manifestLock.writeLock();
+      marshallerWriteLock.lock();
       try {
+         MarshallerSnapshot ms = marshallers;
+         List<MarshallerProvider> legacyMarshallerProviders = new ArrayList<>(ms.legacyProviders);
          legacyMarshallerProviders.add(marshallerProvider);
+         marshallers = new MarshallerSnapshot(ms.byName, ms.byClass, ms.typeIds, legacyMarshallerProviders);
       } finally {
-         manifestLock.unlockWrite(stamp);
+         marshallerWriteLock.unlock();
       }
    }
 
@@ -359,11 +399,14 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshallerProvider argument cannot be null");
       }
 
-      long stamp = manifestLock.writeLock();
+      marshallerWriteLock.lock();
       try {
+         MarshallerSnapshot ms = marshallers;
+         List<MarshallerProvider> legacyMarshallerProviders = new ArrayList<>(ms.legacyProviders);
          legacyMarshallerProviders.remove(marshallerProvider);
+         marshallers = new MarshallerSnapshot(ms.byName, ms.byClass, ms.typeIds, legacyMarshallerProviders);
       } finally {
-         manifestLock.unlockWrite(stamp);
+         marshallerWriteLock.unlock();
       }
    }
 
@@ -373,8 +416,13 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshallerProvider argument cannot be null");
       }
 
-      long stamp = manifestLock.writeLock();
+      marshallerWriteLock.lock();
       try {
+         MarshallerSnapshot ms = marshallers;
+         Map<Class<?>, Registration> marshallersByClass = new HashMap<>(ms.byClass);
+         Map<String, Registration> marshallersByName = new HashMap<>(ms.byName);
+         SmallIntMap<Registration> marshallersByTypeId = ms.typeIds;
+
          Registration byClass = marshallersByClass.get(marshallerProvider.getJavaClass());
          if (byClass != null) {
             if (byClass.marshallerProvider == null) {
@@ -392,11 +440,15 @@ public final class SerializationContextImpl implements SerializationContext {
             Registration registration = new Registration(makeMarshallerDelegate(marshaller), marshallerProvider, typeId);
             marshallersByName.put(typeName, registration);
             if (typeId != null) {
+               if (marshallersByTypeId == marshallers.typeIds)
+                  marshallersByTypeId = new SmallIntMap<>(marshallersByTypeId);
                marshallersByTypeId.put(typeId, registration);
             }
          }
+
+         marshallers = new MarshallerSnapshot(marshallersByName, marshallersByClass, marshallersByTypeId, ms.legacyProviders);
       } finally {
-         manifestLock.unlockWrite(stamp);
+         marshallerWriteLock.unlock();
       }
    }
 
@@ -406,8 +458,13 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("marshallerProvider argument cannot be null");
       }
 
-      long stamp = manifestLock.writeLock();
+      marshallerWriteLock.lock();
       try {
+         MarshallerSnapshot ms = marshallers;
+         Map<Class<?>, Registration> marshallersByClass = new HashMap<>(ms.byClass);
+         Map<String, Registration> marshallersByName = new HashMap<>(ms.byName);
+         SmallIntMap<Registration> marshallersByTypeId = ms.typeIds;
+
          Registration byClass = marshallersByClass.get(marshallerProvider.getJavaClass());
          if (byClass == null || byClass.marshallerProvider != marshallerProvider) {
             throw new IllegalArgumentException("The given InstanceMarshallerProvider was not previously registered with this SerializationContext");
@@ -416,58 +473,50 @@ public final class SerializationContextImpl implements SerializationContext {
          for (String typeName : marshallerProvider.getTypeNames()) {
             Registration registration = marshallersByName.remove(typeName);
             if (registration != null && registration.id != null) {
+               if (marshallersByTypeId == marshallers.typeIds)
+                  marshallersByTypeId = new SmallIntMap<>(marshallersByTypeId);
                marshallersByTypeId.remove(registration.id);
             }
          }
+
+         marshallers = new MarshallerSnapshot(marshallersByName, marshallersByClass, marshallersByTypeId, ms.legacyProviders);
       } finally {
-         manifestLock.unlockWrite(stamp);
+         marshallerWriteLock.unlock();
       }
    }
 
    @Override
    public boolean canMarshall(Class<?> javaClass) {
-      long stamp = manifestLock.readLock();
-      try {
-         return marshallersByClass.containsKey(javaClass) || getMarshallerFromLegacyProvider(javaClass) != null;
-      } finally {
-         manifestLock.unlockRead(stamp);
-      }
+      MarshallerSnapshot ms = marshallers;
+      return ms.byClass.containsKey(javaClass) || getMarshallerFromLegacyProvider(javaClass, ms.legacyProviders) != null;
    }
 
    @Override
    public boolean canMarshall(String fullTypeName) {
-      long stamp = manifestLock.readLock();
-      try {
-         return marshallersByName.containsKey(fullTypeName) || getMarshallerFromLegacyProvider(fullTypeName) != null;
-      } finally {
-         manifestLock.unlockRead(stamp);
-      }
+      MarshallerSnapshot ms = marshallers;
+      return ms.byName.containsKey(fullTypeName) || getMarshallerFromLegacyProvider(fullTypeName, ms.legacyProviders) != null;
    }
 
    @Override
    public boolean canMarshall(Object object) {
       Class<?> javaClass = object.getClass();
-      long stamp = manifestLock.readLock();
-      try {
-         Registration registration = marshallersByClass.get(javaClass);
-         if (registration != null) {
-            if (registration.marshallerProvider != null) {
-               String typeName = ((InstanceMarshallerProvider<Object>) registration.marshallerProvider).getTypeName(object);
-               if (typeName == null) {
-                  throw new IllegalArgumentException("No marshaller registered for object of Java type " + javaClass.getName() + " : " + object);
-               }
-               registration = marshallersByName.get(typeName);
+      MarshallerSnapshot ms = marshallers;
+      Registration registration = ms.byClass.get(javaClass);
+      if (registration != null) {
+         if (registration.marshallerProvider != null) {
+            String typeName = ((InstanceMarshallerProvider<Object>) registration.marshallerProvider).getTypeName(object);
+            if (typeName == null) {
+               throw new IllegalArgumentException("No marshaller registered for object of Java type " + javaClass.getName() + " : " + object);
             }
-            if (registration != null) {
-               return true;
-            }
+            registration = ms.byName.get(typeName);
          }
-
-         BaseMarshaller<?> marshaller = getMarshallerFromLegacyProvider(javaClass);
-         return marshaller != null;
-      } finally {
-         manifestLock.unlockRead(stamp);
+         if (registration != null) {
+            return true;
+         }
       }
+
+      BaseMarshaller<?> marshaller = getMarshallerFromLegacyProvider(javaClass, ms.legacyProviders);
+      return marshaller != null;
    }
 
    @Override
@@ -486,100 +535,84 @@ public final class SerializationContextImpl implements SerializationContext {
    }
 
    public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(String typeName) {
-      long stamp = manifestLock.readLock();
-      try {
-         Registration registration = marshallersByName.get(typeName);
-         if (registration != null) {
-            return (BaseMarshallerDelegate<T>) registration.marshallerDelegate;
-         }
-
-         BaseMarshaller<T> marshaller = getMarshallerFromLegacyProvider(typeName);
-         if (marshaller == null) {
-            throw new IllegalArgumentException("No marshaller registered for Protobuf type " + typeName);
-         }
-         //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
-         return makeMarshallerDelegate(marshaller);
-      } finally {
-         manifestLock.unlockRead(stamp);
-      }
-   }
-
-   @Override
-   public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(int typeId) {
-      // Try first without locking as this class is thread safe
-      Registration registration = marshallersByTypeId.get(typeId);
+      MarshallerSnapshot ms = marshallers;
+      Registration registration = ms.byName.get(typeName);
       if (registration != null) {
          return (BaseMarshallerDelegate<T>) registration.marshallerDelegate;
       }
 
-      long stamp = manifestLock.readLock();
-      try {
-         GenericDescriptor descriptor = typeIds.get(typeId);
-         if (descriptor == null) {
-            throw new IllegalArgumentException("No marshaller registered for Protobuf type id " + typeId);
-         }
-         return getMarshallerDelegate(descriptor.getFullName());
-      } finally {
-         manifestLock.unlockRead(stamp);
+      BaseMarshaller<T> marshaller = getMarshallerFromLegacyProvider(typeName, ms.legacyProviders);
+      if (marshaller == null) {
+         throw new IllegalArgumentException("No marshaller registered for Protobuf type " + typeName);
       }
+      //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
+      return makeMarshallerDelegate(marshaller);
+   }
+
+   @Override
+   public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(int typeId) {
+      MarshallerSnapshot ms = marshallers;
+      // Try first without locking as this class is thread safe
+      Registration registration = ms.typeIds.get(typeId);
+      if (registration != null) {
+         return (BaseMarshallerDelegate<T>) registration.marshallerDelegate;
+      }
+
+      DescriptorSnapshot ds = descriptors;
+      GenericDescriptor descriptor = ds.typeIds.get(typeId);
+      if (descriptor == null) {
+         throw new IllegalArgumentException("No marshaller registered for Protobuf type id " + typeId);
+      }
+      return getMarshallerDelegate(descriptor.getFullName());
    }
 
    @Override
    public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(Class<T> javaClass) {
-      long stamp = manifestLock.readLock();
-      try {
-         Registration registration = marshallersByClass.get(javaClass);
-         if (registration != null) {
-            if (registration.marshallerProvider != null) {
-               throw new IllegalArgumentException("Java type " + javaClass.getName()
-                     + " is mapped to multiple protobuf types : " + registration.marshallerProvider.getTypeNames()
-                     + ". Object instance needed for disambiguation.");
-            }
-            return (BaseMarshallerDelegate<T>) registration.marshallerDelegate;
+      MarshallerSnapshot ms = marshallers;
+      Registration registration = ms.byClass.get(javaClass);
+      if (registration != null) {
+         if (registration.marshallerProvider != null) {
+            throw new IllegalArgumentException("Java type " + javaClass.getName()
+                  + " is mapped to multiple protobuf types : " + registration.marshallerProvider.getTypeNames()
+                  + ". Object instance needed for disambiguation.");
          }
-
-         BaseMarshaller<T> marshaller = getMarshallerFromLegacyProvider(javaClass);
-         if (marshaller == null) {
-            throw new IllegalArgumentException("No marshaller registered for Java type " + javaClass.getName());
-         }
-         //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
-         return makeMarshallerDelegate(marshaller);
-      } finally {
-         manifestLock.unlockRead(stamp);
+         return (BaseMarshallerDelegate<T>) registration.marshallerDelegate;
       }
+
+      BaseMarshaller<T> marshaller = getMarshallerFromLegacyProvider(javaClass, ms.legacyProviders);
+      if (marshaller == null) {
+         throw new IllegalArgumentException("No marshaller registered for Java type " + javaClass.getName());
+      }
+      //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
+      return makeMarshallerDelegate(marshaller);
    }
 
    public <T> BaseMarshallerDelegate<T> getMarshallerDelegate(T object) {
       Class<T> javaClass = (Class<T>) object.getClass();
-      long stamp = manifestLock.readLock();
-      try {
-         Registration registration = marshallersByClass.get(javaClass);
+      MarshallerSnapshot ms = marshallers;
+      Registration registration = ms.byClass.get(javaClass);
+      if (registration != null) {
+         if (registration.marshallerProvider != null) {
+            String typeName = ((InstanceMarshallerProvider<T>) registration.marshallerProvider).getTypeName(object);
+            if (typeName == null) {
+               throw new IllegalArgumentException("No marshaller registered for object of Java type " + javaClass.getName() + " : " + object);
+            }
+            registration = ms.byName.get(typeName);
+         }
          if (registration != null) {
-            if (registration.marshallerProvider != null) {
-               String typeName = ((InstanceMarshallerProvider<T>) registration.marshallerProvider).getTypeName(object);
-               if (typeName == null) {
-                  throw new IllegalArgumentException("No marshaller registered for object of Java type " + javaClass.getName() + " : " + object);
-               }
-               registration = marshallersByName.get(typeName);
-            }
-            if (registration != null) {
-               return (BaseMarshallerDelegate<T>) registration.marshallerDelegate;
-            }
+            return (BaseMarshallerDelegate<T>) registration.marshallerDelegate;
          }
-
-         BaseMarshaller<T> marshaller = getMarshallerFromLegacyProvider(javaClass);
-         if (marshaller == null) {
-            throw new IllegalArgumentException("No marshaller registered for object of Java type " + javaClass.getName() + " : " + object);
-         }
-         //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
-         return makeMarshallerDelegate(marshaller);
-      } finally {
-         manifestLock.unlockRead(stamp);
       }
+
+      BaseMarshaller<T> marshaller = getMarshallerFromLegacyProvider(javaClass, ms.legacyProviders);
+      if (marshaller == null) {
+         throw new IllegalArgumentException("No marshaller registered for object of Java type " + javaClass.getName() + " : " + object);
+      }
+      //todo [anistor] A marshaller delegate is created per call and cannot be cached! This is just legacy.
+      return makeMarshallerDelegate(marshaller);
    }
 
-   @GuardedBy("manifestLock")
-   private <T> BaseMarshaller<T> getMarshallerFromLegacyProvider(Class<T> javaClass) {
+   private <T> BaseMarshaller<T> getMarshallerFromLegacyProvider(Class<T> javaClass, List<MarshallerProvider> legacyMarshallerProviders) {
       if (!legacyMarshallerProviders.isEmpty()) {
          for (MarshallerProvider mp : legacyMarshallerProviders) {
             BaseMarshaller<T> marshaller = (BaseMarshaller<T>) mp.getMarshaller(javaClass);
@@ -591,8 +624,7 @@ public final class SerializationContextImpl implements SerializationContext {
       return null;
    }
 
-   @GuardedBy("manifestLock")
-   private <T> BaseMarshaller<T> getMarshallerFromLegacyProvider(String fullTypeName) {
+   private <T> BaseMarshaller<T> getMarshallerFromLegacyProvider(String fullTypeName, List<MarshallerProvider> legacyMarshallerProviders) {
       if (!legacyMarshallerProviders.isEmpty()) {
          for (MarshallerProvider mp : legacyMarshallerProviders) {
             BaseMarshaller<T> marshaller = (BaseMarshaller<T>) mp.getMarshaller(fullTypeName);
@@ -622,16 +654,12 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("Type name argument cannot be null");
       }
 
-      long stamp = descriptorLock.readLock();
-      try {
-         GenericDescriptor descriptor = genericDescriptors.get(fullTypeName);
-         if (descriptor == null) {
-            throw new IllegalArgumentException("Unknown type name : " + fullTypeName);
-         }
-         return descriptor;
-      } finally {
-         descriptorLock.unlockRead(stamp);
+      DescriptorSnapshot ds = descriptors;
+      GenericDescriptor descriptor = ds.genericDescriptors.get(fullTypeName);
+      if (descriptor == null) {
+         throw new IllegalArgumentException("Unknown type name : " + fullTypeName);
       }
+      return descriptor;
    }
 
    @Override
@@ -640,15 +668,31 @@ public final class SerializationContextImpl implements SerializationContext {
          throw new IllegalArgumentException("Type id argument cannot be null");
       }
 
-      long stamp = descriptorLock.readLock();
-      try {
-         GenericDescriptor descriptor = typeIds.get(typeId);
-         if (descriptor == null) {
-            throw new IllegalArgumentException("Unknown type id : " + typeId);
-         }
-         return descriptor;
-      } finally {
-         descriptorLock.unlockRead(stamp);
+      DescriptorSnapshot ds = descriptors;
+      GenericDescriptor descriptor = ds.typeIds.get(typeId);
+      if (descriptor == null) {
+         throw new IllegalArgumentException("Unknown type id : " + typeId);
       }
+      return descriptor;
+   }
+
+   private record MarshallerSnapshot(
+         Map<String, Registration> byName,
+         Map<Class<?>, Registration> byClass,
+         SmallIntMap<Registration> typeIds,
+         List<MarshallerProvider> legacyProviders
+   ) {
+      static final MarshallerSnapshot EMPTY = new MarshallerSnapshot(
+            Map.of(), Map.of(), new SmallIntMap<>(), List.of());
+   }
+
+   private record DescriptorSnapshot(
+         Map<String, FileDescriptor> fileDescriptors,
+         Map<String, GenericDescriptor> genericDescriptors,
+         Map<String, EnumValueDescriptor> enumDescriptors,
+         SmallIntMap<GenericDescriptor> typeIds
+   ) {
+      static final DescriptorSnapshot EMPTY = new DescriptorSnapshot(
+            Map.of(), Map.of(), Map.of(), new SmallIntMap<>());
    }
 }
