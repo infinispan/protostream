@@ -35,6 +35,8 @@ import org.infinispan.protostream.integrationtests.processor.marshaller.model.Ma
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOverlappingMarshallerDelegate;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapSchema;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.ModelWithMap;
+import org.infinispan.protostream.integrationtests.processor.marshaller.model.AdaptedFieldModel;
+import org.infinispan.protostream.integrationtests.processor.marshaller.model.AdaptedFieldSchema;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.NullTestModel;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.Player;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.SimpleEnum;
@@ -376,6 +378,23 @@ public class GeneratedMarshallerTest {
       bytes = ProtobufUtil.toWrappedByteArray(ctx, gs);
       StreamModel.GetterSetter unmarshalledGS = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
       assertEquals(1, unmarshalledGS.strings.length);
+   }
+
+   @Test
+   public void testAdaptedFieldInFactory() throws IOException {
+      var ctx = ProtobufUtil.newSerializationContext();
+      AdaptedFieldSchema.INSTANCE.register(ctx);
+
+      UUID id = UUID.randomUUID();
+      var model = new AdaptedFieldModel(id);
+      var bytes = ProtobufUtil.toWrappedByteArray(ctx, model);
+      AdaptedFieldModel copy = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(id, copy.getUuid());
+
+      var nullModel = new AdaptedFieldModel(null);
+      bytes = ProtobufUtil.toWrappedByteArray(ctx, nullModel);
+      AdaptedFieldModel nullCopy = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertNull(nullCopy.getUuid());
    }
 
    private static void assertJson(String j1, String j2) throws IOException {

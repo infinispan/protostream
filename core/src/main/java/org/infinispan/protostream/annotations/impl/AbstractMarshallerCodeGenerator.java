@@ -286,21 +286,14 @@ public abstract class AbstractMarshallerCodeGenerator {
                String val = toJavaLiteral(defaultValue, fieldMetadata.getJavaType());
                iw.printf(" = %s", box(val, fieldMetadata.getJavaType()));
             } else {
-               if (fieldMetadata.isBoxedPrimitive()
-                     || fieldMetadata.getProtobufType() == Type.BYTES
-                     || fieldMetadata.getProtobufType().getJavaType() == JavaType.STRING
-                     || fieldMetadata.getProtobufType().getJavaType() == JavaType.BYTE_STRING
-                     || fieldMetadata.getProtobufType().getJavaType() == JavaType.ENUM
-                     || fieldMetadata.getProtobufType().getJavaType() == JavaType.MESSAGE
-                     || fieldMetadata.getJavaType().getCanonicalName().equals(Date.class.getCanonicalName())
-                     || fieldMetadata.getJavaType().getCanonicalName().equals(Instant.class.getCanonicalName())) {
-                  iw.print(" = null");
-               } else if (fieldMetadata.isPrimitive()) {
+               if (fieldMetadata.isPrimitive()) {
                   if (fieldMetadata.getProtobufType() == Type.BOOL) {
                      iw.print(" = false");
                   } else {
                      iw.print(" = 0");
                   }
+               } else {
+                  iw.print(" = null");
                }
             }
             iw.println(";");
