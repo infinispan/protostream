@@ -82,7 +82,7 @@ public enum JavaType {
 
       @Override
       public String defaultValueAsString() {
-         return "[]";
+         return "new byte[0]";
       }
    },
    ENUM {
