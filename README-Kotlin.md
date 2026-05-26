@@ -128,7 +128,7 @@ val restored = ProtobufUtil.fromWrappedByteArray<Person>(ctx, bytes)
 ```xml
 <properties>
     <version.kotlin>2.1.10</version.kotlin>
-    <version.protostream>6.0.7</version.protostream>
+    <version.protostream>6.0.8</version.protostream>
 </properties>
 
 <dependencies>
@@ -223,8 +223,8 @@ plugins {
 }
 
 dependencies {
-    implementation("org.infinispan.protostream:protostream:6.0.7")
-    kapt("org.infinispan.protostream:protostream-processor:6.0.7")
+    implementation("org.infinispan.protostream:protostream:6.0.8")
+    kapt("org.infinispan.protostream:protostream-processor:6.0.8")
 }
 ```
 
@@ -237,8 +237,8 @@ plugins {
 }
 
 dependencies {
-    implementation 'org.infinispan.protostream:protostream:6.0.7'
-    kapt 'org.infinispan.protostream:protostream-processor:6.0.7'
+    implementation 'org.infinispan.protostream:protostream:6.0.8'
+    kapt 'org.infinispan.protostream:protostream-processor:6.0.8'
 }
 ```
 
