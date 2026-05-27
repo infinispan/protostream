@@ -2,7 +2,6 @@ package org.infinispan.protostream.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -116,22 +115,14 @@ public final class SerializationContextImpl implements SerializationContext {
          // resolve imports and types for all files
          ResolutionContext resolutionContext = new ResolutionContext(
                source.getProgressCallback(),
-               // Utilized for imports resolution.
                fileDescriptors,
-               // Read-only view of snapshot for uniqueness checks.
-               Collections.unmodifiableMap(genericDescriptors),
+               genericDescriptors,
                typeIds,
-               Collections.unmodifiableMap(enumDescriptors));
+               enumDescriptors);
 
          try {
-            // Resolution will try to resolve the file but might throw.
-            // We should still include the files, even with failures, to the context.
-            // This allows to keep track of failed resolutions.
             resolutionContext.resolve();
          } finally {
-            genericDescriptors.putAll(resolutionContext.getResolvedTypes());
-            enumDescriptors.putAll(resolutionContext.getResolvedEnumValues());
-            typeIds.putAll(resolutionContext.getResolvedTypeIds());
             descriptors = new DescriptorSnapshot(fileDescriptors, genericDescriptors, enumDescriptors, typeIds);
          }
       } finally {

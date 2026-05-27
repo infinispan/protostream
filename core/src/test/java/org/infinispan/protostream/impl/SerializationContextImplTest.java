@@ -413,6 +413,49 @@ public class SerializationContextImplTest {
       assertFalse(fileDescriptor.isResolved());
    }
 
+   @Test
+   public void testResolvedTypesPreservedWhenOtherFileFails() {
+      SerializationContext ctx = createContext();
+
+      String validFile = """
+            syntax = "proto3";
+            package test;
+            message A {
+               optional int32 f1 = 1;
+            }""";
+
+      String invalidFile = "import \"no_such_file.proto\";";
+
+      Map<String, DescriptorParserException> errors = new HashMap<>();
+      List<String> successful = new ArrayList<>();
+      FileDescriptorSource source = new FileDescriptorSource()
+            .addProtoFile("valid.proto", validFile)
+            .addProtoFile("invalid.proto", invalidFile)
+            .withProgressCallback(new FileDescriptorSource.ProgressCallback() {
+               @Override
+               public void handleError(String fileName, DescriptorParserException exception) {
+                  errors.put(fileName, exception);
+               }
+
+               @Override
+               public void handleSuccess(String fileName) {
+                  successful.add(fileName);
+               }
+            });
+      ctx.registerProtoFiles(source);
+
+      assertEquals(1, successful.size());
+      assertTrue(successful.contains("valid.proto"));
+      assertEquals(1, errors.size());
+      assertTrue(errors.containsKey("invalid.proto"));
+
+      Map<String, FileDescriptor> fileDescriptors = ctx.getFileDescriptors();
+      assertTrue(fileDescriptors.get("valid.proto").isResolved());
+      assertFalse(fileDescriptors.get("invalid.proto").isResolved());
+
+      assertNotNull(ctx.getGenericDescriptors().get("test.A"));
+   }
+
    /**
     * Test that files with syntax errors DO NOT get registered if there is no progress callback present.
     */
