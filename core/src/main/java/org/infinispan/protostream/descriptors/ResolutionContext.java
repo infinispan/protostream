@@ -161,16 +161,11 @@ public class ResolutionContext {
       return v != null ? v : second.get(k);
    }
 
-   public Map<String, GenericDescriptor> getResolvedTypes() {
-      return globalTypes;
-   }
-
-   public Map<String, EnumValueDescriptor> getResolvedEnumValues() {
-      return enumValueDescriptors;
-   }
-
-   public Map<Integer, GenericDescriptor> getResolvedTypeIds() {
-      return typeIds;
+   void flush() {
+      allGlobalTypes.putAll(globalTypes);
+      allTypeIds.putAll(typeIds);
+      allEnumValueDescriptors.putAll(enumValueDescriptors);
+      clear();
    }
 
    void clear() {
