@@ -41,7 +41,7 @@ If you are using Gradle, add this dependency to your build file:
 
 ```
 dependencies { 
-    implementation 'org.infinispan.protostream:protostream:6.0.8'
+    implementation 'org.infinispan.protostream:protostream:6.0.9'
 }
 ```
 
@@ -55,7 +55,7 @@ will be automatically discovered by the service loader mechanism. Another way, w
 is to use the `--processor-path` option.
 
 ```shell
-javac --processor-path /path/to/protostream-processor-6.0.8.jar:... ...
+javac --processor-path /path/to/protostream-processor-6.0.9.jar:... ...
 ```
 
 Using Maven:
@@ -79,7 +79,7 @@ Using Maven:
 Using Gradle:
 ```
 dependencies {
-    annotationProcessor 'org.infinispan.protostream:protostream-processor:6.0.8'
+    annotationProcessor 'org.infinispan.protostream:protostream-processor:6.0.9'
     ...
 }
 ```
