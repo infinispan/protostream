@@ -252,9 +252,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
          discoverFields(annotatedClass, new HashSet<>(), fieldsByNumber, fieldsByName, oneofs);
          if (fieldsByNumber.isEmpty()) {
-            //todo avoid this warning in case where not necessary
-            // TODO [anistor] remove the "The class should be either annotated or it should have a custom marshaller" part after MessageMarshaller is removed in 5
-            log.warnf("Class %s does not have any @ProtoField annotated members. The class should be either annotated or it should have a custom marshaller.", getAnnotatedClassName());
+            log.debugf("Class %s does not have any @ProtoField annotated members.", getAnnotatedClassName());
          }
 
          // If we have a factory method / constructor, we must ensure its parameters match the declared fields.
