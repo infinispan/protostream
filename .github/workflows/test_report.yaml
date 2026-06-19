@@ -4,22 +4,29 @@ on:
     workflows: ['Test']
     types:
       - completed
+
+permissions:
+  contents: read
+
 jobs:
   report:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      actions: read
     strategy:
       matrix:
         jdk: [17, 21, 25-ea]
     steps:
       - name: Download Surefire Report Artifact
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ matrix.jdk }}-test-results
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
           path: ${{ matrix.jdk }}
 
-      - uses: rigazilla/action-surefire-report@summary
+      - uses: rigazilla/action-surefire-report@93b492377a7dde6a3f644cc18d4d74846cac71f3 # summary
         with:
           fail_on_test_failures: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -31,6 +38,9 @@ jobs:
             ${{ matrix.jdk }}/**/*-reports*/**/TEST-*.xml
   report-summary:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      statuses: write
     needs: report
     if: always()
     steps:
