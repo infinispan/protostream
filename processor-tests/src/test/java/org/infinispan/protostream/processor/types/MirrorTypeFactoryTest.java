@@ -1,6 +1,6 @@
 package org.infinispan.protostream.processor.types;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,7 +14,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 import org.infinispan.protostream.annotations.impl.types.XClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com

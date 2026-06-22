@@ -1,9 +1,9 @@
 package org.infinispan.protostream.integrationtests.processor.annotated_package;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -19,7 +19,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.integrationtests.processor.UserSerializationContextInitializer;
 import org.infinispan.protostream.processor.tests.ReusableInitializer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com
@@ -84,7 +84,7 @@ public class AnnotationOnPackageIntegrationTest {
          }
       }
 
-      assertNotNull("DependentInitializer implementation not found by ServiceLoader", dependentInitializer);
+      assertNotNull(dependentInitializer, "DependentInitializer implementation not found by ServiceLoader");
 
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       dependentInitializer.register(ctx);

@@ -1,10 +1,11 @@
 package org.infinispan.protostream;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -18,7 +19,7 @@ import java.util.List;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com
@@ -99,9 +100,9 @@ public class WrappingTest extends AbstractProtoStreamTest {
 
       List list = (List) roundtrip(users, m);
 
-      assertTrue(list.get(0) instanceof User);
-      assertTrue(list.get(1) instanceof User);
-      assertTrue(list.get(2) instanceof User);
+      assertInstanceOf(User.class, list.get(0));
+      assertInstanceOf(User.class, list.get(1));
+      assertInstanceOf(User.class, list.get(2));
       assertEquals(1, ((User) list.get(0)).getId());
       assertEquals(2, ((User) list.get(1)).getId());
       assertEquals(3, ((User) list.get(2)).getId());

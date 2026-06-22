@@ -6,7 +6,7 @@ import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
