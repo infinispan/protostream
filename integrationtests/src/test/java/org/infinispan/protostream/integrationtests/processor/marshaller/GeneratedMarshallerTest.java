@@ -1,11 +1,12 @@
 package org.infinispan.protostream.integrationtests.processor.marshaller;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -42,7 +43,7 @@ import org.infinispan.protostream.integrationtests.processor.marshaller.model.Pl
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.SimpleEnum;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.SimpleRecord;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.StreamModel;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -340,13 +341,13 @@ public class GeneratedMarshallerTest {
       var bytes = ProtobufUtil.toWrappedByteArray(ctx, ccf);
       IterableModel.CustomCollectionFactory unmarshalledCCF = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
       assertEquals(list.size(), unmarshalledCCF.strings.size());
-      assertTrue(unmarshalledCCF.strings instanceof LinkedList);
+      assertInstanceOf(LinkedList.class, unmarshalledCCF.strings);
 
       var dc = new IterableModel.DefaultCollectionFactory(list);
       bytes = ProtobufUtil.toWrappedByteArray(ctx, dc);
       IterableModel.DefaultCollectionFactory unmarshalledDC = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
       assertEquals(list.size(), unmarshalledDC.strings.size());
-      assertTrue(unmarshalledDC.strings instanceof ArrayList<String>);
+      assertInstanceOf(ArrayList.class, unmarshalledDC.strings);
 
       var gs = new IterableModel.GetterSetter();
       gs.setStrings(list);
@@ -355,13 +356,13 @@ public class GeneratedMarshallerTest {
       int numEntries = 0;
       for (String s : unmarshalledGS.getStrings()) numEntries++;
       assertEquals(list.size(), numEntries);
-      assertTrue(unmarshalledGS.strings instanceof ArrayList<String>);
+       assertInstanceOf(ArrayList.class, unmarshalledGS.strings);
 
       var factory = new IterableModel.IterableFactory(list);
       bytes = ProtobufUtil.toWrappedByteArray(ctx, factory);
       IterableModel.IterableFactory unmarshalledFactory = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
       assertEquals(list.size(), unmarshalledFactory.strings.size());
-      assertTrue(unmarshalledFactory.strings instanceof ArrayList<String>);
+      assertInstanceOf(ArrayList.class, unmarshalledFactory.strings);
    }
 
    @Test

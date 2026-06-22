@@ -1,11 +1,11 @@
 package org.infinispan.protostream.impl;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContext.MarshallerProvider;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.TagWriter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 
 public class FullBufferReadTest {

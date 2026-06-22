@@ -1,7 +1,7 @@
 package org.infinispan.protostream.impl.parser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,7 +17,7 @@ import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.OneOfDescriptor;
 import org.infinispan.protostream.descriptors.Option;
 import org.infinispan.protostream.descriptors.Type;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @since 15.0
@@ -105,7 +105,7 @@ public class ParserTest {
 
    private void assertReserved(Descriptor message, String... names) {
       for(String name : names) {
-         assertTrue(name, message.isReserved(name));
+         assertTrue(message.isReserved(name), name);
       }
    }
 
@@ -176,9 +176,9 @@ public class ParserTest {
 
    private static Descriptor getDescriptor(Descriptor descriptor, String name, int fieldCount, int messageCount, int enumCount) {
       assertEquals(name, descriptor.getName());
-      assertEquals("Message " + name + " fields", fieldCount, descriptor.getFields().size());
-      assertEquals("Message " + name + " messages", messageCount, descriptor.getNestedTypes().size());
-      assertEquals("Message " + name + " enums", enumCount, descriptor.getEnumTypes().size());
+      assertEquals(fieldCount, descriptor.getFields().size(), "Message " + name + " fields");
+      assertEquals(messageCount, descriptor.getNestedTypes().size(), "Message " + name + " messages");
+      assertEquals(enumCount, descriptor.getEnumTypes().size(), "Message " + name + " enums");
       return descriptor;
    }
 }

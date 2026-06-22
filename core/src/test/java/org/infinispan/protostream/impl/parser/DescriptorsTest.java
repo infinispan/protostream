@@ -1,11 +1,13 @@
 package org.infinispan.protostream.impl.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.net.URL;
@@ -13,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hamcrest.core.StringStartsWith;
 import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -29,8 +30,7 @@ import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.ResolutionContext;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.SmallIntMap;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 public class DescriptorsTest {
 
@@ -38,15 +38,9 @@ public class DescriptorsTest {
 
    public static final String PROTO3_SYNTAX = "syntax = \"proto3\";\n";
 
-   @org.junit.Rule
-   public ExpectedException exception = ExpectedException.none();
-
    @Test
    public void testGroupsAreNotSupported() {
       // groups are a deprecated feature and are not supported
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Syntax error in file1.proto at 3:32: unexpected label: {");
-
       String file1 = """
             syntax = "proto3";
             message TestMessage {
@@ -56,7 +50,10 @@ public class DescriptorsTest {
               }
             }""";
 
-      parseAndResolve(FileDescriptorSource.fromString("file1.proto", file1));
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(FileDescriptorSource.fromString("file1.proto", file1));
+      });
+      assertTrue(ex.getMessage().contains("Syntax error in file1.proto at 3:32: unexpected label: {"));
    }
 
    @Test
@@ -98,9 +95,6 @@ public class DescriptorsTest {
 
    @Test
    public void testInvalidImport() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Syntax error in file1.proto at 3:20: unexpected label: invalid.proto");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -109,14 +103,14 @@ public class DescriptorsTest {
                string a = 1;
             }""";
 
-      parseAndResolve(FileDescriptorSource.fromString("file1.proto", file1));
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(FileDescriptorSource.fromString("file1.proto", file1));
+      });
+      assertTrue(ex.getMessage().contains("Syntax error in file1.proto at 3:20: unexpected label: invalid.proto"));
    }
 
    @Test
    public void testCyclicImport() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Cyclic import detected at test1.proto, import test2.proto");
-
       String file1 = """
             syntax = "proto3";
             import "test2.proto";
@@ -133,7 +127,10 @@ public class DescriptorsTest {
       source.addProtoFile("test1.proto", file1);
       source.addProtoFile("test2.proto", file2);
 
-      parseAndResolve(source);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(source);
+      });
+      assertTrue(ex.getMessage().contains("Cyclic import detected at test1.proto, import test2.proto"));
    }
 
    @Test
@@ -161,9 +158,6 @@ public class DescriptorsTest {
 
    @Test
    public void testDuplicateImport() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate import : file1.proto");
-
       String file1 = """
             syntax = "proto3";
             package test1;
@@ -179,14 +173,14 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("file1.proto", file1);
       fileDescriptorSource.addProtoFile("file2.proto", file2);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate import : file1.proto"));
    }
 
    @Test
    public void testEnumConstantNameClashesWithEnumTypeName() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Enum constant 'E' clashes with enum type name: test1.E");
-
       String file1 = """
             syntax = "proto3";
             package test1;
@@ -197,14 +191,14 @@ public class DescriptorsTest {
       FileDescriptorSource source = new FileDescriptorSource();
       source.addProtoFile("test.proto", file1);
 
-      parseAndResolve(source);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(source);
+      });
+      assertTrue(ex.getMessage().contains("Enum constant 'E' clashes with enum type name: test1.E"));
    }
 
    @Test
    public void testDuplicateEnumConstantName() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Enum constant 'A' is already defined in test1.E");
-
       String file1 = """
             syntax = "proto3";
             package test1;
@@ -215,14 +209,14 @@ public class DescriptorsTest {
       FileDescriptorSource source = new FileDescriptorSource();
       source.addProtoFile("test.proto", file1);
 
-      parseAndResolve(source);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(source);
+      });
+      assertTrue(ex.getMessage().contains("Enum constant 'A' is already defined in test1.E"));
    }
 
    @Test
    public void testEnumConstantNameClashesWithContainingEnumTypeName() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Enum constant 'E' clashes with enum type name: test1.E");
-
       String file1 = """
             syntax = "proto3";
             package test1;
@@ -233,14 +227,14 @@ public class DescriptorsTest {
       FileDescriptorSource source = new FileDescriptorSource();
       source.addProtoFile("test.proto", file1);
 
-      parseAndResolve(source);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(source);
+      });
+      assertTrue(ex.getMessage().contains("Enum constant 'E' clashes with enum type name: test1.E"));
    }
 
    @Test
    public void testDuplicateEnumConstantValue() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("IPROTO000013: Error while parsing 'test.proto': Duplicate tag 1 in test1.E");
-
       String file1 = """
             syntax = "proto3";
             package test1;
@@ -251,7 +245,10 @@ public class DescriptorsTest {
       FileDescriptorSource source = new FileDescriptorSource();
       source.addProtoFile("test.proto", file1);
 
-      parseAndResolve(source);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(source);
+      });
+      assertTrue(ex.getMessage().contains("IPROTO000013: Error while parsing 'test.proto': Duplicate tag 1 in test1.E"));
    }
 
    @Test
@@ -302,9 +299,6 @@ public class DescriptorsTest {
 
    @Test
    public void testDuplicateTypeInFile1() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of 'test.M1' in test_proto_path/file1.proto");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -319,14 +313,14 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate definition of 'test.M1' in test_proto_path/file1.proto"));
    }
 
    @Test
    public void testDuplicateTypeInFile2() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of 'test.M1' in test_proto_path/file1.proto");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -341,14 +335,14 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate definition of 'test.M1' in test_proto_path/file1.proto"));
    }
 
    @Test
    public void testDuplicateTypeInFile3() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of 'test.E1' in test_proto_path/file1.proto");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -363,7 +357,10 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate definition of 'test.E1' in test_proto_path/file1.proto"));
    }
 
    @Test
@@ -389,9 +386,6 @@ public class DescriptorsTest {
 
    @Test
    public void testDuplicateTypeInMessage1() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of 'test.M1.M2' in test_proto_path/file1.proto");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -405,14 +399,14 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate definition of 'test.M1.M2' in test_proto_path/file1.proto"));
    }
 
    @Test
    public void testDuplicateTypeInMessage2() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of 'test.M1.E1' in test_proto_path/file1.proto");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -426,14 +420,14 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate definition of 'test.M1.E1' in test_proto_path/file1.proto"));
    }
 
    @Test
    public void testDuplicateTypeInMessage3() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of 'test.M1.E1' in test_proto_path/file1.proto");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -447,14 +441,14 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate definition of 'test.M1.E1' in test_proto_path/file1.proto"));
    }
 
    @Test
    public void testDuplicateTypeInPackage1() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file1.proto and test_proto_path/file2.proto");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -473,14 +467,14 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
       fileDescriptorSource.addProtoFile("test_proto_path/file2.proto", file2);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate definition of test.M1 in test_proto_path/file1.proto and test_proto_path/file2.proto"));
    }
 
    @Test
    public void testDuplicateTypeInPackage2() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate definition of test.M1 in test_proto_path/file1.proto and test_proto_path/file2.proto");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -499,14 +493,14 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
       fileDescriptorSource.addProtoFile("test_proto_path/file2.proto", file2);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate definition of test.M1 in test_proto_path/file1.proto and test_proto_path/file2.proto"));
    }
 
    @Test
    public void testDuplicateTypeIdInSameFile() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate type id 100010 for type test1.M2. Already used by test1.M1");
-
       String file1 = PROTO3_SYNTAX + "package test1;\n" +
             "/**@TypeId(100010)*/\n" +
             "message M1 {\n" +
@@ -520,14 +514,14 @@ public class DescriptorsTest {
       FileDescriptorSource source = new FileDescriptorSource();
       source.addProtoFile("file1.proto", file1);
 
-      parseAndResolve(source);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(source);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate type id 100010 for type test1.M2. Already used by test1.M1"));
    }
 
    @Test
    public void testDuplicateTypeIdInImportedFile() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate type id 100010 for type test2.M2. Already used by test1.M1");
-
       String file1 = PROTO3_SYNTAX + "package test1;\n" +
             "/**@TypeId(100010)*/\n" +
             "message M1 {\n" +
@@ -545,14 +539,14 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("file1.proto", file1);
       fileDescriptorSource.addProtoFile("file2.proto", file2);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate type id 100010 for type test2.M2. Already used by test1.M1"));
    }
 
    @Test
    public void testNotImportedInSamePackage() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Failed to resolve type of field \"test.M2.b\" in \"file2.proto\". Type not found : M1");
-
       String file1 = PROTO3_SYNTAX + "package test;\n" +
             "message M1 {\n" +
             "  string a = 1;\n" +
@@ -567,14 +561,14 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("file1.proto", file1);
       fileDescriptorSource.addProtoFile("file2.proto", file2);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Failed to resolve type of field \"test.M2.b\" in \"file2.proto\". Type not found : M1"));
    }
 
    @Test
    public void testNotImportedInAnotherPackage() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Failed to resolve type of field \"test2.M2.b\" in \"file2.proto\". Type not found : test1.M1");
-
       String file1 = PROTO3_SYNTAX + "package test1;\n" +
             "message M1 {\n" +
             "  string a = 1;\n" +
@@ -589,15 +583,15 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("file1.proto", file1);
       fileDescriptorSource.addProtoFile("file2.proto", file2);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Failed to resolve type of field \"test2.M2.b\" in \"file2.proto\". Type not found : test1.M1"));
    }
 
    @Test
    public void testEmptyPackageName() {
       // package name cannot be empty
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage(StringStartsWith.startsWith("IPROTO000013"));
-
       String file1 = """
             syntax = "proto3";
             package ;
@@ -608,14 +602,14 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().startsWith("IPROTO000013"));
    }
 
    @Test
    public void testDefinitionNameWithDots1() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Syntax error in file1.proto at 3:22: unexpected label: somePackage.M1");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -626,14 +620,14 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Syntax error in file1.proto at 3:22: unexpected label: somePackage.M1"));
    }
 
    @Test
    public void testDefinitionNameWithDots2() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Syntax error in file1.proto at 3:19: unexpected label: somePackage.E1");
-
       String file1 = """
             syntax = "proto3";
             package testPackage;
@@ -644,7 +638,10 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Syntax error in file1.proto at 3:19: unexpected label: somePackage.E1"));
    }
 
    @Test
@@ -681,9 +678,6 @@ public class DescriptorsTest {
 
    @Test
    public void testPrivateImport() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Failed to resolve type of field \"M3.a\" in \"file3.proto\". Type not found : M1");
-
       String file1 = """
             syntax = "proto3";
             message M1 {
@@ -704,7 +698,10 @@ public class DescriptorsTest {
       fileDescriptorSource.addProtoFile("file2.proto", file2);
       fileDescriptorSource.addProtoFile("file3.proto", file3);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Failed to resolve type of field \"M3.a\" in \"file3.proto\". Type not found : M1"));
    }
 
    @Test
@@ -849,9 +846,6 @@ public class DescriptorsTest {
 
    @Test
    public void testDuplicateAnnotation() {
-      exception.expect(AnnotationParserException.class);
-      exception.expectMessage("Error: 1,8: duplicate annotation definition \"Field\"");
-
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
@@ -870,7 +864,10 @@ public class DescriptorsTest {
       Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
 
       //todo [anistor] this is waaay too lazy
-      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      var ex = assertThrows(AnnotationParserException.class, () -> {
+         descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      });
+      assertTrue(ex.getMessage().contains("Error: 1,8: duplicate annotation definition \"Field\""));
    }
 
    @Test
@@ -933,9 +930,6 @@ public class DescriptorsTest {
 
    @Test
    public void testBrokenUndefinedAnnotation() {
-      exception.expect(AnnotationParserException.class);
-      exception.expectMessage("Error: 2,23: ')' expected");
-
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
@@ -955,7 +949,10 @@ public class DescriptorsTest {
       Map<String, FileDescriptor> descriptors = parseAndResolve(fileDescriptorSource, config);
 
       //todo [anistor] The processing of annotations is waaay too lazy
-      descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      var ex = assertThrows(AnnotationParserException.class, () -> {
+         descriptors.get("test.proto").getMessageTypes().get(0).getFields().get(0).getAnnotations();
+      });
+      assertTrue(ex.getMessage().contains("Error: 2,23: ')' expected"));
    }
 
    @Test
@@ -987,9 +984,6 @@ public class DescriptorsTest {
 
    @Test
    public void testAnnotationTarget() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Annotation '@Field()' cannot be applied to message types.");
-
       Configuration config = Configuration.builder().annotationsConfig()
             .annotation("Field", AnnotationElement.AnnotationTarget.FIELD)
             .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
@@ -1005,7 +999,10 @@ public class DescriptorsTest {
             }""";
 
       FileDescriptorSource fileDescriptorSource = FileDescriptorSource.fromString("test.proto", testProto);
-      parseAndResolve(fileDescriptorSource, config);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource, config);
+      });
+      assertTrue(ex.getMessage().contains("Annotation '@Field()' cannot be applied to message types."));
    }
 
    @Test
@@ -1037,8 +1034,8 @@ public class DescriptorsTest {
       AnnotationElement.Annotation annotation = messageType.getAnnotations().get("Xyz");
       assertNotNull(annotation);
       AnnotationElement.Value attr = annotation.getAttributeValue("elem1");
-      assertTrue(attr instanceof AnnotationElement.Array);
-      assertTrue(attr.getValue() instanceof List);
+      assertInstanceOf(AnnotationElement.Array.class, attr);
+      assertInstanceOf(List.class, attr.getValue());
       List values = (List) attr.getValue();
       assertEquals(3, values.size());
       assertEquals(true, values.get(0));
@@ -1084,9 +1081,6 @@ public class DescriptorsTest {
 
    @Test
    public void testDuplicateOptionInFile() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("test_proto_path/file1.proto: Option \"custom_option\" was already set.");
-
       String file1 = """
             syntax = "proto3";
             package test;
@@ -1097,7 +1091,10 @@ public class DescriptorsTest {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       fileDescriptorSource.addProtoFile("test_proto_path/file1.proto", file1);
 
-      parseAndResolve(fileDescriptorSource);
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         parseAndResolve(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("test_proto_path/file1.proto: Option \"custom_option\" was already set."));
    }
 
    public static void resolve(Map<String, FileDescriptor> fileDescriptorMap) {

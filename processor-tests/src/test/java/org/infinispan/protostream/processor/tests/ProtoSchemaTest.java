@@ -1,11 +1,12 @@
 package org.infinispan.protostream.processor.tests;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ import org.infinispan.protostream.processor.tests.testdomain.OuterRecord;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleClass;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleEnum;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleRecord;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ProtoSchemaTest {
 
@@ -231,7 +232,7 @@ public class ProtoSchemaTest {
          }
       }
 
-      assertNotNull("SecondInitializer implementation not found by ServiceLoader", initializer);
+      assertNotNull(initializer, "SecondInitializer implementation not found by ServiceLoader");
       assertEquals("org.infinispan.protostream.processor.tests.TestInitializer", initializer.getClass().getName());
    }
 
@@ -284,7 +285,7 @@ public class ProtoSchemaTest {
             break;
          }
       }
-      assertNotNull("Non-abstract initializers must be supported", found);
+      assertNotNull(found, "Non-abstract initializers must be supported");
       assertNotNull(found.getProtoFileName());
       assertNotNull(found.getProtoFile());
    }
@@ -310,7 +311,7 @@ public class ProtoSchemaTest {
          }
       }
 
-      assertNotNull("DependentInitializer implementation not found by ServiceLoader", dependentInitializer);
+      assertNotNull(dependentInitializer, "DependentInitializer implementation not found by ServiceLoader");
 
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       dependentInitializer.register(ctx);
@@ -868,7 +869,7 @@ public class ProtoSchemaTest {
       assertTrue(ctx.canMarshall(MessageWithAllFieldTypes.class));
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new MessageWithAllFieldTypes());
       Object o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-      assertTrue(o instanceof MessageWithAllFieldTypes);
+      assertInstanceOf(MessageWithAllFieldTypes.class, o);
    }
 
    static class MessageWithRepeatedFields {
@@ -1143,11 +1144,11 @@ public class ProtoSchemaTest {
       TestInitializer serCtxInitializer = new TestInitializer();
       serCtxInitializer.register(ctx);
 
-      assertTrue(serCtxInitializer.getProtoFile(), serCtxInitializer.getProtoFile().contains("message NoFields {\n}\n"));
+      assertTrue(serCtxInitializer.getProtoFile().contains("message NoFields {\n}\n"), serCtxInitializer.getProtoFile());
 
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new NoProtoFields());
       Object o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-      assertTrue(o instanceof  NoProtoFields);
+      assertInstanceOf(NoProtoFields.class, o);
    }
 
    static class NonStandardPropertyAccessors {
@@ -1185,7 +1186,7 @@ public class ProtoSchemaTest {
 
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new NonStandardPropertyAccessors());
       Object o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-      assertTrue(o instanceof NonStandardPropertyAccessors);
+      assertInstanceOf(NonStandardPropertyAccessors.class, o);
    }
 
    /**
@@ -1280,7 +1281,7 @@ public class ProtoSchemaTest {
       CustomMap o = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
       assertNotNull(o);
-      assertTrue(o.getMyMap() instanceof HashMap);
+      assertInstanceOf(HashMap.class, o.getMyMap());
       assertEquals("v", o.getMyMap().get(new CustomMap.CustomKey("k")));
    }
 

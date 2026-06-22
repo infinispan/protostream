@@ -1,11 +1,13 @@
 package org.infinispan.protostream.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,16 +25,12 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.WireType;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com
  */
 public class SerializationContextImplTest {
-
-   @org.junit.Rule
-   public ExpectedException exception = ExpectedException.none();
 
    private SerializationContext createContext() {
       return ProtobufUtil.newSerializationContext();
@@ -108,43 +106,43 @@ public class SerializationContextImplTest {
 
    @Test
    public void testRegisterImproperMarshaller1() {
-      exception.expect(IllegalArgumentException.class);
-      exception.expectMessage("Invalid marshaller (the produced class is a Java Enum, but the marshaller is not an EnumMarshaller)");
+      var ex = assertThrows(IllegalArgumentException.class, () -> {
+         SerializationContext ctx = createContext();
 
-      SerializationContext ctx = createContext();
+         String file = """
+               syntax = "proto3";
+               package test;
+               message Color {
+                  optional int32 color = 1;
+               }""";
 
-      String file = """
-            syntax = "proto3";
-            package test;
-            message Color {
-               optional int32 color = 1;
-            }""";
+         FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
+         ctx.registerProtoFiles(fileDescriptorSource);
 
-      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
-      ctx.registerProtoFiles(fileDescriptorSource);
+         ctx.registerMarshaller(new MessageMarshaller<ColorType1>() {
+            @Override
+            public Class<ColorType1> getJavaClass() {
+               return ColorType1.class;
+            }
 
-      ctx.registerMarshaller(new MessageMarshaller<ColorType1>() {
-         @Override
-         public Class<ColorType1> getJavaClass() {
-            return ColorType1.class;
-         }
+            @Override
+            public String getTypeName() {
+               return "test.Color";
+            }
 
-         @Override
-         public String getTypeName() {
-            return "test.Color";
-         }
+            @Override
+            public ColorType1 readFrom(ProtoStreamReader reader) {
+               // never invoked
+               return null;
+            }
 
-         @Override
-         public ColorType1 readFrom(ProtoStreamReader reader) {
-            // never invoked
-            return null;
-         }
-
-         @Override
-         public void writeTo(ProtoStreamWriter writer, ColorType1 color) {
-            // never invoked
-         }
+            @Override
+            public void writeTo(ProtoStreamWriter writer, ColorType1 color) {
+               // never invoked
+            }
+         });
       });
+      assertTrue(ex.getMessage().contains("Invalid marshaller (the produced class is a Java Enum, but the marshaller is not an EnumMarshaller)"));
    }
 
    // ColorType2 should be an Enum, but it isn't, so an exception is thrown
@@ -154,44 +152,44 @@ public class SerializationContextImplTest {
 
    @Test
    public void testRegisterImproperMarshaller2() {
-      exception.expect(IllegalArgumentException.class);
-      exception.expectMessage("test.Color is not a message type");
+      var ex = assertThrows(IllegalArgumentException.class, () -> {
+         SerializationContext ctx = createContext();
 
-      SerializationContext ctx = createContext();
+         String file = """
+               syntax = "proto3";
+               package test;
+               enum Color {
+                  GREEN = 1;
+                  RED = 2;
+               }""";
 
-      String file = """
-            syntax = "proto3";
-            package test;
-            enum Color {
-               GREEN = 1;
-               RED = 2;
-            }""";
+         FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
+         ctx.registerProtoFiles(fileDescriptorSource);
 
-      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile("file.proto", file);
-      ctx.registerProtoFiles(fileDescriptorSource);
+         ctx.registerMarshaller(new MessageMarshaller<ColorType2>() {
+            @Override
+            public Class<ColorType2> getJavaClass() {
+               return ColorType2.class;
+            }
 
-      ctx.registerMarshaller(new MessageMarshaller<ColorType2>() {
-         @Override
-         public Class<ColorType2> getJavaClass() {
-            return ColorType2.class;
-         }
+            @Override
+            public String getTypeName() {
+               return "test.Color";
+            }
 
-         @Override
-         public String getTypeName() {
-            return "test.Color";
-         }
+            @Override
+            public ColorType2 readFrom(ProtoStreamReader reader) {
+               // never invoked
+               return null;
+            }
 
-         @Override
-         public ColorType2 readFrom(ProtoStreamReader reader) {
-            // never invoked
-            return null;
-         }
-
-         @Override
-         public void writeTo(ProtoStreamWriter writer, ColorType2 color) {
-            // never invoked
-         }
+            @Override
+            public void writeTo(ProtoStreamWriter writer, ColorType2 color) {
+               // never invoked
+            }
+         });
       });
+      assertTrue(ex.getMessage().contains("test.Color is not a message type"));
    }
 
    @Test
@@ -268,7 +266,7 @@ public class SerializationContextImplTest {
       byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, new X(1234));
       Object out = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
-      assertTrue(out instanceof X);
+      assertInstanceOf(X.class, out);
       assertNotNull(((X) out).f);
       assertEquals(1234, ((X) out).f.intValue());
    }
@@ -359,11 +357,11 @@ public class SerializationContextImplTest {
 
    @Test
    public void testUnregisterMissingFiles() {
-      exception.expect(IllegalArgumentException.class);
-      exception.expectMessage("File test.proto does not exist");
-
-      SerializationContext ctx = createContext();
-      ctx.unregisterProtoFile("test.proto");
+      var ex = assertThrows(IllegalArgumentException.class, () -> {
+         SerializationContext ctx = createContext();
+         ctx.unregisterProtoFile("test.proto");
+      });
+      assertTrue(ex.getMessage().contains("File test.proto does not exist"));
    }
 
    @Test
@@ -492,117 +490,117 @@ public class SerializationContextImplTest {
 
    @Test
    public void testDuplicateTypeIdInDifferentFiles() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate type id 100010 for type test2.M2. Already used by test1.M1");
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         String file1 = """
+               syntax = "proto3";
+               package test1;
+               /**@TypeId(100010)*/
+               message M1 {
+                  string a = 1;
+               }""";
+         String file2 = """
+               syntax = "proto3";
+               package test2;
+               /**@TypeId(100010)*/
+               message M2 {
+                  string b = 1;
+               }""";
 
-      String file1 = """
-            syntax = "proto3";
-            package test1;
-            /**@TypeId(100010)*/
-            message M1 {
-               string a = 1;
-            }""";
-      String file2 = """
-            syntax = "proto3";
-            package test2;
-            /**@TypeId(100010)*/
-            message M2 {
-               string b = 1;
-            }""";
+         FileDescriptorSource source = new FileDescriptorSource()
+               .addProtoFile("test1.proto", file1)
+               .addProtoFile("test2.proto", file2);
 
-      FileDescriptorSource source = new FileDescriptorSource()
-            .addProtoFile("test1.proto", file1)
-            .addProtoFile("test2.proto", file2);
-
-      SerializationContext ctx = createContext();
-      ctx.registerProtoFiles(source);
+         SerializationContext ctx = createContext();
+         ctx.registerProtoFiles(source);
+      });
+      assertTrue(ex.getMessage().contains("Duplicate type id 100010 for type test2.M2. Already used by test1.M1"));
    }
 
    @Test
    public void testDuplicateTypeIdInSameFile() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Duplicate type id 100010 for type test1.M2. Already used by test1.M1");
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         String file1 = """
+               syntax = "proto3";
+               package test1;
+               /**@TypeId(100010)*/
+               message M1 {
+                  string a = 1;
+               }/**@TypeId(100010)*/
+               message M2 {
+                  string b = 1;
+               }""";
 
-      String file1 = """
-            syntax = "proto3";
-            package test1;
-            /**@TypeId(100010)*/
-            message M1 {
-               string a = 1;
-            }/**@TypeId(100010)*/
-            message M2 {
-               string b = 1;
-            }""";
-
-      SerializationContext ctx = createContext();
-      ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
+         SerializationContext ctx = createContext();
+         ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
+      });
+      assertTrue(ex.getMessage().contains("Duplicate type id 100010 for type test1.M2. Already used by test1.M1"));
    }
 
    @Test
    public void testEnumConstantNameClashesWithOtherType1() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         String file1 = """
+               syntax = "proto3";
+               package test1;
+               message M1 {
+                 string a = 1;
+               }
+               enum E1 {
+                 M1 = 1;
+               }""";
 
-      String file1 = """
-            syntax = "proto3";
-            package test1;
-            message M1 {
-              string a = 1;
-            }
-            enum E1 {
-              M1 = 1;
-            }""";
-
-      SerializationContext ctx = createContext();
-      ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
+         SerializationContext ctx = createContext();
+         ctx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", file1));
+      });
+      assertTrue(ex.getMessage().contains("Enum value test1.E1.M1 clashes with message definition test1.M1"));
    }
 
    @Test
    public void testEnumConstantNameClashesWithOtherType2() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         String file1 = """
+               syntax = "proto3";
+               package test1;
+               message M1 {
+                 string a = 1;
+               }""";
 
-      String file1 = """
-            syntax = "proto3";
-            package test1;
-            message M1 {
-              string a = 1;
-            }""";
+         String file2 = "package test1;\n" +
+               "enum E1 {\n" +
+               "  M1 = 1;\n" +
+               "}";
 
-      String file2 = "package test1;\n" +
-            "enum E1 {\n" +
-            "  M1 = 1;\n" +
-            "}";
+         FileDescriptorSource fileDescriptorSource = new FileDescriptorSource()
+               .addProtoFile("test_proto_path/file1.proto", file1)
+               .addProtoFile("test_proto_path/file2.proto", file2);
 
-      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource()
-            .addProtoFile("test_proto_path/file1.proto", file1)
-            .addProtoFile("test_proto_path/file2.proto", file2);
-
-      SerializationContext ctx = createContext();
-      ctx.registerProtoFiles(fileDescriptorSource);
+         SerializationContext ctx = createContext();
+         ctx.registerProtoFiles(fileDescriptorSource);
+      });
+      assertTrue(ex.getMessage().contains("Enum value test1.E1.M1 clashes with message definition test1.M1"));
    }
 
    @Test
    public void testEnumConstantNameClashesWithOtherType3() {
-      exception.expect(DescriptorParserException.class);
-      exception.expectMessage("Enum value test1.E1.M1 clashes with message definition test1.M1");
+      var ex = assertThrows(DescriptorParserException.class, () -> {
+         String file1 = """
+               syntax = "proto3";
+               package test1;
+               message M1 {
+                 string a = 1;
+               }""";
 
-      String file1 = """
-            syntax = "proto3";
-            package test1;
-            message M1 {
-              string a = 1;
-            }""";
+         String file2 = """
+               syntax = "proto3";
+               package test1;
+               enum E1 {
+                 M1 = 1;
+               }""";
 
-      String file2 = """
-            syntax = "proto3";
-            package test1;
-            enum E1 {
-              M1 = 1;
-            }""";
-
-      SerializationContext ctx = createContext();
-      ctx.registerProtoFiles(FileDescriptorSource.fromString("test_proto_path/file1.proto", file1));
-      ctx.registerProtoFiles(FileDescriptorSource.fromString("test_proto_path/file2.proto", file2));
+         SerializationContext ctx = createContext();
+         ctx.registerProtoFiles(FileDescriptorSource.fromString("test_proto_path/file1.proto", file1));
+         ctx.registerProtoFiles(FileDescriptorSource.fromString("test_proto_path/file2.proto", file2));
+      });
+      assertTrue(ex.getMessage().contains("Enum value test1.E1.M1 clashes with message definition test1.M1"));
    }
 }

@@ -9,7 +9,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.Play;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.PlaySchemaImpl;
 import org.infinispan.protostream.types.java.CommonContainerTypesSchema;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JSONTranscodingTest {
 

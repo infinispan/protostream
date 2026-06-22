@@ -1,8 +1,8 @@
 package org.infinispan.protostream.types.java;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -49,33 +49,14 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.config.Configuration;
 import org.jboss.logging.Logger;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class TypesMarshallingTest {
 
    private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getName());
 
-   private final TestConfiguration testConfiguration;
-   private final ImmutableSerializationContext context;
-
-   public TypesMarshallingTest(TestConfiguration testConfiguration) {
-      this.testConfiguration = testConfiguration;
-      context = newContext(true);
-   }
-
-   @Override
-   public String toString() {
-      return "TypesMarshallingTest{" +
-            "testConfiguration=" + testConfiguration +
-            ", context=" + context +
-            '}';
-   }
-
-   @Parameterized.Parameters(name = "{0}")
-   public static Object[][] marshallingMethods() {
+   static Stream<TestConfiguration> marshallingMethods() {
       return Arrays.stream(MarshallingMethodType.values())
             .flatMap(t -> switch (t) {
                case BYTE_ARRAY, INPUT_STREAM -> Stream.of(new TestConfiguration(t, false, false, null));
@@ -87,33 +68,39 @@ public class TypesMarshallingTest {
                      new TestConfiguration(t, true, false, LinkedList::new),
                      new TestConfiguration(t, true, false, LinkedList::new),
                      new TestConfiguration(t, true, false, TreeSet::new));
-            })
-            .map(t -> new Object[]{t})
-            .toArray(Object[][]::new);
+            });
    }
 
-   @Test
-   public void testNullElement() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testNullElement(TestConfiguration testConfiguration) throws IOException {
       assumeTrue(testConfiguration.method != MarshallingMethodType.INPUT_STREAM && testConfiguration.method != MarshallingMethodType.BYTE_ARRAY);
+      ImmutableSerializationContext context = newContext(true);
       testConfiguration.method.marshallAndUnmarshallTest(null, context, false);
       testConfiguration.method.marshallAndUnmarshallTest(new WrappedMessage(null), context, false);
       testConfiguration.method.marshallAndUnmarshallTest(Collections.singletonList(null), context, false);
    }
 
-   @Test
-   public void testNestedWrappedMessage() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testNestedWrappedMessage(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       WrappedMessage msg = new WrappedMessage(UUID.randomUUID());
       testConfiguration.method.marshallAndUnmarshallTest(msg, context, false);
    }
 
-   @Test
-   public void testNestedCollection() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testNestedCollection(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       WrappedMessage msg = new WrappedMessage(List.of(UUID.randomUUID(), UUID.randomUUID()));
       testConfiguration.method.marshallAndUnmarshallTest(msg, context, false);
    }
 
-   @Test
-   public void testDeeplyConfusingMessage() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testDeeplyConfusingMessage(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       var msg = List.of(
             List.of(1, 2, 3),
             Collections.singletonList(List.of(4, 5, 6)),
@@ -124,9 +111,11 @@ public class TypesMarshallingTest {
       testConfiguration.method.marshallAndUnmarshallTest(msg, context, false);
    }
 
-   @Test
-   public void testManyCollections() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testManyCollections(TestConfiguration testConfiguration) throws IOException {
       assumeTrue(testConfiguration.runTest);
+      ImmutableSerializationContext context = newContext(true);
       var msg = new PrimitiveCollections(
             List.of("hello", "world"),
             new ArrayList<>(List.of("hello1", "world1")),
@@ -141,41 +130,55 @@ public class TypesMarshallingTest {
       testConfiguration.method.marshallAndUnmarshallTest(msg, context, false);
    }
 
-   @Test
-   public void testInstant() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testInstant(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       testConfiguration.method.marshallAndUnmarshallTest(Instant.EPOCH, context, false);
    }
 
-   @Test
-   public void testDate() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testDate(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       testConfiguration.method.marshallAndUnmarshallTest(new Date(), context, false);
    }
 
-   @Test
-   public void testUUID() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testUUID(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       testConfiguration.method.marshallAndUnmarshallTest(UUID.randomUUID(), context, false);
    }
 
-   @Test
-   public void testBitSet() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testBitSet(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       var bytes = new byte[ThreadLocalRandom.current().nextInt(64)];
       ThreadLocalRandom.current().nextBytes(bytes);
       testConfiguration.method.marshallAndUnmarshallTest(BitSet.valueOf(bytes), context, false);
    }
 
-   @Test
-   public void testBigDecimal() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testBigDecimal(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       testConfiguration.method.marshallAndUnmarshallTest(BigDecimal.valueOf(ThreadLocalRandom.current().nextDouble(-256, 256)), context, false);
    }
 
-   @Test
-   public void testBigInteger() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testBigInteger(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       testConfiguration.method.marshallAndUnmarshallTest(BigInteger.valueOf(ThreadLocalRandom.current().nextInt()), context, false);
    }
 
-   @Test
-   public void testContainerWithString() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testContainerWithString(TestConfiguration testConfiguration) throws IOException {
       assumeTrue(testConfiguration.runTest);
+      ImmutableSerializationContext context = newContext(true);
       if (testConfiguration.isArray) {
          testConfiguration.method.marshallAndUnmarshallTest(stringArray(), context, true);
       } else {
@@ -183,9 +186,11 @@ public class TypesMarshallingTest {
       }
    }
 
-   @Test
-   public void testContainerWithBooks() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testContainerWithBooks(TestConfiguration testConfiguration) throws IOException {
       assumeTrue(testConfiguration.runTest);
+      ImmutableSerializationContext context = newContext(true);
       if (testConfiguration.isArray) {
          testConfiguration.method.marshallAndUnmarshallTest(bookArray(), context, true);
       } else {
@@ -193,99 +198,118 @@ public class TypesMarshallingTest {
       }
    }
 
-   @Test
-   public void testPrimitiveCollectionCompatibility() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testPrimitiveCollectionCompatibility(TestConfiguration testConfiguration) throws IOException {
       assumeTrue(testConfiguration.method == MarshallingMethodType.WRAPPED_MESSAGE || testConfiguration.method == MarshallingMethodType.JSON);
+      ImmutableSerializationContext context = newContext(true);
       var list = new ArrayList<>(List.of("a1", "a2", "a3"));
 
-      // without wrapping enabled
       var oldCtx = newContext(false);
 
-      // send with oldCtx: simulates previous version
       var data = ProtobufUtil.toWrappedByteArray(oldCtx, list, 512);
-      // read with newCtx: simulates current version
       var listCopy = ProtobufUtil.fromWrappedByteArray(context, data);
 
       assertEquals(list, listCopy);
 
-      // other way around
-      // send with newCtx: simulates current version
       data = ProtobufUtil.toWrappedByteArray(context, list, 512);
-      // read with oldCtx: simulates previous version
       listCopy = ProtobufUtil.fromWrappedByteArray(oldCtx, data);
 
       assertEquals(list, listCopy);
    }
 
-   @Test
-   public void testLocalDate() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testLocalDate(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       LocalDate date = LocalDate.of(1985, 10, 26);
       testConfiguration.method.marshallAndUnmarshallTest(date, context, false);
    }
 
-   @Test
-   public void testLocalDateTime() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testLocalDateTime(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       LocalDateTime dateTime = LocalDateTime.of(1985, 10, 26, 0, 59, 0, 0);
       testConfiguration.method.marshallAndUnmarshallTest(dateTime, context, false);
    }
 
-   @Test
-   public void testLocalTime() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testLocalTime(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       LocalTime time = LocalTime.of(23, 59, 59, 59);
       testConfiguration.method.marshallAndUnmarshallTest(time, context, false);
    }
 
-   @Test
-   public void testMonth() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testMonth(TestConfiguration testConfiguration) throws IOException {
       assumeTrue(testConfiguration.method == MarshallingMethodType.WRAPPED_MESSAGE || testConfiguration.method == MarshallingMethodType.JSON);
+      ImmutableSerializationContext context = newContext(true);
       testConfiguration.method.marshallAndUnmarshallTest(Month.OCTOBER, context, false);
    }
 
-   @Test
-   public void testMonthDay() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testMonthDay(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       MonthDay monthDay  = MonthDay.of(10, 26);
       testConfiguration.method.marshallAndUnmarshallTest(monthDay, context, false);
    }
 
-   @Test
-   public void testOffsetTime() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testOffsetTime(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       OffsetTime offsetTime = OffsetTime.of(23,  59, 59, 10, ZoneOffset.UTC);
       testConfiguration.method.marshallAndUnmarshallTest(offsetTime, context, false);
    }
 
-   @Test
-   public void testPeriod() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testPeriod(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       Period period = Period.of(10, 4, 3);
       testConfiguration.method.marshallAndUnmarshallTest(period, context, false);
    }
 
-   @Test
-   public void testYear() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testYear(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       Year year = Year.of(1985);
       testConfiguration.method.marshallAndUnmarshallTest(year, context, false);
    }
 
-   @Test
-   public void testZoneId() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testZoneId(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       ZoneId zid = ZoneId.systemDefault();
       testConfiguration.method.marshallAndUnmarshallTest(zid, context, false);
    }
 
-   @Test
-   public void testOffset() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testOffset(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       ZoneOffset offset = ZoneOffset.of("+07:00");
       testConfiguration.method.marshallAndUnmarshallTest(offset, context, false);
    }
 
-
-   @Test
-   public void testZonedTime() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testZonedTime(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       ZonedDateTime time = ZonedDateTime.of(1985, 10, 26, 0, 59, 0, 0, ZoneId.of("+07:00"));
       testConfiguration.method.marshallAndUnmarshallTest(time, context, false);
    }
 
-   @Test
-   public void testMultipleAdaptersForInterface() throws IOException {
+   @ParameterizedTest(name = "{0}")
+   @MethodSource("marshallingMethods")
+   public void testMultipleAdaptersForInterface(TestConfiguration testConfiguration) throws IOException {
+      ImmutableSerializationContext context = newContext(true);
       testConfiguration.method.marshallAndUnmarshallTest(Collections.emptyList(), context, false);
       testConfiguration.method.marshallAndUnmarshallTest(Collections.singletonList("1"), context, false);
       testConfiguration.method.marshallAndUnmarshallTest(List.of(), context, false);
@@ -338,7 +362,6 @@ public class TypesMarshallingTest {
    }
 
    private static Object[] bookArray() {
-      // cannot use new Book[] because there is no marshaller for it.
       return new Object[]{
             new Book("Book1", "Description1", 2020),
             new Book("Book2", "Description2", 2021),
