@@ -12,7 +12,7 @@ import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the Parser/TagHandler mechanism.

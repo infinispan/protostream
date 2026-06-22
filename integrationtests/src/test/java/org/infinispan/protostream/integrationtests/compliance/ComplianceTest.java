@@ -15,7 +15,7 @@ import org.infinispan.protostream.integrationtests.compliance.handwritten.Custom
 import org.infinispan.protostream.integrationtests.compliance.handwritten.CustomValueMarshaller;
 import org.infinispan.protostream.integrationtests.compliance.handwritten.MapsTest;
 import org.infinispan.protostream.integrationtests.compliance.handwritten.MapsTestMarshaller;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 
 public class ComplianceTest {

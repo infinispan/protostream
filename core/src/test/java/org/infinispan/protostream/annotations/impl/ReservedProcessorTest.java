@@ -1,6 +1,8 @@
 package org.infinispan.protostream.annotations.impl;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.StringWriter;
 
@@ -8,9 +10,7 @@ import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilderException;
 import org.infinispan.protostream.annotations.impl.types.ReflectionTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com
@@ -27,9 +27,6 @@ public class ReservedProcessorTest {
    // messages from protoc:
    //   test.proto:3:9: Field name "field2222" is reserved multiple times
    //   test.proto: Reserved range 13 to 13 overlaps with already defined range 13 to 536870911.
-
-   @Rule
-   public ExpectedException expectedException = ExpectedException.none();
 
    @Test
    public void testEmpty() {
@@ -69,12 +66,12 @@ public class ReservedProcessorTest {
 
    @Test
    public void testDuplicateReservedNumber() {
-      expectedException.expect(ProtoSchemaBuilderException.class);
-      expectedException.expectMessage("Found duplicate @ProtoReserved number 1 in org.infinispan.protostream.annotations.impl.ReservedProcessorTest.DuplicateNumber");
+      var ex = assertThrows(ProtoSchemaBuilderException.class, () -> {
+         XClass classToTest = new ReflectionTypeFactory().fromClass(DuplicateNumber.class);
 
-      XClass classToTest = new ReflectionTypeFactory().fromClass(DuplicateNumber.class);
-
-      new ReservedProcessor().scan(classToTest);
+         new ReservedProcessor().scan(classToTest);
+      });
+      assertTrue(ex.getMessage().contains("Found duplicate @ProtoReserved number 1 in org.infinispan.protostream.annotations.impl.ReservedProcessorTest.DuplicateNumber"));
    }
 
    @ProtoReserved(names = {"triceratops", "valociraptor", "triceratops"})
@@ -83,11 +80,11 @@ public class ReservedProcessorTest {
 
    @Test
    public void testDuplicateReservedName() {
-      expectedException.expect(ProtoSchemaBuilderException.class);
-      expectedException.expectMessage("Found duplicate @ProtoReserved name \"triceratops\" in org.infinispan.protostream.annotations.impl.ReservedProcessorTest.DuplicateName");
+      var ex = assertThrows(ProtoSchemaBuilderException.class, () -> {
+         XClass classToTest = new ReflectionTypeFactory().fromClass(DuplicateName.class);
 
-      XClass classToTest = new ReflectionTypeFactory().fromClass(DuplicateName.class);
-
-      new ReservedProcessor().scan(classToTest);
+         new ReservedProcessor().scan(classToTest);
+      });
+      assertTrue(ex.getMessage().contains("Found duplicate @ProtoReserved name \"triceratops\" in org.infinispan.protostream.annotations.impl.ReservedProcessorTest.DuplicateName"));
    }
 }

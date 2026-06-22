@@ -3,7 +3,7 @@ package org.infinispan.protostream;
 import static org.infinispan.protostream.impl.parser.DescriptorsTest.asFile;
 import static org.infinispan.protostream.impl.parser.DescriptorsTest.parseAndResolve;
 import static org.infinispan.protostream.impl.parser.DescriptorsTest.resolve;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,7 +14,7 @@ import java.util.Map;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.descriptors.ProtoLock;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ProtoLockTest {
 

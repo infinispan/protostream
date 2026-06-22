@@ -1,13 +1,13 @@
 package org.infinispan.protostream.annotations.impl.types;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.custom.annotations.MyCustomAnnotation;
 import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoComments;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com
@@ -109,15 +109,15 @@ public class DocumentationExtractorTest {
    @Test
    public void testCustomFieldAnnotation() throws Exception {
       String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field6"), true);
-      assertTrue(doc, doc.startsWith("@org.infinispan.custom.annotations.MyCustomAnnotation("));
+      assertTrue(doc.startsWith("@org.infinispan.custom.annotations.MyCustomAnnotation("), doc);
       verifyAnnotation(doc);
       doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field6"), false);
-      assertTrue(doc, doc.startsWith("@MyCustomAnnotation("));
+      assertTrue(doc.startsWith("@MyCustomAnnotation("), doc);
       verifyAnnotation(doc);
    }
 
    private void verifyAnnotation(String doc) {
-      assertTrue(doc, doc.contains("name="));
+      assertTrue(doc.contains("name="), doc);
       assertTrue(doc.contains("someBool=true"));
       assertTrue(doc.contains("someLong=-100"));
       assertTrue(doc.contains("someInteger=100"));
@@ -135,50 +135,50 @@ public class DocumentationExtractorTest {
    @Test
    public void testCustomMethodAnnotation() throws Exception {
       String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredMethod("method2"), true);
-      assertTrue(doc, doc.startsWith("@org.infinispan.custom.annotations.MyCustomAnnotation("));
+      assertTrue(doc.startsWith("@org.infinispan.custom.annotations.MyCustomAnnotation("), doc);
       verifyAnnotation(doc);
       doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredMethod("method2"), false);
-      assertTrue(doc, doc.startsWith("@MyCustomAnnotation("));
+      assertTrue(doc.startsWith("@MyCustomAnnotation("), doc);
       verifyAnnotation(doc);
    }
 
    @Test
    public void testMixedCustomFieldAnnotation() throws Exception {
       String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field7"), true);
-      assertTrue(doc, doc.startsWith("1\n1\n@org.infinispan.custom.annotations.MyCustomAnnotation("));
+      assertTrue(doc.startsWith("1\n1\n@org.infinispan.custom.annotations.MyCustomAnnotation("), doc);
       verifyAnnotation(doc);
       doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field7"), false);
-      assertTrue(doc, doc.startsWith("1\n1\n@MyCustomAnnotation("));
+      assertTrue(doc.startsWith("1\n1\n@MyCustomAnnotation("), doc);
       verifyAnnotation(doc);
    }
 
    @Test
    public void testMixedCustomMethodAnnotation() throws Exception {
       String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredMethod("method3"), true);
-      assertTrue(doc, doc.startsWith("1\n1\n@org.infinispan.custom.annotations.MyCustomAnnotation("));
+      assertTrue(doc.startsWith("1\n1\n@org.infinispan.custom.annotations.MyCustomAnnotation("), doc);
       verifyAnnotation(doc);
       doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredMethod("method3"), false);
-      assertTrue(doc, doc.startsWith("1\n1\n@MyCustomAnnotation("));
+      assertTrue(doc.startsWith("1\n1\n@MyCustomAnnotation("), doc);
       verifyAnnotation(doc);
    }
 
    @Test
    public void testDefaultFieldAnnotation() throws Exception {
       String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field8"), true);
-      assertTrue(doc, doc.startsWith("@org.infinispan.custom.annotations.MyCustomAnnotation("));
+      assertTrue(doc.startsWith("@org.infinispan.custom.annotations.MyCustomAnnotation("), doc);
       verifyAnnotationDefaultValues(doc);
       doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredField("field8"), false);
-      assertTrue(doc, doc.startsWith("@MyCustomAnnotation("));
+      assertTrue(doc.startsWith("@MyCustomAnnotation("), doc);
       verifyAnnotationDefaultValues(doc);
    }
 
    @Test
    public void testDefaultMethodAnnotation() throws Exception {
       String doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredMethod("method4"), true);
-      assertTrue(doc, doc.startsWith("@org.infinispan.custom.annotations.MyCustomAnnotation("));
+      assertTrue(doc.startsWith("@org.infinispan.custom.annotations.MyCustomAnnotation("), doc);
       verifyAnnotationDefaultValues(doc);
       doc = DocumentationExtractor.getDocumentation(TestDocs.class.getDeclaredMethod("method4"), false);
-      assertTrue(doc, doc.startsWith("@MyCustomAnnotation("));
+      assertTrue(doc.startsWith("@MyCustomAnnotation("), doc);
       verifyAnnotationDefaultValues(doc);
    }
 }

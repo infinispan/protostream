@@ -23,3 +23,10 @@ out
 *~
 # OS X generated file
 .DS_Store
+# AI assistant files
+CLAUDE.md
+GEMINI.md
+COPILOT.md
+CURSOR.md
+.cursorrules
+.github/copilot-instructions.md

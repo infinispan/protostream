@@ -1,48 +1,45 @@
 package org.infinispan.protostream.config;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 
 import org.infinispan.protostream.descriptors.AnnotationElement;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com
  */
 public class AnnotationConfigurationTest {
 
-   @org.junit.Rule
-   public ExpectedException exception = ExpectedException.none();
-
    @Test
    public void testNullDefaultValue() {
-      exception.expect(IllegalArgumentException.class);
-      exception.expectMessage("Default value cannot be null");
-
-      Configuration.builder()
-            .annotationsConfig()
-            .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
-            .attribute("elem1")
-            .type(AnnotationElement.AttributeType.BOOLEAN)
-            .defaultValue(null);  // exception expected here
+      var ex = assertThrows(IllegalArgumentException.class, () -> {
+         Configuration.builder()
+               .annotationsConfig()
+               .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
+               .attribute("elem1")
+               .type(AnnotationElement.AttributeType.BOOLEAN)
+               .defaultValue(null);  // exception expected here
+      });
+      assertTrue(ex.getMessage().contains("Default value cannot be null"));
    }
 
    @Test
    public void testWrongDefaultValueType() {
-     exception.expect(IllegalArgumentException.class);
-     exception.expectMessage("Illegal default value type for annotation element 'elem1'. Boolean expected.");
+      var ex = assertThrows(IllegalArgumentException.class, () -> {
+         AnnotationAttributeConfiguration.Builder builder = Configuration.builder()
+               .annotationsConfig()
+               .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
+               .attribute("elem1")
+               .type(AnnotationElement.AttributeType.BOOLEAN)
+               .defaultValue(13);  // this is not valid
 
-      AnnotationAttributeConfiguration.Builder builder = Configuration.builder()
-            .annotationsConfig()
-            .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
-            .attribute("elem1")
-            .type(AnnotationElement.AttributeType.BOOLEAN)
-            .defaultValue(13);  // this is not valid
-
-      builder.build();  // exception expected here
+         builder.build();  // exception expected here
+      });
+      assertTrue(ex.getMessage().contains("Illegal default value type for annotation element 'elem1'. Boolean expected."));
    }
 
    @Test
@@ -59,16 +56,16 @@ public class AnnotationConfigurationTest {
 
    @Test
    public void testAttributeNameMustNotBeEmpty() {
-      exception.expect(IllegalArgumentException.class);
-      exception.expectMessage("'' is not a valid annotation element name");
-
-      Configuration.builder()
-            .annotationsConfig()
-            .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
-            .metadataCreator(null)
-            .attribute("elem1")
-            .type(AnnotationElement.AttributeType.STRING)
-            .attribute("");
+      var ex = assertThrows(IllegalArgumentException.class, () -> {
+         Configuration.builder()
+               .annotationsConfig()
+               .annotation("Xyz", AnnotationElement.AnnotationTarget.MESSAGE)
+               .metadataCreator(null)
+               .attribute("elem1")
+               .type(AnnotationElement.AttributeType.STRING)
+               .attribute("");
+      });
+      assertTrue(ex.getMessage().contains("'' is not a valid annotation element name"));
    }
 
    @Test

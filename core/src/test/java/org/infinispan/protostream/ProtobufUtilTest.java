@@ -2,13 +2,14 @@ package org.infinispan.protostream;
 
 import static org.infinispan.protostream.domain.Account.Currency.BRL;
 import static org.infinispan.protostream.domain.Account.Currency.USD;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,7 +31,7 @@ import org.infinispan.protostream.domain.Item;
 import org.infinispan.protostream.domain.Numerics;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -57,7 +58,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       int messageSize = ProtobufUtil.computeMessageSize(ctx, user);
       int estimateSize = ProtobufUtil.estimateMessageSize(ctx, user);
 
-      assertTrue("Estimate was: " + estimateSize + " and actual is: " + messageSize, estimateSize >= messageSize);
+      assertTrue(estimateSize >= messageSize, "Estimate was: " + estimateSize + " and actual is: " + messageSize);
 
       assertEquals(expectedMessageSize, messageSize);
 
@@ -66,12 +67,12 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       messageSize = ProtobufUtil.computeWrappedMessageSize(ctx, user);
       estimateSize = ProtobufUtil.estimateMessageSize(ctx, user);
 
-      assertTrue("Estimate was: " + estimateSize + " and actual is: " + messageSize, estimateSize >= messageSize);
+      assertTrue(estimateSize >= messageSize, "Estimate was: " + estimateSize + " and actual is: " + messageSize);
 
       assertEquals(expectedMessageSize, messageSize);
    }
 
-   @Test(expected = MalformedProtobufException.class)
+   @Test
    public void testFromByteArrayWithExtraPadding() throws Exception {
       ImmutableSerializationContext ctx = createContext();
 
@@ -88,10 +89,11 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       System.arraycopy(userBytes, 0, userBytesWithPadding, 0, userBytes.length);
       Arrays.fill(userBytesWithPadding, userBytes.length, userBytes.length + 20, (byte) 42);
 
-      ProtobufUtil.fromByteArray(ctx, userBytesWithPadding, User.class); // this must fail
+      assertThrows(MalformedProtobufException.class, () ->
+            ProtobufUtil.fromByteArray(ctx, userBytesWithPadding, User.class));
    }
 
-   @Test(expected = IllegalStateException.class)
+   @Test
    public void testFromWrappedByteArrayWithExtraPadding() throws Exception {
       ImmutableSerializationContext ctx = createContext();
 
@@ -108,7 +110,8 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       System.arraycopy(userBytes, 0, userBytesWithPadding, 0, userBytes.length);
       Arrays.fill(userBytesWithPadding, userBytes.length, userBytes.length + 20, (byte) 42);
 
-      ProtobufUtil.fromWrappedByteArray(ctx, userBytesWithPadding); // this must fail
+      assertThrows(IllegalStateException.class, () ->
+            ProtobufUtil.fromWrappedByteArray(ctx, userBytesWithPadding));
    }
 
    @Test
@@ -158,7 +161,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    @Test
    public void testWithInvalidJson() throws Exception {
       Throwable error = testFromJson("john");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Invalid JSON"));
    }
 
@@ -171,27 +174,27 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    @Test
    public void testWithMismatchedFieldType() throws Exception {
       Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User.Address\",\"street\":\"Abbey Rd\",\"postCode\":\"NW89AY\",\"number\":\"true\"}");
-      assertTrue(error instanceof NumberFormatException);
+      assertInstanceOf(NumberFormatException.class, error);
    }
 
    @Test
    public void testWithMismatchedArrayType() throws Exception {
       Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User\",\"id\":[1,2,3],\"accountIds\":[12,24],\"name\":\"John\",\"surname\":\"Batman\",\"gender\":\"MALE\"}");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("not an array"));
    }
 
    @Test
    public void testWithMismatchedMessageType() throws Exception {
       Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User\",\"id\":1,\"accountIds\":[12,24],\"name\":{\"name\":\"John\"},\"surname\":\"Batman\",\"gender\":\"MALE\"}");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Field 'name' is not an object"));
    }
 
    @Test
    public void testWithMismatchedArrayType2() throws Exception {
       Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User\",\"id\":1,\"accountIds\":[12,24],\"name\":[1,2,3],\"surname\":\"Batman\",\"gender\":\"MALE\"}");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Field 'name' is not an array"));
    }
 
@@ -240,56 +243,56 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    @Test
    public void testWithMalformedJson() throws Exception {
       Throwable error = testFromJson("{'_type':'sample_bank_account.User.Address','street':'Abbey Rd',}");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Invalid JSON"));
    }
 
    @Test
    public void testWithInvalidTopLevelObject() throws Exception {
       Throwable error = testFromJson("[{\"a\":1}]");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Invalid top level object"));
    }
 
    @Test
    public void testWithMissingTypeSpecialField() throws Exception {
       Throwable error = testFromJson("{ \"street\":\"Abbey Rd\" }");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Expected field '_type' but it was 'street'"));
    }
 
    @Test
    public void testWithMissingValueSpecialField() throws Exception {
       Throwable error = testFromJson("{ \"_type\":\"double\", \"person\": true }");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Expected field '_value' but it was 'person"));
    }
 
    @Test
    public void testWithInvalidField() throws Exception {
       Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User.Address\",\"rua\":\"Abbey Rd\",\"postCode\":\"NW89AY\",\"number\":3}");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("field 'rua' was not found"));
    }
 
    @Test
    public void testWithInvalidEnumField() throws Exception {
       Throwable error = testFromJson("{\"_type\":\"sample_bank_account.User\",\"id\":1,\"accountIds\":[1,3],\"name\":\"John\",\"surname\":\"Batman\",\"gender\":\"NOT SURE\"}");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Invalid enum value 'NOT SURE'"));
    }
 
    @Test
    public void testWithNullEnumValue() throws Exception {
       Throwable error = testFromJson("{\"_type\":\"sample_bank_account.Account.Currency\",\"_value\": null}");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Invalid enum value 'null'"));
    }
 
    @Test
    public void testWithWrongTypeEnumValue() throws Exception {
       Throwable error = testFromJson("{\"_type\":\"sample_bank_account.Account.Currency\",\"_value\":true}");
-      assertTrue(error instanceof IllegalStateException);
+      assertInstanceOf(IllegalStateException.class, error);
       assertTrue(error.getMessage().contains("Invalid enum value 'true'"));
    }
 
@@ -475,8 +478,8 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
    private static void assertJsonNumber(ImmutableSerializationContext ctx, String type, String number) throws IOException {
       byte[] bytes = ProtobufUtil.fromCanonicalJSON(ctx, primitiveNumericJson(type, number));
       String json = ProtobufUtil.toCanonicalJSON(ctx, bytes);
-      assertTrue("type " + type + " not in " + json, json.contains(type));
-      assertTrue("value " + number + " not in " + json, json.contains(number));
+      assertTrue(json.contains(type), "type " + type + " not in " + json);
+      assertTrue(json.contains(number), "value " + number + " not in " + json);
    }
 
    private static void expectNumberFormatExceptionWithJson(ImmutableSerializationContext ctx, String type, String number) {
@@ -484,7 +487,7 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
          ProtobufUtil.fromCanonicalJSON(ctx, primitiveNumericJson(type, number));
          fail(number + " is not a valid " + type + " numeric value");
       } catch (Exception e) {
-         assertTrue("Wrong exception " + e.getMessage(), e instanceof NumberFormatException);
+         assertInstanceOf(NumberFormatException.class, e, "Wrong exception " + e.getMessage());
       }
    }
 
@@ -908,13 +911,13 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
             syntax = "proto2";
             message Person {
                optional string name = 1;
-            
+
                message Address {
                  optional string street = 1;
                  optional string city = 2;
                  optional string zip = 3;
                }
-            
+
                optional Address address = 2;
             }""";
       ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
@@ -935,14 +938,14 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
             message Person {
                optional string _type = 1;
                optional string name = 2;
-            
+
                message Address {
                  optional string _type = 1;
                  optional string street = 2;
                  optional string city = 3;
                  optional string zip = 4;
                }
-            
+
                optional Address address = 3;
             }""";
       ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
@@ -951,8 +954,8 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       String message = assertThrows(IllegalStateException.class, () -> ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json)))
          .getMessage();
 
-      assertTrue("Does not contain:\n" + message, message.contains("Message for 'Person'"));
-      assertTrue("Does not contain:\n" + message, message.contains("Field number '1' has reserved name '_type'"));
+      assertTrue(message.contains("Message for 'Person'"));
+      assertTrue(message.contains("Field number '1' has reserved name '_type'"));
    }
 
    @Test
@@ -963,14 +966,14 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
             syntax = "proto2";
             message Person {
                optional string name = 1;
-            
+
                message Address {
                  optional string street = 1;
                  optional string _type = 2;
                  optional string city = 3;
                  optional string zip = 4;
                }
-            
+
                optional Address address = 2;
             }""";
       ctx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", protoDefinition));
@@ -979,8 +982,8 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       String message = assertThrows(IllegalStateException.class, () -> ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json)))
          .getMessage();
 
-      assertTrue("Does not contain:\n" + message, message.contains("Message for 'Person.Address'"));
-      assertTrue("Does not contain:\n" + message, message.contains("Field number '2' has reserved name '_type'"));
+      assertTrue(message.contains("Message for 'Person.Address'"));
+      assertTrue(message.contains("Field number '2' has reserved name '_type'"));
    }
 
    @Test

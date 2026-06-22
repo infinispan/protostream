@@ -1,6 +1,6 @@
 package org.infinispan.protostream.test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,8 +24,8 @@ import org.jboss.marshalling.MarshallerFactory;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.Unmarshaller;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 /**
  * Compare performance (time, space) versus Java Serialization and JBoss Marshalling.
@@ -34,7 +34,7 @@ import org.junit.Test;
  *
  * @author anistor@redhat.com
  */
-@Ignore
+@Disabled
 public class PerformanceTest extends AbstractProtoStreamTest {
 
    private static final Log log = Log.LogFactory.getLog(PerformanceTest.class);

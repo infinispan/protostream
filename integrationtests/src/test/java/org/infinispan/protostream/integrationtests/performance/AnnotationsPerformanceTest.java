@@ -24,14 +24,14 @@ import org.infinispan.protostream.domain.marshallers.NoteMarshaller;
 import org.infinispan.protostream.domain.marshallers.UserMarshaller;
 import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com
  * @since 3.0
  */
-@Ignore
+@Disabled
 public class AnnotationsPerformanceTest extends AbstractProtoStreamTest {
 
    private static final Log log = Log.LogFactory.getLog(AnnotationsPerformanceTest.class);

@@ -1,14 +1,15 @@
 package org.infinispan.protostream.impl.parser;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
 import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.impl.Log;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com
@@ -17,9 +18,6 @@ import org.junit.rules.ExpectedException;
 public class AnnotationParserTest {
 
    private static final Log log = Log.LogFactory.getLog(AnnotationParserTest.class);
-
-   @org.junit.Rule
-   public ExpectedException exception = ExpectedException.none();
 
    private static final String testDoc = "\n" +
          "some garbage  \n" +
@@ -141,30 +139,28 @@ public class AnnotationParserTest {
 
    @Test
    public void testAnnotationsMustStartOnAnEmptyLine() {
-      exception.expect(AnnotationParserException.class);
-      exception.expectMessage("Error: 4,7: Annotations must start on an empty line");
-
-      testAnnotationParsing(
-            "some garbage  \n" +
-                  "\n" +
-                  "more garbage\n" +
-                  " aaa  @Abc\n" +
-                  "\n",
-            true,
-            "@Abc(\n)\n");
+      var ex = assertThrows(AnnotationParserException.class, () ->
+            testAnnotationParsing(
+                  "some garbage  \n" +
+                        "\n" +
+                        "more garbage\n" +
+                        " aaa  @Abc\n" +
+                        "\n",
+                  true,
+                  "@Abc(\n)\n"));
+      assertTrue(ex.getMessage().contains("Error: 4,7: Annotations must start on an empty line"));
    }
 
    @Test
    public void testUnexpectedShmoo() {
-      exception.expect(AnnotationParserException.class);
-      exception.expectMessage("Error: 1,1: Unexpected character: x");
-
-      testAnnotationParsing(
-            "xx\n" +
-                  "   @Abc  \n" +
-                  "\n",
-            false,
-            "@Abc(\n)\n");
+      var ex = assertThrows(AnnotationParserException.class, () ->
+            testAnnotationParsing(
+                  "xx\n" +
+                        "   @Abc  \n" +
+                        "\n",
+                  false,
+                  "@Abc(\n)\n"));
+      assertTrue(ex.getMessage().contains("Error: 1,1: Unexpected character: x"));
    }
 
    @Test
@@ -180,12 +176,13 @@ public class AnnotationParserTest {
                   ")\n");
    }
 
-   @Test(expected = AnnotationParserException.class)
+   @Test
    public void testInvalidUnicodeEscape() {
-      testAnnotationParsing(
-            "\n   @Abc(x=\"\\u000G\")  \n\n",
-            false,
-            "Should not have parsed");
+      assertThrows(AnnotationParserException.class, () ->
+            testAnnotationParsing(
+                  "\n   @Abc(x=\"\\u000G\")  \n\n",
+                  false,
+                  "Should not have parsed"));
    }
 
    private void testAnnotationParsing(String input, boolean expectDocNoise, String expectedOutput) {

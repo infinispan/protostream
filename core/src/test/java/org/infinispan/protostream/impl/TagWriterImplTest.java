@@ -1,7 +1,7 @@
 package org.infinispan.protostream.impl;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -15,7 +15,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.descriptors.WireType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anistor@redhat.com
