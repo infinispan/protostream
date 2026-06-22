@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.FileDescriptor;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SchemaEvolutionTest {
 

@@ -1,7 +1,7 @@
 package org.infinispan.protostream.processor.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.EnumSet;
@@ -11,7 +11,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.processor.tests.testdomain.MarshalledNo15GreaterThan;
 import org.infinispan.protostream.processor.tests.testdomain.MarshalledYes15GreaterThan;
 import org.infinispan.protostream.processor.tests.testdomain.SimpleEnum;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class OrderedMarshallerTest {
    @Test

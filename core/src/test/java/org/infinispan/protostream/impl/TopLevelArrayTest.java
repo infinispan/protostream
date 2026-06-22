@@ -1,7 +1,8 @@
 package org.infinispan.protostream.impl;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -15,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Try defining a protobuf type that wraps a primitive or message array and marshall it as top level object,
@@ -70,7 +71,7 @@ public class TopLevelArrayTest {
 
       Object dataOut = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
-      assertTrue(dataOut instanceof int[]);
+      assertInstanceOf(int[].class, dataOut);
       assertArrayEquals(dataIn, (int[]) dataOut);
    }
 
@@ -188,7 +189,7 @@ public class TopLevelArrayTest {
 
       Object dataOut = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
 
-      assertTrue(dataOut instanceof MyMessage[]);
+      assertInstanceOf(MyMessage[].class, dataOut);
       assertArrayEquals(dataIn, (MyMessage[]) dataOut);
    }
 

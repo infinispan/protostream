@@ -2,7 +2,7 @@
 
 ## Test Framework
 
-ProtoStream uses **JUnit 4** across all modules.
+ProtoStream uses **JUnit 6** (Jupiter) across all modules.
 
 | Module              | Test Focus                                      | Test Naming |
 |---------------------|--------------------------------------------------|-------------|
@@ -18,6 +18,9 @@ ProtoStream uses **JUnit 4** across all modules.
 Most core tests extend `AbstractProtoStreamTest`, which provides helper methods for creating a `SerializationContext` with sample domain schemas and marshallers pre-registered.
 
 ```java
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 public class MyFeatureTest extends AbstractProtoStreamTest {
 
    @Test
@@ -28,11 +31,20 @@ public class MyFeatureTest extends AbstractProtoStreamTest {
 }
 ```
 
+**Important**: JUnit 6 assertion methods place the message parameter **last** (unlike JUnit 4 where it was first):
+```java
+assertEquals(expected, actual, "message");
+assertTrue(condition, "message");
+assertThrows(ExpectedException.class, () -> codeUnderTest());
+```
+
 ### Annotation Processor Tests
 
 Processor tests use the `compile-testing` library to verify compile-time behavior:
 
 ```java
+import org.junit.jupiter.api.Test;
+
 @Test
 public void testAnnotationProcessing() {
    Compilation compilation = Compiler.javac()

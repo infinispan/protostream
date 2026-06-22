@@ -3,15 +3,15 @@ package org.infinispan.protostream.integrationtests.processor;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 import static javax.tools.StandardLocation.SOURCE_OUTPUT;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
 
 import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.testing.compile.Compilation;
 
@@ -218,15 +218,15 @@ public class AnnotationProcessorCompilationTest {
     * Asserts that the file contains a given expected string.
     */
    private static void assertFileContains(FileObject file, String string) {
-      assertTrue("File " + file.getName() + " is expected to contain '"
-            + string + "' but it doesn't.", CompilationUtils.checkFileContainsString(file, string));
+      assertTrue(CompilationUtils.checkFileContainsString(file, string),
+            "File " + file.getName() + " is expected to contain '" + string + "' but it doesn't.");
    }
 
    /**
     * Asserts that the file does not contain a given string.
     */
    private static void assertFileDoesNotContain(FileObject file, String string) {
-      assertFalse("File " + file.getName() + " is not expected to contain '"
-            + string + "' but it does.", CompilationUtils.checkFileContainsString(file, string));
+      assertFalse(CompilationUtils.checkFileContainsString(file, string),
+            "File " + file.getName() + " is not expected to contain '" + string + "' but it does.");
    }
 }

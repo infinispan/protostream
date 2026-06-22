@@ -1,5 +1,6 @@
 package org.infinispan.protostream.processor.tests.kotlin
 
+import org.assertj.core.api.Assertions.assertThat
 import org.infinispan.protostream.GeneratedSchema
 import org.infinispan.protostream.ProtobufUtil
 import org.infinispan.protostream.SerializationContextInitializer
@@ -13,10 +14,10 @@ import org.infinispan.protostream.processor.tests.kotlin.testdomain.KotlinEnum
 import org.infinispan.protostream.processor.tests.kotlin.testdomain.MessageWithDefaults
 import org.infinispan.protostream.processor.tests.kotlin.testdomain.MessageWithEnum
 import org.infinispan.protostream.processor.tests.kotlin.testdomain.MutableMessage
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 @ProtoSchema(
     schemaFileName = "kotlin_test.proto",
@@ -160,13 +161,13 @@ class KotlinProtoSchemaTest {
         val initializer: KotlinTestSchema = KotlinTestSchemaImpl()
         val protoFile = initializer.protoFile
         assertNotNull(protoFile)
-        assertTrue(protoFile.contains("message MutableMessage"))
-        assertTrue(protoFile.contains("message ImmutableMessage"))
-        assertTrue(protoFile.contains("message BooleanFieldMessage"))
-        assertTrue(protoFile.contains("enum KotlinEnum"))
-        assertTrue(protoFile.contains("message MessageWithEnum"))
-        assertTrue(protoFile.contains("message CollectionMessage"))
-        assertTrue(protoFile.contains("message MessageWithDefaults"))
-        assertTrue(protoFile.contains("message GetterAnnotatedMessage"))
+        assertThat(protoFile).contains("message MutableMessage")
+        assertThat(protoFile).contains("message ImmutableMessage")
+        assertThat(protoFile).contains("message BooleanFieldMessage")
+        assertThat(protoFile).contains("enum KotlinEnum")
+        assertThat(protoFile).contains("message MessageWithEnum")
+        assertThat(protoFile).contains("message CollectionMessage")
+        assertThat(protoFile).contains("message MessageWithDefaults")
+        assertThat(protoFile).contains("message GetterAnnotatedMessage")
     }
 }
