@@ -40,7 +40,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       checks: write
-      statuses: write
     needs: report
     if: always()
     steps:
