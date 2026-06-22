@@ -28,6 +28,8 @@ on:
       - '**/AI.md'
       - '**/AI-*.md'
 
+permissions: {}
+
 jobs:
   notice:
     runs-on: ubuntu-latest

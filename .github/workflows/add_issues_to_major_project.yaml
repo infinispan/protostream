@@ -8,8 +8,7 @@ on:
       - opened
       # Triggers the workflow when a new issue is opened in the repository.
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   add-to-project:

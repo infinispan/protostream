@@ -121,6 +121,7 @@ jobs:
   published:
     needs: release
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - uses: GOSCHEN/http-status-code@944938ed534b092b9f7e1e5c6b08c5d9bbc35162 # v1.1.0
         with:
