@@ -1122,4 +1122,197 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
       assertValid(converted);
    }
+
+   // ---- Additional mutation-coverage tests ----
+
+   @Test
+   public void testWriteToOutputStream() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ProtobufUtil.writeTo(ctx, baos, account);
+      byte[] bytes = baos.toByteArray();
+
+      Account result = ProtobufUtil.fromByteArray(ctx, bytes, Account.class);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testWriteToRandomAccessOutputStream() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      org.infinispan.protostream.RandomAccessOutputStream raos = new org.infinispan.protostream.impl.RandomAccessOutputStreamImpl(512);
+      ProtobufUtil.writeTo(ctx, raos, account);
+      byte[] bytes = raos.toByteArray();
+
+      Account result = ProtobufUtil.fromByteArray(ctx, bytes, Account.class);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testWriteToNullObject() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      assertThrows(NullPointerException.class, () -> ProtobufUtil.toByteArray(ctx, null));
+   }
+
+   @Test
+   public void testToByteBuffer() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      java.nio.ByteBuffer buffer = ProtobufUtil.toByteBuffer(ctx, account);
+      byte[] bytes = new byte[buffer.remaining()];
+      buffer.get(bytes);
+
+      Account result = ProtobufUtil.fromByteArray(ctx, bytes, Account.class);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testFromByteBuffer() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      byte[] bytes = ProtobufUtil.toByteArray(ctx, account);
+      java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(bytes);
+
+      Account result = ProtobufUtil.fromByteBuffer(ctx, buffer, Account.class);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testFromByteArrayWithOffset() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      byte[] bytes = ProtobufUtil.toByteArray(ctx, account);
+      // prepend some padding bytes
+      byte[] padded = new byte[bytes.length + 10];
+      System.arraycopy(bytes, 0, padded, 10, bytes.length);
+
+      Account result = ProtobufUtil.fromByteArray(ctx, padded, 10, bytes.length, Account.class);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testReadFromInputStreamWithLength() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      byte[] bytes = ProtobufUtil.toByteArray(ctx, account);
+      try (java.io.InputStream in = new ByteArrayInputStream(bytes)) {
+         Account result = ProtobufUtil.readFrom(ctx, in, bytes.length, Account.class);
+         assertEquals(account, result);
+      }
+   }
+
+   @Test
+   public void testReadFromInputStreamDeprecated() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      byte[] bytes = ProtobufUtil.toByteArray(ctx, account);
+      try (java.io.InputStream in = new ByteArrayInputStream(bytes)) {
+         @SuppressWarnings("deprecation")
+         Account result = ProtobufUtil.readFrom(ctx, in, Account.class);
+         assertEquals(account, result);
+      }
+   }
+
+   @Test
+   public void testFromEnumClass() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      byte[] bytes = ProtobufUtil.toByteArray(ctx, createAccount());
+      assertThrows(IllegalArgumentException.class, () -> ProtobufUtil.fromByteArray(ctx, bytes, Account.Currency.class));
+   }
+
+   @Test
+   public void testToWrappedByteBuffer() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      java.nio.ByteBuffer buffer = ProtobufUtil.toWrappedByteBuffer(ctx, account);
+      byte[] bytes = new byte[buffer.remaining()];
+      buffer.get(bytes);
+
+      Account result = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testFromWrappedByteBuffer() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, account);
+      java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(bytes);
+
+      Account result = ProtobufUtil.fromWrappedByteBuffer(ctx, buffer);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testToWrappedStreamRandomAccess() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      org.infinispan.protostream.RandomAccessOutputStream raos = new org.infinispan.protostream.impl.RandomAccessOutputStreamImpl(512);
+      ProtobufUtil.toWrappedStream(ctx, raos, account);
+      byte[] bytes = raos.toByteArray();
+
+      Account result = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testToWrappedStreamOutputStream() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ProtobufUtil.toWrappedStream(ctx, baos, account);
+      byte[] bytes = baos.toByteArray();
+
+      Account result = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(account, result);
+   }
+
+   @Test
+   @SuppressWarnings("deprecation")
+   public void testToWrappedStreamDeprecated() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ProtobufUtil.toWrappedStream(ctx, baos, account, 4096);
+      byte[] bytes = baos.toByteArray();
+
+      Account result = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testFromWrappedStreamDeprecated() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, account);
+      try (java.io.InputStream in = new ByteArrayInputStream(bytes)) {
+         @SuppressWarnings("deprecation")
+         Account result = ProtobufUtil.fromWrappedStream(ctx, in);
+         assertEquals(account, result);
+      }
+   }
+
+   @Test
+   public void testEstimateSize() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      int estimated = ProtobufUtil.estimateSize(ctx, account);
+      int actual = ProtobufUtil.toByteArray(ctx, account).length;
+      assertTrue("Estimated size " + estimated + " should be >= actual " + actual, estimated >= actual);
+   }
 }
