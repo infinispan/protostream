@@ -160,6 +160,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Incorrect array field type. Number=%d Field=%s", id =42)
    IllegalStateException incorrectArrayField(int fieldNumber, FieldDescriptor fieldDescriptor);
 
+   @Message(value = "Unknown field number %d: no descriptor available", id = 43)
+   IllegalStateException unknownField(int fieldNumber);
+
    class LogFactory {
       public static Log getLog(Class<?> clazz) {
          return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
