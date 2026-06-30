@@ -41,6 +41,8 @@ import org.infinispan.protostream.containers.IndexedElementContainer;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 import org.infinispan.protostream.containers.IterableElementContainer;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
+import org.infinispan.protostream.containers.MapElementContainer;
+import org.infinispan.protostream.containers.MapElementContainerAdapter;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.Log;
@@ -70,6 +72,8 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
 
    private final boolean isIterableContainer;
 
+   private final boolean isMapContainer;
+
    private final boolean isOrderedMarshallable;
 
    private XExecutable factory;
@@ -90,6 +94,7 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       this.isAdapter = javaClass != annotatedClass;
       this.isIndexedContainer = annotatedClass.isAssignableTo(isAdapter ? IndexedElementContainerAdapter.class : IndexedElementContainer.class);
       this.isIterableContainer = annotatedClass.isAssignableTo(isAdapter ? IterableElementContainerAdapter.class : IterableElementContainer.class);
+      this.isMapContainer = annotatedClass.isAssignableTo(isAdapter ? MapElementContainerAdapter.class : MapElementContainer.class);
       this.isOrderedMarshallable = protoSchemaGenerator.orderedMarshaller();
 
       checkInstantiability();
@@ -125,8 +130,12 @@ public class ProtoMessageTypeMetadata extends ProtoTypeMetadata {
       return isIterableContainer;
    }
 
+   public boolean isMapContainer() {
+      return isMapContainer;
+   }
+
    public boolean isContainer() {
-      return isIterableContainer || isIndexedContainer;
+      return isIterableContainer || isIndexedContainer || isMapContainer;
    }
 
    public boolean isOrderedMarshallable() {
