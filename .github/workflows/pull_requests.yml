@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   jdk:
@@ -29,7 +30,11 @@ jobs:
           cache: maven
 
       - name: JDK Tests ${{ matrix.jdk }}
-        run: ./mvnw -B clean install artifact:compare -Dmaven.test.failure.ignore=true -Dansi.strip=true
+        run: ./mvnw -B clean install artifact:compare -Dmaven.test.failure.ignore=true -Dansi.strip=true ${{ matrix.jdk == 17 && '-Pcoverage' || '' }}
+
+      - name: Generate aggregate coverage report
+        if: matrix.jdk == 17
+        run: ./mvnw -B verify -PjacocoReport -Dansi.strip=true
 
       - name: Test Logs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -37,6 +42,16 @@ jobs:
         with:
           name: ${{ matrix.jdk }}-test-results
           path: "**/target/*-reports*/**/TEST-*.xml"
+
+      - name: Add coverage to PR
+        if: matrix.jdk == 17 && github.event_name == 'pull_request'
+        uses: vilmosnagy/jacoco-report@4982e687fa89217b469696f8633358606c4f3172 # 1.8.0
+        with:
+          paths: jacoco-report/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 40
+          min-coverage-changed-files: 60
+
   jdk-summary:
     name: JDK Build Summary
     runs-on: ubuntu-latest
