@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,7 @@ import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.containers.IndexedElementContainerAdapter;
 import org.infinispan.protostream.containers.IterableElementContainerAdapter;
+import org.infinispan.protostream.containers.MapElementContainerAdapter;
 import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.processor.types.HasModelElement;
 
@@ -184,6 +186,13 @@ final class MarshallerSourceCodeGenerator extends AbstractMarshallerCodeGenerato
       if (pmtm.isIndexedContainer()) {
          elementType = pmtm.getAnnotatedClass().getGenericInterfaceParameterTypes(IndexedElementContainerAdapter.class)[1];
          iw.printf(", %s<%s, %s>", IndexedElementContainerAdapter.class.getName(), pmtm.getJavaClassName(), elementType);
+      } else if (pmtm.isMapContainer()) {
+         String[] types = pmtm.getAnnotatedClass().getGenericInterfaceParameterTypes(MapElementContainerAdapter.class);
+         String map = pmtm.getJavaClassName();
+         String key = types[0];
+         String value = types[1];
+         elementType = Map.Entry.class.getCanonicalName();
+         iw.printf(", %s<%s, %s, %s<%s, %s>>", MapElementContainerAdapter.class.getName(), key, value, map, key, value);
       } else if (pmtm.isIterableContainer()) {
          elementType = pmtm.getAnnotatedClass().getGenericInterfaceParameterTypes(IterableElementContainerAdapter.class)[1];
          iw.printf(", %s<%s, %s>", IterableElementContainerAdapter.class.getName(), pmtm.getJavaClassName(), elementType);
