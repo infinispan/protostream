@@ -77,7 +77,7 @@
 
         <version.infinispan.checkstyle>16.2.1</version.infinispan.checkstyle>
         <version.com.puppycrawl.tools.checkstyle>12.3.1</version.com.puppycrawl.tools.checkstyle>
-        <version.junit>6.1.0</version.junit>
+        <version.junit>6.1.1</version.junit>
         <version.compile-testing>0.21</version.compile-testing>
         <version.mockito>5.23.0</version.mockito>
         <version.jboss.logging>3.6.3.Final</version.jboss.logging>
