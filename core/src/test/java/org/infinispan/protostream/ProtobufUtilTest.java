@@ -1127,4 +1127,54 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
       assertValid(converted);
    }
+
+   // ---- Additional mutation-coverage tests ----
+
+   @Test
+   public void testWriteToNullObject() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      assertThrows(NullPointerException.class, () -> ProtobufUtil.toByteArray(ctx, null));
+   }
+
+   @Test
+   public void testToByteBuffer() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      java.nio.ByteBuffer buffer = ProtobufUtil.toByteBuffer(ctx, account);
+      byte[] bytes = new byte[buffer.remaining()];
+      buffer.get(bytes);
+
+      Account result = ProtobufUtil.fromByteArray(ctx, bytes, Account.class);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testFromByteBuffer() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      byte[] bytes = ProtobufUtil.toByteArray(ctx, account);
+      java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(bytes);
+
+      Account result = ProtobufUtil.fromByteBuffer(ctx, buffer, Account.class);
+      assertEquals(account, result);
+   }
+
+   @Test
+   public void testFromEnumClass() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      byte[] bytes = ProtobufUtil.toByteArray(ctx, createAccount());
+      assertThrows(IllegalArgumentException.class, () -> ProtobufUtil.fromByteArray(ctx, bytes, Account.Currency.class));
+   }
+
+   @Test
+   public void testEstimateSize() throws Exception {
+      ImmutableSerializationContext ctx = createContext();
+      Account account = createAccount();
+
+      int estimated = ProtobufUtil.estimateSize(ctx, account);
+      int actual = ProtobufUtil.toByteArray(ctx, account).length;
+      assertTrue(estimated >= actual, "Estimated size " + estimated + " should be >= actual " + actual);
+   }
 }
