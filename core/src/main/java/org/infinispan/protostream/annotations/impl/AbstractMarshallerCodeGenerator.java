@@ -168,6 +168,14 @@ public abstract class AbstractMarshallerCodeGenerator {
       return "__a$" + field.getNumber();
    }
 
+   private String makeArrayLenVar(ProtoFieldMetadata field) {
+      return "__c$" + field.getNumber() + "_len";
+   }
+
+   private boolean isPrimitiveArray(ProtoFieldMetadata field) {
+      return field.isArray() && field.getJavaType().isPrimitive();
+   }
+
    /*
     * Make field name for caching a marshaller delegate for a related message.
     */
@@ -255,27 +263,42 @@ public abstract class AbstractMarshallerCodeGenerator {
 
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          if (fieldMetadata.isRepeated()) {
-            // a collection local variable
-            iw.printf("%s %s = ", fieldMetadata.getRepeatedImplementation().getCanonicalName(), makeCollectionLocalVar(fieldMetadata));
-            if (noDefaults || fieldMetadata.isArray()) {
-               iw.print("null");
-            } else if (fieldMetadata.isMap()) {
-               iw.printf("new %s()",
-                     fieldMetadata.getRepeatedImplementation().getCanonicalName()
-               );
+            if (isPrimitiveArray(fieldMetadata)) {
+               // primitive array buffer + length counter to avoid boxing
+               iw.printf("%s[] %s = null;\n", fieldMetadata.getJavaTypeName(), makeCollectionLocalVar(fieldMetadata));
+               iw.printf("int %s = 0;\n", makeArrayLenVar(fieldMetadata));
+               if (!noFactory && fieldMetadata.isArray()) {
+                  iw.printf("%s[] %s = ", fieldMetadata.getJavaTypeName(), makeArrayLocalVar(fieldMetadata));
+                  if (noDefaults) {
+                     iw.print("null");
+                  } else {
+                     iw.printf("new %s[0]", fieldMetadata.getJavaTypeName());
+                  }
+                  iw.println(";");
+               }
             } else {
-               iw.printf("new %s()", fieldMetadata.getRepeatedImplementation().getCanonicalName());
-            }
-            iw.println(";");
-            if (!noFactory && fieldMetadata.isArray()) {
-               // an array local variable
-               iw.printf("%s[] %s = ", fieldMetadata.getJavaTypeName(), makeArrayLocalVar(fieldMetadata));
-               if (noDefaults) {
+               // a collection local variable
+               iw.printf("%s %s = ", fieldMetadata.getRepeatedImplementation().getCanonicalName(), makeCollectionLocalVar(fieldMetadata));
+               if (noDefaults || fieldMetadata.isArray()) {
                   iw.print("null");
+               } else if (fieldMetadata.isMap()) {
+                  iw.printf("new %s()",
+                        fieldMetadata.getRepeatedImplementation().getCanonicalName()
+                  );
                } else {
-                  iw.printf("new %s[0]", fieldMetadata.getJavaTypeName());
+                  iw.printf("new %s()", fieldMetadata.getRepeatedImplementation().getCanonicalName());
                }
                iw.println(";");
+               if (!noFactory && fieldMetadata.isArray()) {
+                  // an array local variable
+                  iw.printf("%s[] %s = ", fieldMetadata.getJavaTypeName(), makeArrayLocalVar(fieldMetadata));
+                  if (noDefaults) {
+                     iw.print("null");
+                  } else {
+                     iw.printf("new %s[0]", fieldMetadata.getJavaTypeName());
+                  }
+                  iw.println(";");
+               }
             }
          } else if (!noFactory) {
             // immutable messages need a per-field local variable initialized to default value if any
@@ -388,10 +411,17 @@ public abstract class AbstractMarshallerCodeGenerator {
             String val = toJavaLiteral(defaultValue, fieldMetadata.getJavaType());
             if (fieldMetadata.isRepeated()) {
                String c = makeCollectionLocalVar(fieldMetadata);
-               if (noDefaults || fieldMetadata.isArray()) {
-                  iw.printf("if (%s == null) %s = new %s();\n", c, c, fieldMetadata.getRepeatedImplementation().getCanonicalName());
+               if (isPrimitiveArray(fieldMetadata)) {
+                  String lenVar = makeArrayLenVar(fieldMetadata);
+                  iw.printf("if (%s == null) %s = new %s[8];\n", c, c, fieldMetadata.getJavaTypeName());
+                  iw.printf("else if (%s == %s.length) %s = java.util.Arrays.copyOf(%s, %s.length * 2);\n", lenVar, c, c, c, c);
+                  iw.printf("%s[%s++] = %s;\n", c, lenVar, val);
+               } else {
+                  if (noDefaults || fieldMetadata.isArray()) {
+                     iw.printf("if (%s == null) %s = new %s();\n", c, c, fieldMetadata.getRepeatedImplementation().getCanonicalName());
+                  }
+                  iw.printf("%s.add(%s);\n", c, box(val, typeFactory.fromClass(defaultValue.getClass())));
                }
-               iw.printf("%s.add(%s);\n", c, box(val, typeFactory.fromClass(defaultValue.getClass())));
             } else {
                if (noFactory) {
                   iw.printf("%s;\n", createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", box(val, fieldMetadata.getJavaType())));
@@ -407,32 +437,36 @@ public abstract class AbstractMarshallerCodeGenerator {
       for (ProtoFieldMetadata fieldMetadata : messageTypeMetadata.getFields().values()) {
          if (fieldMetadata.isRepeated()) {
             String c = makeCollectionLocalVar(fieldMetadata);
-            if (fieldMetadata.isArray()) {
+            if (isPrimitiveArray(fieldMetadata)) {
+               String lenVar = makeArrayLenVar(fieldMetadata);
                if (fieldMetadata.getDefaultValue() == null) {
                   iw.printf("if (%s != null)", c);
                }
                iw.println("{");
                iw.inc();
                String a = makeArrayLocalVar(fieldMetadata);
-               if (fieldMetadata.getJavaType().isPrimitive()) {
-                  if (noFactory) {
-                     iw.printf("%s[] ", fieldMetadata.getJavaTypeName());
-                  }
-                  iw.printf("%s = new %s[%s.size()];\n", a, fieldMetadata.getJavaTypeName(), c);
-                  XClass boxedType = box(fieldMetadata.getJavaType());
-                  iw.println("int _j =0;");
-                  iw.printf("for (java.util.Iterator _it = %s.iterator(); _it.hasNext();) %s[_j++] = %s;\n", c, a, unbox("((" + boxedType.getName() + ") _it.next())", boxedType));
+               String trimExpr = String.format("(%s == %s.length) ? %s : java.util.Arrays.copyOf(%s, %s)", lenVar, c, c, c, lenVar);
+               if (noFactory) {
+                  iw.printf("%s[] %s = %s;\n", fieldMetadata.getJavaTypeName(), a, trimExpr);
                   c = a;
                } else {
-                  c = "(" + fieldMetadata.getJavaTypeName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaTypeName() + "[0])";
+                  iw.printf("%s = %s;\n", a, trimExpr);
                }
-            }
-            if (noFactory) {
-               iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", c)).append(";\n");
-            } else if (fieldMetadata.isArray() && !fieldMetadata.getJavaType().isPrimitive()) {
-               iw.append(makeArrayLocalVar(fieldMetadata)).append(" = ").append(c).append(";\n");
+            } else if (fieldMetadata.isArray()) {
+               if (fieldMetadata.getDefaultValue() == null) {
+                  iw.printf("if (%s != null)", c);
+               }
+               iw.println("{");
+               iw.inc();
+               String a = makeArrayLocalVar(fieldMetadata);
+               c = "(" + fieldMetadata.getJavaTypeName() + "[])" + c + ".toArray(new " + fieldMetadata.getJavaTypeName() + "[0])";
             }
             if (fieldMetadata.isArray()) {
+               if (noFactory) {
+                  iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", c)).append(";\n");
+               } else if (!fieldMetadata.getJavaType().isPrimitive()) {
+                  iw.append(makeArrayLocalVar(fieldMetadata)).append(" = ").append(c).append(";\n");
+               }
                iw.dec().append('}');
                if (!noDefaults && fieldMetadata.getDefaultValue() == null) {
                   c = "new " + fieldMetadata.getJavaTypeName() + "[0]";
@@ -445,6 +479,8 @@ public abstract class AbstractMarshallerCodeGenerator {
                   }
                   iw.dec().println("}");
                }
+            } else if (noFactory) {
+               iw.append(createSetPropExpr(messageTypeMetadata, fieldMetadata, "o", c)).append(";\n");
             }
             iw.println();
          }
@@ -748,10 +784,17 @@ public abstract class AbstractMarshallerCodeGenerator {
       if (fieldMetadata.isRepeated()) {
          if (!fieldMetadata.isMap()) {
             String c = makeCollectionLocalVar(fieldMetadata);
-            if (noDefaults || fieldMetadata.isArray()) {
-               iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(fieldMetadata.getRepeatedImplementation().getCanonicalName()).append("();\n");
+            if (isPrimitiveArray(fieldMetadata)) {
+               String lenVar = makeArrayLenVar(fieldMetadata);
+               iw.printf("if (%s == null) %s = new %s[8];\n", c, c, fieldMetadata.getJavaTypeName());
+               iw.printf("else if (%s == %s.length) %s = java.util.Arrays.copyOf(%s, %s.length * 2);\n", lenVar, c, c, c, c);
+               iw.printf("%s[%s++] = %s;\n", c, lenVar, v);
+            } else {
+               if (noDefaults || fieldMetadata.isArray()) {
+                  iw.append("if (").append(c).append(" == null) ").append(c).append(" = new ").append(fieldMetadata.getRepeatedImplementation().getCanonicalName()).append("();\n");
+               }
+               iw.append(c).append(".add(").append(box(v, box(fieldMetadata.getJavaType()))).append(");\n");
             }
-            iw.append(c).append(".add(").append(box(v, box(fieldMetadata.getJavaType()))).append(");\n");
          }
       } else {
          if (messageTypeMetadata.getFactory() == null) {

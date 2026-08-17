@@ -180,6 +180,70 @@ public class ProtoSchemaTest {
    }
 
    @Test
+   public void testRecordRoundTripWithFloats() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      new TestSerializationContextInitializerImpl().register(ctx);
+
+      float[] someFloats = {3.14f, 3.15f, 3.16f};
+      List<String> things = List.of("a", "b", "c");
+      Map<String, String> aMap = Map.of("k1", "v1", "k2", "v2");
+
+      SimpleRecord simpleRecord = new SimpleRecord("hello", 42, SimpleEnum.B, things, someFloats, aMap);
+      byte[] simpleBytes = ProtobufUtil.toWrappedByteArray(ctx, simpleRecord);
+      SimpleRecord simpleCopy = ProtobufUtil.fromWrappedByteArray(ctx, simpleBytes);
+      assertEquals("hello", simpleCopy.aString());
+      assertEquals(42, simpleCopy.anInt());
+      assertEquals(SimpleEnum.B, simpleCopy.anEnum());
+      assertEquals(things, simpleCopy.things());
+      assertArrayEquals(someFloats, simpleCopy.someFloats(), 0.0f);
+      assertEquals(aMap, simpleCopy.aMapOfStrings());
+
+      OuterRecord outerRecord = new OuterRecord("world", 7, OuterRecord.InnerEnum.TWO, things, someFloats, aMap);
+      byte[] outerBytes = ProtobufUtil.toWrappedByteArray(ctx, outerRecord);
+      OuterRecord outerCopy = ProtobufUtil.fromWrappedByteArray(ctx, outerBytes);
+      assertEquals("world", outerCopy.aString());
+      assertEquals(7, outerCopy.anInt());
+      assertEquals(OuterRecord.InnerEnum.TWO, outerCopy.anEnum());
+      assertEquals(things, outerCopy.things());
+      assertArrayEquals(someFloats, outerCopy.someFloats(), 0.0f);
+      assertEquals(aMap, outerCopy.aMapOfStrings());
+   }
+
+   @Test
+   public void testRepeatedFieldBufferGrowth() throws Exception {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      new TestSerializationContextInitializerImpl().register(ctx);
+
+      // The generated marshaller starts primitive array accumulators at capacity 8, so use 20
+      // elements to exercise the grow-and-copy path (8 -> 16 -> 32) on read.
+      int count = 20;
+      byte[] someBytes = new byte[count];
+      short[] someShorts = new short[count];
+      float[] someFloats = new float[count];
+      List<Integer> someInts = new ArrayList<>(count);
+      for (int i = 0; i < count; i++) {
+         someBytes[i] = (byte) i;
+         someShorts[i] = (short) (i * 100);
+         someFloats[i] = i + 0.5f;
+         someInts.add(i * 1000);
+      }
+
+      X x = new X();
+      x.someBytes = someBytes;
+      x.someShorts = someShorts;
+      x.someFloats = someFloats;
+      x.someInts = someInts;
+
+      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, x);
+      X copy = ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+
+      assertArrayEquals(someBytes, copy.someBytes);
+      assertArrayEquals(someShorts, copy.someShorts);
+      assertArrayEquals(someFloats, copy.someFloats, 0.0f);
+      assertEquals(someInts, copy.someInts);
+   }
+
+   @Test
    public void testInheritedTypes() {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
