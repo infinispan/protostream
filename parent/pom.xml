@@ -89,7 +89,7 @@
         <version.auto-service>1.1.1</version.auto-service>
         <version.assertj>3.27.7</version.assertj>
         <version.errorprone>2.50.0</version.errorprone>
-        <version.protobuf>4.35.1</version.protobuf>
+        <version.protobuf>4.36.0</version.protobuf>
         <version.jacoco>0.8.15</version.jacoco>
     </properties>
 
