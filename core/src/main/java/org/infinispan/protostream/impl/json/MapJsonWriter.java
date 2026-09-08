@@ -31,6 +31,10 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 final class MapJsonWriter extends BaseJsonWriter {
 
    private FieldAwareTagHandler delegate;
+
+   // The descriptor of the value field of the current entry.
+   // It is not-null only while the value is a nested message being written by the delegate.
+   private FieldDescriptor valueField;
    private int lastField = 0;
    private boolean done;
 
@@ -62,15 +66,31 @@ final class MapJsonWriter extends BaseJsonWriter {
          return;
       }
 
+      if (delegate != null) {
+         // The value message is still open.
+         // Any nested structure starting now belongs to it (or to a structure it contains), delegate it.
+         delegate.onStartNested(fieldNumber, fieldDescriptor);
+         return;
+      }
+
       if (fieldNumber != MAP_VALUE_FIELD)
          throw new IllegalStateException("Maps only have nested objects for values");
 
+      valueField = fieldDescriptor;
       delegate = createDelegate(fieldNumber, fieldDescriptor);
       pushToken(JsonToken.LEFT_BRACE);
    }
 
    @Override
    public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
+      if (delegate != null) {
+         // The value message is still open.
+         // This tag belongs to the value message (or to a structure it contains), delegate it.
+         delegate.onTag(fieldNumber, fieldDescriptor, tagValue);
+         lastField = delegate.field();
+         return;
+      }
+
       lastField = fieldNumber;
       if (fieldNumber == MAP_KEY_FIELD) {
          if (lastToken() == JsonToken.COLON)
@@ -78,12 +98,6 @@ final class MapJsonWriter extends BaseJsonWriter {
 
          pushToken(JsonTokenWriter.string(Objects.toString(tagValue)));
          pushToken(JsonToken.COLON);
-         return;
-      }
-
-      if (delegate != null) {
-         lastField = delegate.field();
-         delegate.onTag(fieldNumber, fieldDescriptor, tagValue);
          return;
       }
 
@@ -95,8 +109,14 @@ final class MapJsonWriter extends BaseJsonWriter {
    @Override
    public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
       if (delegate != null) {
+         // The value message is still open.
+         // This end belongs either to a structure inside the value message, or to the value message itself.
          delegate.onEndNested(fieldNumber, fieldDescriptor);
-         delegate = null;
+         if (fieldDescriptor == valueField) {
+            delegate = null;
+            valueField = null;
+            lastField = MAP_VALUE_FIELD;
+         }
          return;
       }
 

@@ -988,8 +988,118 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       assertThat(message).contains("Field number '2' has reserved name '_type'");
    }
 
-   @Test
-   public void testStructuredObject() throws IOException {
+    @Test
+    public void testMapWithNestedObjectValues() throws Exception {
+       SerializationContext ctx = ProtobufUtil.newSerializationContext();
+       final String protoDefinition = """
+          syntax = "proto2";
+          message RootAuthenticationSessionEntity {
+             optional string realmId = 1;
+             optional string id = 2;
+             optional int64 timestamp = 3;
+             map<string, AuthenticationSession> authenticationSessions = 4;
+          }
+          message AuthenticationSession {
+             enum Action {
+                AUTHENTICATE = 1;
+             }
+             enum ExecutionStatus {
+                CHALLENGED = 1;
+                ATTEMPTED = 2;
+                SUCCESS = 3;
+             }
+             optional string clientUUID = 1;
+             optional int64 timestamp = 2;
+             optional string redirectUri = 3;
+             optional Action action = 4;
+             map<string, ExecutionStatus> executionStatus = 5;
+             optional string protocol = 6;
+             map<string, string> clientNotes = 7;
+             map<string, string> authNotes = 8;
+          }""";
+       ctx.registerProtoFiles(FileDescriptorSource.fromString("keycloak_session.proto", protoDefinition));
+
+       final String json = """
+          {
+             "_type": "RootAuthenticationSessionEntity",
+             "realmId": "83e700f0-1049-4075-a228-155d2869d4a6",
+             "id": "CAksZ3AQD1xfTZRECAP5x1aF",
+             "timestamp": 1788826800,
+             "authenticationSessions": {
+                "rNQe4Of_sQM": {
+                   "clientUUID": "c0d44283-b7e1-4f4c-9d34-d07d4309d0a0",
+                   "timestamp": 1788826800,
+                   "redirectUri": "http://localhost:8080/admin/master/console/",
+                   "action": "AUTHENTICATE",
+                   "executionStatus": {
+                      "b7c18297-aa4d-401f-909e-e1117ffff85c": "CHALLENGED",
+                      "a350caca-652e-4e76-956d-9625159bb45f": "ATTEMPTED"
+                   },
+                   "protocol": "openid-connect",
+                   "clientNotes": {
+                      "scope": "openid"
+                   },
+                   "authNotes": {
+                      "auth_type": "code"
+                   }
+                }
+             }
+          }""";
+       byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+       String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+       assertValid(converted);
+       assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+    }
+
+    @Test
+    public void testMapWithMultipleNestedObjectValues() throws Exception {
+       SerializationContext ctx = ProtobufUtil.newSerializationContext();
+       final String protoDefinition = """
+          syntax = "proto2";
+          message RootAuthenticationSessionEntity {
+             optional string realmId = 1;
+             map<string, AuthenticationSession> authenticationSessions = 2;
+          }
+          message AuthenticationSession {
+             enum ExecutionStatus {
+                CHALLENGED = 1;
+                ATTEMPTED = 2;
+             }
+             optional string clientUUID = 1;
+             optional int64 timestamp = 2;
+             map<string, ExecutionStatus> executionStatus = 3;
+          }""";
+       ctx.registerProtoFiles(FileDescriptorSource.fromString("keycloak_sessions.proto", protoDefinition));
+
+       final String json = """
+          {
+             "_type": "RootAuthenticationSessionEntity",
+             "realmId": "83e700f0-1049-4075-a228-155d2869d4a6",
+             "authenticationSessions": {
+                "rNQe4Of_sQM": {
+                   "clientUUID": "c0d44283-b7e1-4f4c-9d34-d07d4309d0a0",
+                   "timestamp": 1788826800,
+                   "executionStatus": {
+                      "b7c18297-aa4d-401f-909e-e1117ffff85c": "CHALLENGED"
+                   }
+                },
+                "anotherSession": {
+                   "clientUUID": "a1c05359-e57b-492b-8b5c-9e4ba82e94a2",
+                   "timestamp": 1788826900,
+                   "executionStatus": {
+                      "a350caca-652e-4e76-956d-9625159bb45f": "ATTEMPTED"
+                   }
+                }
+             }
+          }""";
+       byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+       String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+       assertValid(converted);
+       assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+    }
+
+    @Test
+    public void testStructuredObject() throws IOException {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       final String protoDefinition = """
          syntax = "proto2";
@@ -1168,13 +1278,39 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
       assertThrows(IllegalArgumentException.class, () -> ProtobufUtil.fromByteArray(ctx, bytes, Account.Currency.class));
    }
 
-   @Test
-   public void testEstimateSize() throws Exception {
-      ImmutableSerializationContext ctx = createContext();
-      Account account = createAccount();
+    @Test
+    public void testEstimateSize() throws Exception {
+       ImmutableSerializationContext ctx = createContext();
+       Account account = createAccount();
 
-      int estimated = ProtobufUtil.estimateSize(ctx, account);
-      int actual = ProtobufUtil.toByteArray(ctx, account).length;
-      assertTrue(estimated >= actual, "Estimated size " + estimated + " should be >= actual " + actual);
-   }
+       int estimated = ProtobufUtil.estimateSize(ctx, account);
+       int actual = ProtobufUtil.toByteArray(ctx, account).length;
+       assertTrue(estimated >= actual, "Estimated size " + estimated + " should be >= actual " + actual);
+    }
+
+    @Test
+    public void testRepeatedFieldFirstInObject() throws Exception {
+       SerializationContext ctx = ProtobufUtil.newSerializationContext();
+       final String protoDefinition = """
+          syntax = "proto2";
+          message Outer {
+              optional string name=1;
+              optional Inner inner=2;
+          }
+          message Inner {
+              repeated string tags=1;
+          }""";
+       ctx.registerProtoFiles(FileDescriptorSource.fromString("repeated_first.proto", protoDefinition));
+
+       final String json = """
+          {
+             "_type": "Outer",
+             "name": "a",
+             "inner": {"tags": ["x","y"]}
+          }""";
+       byte[] protobuf = ProtobufUtil.fromCanonicalJSON(ctx, new StringReader(json));
+       String converted = ProtobufUtil.toCanonicalJSON(ctx, protobuf);
+       assertValid(converted);
+       assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
+    }
 }
