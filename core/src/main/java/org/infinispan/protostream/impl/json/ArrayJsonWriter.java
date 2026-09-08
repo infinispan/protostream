@@ -68,12 +68,15 @@ final class ArrayJsonWriter extends BaseJsonWriter {
          done = false;
       } else {
          // Otherwise, we are starting a fresh list.
-         // We populate the property name if we're starting a list where it is still missing.
-         if (JsonToken.followedByComma(lastToken())) {
-            pushToken(JsonToken.COMMA);
-            pushToken(JsonTokenWriter.string(fieldDescriptor.getName()));
-            pushToken(JsonToken.COLON);
-         }
+          // We populate the property name if we're starting a list where it is still missing.
+          if (JsonToken.followedByComma(lastToken())) {
+             pushToken(JsonToken.COMMA);
+             pushToken(JsonTokenWriter.string(fieldDescriptor.getName()));
+             pushToken(JsonToken.COLON);
+          } else if (JsonToken.isOpen(lastToken())) {
+             pushToken(JsonTokenWriter.string(fieldDescriptor.getName()));
+             pushToken(JsonToken.COLON);
+          }
          pushToken(JsonToken.LEFT_BRACKET);
       }
 
