@@ -90,7 +90,7 @@
         <version.assertj>3.27.7</version.assertj>
         <version.errorprone>2.50.0</version.errorprone>
         <version.protobuf>4.36.2</version.protobuf>
-        <version.jacoco>0.8.15</version.jacoco>
+        <version.jacoco>0.8.16</version.jacoco>
     </properties>
 
     <dependencyManagement>
