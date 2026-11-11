@@ -1313,4 +1313,85 @@ public class ProtobufUtilTest extends AbstractProtoStreamTest {
        assertValid(converted);
        assertEquals(json.replaceAll("[\\s\\n]+", ""), converted);
     }
+
+    @Test
+    public void testSplitJoinWrappedMessageRoundTrip() throws Exception {
+       ImmutableSerializationContext ctx = createContext();
+
+       User user = new User();
+       user.setId(1);
+       user.setName("John");
+       byte[] wrapped = ProtobufUtil.toWrappedByteArray(ctx, user);
+
+       ProtobufUtil.WrappedMessageParts parts = ProtobufUtil.splitWrappedMessage(wrapped);
+       // User is registered with a numeric type id
+       assertEquals(100042, parts.typeId());
+       assertNull(parts.typeName());
+       assertNotNull(parts.message());
+
+       // joining the parts reproduces the original envelope byte-for-byte
+       assertArrayEquals(wrapped, ProtobufUtil.joinWrappedMessage(parts.typeName(), parts.typeId(), parts.message()));
+    }
+
+    @Test
+    public void testSplitJoinWithTypeName() throws Exception {
+       byte[] inner = new byte[]{0x0A, 0x03, 'a', 'b', 'c'};
+       byte[] wrapped = ProtobufUtil.joinWrappedMessage("sample_bank_account.User", null, inner);
+
+       ProtobufUtil.WrappedMessageParts parts = ProtobufUtil.splitWrappedMessage(wrapped);
+       assertEquals("sample_bank_account.User", parts.typeName());
+       assertNull(parts.typeId());
+       assertArrayEquals(inner, parts.message());
+
+       assertArrayEquals(wrapped, ProtobufUtil.joinWrappedMessage(parts.typeName(), parts.typeId(), parts.message()));
+    }
+
+    @Test
+    public void testSplitSkipsUnknownEnvelopeFields() throws Exception {
+       // typeId=100042, then unknown fields (varint, fixed64, group), then the wrapped message
+       byte[] wrapped = new byte[]{
+             (byte) 0x98, 0x01, (byte) 0xCA, (byte) 0x8D, 0x06,   // field 19 (typeId) = 100042
+             0x28, 0x09,                            // unknown field 5 (varint) = 9
+             0x31, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, // unknown field 6 (fixed64)
+             0x3B, 0x08, 0x09, 0x3C,                 // unknown field 7 (group) { 1: 9 }
+             (byte) 0x8A, 0x01, 0x05, 0x0A, 0x03, 'a', 'b', 'c' // field 17 (message) = "abc" in field 1
+       };
+
+       ProtobufUtil.WrappedMessageParts parts = ProtobufUtil.splitWrappedMessage(wrapped);
+       assertEquals(100042, parts.typeId());
+       assertNull(parts.typeName());
+       assertArrayEquals(new byte[]{0x0A, 0x03, 'a', 'b', 'c'}, parts.message());
+    }
+
+    @Test
+    public void testSplitMalformedWrapped() throws Exception {
+       // truncated typeId varint
+      assertThrows(MalformedProtobufException.class, () -> ProtobufUtil.splitWrappedMessage(new byte[]{(byte) 0x98, 0x01, (byte) 0xEE}));
+       // message length longer than the remaining bytes
+       assertThrows(MalformedProtobufException.class, () -> ProtobufUtil.splitWrappedMessage(new byte[]{(byte) 0x8A, 0x01, 0x05, 0x0A}));
+       // unterminated group in the envelope
+       assertThrows(MalformedProtobufException.class, () -> ProtobufUtil.splitWrappedMessage(new byte[]{0x3B, 0x08, 0x09}));
+       // length inside a group whose int cast is negative (2^31) must not move the position out of bounds
+       assertThrows(MalformedProtobufException.class, () -> ProtobufUtil.splitWrappedMessage(
+             new byte[]{0x3B, 0x0A, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, 0x08}));
+       // length inside a group that points back at the tag start must not loop forever
+       assertThrows(MalformedProtobufException.class, () -> ProtobufUtil.splitWrappedMessage(
+             new byte[]{0x3B, 0x0A, (byte) 0xF5, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 0x01}));
+       // fixed64 field with fewer than 8 remaining bytes
+       assertThrows(MalformedProtobufException.class, () -> ProtobufUtil.splitWrappedMessage(
+             new byte[]{(byte) 0x91, 0x02, 0x01, 0x02, 0x03, 0x04}));
+       // END_GROUP field number does not match the open group
+       assertThrows(MalformedProtobufException.class, () -> ProtobufUtil.splitWrappedMessage(
+             new byte[]{0x3B, 0x08, 0x09, 0x44}));
+       // length near Long.MAX_VALUE overflows a pos+length bounds check; must not escape as an unchecked exception
+       assertThrows(MalformedProtobufException.class, () -> ProtobufUtil.splitWrappedMessage(
+             new byte[]{(byte) 0x8A, 0x01, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+                   (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 0x00}));
+    }
+
+    @Test
+    public void testJoinWrappedMessageRejectsBothIdentifiers() {
+       assertThrows(IllegalArgumentException.class,
+             () -> ProtobufUtil.joinWrappedMessage("sample_bank_account.User", 42, new byte[0]));
+    }
 }

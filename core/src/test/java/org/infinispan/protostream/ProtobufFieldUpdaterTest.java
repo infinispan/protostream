@@ -1,6 +1,8 @@
 package org.infinispan.protostream;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.domain.Account;
 import org.infinispan.protostream.domain.Address;
 import org.infinispan.protostream.domain.User;
 import org.infinispan.protostream.test.AbstractProtoStreamTest;
@@ -165,6 +168,78 @@ public class ProtobufFieldUpdaterTest extends AbstractProtoStreamTest {
       assertEquals("Batman", result.getSurname());
       assertEquals(1, result.getAddresses().size());
       assertEquals("Old Street", result.getAddresses().get(0).getStreet());
+   }
+
+   @Test
+   public void testUnknownFieldsPreserved() throws Exception {
+      SerializationContext ctx = createContext();
+      User user = createTestUser();
+      byte[] bytes = toMessageBytes(ctx, user);
+
+      // append an unknown field (90, varint = 5) to the inner message
+      byte[] unknownField = new byte[]{(byte) 0xF0, 0x05, 0x05};
+      byte[] withUnknown = Arrays.copyOf(bytes, bytes.length + unknownField.length);
+      System.arraycopy(unknownField, 0, withUnknown, bytes.length, unknownField.length);
+
+      Descriptor descriptor = ctx.getMessageDescriptor("sample_bank_account.User");
+      byte[] updated = ProtobufFieldUpdater.update(descriptor, withUnknown, List.of(
+            new ProtobufFieldUpdater.UpdateOperation(
+                  ProtobufFieldUpdater.OperationType.SET,
+                  new String[]{"name"},
+                  List.of("Jane"))
+      ));
+
+      // the unknown field must survive verbatim (here it was at the end of the message)
+      assertArrayEquals(unknownField, Arrays.copyOfRange(updated, updated.length - unknownField.length, updated.length));
+      User result = fromMessageBytes(ctx, updated, User.class);
+      assertEquals("Jane", result.getName());
+      assertEquals(1, result.getId());
+   }
+
+   @Test
+   public void testAddRemoveRepeatedMessageField() throws Exception {
+      SerializationContext ctx = createContext();
+      User user = createTestUser();
+      user.setAddresses(List.of(new Address("Old Street", "XYZ42", -12), new Address("Bond Street", "W23", 2)));
+      byte[] bytes = toMessageBytes(ctx, user);
+
+      Descriptor descriptor = ctx.getMessageDescriptor("sample_bank_account.User");
+      byte[] updated = ProtobufFieldUpdater.update(ctx, descriptor, bytes, List.of(
+            new ProtobufFieldUpdater.UpdateOperation(
+                  ProtobufFieldUpdater.OperationType.ADD,
+                  new String[]{"addresses"},
+                  List.of(new Address("New Street", "ABC1", 3))),
+            new ProtobufFieldUpdater.UpdateOperation(
+                  ProtobufFieldUpdater.OperationType.REMOVE,
+                  new String[]{"addresses"},
+                  List.of(new Address("Old Street", "XYZ42", -12)))
+      ));
+
+      User result = fromMessageBytes(ctx, updated, User.class);
+      assertEquals(2, result.getAddresses().size());
+      assertEquals("Bond Street", result.getAddresses().get(0).getStreet());
+      assertEquals("New Street", result.getAddresses().get(1).getStreet());
+   }
+
+   @Test
+   public void testNoOpRemoveOnAbsentChainLeavesMessageUnchanged() throws Exception {
+      SerializationContext ctx = createContext();
+      Account account = new Account(); // no limits
+      account.setDescription("Checking");
+      byte[] bytes = toMessageBytes(ctx, account);
+
+      Descriptor descriptor = ctx.getMessageDescriptor("sample_bank_account.Account");
+      byte[] updated = ProtobufFieldUpdater.update(ctx, descriptor, bytes, List.of(
+            new ProtobufFieldUpdater.UpdateOperation(
+                  ProtobufFieldUpdater.OperationType.REMOVE,
+                  new String[]{"limits", "maxDailyLimit"},
+                  List.of(1.0))
+      ));
+
+      // a no-op REMOVE must not create an empty nested message
+      assertArrayEquals(bytes, updated);
+      Account result = fromMessageBytes(ctx, updated, Account.class);
+      assertNull(result.getLimits());
    }
 
    private User createTestUser() {
