@@ -116,6 +116,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       return new TagWriterImpl((SerializationContextImpl) ctx, new OutputStreamNoBufferEncoder(out));
    }
 
+   @Override
    public int getWrittenBytes() {
       // the CCE here will signal misuse; let it happen
       return ((OverEstimateEncoder) encoder).getWrittenBytes();

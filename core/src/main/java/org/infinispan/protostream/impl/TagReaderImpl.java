@@ -86,6 +86,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
     * @deprecated since 6.0. Please use {@link #newInstance(ImmutableSerializationContext, InputStream, int)} instead
     * as the size of the message should be known for proper processing.
     */
+   @Deprecated
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, InputStream input) throws IOException {
       return new TagReaderImpl((SerializationContextImpl) serCtx, new InputStreamDecoder(input));
    }
