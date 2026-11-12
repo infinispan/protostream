@@ -16,11 +16,11 @@ import org.infinispan.protostream.annotations.impl.AbstractMarshallerCodeGenerat
 import org.infinispan.protostream.annotations.impl.BaseProtoSchemaGenerator;
 import org.infinispan.protostream.annotations.impl.ImportedProtoTypeMetadata;
 import org.infinispan.protostream.annotations.impl.ProtoTypeMetadata;
-import org.infinispan.protostream.processor.dependency.CompileTimeDependency;
-import org.infinispan.protostream.processor.types.MirrorTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
 import org.infinispan.protostream.annotations.impl.types.XTypeFactory;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
+import org.infinispan.protostream.processor.dependency.CompileTimeDependency;
+import org.infinispan.protostream.processor.types.MirrorTypeFactory;
 
 /**
  * @author anistor@redhat.com

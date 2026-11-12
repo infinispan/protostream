@@ -11,8 +11,6 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.Log;
-import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
-import org.infinispan.protostream.impl.TagWriterImpl;
 
 /**
  * Partially updates protobuf-serialized message bytes at the field level, without requiring Java POJOs.
@@ -173,8 +171,8 @@ public final class ProtobufFieldUpdater {
    }
 
    private static byte[] serializeFields(Descriptor descriptor, Map<Integer, List<Object>> fieldMap) throws IOException {
-      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl(128);
-      TagWriter writer = TagWriterImpl.newInstance(null, baos);
+      RandomAccessOutputStream baos = RandomAccessOutputStream.withCapacity(128);
+      TagWriter writer = TagWriter.newInstance(null, baos);
 
       for (var entry : fieldMap.entrySet()) {
          int fieldNumber = entry.getKey();

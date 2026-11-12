@@ -3,20 +3,10 @@ package org.infinispan.protostream.processor.tests.kotlin
 import org.assertj.core.api.Assertions.assertThat
 import org.infinispan.protostream.GeneratedSchema
 import org.infinispan.protostream.ProtobufUtil
-import org.infinispan.protostream.SerializationContextInitializer
 import org.infinispan.protostream.annotations.ProtoSchema
 import org.infinispan.protostream.annotations.ProtoSyntax
-import org.infinispan.protostream.processor.tests.kotlin.testdomain.BooleanFieldMessage
-import org.infinispan.protostream.processor.tests.kotlin.testdomain.CollectionMessage
-import org.infinispan.protostream.processor.tests.kotlin.testdomain.GetterAnnotatedMessage
-import org.infinispan.protostream.processor.tests.kotlin.testdomain.ImmutableMessage
-import org.infinispan.protostream.processor.tests.kotlin.testdomain.KotlinEnum
-import org.infinispan.protostream.processor.tests.kotlin.testdomain.MessageWithDefaults
-import org.infinispan.protostream.processor.tests.kotlin.testdomain.MessageWithEnum
-import org.infinispan.protostream.processor.tests.kotlin.testdomain.MutableMessage
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.infinispan.protostream.processor.tests.kotlin.testdomain.*
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 @ProtoSchema(

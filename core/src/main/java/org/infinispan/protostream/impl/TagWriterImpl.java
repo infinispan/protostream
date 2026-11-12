@@ -82,7 +82,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
    /**
     * @deprecated since 5.0.10 Please use {@link #newInstance(ImmutableSerializationContext, OutputStream)} with a {@link java.io.BufferedOutputStream} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true, since = "5.0")
    public static TagWriterImpl newInstance(ImmutableSerializationContext serCtx, OutputStream output, int bufferSize) {
       return new TagWriterImpl((SerializationContextImpl) serCtx, new OutputStreamEncoder(output, bufferSize));
    }
@@ -116,6 +116,7 @@ public final class TagWriterImpl implements TagWriter, ProtobufTagMarshaller.Wri
       return new TagWriterImpl((SerializationContextImpl) ctx, new OutputStreamNoBufferEncoder(out));
    }
 
+   @Override
    public int getWrittenBytes() {
       // the CCE here will signal misuse; let it happen
       return ((OverEstimateEncoder) encoder).getWrittenBytes();

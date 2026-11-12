@@ -7,8 +7,8 @@ import javax.lang.model.type.TypeMirror;
 
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.impl.ProtoMessageTypeMetadata;
-import org.infinispan.protostream.processor.types.MirrorTypeFactory;
 import org.infinispan.protostream.annotations.impl.types.XClass;
+import org.infinispan.protostream.processor.types.MirrorTypeFactory;
 
 /**
  * A ProtoMessageTypeMetadata for compile time, using javax.lang.model instead of reflection.

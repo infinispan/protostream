@@ -1,9 +1,9 @@
 package org.infinispan.protostream.types.java;
 
+import java.util.Objects;
+
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-
-import java.util.Objects;
 
 public class Book implements Comparable<Book> {
 

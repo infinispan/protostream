@@ -86,6 +86,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
     * @deprecated since 6.0. Please use {@link #newInstance(ImmutableSerializationContext, InputStream, int)} instead
     * as the size of the message should be known for proper processing.
     */
+   @Deprecated(forRemoval = true, since = "6.0")
    public static TagReaderImpl newInstance(ImmutableSerializationContext serCtx, InputStream input) throws IOException {
       return new TagReaderImpl((SerializationContextImpl) serCtx, new InputStreamDecoder(input));
    }
@@ -94,7 +95,7 @@ public final class TagReaderImpl implements TagReader, ProtobufTagMarshaller.Rea
       Decoder decoder;
       if (length < 512) {
          // For smaller values it is faster to just copy it into a byte[] and use the regular ByteArrayDecoder.
-         // Otherwise the limit stream decoder uses a chunk based approach as necessary
+         // Otherwise, the limit stream decoder uses a chunk based approach as necessary
          byte[] bytes = input.readNBytes(length);
          if (bytes.length != length) {
             throw log.messageTruncated();

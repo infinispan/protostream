@@ -1,10 +1,10 @@
 package org.infinispan.protostream;
 
-import org.infinispan.protostream.schema.Schema;
-
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
+
+import org.infinispan.protostream.schema.Schema;
 
 /**
  * An annotation-based generated proto schema file. This is just a more specific flavour of
