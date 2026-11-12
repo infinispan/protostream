@@ -2,7 +2,6 @@ package org.infinispan.protostream.processor.tests.testdomain;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Set;
 
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;

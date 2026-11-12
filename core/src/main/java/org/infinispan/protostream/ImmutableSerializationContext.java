@@ -1,6 +1,5 @@
 package org.infinispan.protostream;
 
-import java.time.LocalTime;
 import java.util.Map;
 
 import org.infinispan.protostream.config.Configuration;

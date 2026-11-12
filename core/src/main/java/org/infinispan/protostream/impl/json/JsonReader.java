@@ -46,8 +46,6 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
-import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
-import org.infinispan.protostream.impl.TagWriterImpl;
 import org.infinispan.protostream.impl.json.JsonLexer.Token;
 
 /**
@@ -84,8 +82,8 @@ public final class JsonReader {
          if (token != START_OBJECT)
             throw new IllegalStateException("Invalid top level object! Found token: " + token);
 
-         try (RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE)) {
-            TagWriter writer = TagWriterImpl.newInstance(ctx, raos);
+         try (RandomAccessOutputStream raos = RandomAccessOutputStream.withCapacity(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE)) {
+            TagWriter writer = TagWriter.newInstance(ctx, raos);
             processDocument(ctx, parser, writer, null, null);
             writer.flush();
             return raos.toByteArray();
@@ -139,8 +137,8 @@ public final class JsonReader {
 
    private static void processObject(ImmutableSerializationContext ctx, JsonLexer parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber, boolean topLevel) throws IOException {
       assertDescriptorField(messageDescriptor);
-      RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-      TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, raos);
+      RandomAccessOutputStream raos = RandomAccessOutputStream.withCapacity(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
+      TagWriter nestedWriter = TagWriter.newInstance(ctx, raos);
       boolean isContainerAdapter = JsonHelper.isContainerAdapter(ctx, messageDescriptor);
 
       String currentField = null;
@@ -264,8 +262,8 @@ public final class JsonReader {
          RandomAccessOutputStream extraBuffer = null;
          TagWriter out = writer;
          if (fieldNumber != null) {
-            extraBuffer = new RandomAccessOutputStreamImpl(nestedData.length + 128);
-            out = TagWriterImpl.newInstance(ctx, extraBuffer);
+            extraBuffer = RandomAccessOutputStream.withCapacity(nestedData.length + 128);
+            out = TagWriter.newInstance(ctx, extraBuffer);
          }
 
          Integer topLevelTypeId = messageDescriptor.getTypeId();
@@ -318,8 +316,8 @@ public final class JsonReader {
                Descriptor parentDescriptor = (Descriptor) ctx.getDescriptorByName(type);
                FieldDescriptor fd = parentDescriptor != null ? parentDescriptor.findFieldByName(field) : null;
                Descriptor elementType = fd != null ? fd.getMessageType() : null;
-               RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-               TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, raos);
+               RandomAccessOutputStream raos = RandomAccessOutputStream.withCapacity(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
+               TagWriter nestedWriter = TagWriter.newInstance(ctx, raos);
                if (elementType != null) {
                   // Element type is known from the schema: processObject handles both _type-present
                   // and _type-absent cases, and correctly bundles all fields
@@ -441,7 +439,7 @@ public final class JsonReader {
 
             case FIELD_NAME: {
                ByteArrayOutputStream baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-               TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, baos);
+               TagWriter nestedWriter = TagWriter.newInstance(ctx, baos);
                String key = parser.currentName();
                switch (md.getKeyType()) {
                   case STRING -> nestedWriter.writeString(1, key);
@@ -543,7 +541,7 @@ public final class JsonReader {
       TagWriter out = writer;
       if (outerFieldNumber != null) {
          baos = new ByteArrayOutputStream(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
-         out = TagWriterImpl.newInstance(ctx, baos);
+         out = TagWriter.newInstance(ctx, baos);
       }
 
       switch (token) {

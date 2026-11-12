@@ -25,6 +25,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.protostream.exception.ProtoStreamException;
 import org.infinispan.protostream.impl.JsonUtils;
+import org.infinispan.protostream.integrationtests.processor.marshaller.model.AdaptedFieldModel;
+import org.infinispan.protostream.integrationtests.processor.marshaller.model.AdaptedFieldSchema;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.FootballSchema;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.FootballSchemaImpl;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.FootballTeam;
@@ -36,8 +38,6 @@ import org.infinispan.protostream.integrationtests.processor.marshaller.model.Ma
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapOverlappingMarshallerDelegate;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.MapSchema;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.ModelWithMap;
-import org.infinispan.protostream.integrationtests.processor.marshaller.model.AdaptedFieldModel;
-import org.infinispan.protostream.integrationtests.processor.marshaller.model.AdaptedFieldSchema;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.NullTestModel;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.Player;
 import org.infinispan.protostream.integrationtests.processor.marshaller.model.SimpleEnum;

@@ -1,5 +1,7 @@
 package org.infinispan.protostream.schema;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.lang.invoke.MethodHandles;
 
 import org.infinispan.protostream.FileDescriptorSource;
@@ -7,8 +9,6 @@ import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
 import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ProtoBufSchemaTest {
    private static final Log log = Log.LogFactory.getLog(MethodHandles.lookup().lookupClass());
