@@ -5,14 +5,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.Objects;
 
+import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.impl.JsonUtils;
-import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.infinispan.protostream.impl.TagReaderImpl;
-import org.infinispan.protostream.impl.TagWriterImpl;
+import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
 
 /**
  * This is the entry point to the ProtoStream library. This class provides methods to write and read Java objects
@@ -49,89 +51,107 @@ public final class ProtobufUtil {
       return serializationContext;
    }
 
+   /**
+    * Parses a set of .proto files but does not resolve type dependencies and does not detect semantic errors like
+    * duplicate type definitions. If the {@link FileDescriptorSource} parameter does not include a progress callback
+    * parsing will stop on first encountered error. If a callback exists all files will be processed; only one error per
+    * file is reported and parsing will continue with the next file.
+    *
+    * @param configuration the {@link Configuration} to use
+    * @param source the {@link FileDescriptorSource} containing the .proto files to parse
+    * @return a map of successfully parsed {@link FileDescriptor} objects keyed by their names
+    * @throws DescriptorParserException if parsing errors were encountered and no progress callback was specified in the
+    *                                   {@link FileDescriptorSource}
+    */
+   public static Map<String, FileDescriptor> parseProtoFiles(Configuration configuration, FileDescriptorSource source) throws DescriptorParserException {
+      return new ProtostreamProtoParser(configuration).parse(source);
+   }
+
    public static <A> int computeMessageSize(ImmutableSerializationContext ctx, A t) throws IOException {
-      TagWriterImpl out = TagWriterImpl.newInstance(ctx);
+      TagWriter out = TagWriter.newInstance(ctx);
       write(ctx, out, t);
       return out.getWrittenBytes();
    }
 
    public static <A> int estimateSize(ImmutableSerializationContext ctx, A t) throws IOException {
-      TagWriterImpl out = TagWriterImpl.newInstanceSizeEstimate(ctx);
+      TagWriter out = TagWriter.newInstanceSizeEstimate(ctx);
       write(ctx, out, t);
       return out.getWrittenBytes();
    }
 
    public static <A> int computeWrappedMessageSize(ImmutableSerializationContext ctx, A t) throws IOException {
-      TagWriterImpl out = TagWriterImpl.newInstance(ctx);
+      TagWriter out = TagWriter.newInstance(ctx);
       WrappedMessage.write(ctx, out, t);
       return out.getWrittenBytes();
    }
 
    public static <A> int estimateMessageSize(ImmutableSerializationContext ctx, A t) throws IOException {
-      TagWriterImpl out = TagWriterImpl.newInstanceSizeEstimate(ctx);
+      TagWriter out = TagWriter.newInstanceSizeEstimate(ctx);
       WrappedMessage.write(ctx, out, t);
       return out.getWrittenBytes();
    }
 
-   private static <A> void write(ImmutableSerializationContext ctx, TagWriterImpl out, A t) throws IOException {
+   private static <A> void write(ImmutableSerializationContext ctx, TagWriter out, A t) throws IOException {
       Objects.requireNonNull(t, "Object to marshall cannot be null");
       BaseMarshallerDelegate<A> marshallerDelegate = ((SerializationContextImpl) ctx).getMarshallerDelegate(t);
-      marshallerDelegate.marshall(out, null, t);
+      marshallerDelegate.marshall((ProtobufTagMarshaller.WriteContext) out, null, t);
       out.flush();
    }
 
    public static void writeTo(ImmutableSerializationContext ctx, RandomAccessOutputStream out, Object t) throws IOException {
-      write(ctx, TagWriterImpl.newInstance(ctx, out), t);
+      write(ctx, TagWriter.newInstance(ctx, out), t);
    }
 
    public static void writeTo(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
-      TagWriterImpl writer = out instanceof RandomAccessOutputStream raos ? TagWriterImpl.newInstance(ctx, raos) : TagWriterImpl.newInstance(ctx, out);
+      TagWriter writer = out instanceof RandomAccessOutputStream raos ? TagWriter.newInstance(ctx, raos) : TagWriter.newInstance(ctx, out);
       write(ctx, writer, t);
    }
 
    public static byte[] toByteArray(ImmutableSerializationContext ctx, Object t) throws IOException {
-      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl(DEFAULT_ARRAY_BUFFER_SIZE);
+      RandomAccessOutputStream baos = RandomAccessOutputStream.withCapacity(DEFAULT_ARRAY_BUFFER_SIZE);
       writeTo(ctx, baos, t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
-      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl(DEFAULT_ARRAY_BUFFER_SIZE);
+      RandomAccessOutputStream baos = RandomAccessOutputStream.withCapacity(DEFAULT_ARRAY_BUFFER_SIZE);
       writeTo(ctx, baos, t);
       return baos.getByteBuffer();
    }
 
-   private static <A> A readFrom(TagReaderImpl in, Class<A> clazz) throws IOException {
+   private static <A> A readFrom(TagReader in, Class<A> clazz) throws IOException {
       if (clazz.isEnum()) {
          throw new IllegalArgumentException("The Class argument must not be an Enum");
       }
-      BaseMarshallerDelegate<A> marshallerDelegate = in.getSerializationContext().getMarshallerDelegate(clazz);
-      return marshallerDelegate.unmarshall(in, null);
+      TagReaderImpl inImpl = (TagReaderImpl) in;
+      BaseMarshallerDelegate<A> marshallerDelegate = inImpl.getSerializationContext().getMarshallerDelegate(clazz);
+      return marshallerDelegate.unmarshall(inImpl, null);
    }
 
    /**
     * @deprecated Please use {@link #readFrom(ImmutableSerializationContext, InputStream, int, Class)} instead
     * as we need to know how many bytes in the stream to read from
     */
+   @Deprecated
    public static <A> A readFrom(ImmutableSerializationContext ctx, InputStream in, Class<A> clazz) throws IOException {
-      return readFrom(TagReaderImpl.newInstance(ctx, in), clazz);
+      return readFrom(TagReader.newInstance(ctx, in), clazz);
    }
 
    public static <A> A readFrom(ImmutableSerializationContext ctx, InputStream in, int length, Class<A> clazz) throws IOException {
-      return readFrom(TagReaderImpl.newInstance(ctx, in, length), clazz);
+      return readFrom(TagReader.newInstance(ctx, in, length), clazz);
    }
 
    public static <A> A fromByteArray(ImmutableSerializationContext ctx, byte[] bytes, Class<A> clazz) throws IOException {
-      return readFrom(TagReaderImpl.newInstance(ctx, bytes), clazz);
+      return readFrom(TagReader.newInstance(ctx, bytes), clazz);
    }
 
    //todo [anistor] what happens with remaining unconsumed trailing bytes after offset+length, here and in general? signal an error, a warning, or ignore?
    public static <A> A fromByteArray(ImmutableSerializationContext ctx, byte[] bytes, int offset, int length, Class<A> clazz) throws IOException {
-      return readFrom(TagReaderImpl.newInstance(ctx, bytes, offset, length), clazz);
+      return readFrom(TagReader.newInstance(ctx, bytes, offset, length), clazz);
    }
 
    public static <A> A fromByteBuffer(ImmutableSerializationContext ctx, ByteBuffer byteBuffer, Class<A> clazz) throws IOException {
-      return readFrom(TagReaderImpl.newInstance(ctx, byteBuffer), clazz);
+      return readFrom(TagReader.newInstance(ctx, byteBuffer), clazz);
    }
 
    /**
@@ -148,23 +168,24 @@ public final class ProtobufUtil {
    }
 
    public static <A> A fromWrappedByteArray(ImmutableSerializationContext ctx, byte[] bytes, int offset, int length) throws IOException {
-      return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, bytes, offset, length));
+      return WrappedMessage.read(ctx, TagReader.newInstance(ctx, bytes, offset, length));
    }
 
    public static <A> A fromWrappedByteBuffer(ImmutableSerializationContext ctx, ByteBuffer byteBuffer) throws IOException {
-      return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, byteBuffer));
+      return WrappedMessage.read(ctx, TagReader.newInstance(ctx, byteBuffer));
    }
 
    /**
     * @deprecated Please use {@link #fromWrappedStream(ImmutableSerializationContext, InputStream, int)} instead
     * as we need to know how many bytes in the stream to read from
     */
+   @Deprecated
    public static <A> A fromWrappedStream(ImmutableSerializationContext ctx, InputStream in) throws IOException {
-      return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, in));
+      return WrappedMessage.read(ctx, TagReader.newInstance(ctx, in));
    }
 
    public static <A> A fromWrappedStream(ImmutableSerializationContext ctx, InputStream in, int exactSize) throws IOException {
-      return WrappedMessage.read(ctx, TagReaderImpl.newInstance(ctx, in, exactSize));
+      return WrappedMessage.read(ctx, TagReader.newInstance(ctx, in, exactSize));
    }
 
 
@@ -174,23 +195,23 @@ public final class ProtobufUtil {
    }
 
    public static byte[] toWrappedByteArray(ImmutableSerializationContext ctx, Object t, int bufferSize) throws IOException {
-      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl(bufferSize);
-      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, baos), t);
+      RandomAccessOutputStream baos = RandomAccessOutputStream.withCapacity(bufferSize);
+      WrappedMessage.write(ctx, TagWriter.newInstance(ctx, baos), t);
       return baos.toByteArray();
    }
 
    public static ByteBuffer toWrappedByteBuffer(ImmutableSerializationContext ctx, Object t) throws IOException {
-      RandomAccessOutputStream baos = new RandomAccessOutputStreamImpl(DEFAULT_ARRAY_BUFFER_SIZE);
-      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, baos), t);
+      RandomAccessOutputStream baos = RandomAccessOutputStream.withCapacity(DEFAULT_ARRAY_BUFFER_SIZE);
+      WrappedMessage.write(ctx, TagWriter.newInstance(ctx, baos), t);
       return baos.getByteBuffer();
    }
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, RandomAccessOutputStream out, Object t) throws IOException {
-      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, out), t);
+      WrappedMessage.write(ctx, TagWriter.newInstance(ctx, out), t);
    }
 
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
-      TagWriter writer = out instanceof RandomAccessOutputStream raos ? TagWriterImpl.newInstance(ctx, raos) : TagWriterImpl.newInstance(ctx, out);
+      TagWriter writer = out instanceof RandomAccessOutputStream raos ? TagWriter.newInstance(ctx, raos) : TagWriter.newInstance(ctx, out);
       WrappedMessage.write(ctx, writer, t);
    }
 
@@ -199,7 +220,7 @@ public final class ProtobufUtil {
     */
    @Deprecated
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t, int bufferSize) throws IOException {
-      WrappedMessage.write(ctx, TagWriterImpl.newInstance(ctx, out, bufferSize), t);
+      WrappedMessage.write(ctx, TagWriter.newInstance(ctx, out, bufferSize), t);
    }
 
    /**

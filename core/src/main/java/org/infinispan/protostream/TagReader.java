@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
+import org.infinispan.protostream.impl.TagReaderImpl;
+
 /**
  * @author anistor@redhat.com
  * @since 4.4
@@ -38,8 +40,14 @@ public interface TagReader {
     */
    boolean skipField(int tag) throws IOException;
 
+   /**
+    * Reads a {@code bool} value.
+    */
    boolean readBool() throws IOException;
 
+   /**
+    * Reads an {@code enum} value.
+    */
    int readEnum() throws IOException;
 
    /**
@@ -57,28 +65,64 @@ public interface TagReader {
     */
    ByteBuffer readByteBuffer() throws IOException;
 
+   /**
+    * Reads a {@code double} value.
+    */
    double readDouble() throws IOException;
 
+   /**
+    * Reads a {@code float} value.
+    */
    float readFloat() throws IOException;
 
+   /**
+    * Reads an {@code int64} value.
+    */
    long readInt64() throws IOException;
 
+   /**
+    * Reads a {@code uint64} value.
+    */
    long readUInt64() throws IOException;
 
+   /**
+    * Reads a {@code sint64} value.
+    */
    long readSInt64() throws IOException;
 
+   /**
+    * Reads a {@code fixed64} value.
+    */
    long readFixed64() throws IOException;
 
+   /**
+    * Reads a {@code sfixed64} value.
+    */
    long readSFixed64() throws IOException;
 
+   /**
+    * Reads an {@code int32} value.
+    */
    int readInt32() throws IOException;
 
+   /**
+    * Reads a {@code uint32} value.
+    */
    int readUInt32() throws IOException;
 
+   /**
+    * Reads a {@code sint32} value.
+    */
    int readSInt32() throws IOException;
 
+   /**
+    * Reads a {@code fixed32} value.
+    */
    int readFixed32() throws IOException;
 
+   /**
+    * Reads a {@code sfixed32} value.
+    */
    int readSFixed32() throws IOException;
 
    /**
@@ -113,4 +157,67 @@ public interface TagReader {
     * @return Returns true if the original payload is InputStream based.
     */
    boolean isInputStream();
+
+   /**
+    * Creates a new {@link TagReader} which reads from the supplied {@link InputStream}.
+    *
+    * @param serCtx the {@link ImmutableSerializationContext} to use
+    * @param input  the {@link InputStream} to read from
+    * @param length the length of the message to read from the stream
+    * @return a new {@link TagReader} instance
+    * @throws IOException if there is an error reading from the input stream
+    */
+   static TagReader newInstance(ImmutableSerializationContext serCtx, InputStream input, int length) throws IOException {
+      return TagReaderImpl.newInstance(serCtx, input, length);
+   }
+
+   /**
+    * Creates a new {@link TagReader} which reads from the supplied {@link InputStream}.
+    *
+    * @param serCtx the {@link ImmutableSerializationContext} to use
+    * @param input  the {@link InputStream} to read from
+    * @return a new {@link TagReader} instance
+    * @throws IOException if there is an error reading from the input stream
+    * @deprecated since 6.0. Please use {@link #newInstance(ImmutableSerializationContext, InputStream, int)} instead
+    * as the size of the message should be known for proper processing.
+    */
+   @Deprecated
+   static TagReader newInstance(ImmutableSerializationContext serCtx, InputStream input) throws IOException {
+      return TagReaderImpl.newInstance(serCtx, input);
+   }
+
+   /**
+    * Creates a new {@link TagReader} which reads from the supplied {@link ByteBuffer}.
+    *
+    * @param serCtx the {@link ImmutableSerializationContext} to use
+    * @param buf    the {@link ByteBuffer} to read from
+    * @return a new {@link TagReader} instance
+    */
+   static TagReader newInstance(ImmutableSerializationContext serCtx, ByteBuffer buf) {
+      return TagReaderImpl.newInstance(serCtx, buf);
+   }
+
+   /**
+    * Creates a new {@link TagReader} which reads from the supplied byte array.
+    *
+    * @param serCtx the {@link ImmutableSerializationContext} to use
+    * @param buf    the byte array to read from
+    * @return a new {@link TagReader} instance
+    */
+   static TagReader newInstance(ImmutableSerializationContext serCtx, byte[] buf) {
+      return TagReaderImpl.newInstance(serCtx, buf);
+   }
+
+   /**
+    * Creates a new {@link TagReader} which reads from a section of the supplied byte array.
+    *
+    * @param serCtx the {@link ImmutableSerializationContext} to use
+    * @param buf    the byte array to read from
+    * @param offset the index of the first byte to read
+    * @param length the number of bytes to read
+    * @return a new {@link TagReader} instance
+    */
+   static TagReader newInstance(ImmutableSerializationContext serCtx, byte[] buf, int offset, int length) {
+      return TagReaderImpl.newInstance(serCtx, buf, offset, length);
+   }
 }
