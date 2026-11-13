@@ -1,0 +1,705 @@
+{
+  "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:protostream:/:lib:/:base.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "Base",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "baseString",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.protostream.lib"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:protostream:/:lib:/:base2.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "Base2",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "base2String",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.protostream.lib"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:protostream:/:message-wrapping.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "WrappedMessage",
+        "type_id" : 0,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedDouble",
+          "type" : "double",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 2,
+          "name" : "wrappedFloat",
+          "type" : "float",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 3,
+          "name" : "wrappedInt64",
+          "type" : "int64",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 4,
+          "name" : "wrappedUInt64",
+          "type" : "uint64",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 5,
+          "name" : "wrappedInt32",
+          "type" : "int32",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 6,
+          "name" : "wrappedFixed64",
+          "type" : "fixed64",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 7,
+          "name" : "wrappedFixed32",
+          "type" : "fixed32",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 8,
+          "name" : "wrappedBool",
+          "type" : "bool",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 9,
+          "name" : "wrappedString",
+          "type" : "string",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 10,
+          "name" : "wrappedBytes",
+          "type" : "bytes",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 11,
+          "name" : "wrappedUInt32",
+          "type" : "uint32",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 12,
+          "name" : "wrappedSFixed32",
+          "type" : "sfixed32",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 13,
+          "name" : "wrappedSFixed64",
+          "type" : "sfixed64",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 14,
+          "name" : "wrappedSInt32",
+          "type" : "sint32",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 15,
+          "name" : "wrappedSInt64",
+          "type" : "sint64",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 20,
+          "name" : "wrappedChar",
+          "type" : "int32",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 21,
+          "name" : "wrappedShort",
+          "type" : "int32",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 22,
+          "name" : "wrappedByte",
+          "type" : "int32",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 23,
+          "name" : "wrappedDateMillis",
+          "type" : "int64",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 24,
+          "name" : "wrappedInstantSeconds",
+          "type" : "int64",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 18,
+          "name" : "wrappedEnum",
+          "type" : "int32",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 17,
+          "name" : "wrappedMessage",
+          "type" : "bytes",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 26,
+          "name" : "wrappedEmpty",
+          "type" : "bool",
+          "oneof_parent" : "scalarOrMessage"
+        }, {
+          "id" : 16,
+          "name" : "wrappedTypeName",
+          "type" : "string",
+          "oneof_parent" : "typeNameOrId"
+        }, {
+          "id" : 19,
+          "name" : "wrappedTypeId",
+          "type" : "uint32",
+          "oneof_parent" : "typeNameOrId"
+        }, {
+          "id" : 28,
+          "name" : "wrappedContainerTypeName",
+          "type" : "string",
+          "oneof_parent" : "wrappedContainerTypeNameOrId"
+        }, {
+          "id" : 29,
+          "name" : "wrappedContainerTypeId",
+          "type" : "uint32",
+          "oneof_parent" : "wrappedContainerTypeNameOrId"
+        }, {
+          "id" : 25,
+          "name" : "wrappedInstantNanos",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 27,
+          "name" : "wrappedContainerSize",
+          "type" : "uint32",
+          "optional" : true
+        }, {
+          "id" : 30,
+          "name" : "wrappedContainerMessage",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.protostream"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:protostream:/:test:/:message.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "aEnum",
+        "enum_fields" : [ {
+          "name" : "VAL0"
+        }, {
+          "name" : "VAL1",
+          "integer" : 1
+        } ]
+      }, {
+        "name" : "SearchRequest.DNT",
+        "enum_fields" : [ {
+          "name" : "DO_NOT_TRACK"
+        }, {
+          "name" : "TRACK_FOR_SURE",
+          "integer" : 1
+        }, {
+          "name" : "DONT_CARE",
+          "integer" : 2
+        }, {
+          "name" : "SOME_ALIAS",
+          "integer" : 1
+        } ],
+        "options" : [ {
+          "name" : "allow_alias",
+          "value" : "true"
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "SearchRequest",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "query",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "page_number",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "result_per_page",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "flags",
+          "type" : "int32",
+          "is_repeated" : true,
+          "options" : [ {
+            "name" : "packed",
+            "value" : "true"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "dnt",
+          "type" : "DNT",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "reqEnum",
+          "type" : "aEnum",
+          "optional" : true,
+          "options" : [ {
+            "name" : "deprecated",
+            "value" : "true"
+          } ]
+        }, {
+          "id" : 7,
+          "name" : "label",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "typed",
+          "type" : "Inner",
+          "optional" : true
+        } ],
+        "messages" : [ {
+          "name" : "Inner",
+          "fields" : [ {
+            "id" : 1,
+            "name" : "ival",
+            "type" : "int64",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "booly",
+            "type" : "bool",
+            "optional" : true
+          } ],
+          "messages" : [ {
+            "name" : "MoreInner",
+            "fields" : [ {
+              "id" : 1,
+              "name" : "nothing",
+              "type" : "bool",
+              "optional" : true
+            } ]
+          }, {
+            "name" : "AnotherInner",
+            "fields" : [ {
+              "id" : 1,
+              "name" : "nothing",
+              "type" : "bool",
+              "optional" : true
+            }, {
+              "id" : 2,
+              "name" : "f2",
+              "type" : "MoreInner",
+              "optional" : true
+            } ]
+          } ]
+        } ]
+      }, {
+        "name" : "SearchResponse",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "result",
+          "type" : "Result",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "base",
+          "type" : "org.infinispan.protostream.lib.Base",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "scoped",
+          "type" : "SearchRequest.Inner",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Result",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "url",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "title",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "snippets",
+          "type" : "string",
+          "is_repeated" : true
+        }, {
+          "id" : 4,
+          "name" : "i",
+          "type" : "SearchRequest.Inner.MoreInner",
+          "optional" : true
+        } ],
+        "maps" : [ {
+          "key_type" : "string",
+          "field" : {
+            "id" : 5,
+            "name" : "props",
+            "type" : "string",
+            "options" : [ {
+              "name" : "deprecated",
+              "value" : "false"
+            } ]
+          }
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/lib/base.proto"
+      }, {
+        "path" : "org/infinispan/protostream/lib/base2.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.protostream.test"
+      },
+      "options" : [ {
+        "name" : "java_outer_classname",
+        "value" : "file-option"
+      }, {
+        "name" : "java_package",
+        "value" : "com.pkg"
+      } ]
+    }
+  }, {
+    "protopath" : "sample_bank_account:/:bank.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "User.Gender",
+        "type_id" : 100041,
+        "enum_fields" : [ {
+          "name" : "MALE"
+        }, {
+          "name" : "FEMALE",
+          "integer" : 1
+        }, {
+          "name" : "UNSPECIFIED",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "Account.Currency",
+        "type_id" : 100043,
+        "enum_fields" : [ {
+          "name" : "EUR"
+        }, {
+          "name" : "GBP",
+          "integer" : 1
+        }, {
+          "name" : "USD",
+          "integer" : 2
+        }, {
+          "name" : "BRL",
+          "integer" : 3
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "User",
+        "type_id" : 100042,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "id",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "accountIds",
+          "type" : "int32",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "surname",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "salutation",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "addresses",
+          "type" : "Address",
+          "is_repeated" : true
+        }, {
+          "id" : 7,
+          "name" : "age",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "gender",
+          "type" : "Gender",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "notes",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "creationDate",
+          "type" : "fixed64",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "passwordExpirationDate",
+          "type" : "fixed64",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "qrCode",
+          "type" : "int64",
+          "optional" : true
+        } ],
+        "messages" : [ {
+          "name" : "Address",
+          "fields" : [ {
+            "id" : 1,
+            "name" : "street",
+            "type" : "string",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "postCode",
+            "type" : "string",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "number",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 4,
+            "name" : "isCommercial",
+            "type" : "bool",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "Account",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "id",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "description",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "creationDate",
+          "type" : "fixed64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "limits",
+          "type" : "Limits",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "hardLimits",
+          "type" : "Limits",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "blurb",
+          "type" : "bytes",
+          "is_repeated" : true
+        }, {
+          "id" : 7,
+          "name" : "currencies",
+          "type" : "Currency",
+          "is_repeated" : true
+        } ],
+        "reserved_ids" : [ 8, 10, 11, 13, 14, 15, 17, 19, 20, 22 ],
+        "reserved_names" : [ "alpha", "beta", "gamma" ],
+        "messages" : [ {
+          "name" : "Limits",
+          "fields" : [ {
+            "id" : 1,
+            "name" : "maxDailyLimit",
+            "type" : "double",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "maxTransactionLimit",
+            "type" : "double",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "payees",
+            "type" : "string",
+            "is_repeated" : true
+          } ]
+        } ]
+      }, {
+        "name" : "Transaction",
+        "fields" : [ {
+          "id" : 10,
+          "name" : "one",
+          "type" : "string",
+          "oneof_parent" : "choice"
+        }, {
+          "id" : 11,
+          "name" : "or_the_other",
+          "type" : "int32",
+          "oneof_parent" : "choice"
+        }, {
+          "id" : 1,
+          "name" : "id",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "description",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "longDescription",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "notes",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "accountId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "date",
+          "type" : "fixed64",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "amount",
+          "type" : "double",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "isDebit",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "isValid",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Numerics",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "simpleByte",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "simpleShort",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "simpleInt",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "simpleLong",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "simpleFloat",
+          "type" : "float",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "simpleDouble",
+          "type" : "double",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "int_array",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "theArray",
+          "type" : "int32",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "user_list",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "theList",
+          "type" : "User",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "message",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "true",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "map",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "message",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "to",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "rpc",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "sample_bank_account"
+      }
+    }
+  } ]
+}

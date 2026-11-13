@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -219,7 +221,8 @@ public class ProtoLock {
       j.writeStartObject();
       j.writeFieldName("definitions");
       j.writeStartArray();
-      for (Map.Entry<String, FileDescriptor> entry : descriptors.entrySet()) {
+      // Sort by path: the descriptors map has no stable iteration order, and lock files are committed to repositories
+      for (Map.Entry<String, FileDescriptor> entry : new TreeMap<>(descriptors).entrySet()) {
          FileDescriptor fd = entry.getValue();
          j.writeStartObject();
          j.writeStringField("protopath", escapePath(entry.getKey()));
@@ -367,7 +370,8 @@ public class ProtoLock {
       if (!reservable.getReservedNames().isEmpty()) {
          j.writeFieldName("reserved_names");
          j.writeStartArray();
-         for (String n : reservable.getReservedNames()) {
+         // Sort: reserved names are held in a Set with no stable iteration order
+         for (String n : new TreeSet<>(reservable.getReservedNames())) {
             j.writeString(n);
          }
          j.writeEndArray();
