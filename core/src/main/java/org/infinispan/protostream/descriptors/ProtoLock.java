@@ -16,12 +16,11 @@ import java.util.stream.Collectors;
 
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
+import org.infinispan.protostream.impl.json.PrettyJsonWriter;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -215,9 +214,7 @@ public class ProtoLock {
     * @param os the {@link OutputStream} to write to
     */
    public void writeLockFile(OutputStream os) throws IOException {
-      JsonFactory jsonFactory = new JsonFactory();
-      JsonGenerator j = jsonFactory.createGenerator(os);
-      j.setPrettyPrinter(new DefaultPrettyPrinter());
+      PrettyJsonWriter j = new PrettyJsonWriter(os);
       j.writeStartObject();
       j.writeFieldName("definitions");
       j.writeStartArray();
@@ -268,7 +265,7 @@ public class ProtoLock {
       j.flush();
    }
 
-   private static void writeMessageEnums(JsonGenerator j, List<Descriptor> mds) throws IOException {
+   private static void writeMessageEnums(PrettyJsonWriter j, List<Descriptor> mds) throws IOException {
       for (Descriptor md : mds) {
          for (EnumDescriptor ed : md.getEnumTypes()) {
             writeEnum(j, ed);
@@ -277,7 +274,7 @@ public class ProtoLock {
       }
    }
 
-   private static void writeMessage(JsonGenerator j, Descriptor md) throws IOException {
+   private static void writeMessage(PrettyJsonWriter j, Descriptor md) throws IOException {
       boolean hasMaps = false;
       j.writeStartObject();
       j.writeStringField("name", md.getName());
@@ -331,7 +328,7 @@ public class ProtoLock {
       j.writeEndObject();
    }
 
-   private static void writeEnum(JsonGenerator j, EnumDescriptor ed) throws IOException {
+   private static void writeEnum(PrettyJsonWriter j, EnumDescriptor ed) throws IOException {
       j.writeStartObject();
       if (ed.getContainingType() != null) {
          j.writeStringField("name", ed.getContainingType().getName() + "." + ed.getName());
@@ -358,7 +355,7 @@ public class ProtoLock {
       j.writeEndObject();
    }
 
-   private static void writeReserved(JsonGenerator j, ReservableDescriptor reservable) throws IOException {
+   private static void writeReserved(PrettyJsonWriter j, ReservableDescriptor reservable) throws IOException {
       if (!reservable.getReservedNumbers().isEmpty()) {
          j.writeFieldName("reserved_ids");
          j.writeStartArray();
@@ -378,7 +375,7 @@ public class ProtoLock {
       }
    }
 
-   private static void writeField(JsonGenerator j, FieldDescriptor f, String parent) throws IOException {
+   private static void writeField(PrettyJsonWriter j, FieldDescriptor f, String parent) throws IOException {
       j.writeStartObject();
       j.writeNumberField("id", f.getNumber());
       j.writeStringField("name", f.getName());
@@ -396,7 +393,7 @@ public class ProtoLock {
       j.writeEndObject();
    }
 
-   private static void writeOptions(JsonGenerator j, List<Option> options) throws IOException {
+   private static void writeOptions(PrettyJsonWriter j, List<Option> options) throws IOException {
       if (!options.isEmpty()) {
          j.writeFieldName("options");
          j.writeStartArray();
