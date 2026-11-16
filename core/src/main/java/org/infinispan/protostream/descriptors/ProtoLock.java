@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -136,7 +136,7 @@ public class ProtoLock {
 
    private static Map<String, Descriptor.Builder> readMessages(JsonNode json, String namePrefix) {
       if (json.has("messages")) {
-         Map<String, Descriptor.Builder> messageBuilders = new HashMap<>();
+         Map<String, Descriptor.Builder> messageBuilders = new LinkedHashMap<>();
          ArrayNode messages = (ArrayNode) json.get("messages");
          for (int m = 0; m < messages.size(); m++) {
             JsonNode message = messages.get(m);
@@ -147,7 +147,7 @@ public class ProtoLock {
             }
             if (message.has("fields")) {
                ArrayNode fields = (ArrayNode) message.get("fields");
-               Map<String, OneOfDescriptor.Builder> oneOfBuilders = new HashMap<>();
+               Map<String, OneOfDescriptor.Builder> oneOfBuilders = new LinkedHashMap<>();
                for (int f = 0; f < fields.size(); f++) {
                   JsonNode field = fields.get(f);
                   FieldDescriptor.Builder fb = new FieldDescriptor.Builder();
@@ -161,13 +161,15 @@ public class ProtoLock {
                      fb.withLabel(Label.OPTIONAL);
                   }
                   readOptions(field, fb);
-                  if (message.has("oneof_parent")) {
-                     String oneOf = message.get("oneof_parent").asText();
+                  if (field.has("oneof_parent")) {
+                     String oneOf = field.get("oneof_parent").asText();
+                     fb.withLabel(Label.ONE_OF);
                      oneOfBuilders.computeIfAbsent(oneOf, n -> new OneOfDescriptor.Builder().withName(n)).addField(fb);
                   } else {
                      mb.addField(fb);
                   }
                }
+               oneOfBuilders.values().forEach(mb::addOneOf);
             }
             if (message.has("maps")) {
                ArrayNode maps = (ArrayNode) message.get("maps");

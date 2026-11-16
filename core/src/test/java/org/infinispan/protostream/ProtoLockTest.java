@@ -60,6 +60,19 @@ public class ProtoLockTest {
       assertEquals(expected, actual);
    }
 
+   @Test
+   public void testReadLockFileRoundTrip() throws IOException {
+      byte[] expected;
+      try (InputStream is = ProtoLockTest.class.getResourceAsStream("/protolock/proto.lock")) {
+         expected = is.readAllBytes();
+      }
+      ProtoLock protoLock = ProtoLock.readLockFile(new ByteArrayInputStream(expected));
+      resolve(protoLock.descriptors());
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      protoLock.writeLockFile(baos);
+      assertEquals(new String(expected, StandardCharsets.UTF_8), baos.toString(StandardCharsets.UTF_8));
+   }
+
    private static ProtoLock createProtoLock() throws IOException {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
       for (String f : PROTO_FILES) {
