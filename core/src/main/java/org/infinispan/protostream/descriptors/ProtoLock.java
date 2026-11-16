@@ -2,7 +2,9 @@ package org.infinispan.protostream.descriptors;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,14 +18,8 @@ import java.util.stream.Collectors;
 
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.impl.Log;
+import org.infinispan.protostream.impl.json.JsonTree;
 import org.infinispan.protostream.impl.json.PrettyJsonWriter;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
  * Reads/writes <a href="https://github.com/nilslice/protolock">protolock</a> files.
@@ -64,18 +60,16 @@ public class ProtoLock {
    }
 
    public static ProtoLock readLockFile(InputStream is, Configuration configuration) throws IOException {
-      JsonFactory jsonFactory = new JsonFactory();
-      jsonFactory.setCodec(new ObjectMapper());
-      JsonParser json = jsonFactory.createParser(is);
-      TreeNode tree = json.getCodec().readTree(json);
+      // A strict decoder: malformed UTF-8 fails instead of being replaced
+      JsonTree tree = JsonTree.parse(new InputStreamReader(is, StandardCharsets.UTF_8.newDecoder()));
       List<FileDescriptor> descriptors = new ArrayList<>();
-      ArrayNode definitions = (ArrayNode) tree.get("definitions");
+      JsonTree definitions = tree.get("definitions");
       String packageName = "";
       for (int i = 0; i < definitions.size(); i++) {
-         JsonNode definition = definitions.get(i);
+         JsonTree definition = definitions.get(i);
          FileDescriptor.Builder fdb = new FileDescriptor.Builder();
          fdb.withName(unescapePath(definition.get("protopath").asText()));
-         JsonNode def = definition.get("def");
+         JsonTree def = definition.get("def");
          if (def.has("package")) {
             packageName = def.get("package").get("name").asText();
             fdb.withPackageName(packageName);
@@ -86,16 +80,16 @@ public class ProtoLock {
          readOptions(def, fdb);
          Map<String, Descriptor.Builder> messageBuilders = readMessages(def, packageName.isEmpty() ? "" : packageName + ".");
          if (def.has("enums")) {
-            ArrayNode enums = (ArrayNode) def.get("enums");
+            JsonTree enums = def.get("enums");
             for (int e = 0; e < enums.size(); e++) {
-               JsonNode en = enums.get(e);
+               JsonTree en = enums.get(e);
                EnumDescriptor.Builder eb = new EnumDescriptor.Builder();
                if (en.has("type_id")) {
                   eb.withDocumentation("@TypeId(" + en.get("type_id").asText() + ")");
                }
-               ArrayNode enumFields = (ArrayNode) en.get("enum_fields");
+               JsonTree enumFields = en.get("enum_fields");
                for (int v = 0; v < enumFields.size(); v++) {
-                  JsonNode enumField = enumFields.get(v);
+                  JsonTree enumField = enumFields.get(v);
                   EnumValueDescriptor.Builder evb = new EnumValueDescriptor.Builder();
                   evb.withName(enumField.get("name").asText());
                   if (enumField.has("integer")) {
@@ -105,11 +99,11 @@ public class ProtoLock {
                   eb.addValue(evb);
                }
                if (en.has("reserved_ids")) {
-                  ArrayNode reservedIds = (ArrayNode) en.get("reserved_ids");
+                  JsonTree reservedIds = en.get("reserved_ids");
                   reservedIds.forEach(n -> eb.addReserved(n.asInt()));
                }
                if (en.has("reserved_names")) {
-                  ArrayNode reservedNames = (ArrayNode) en.get("reserved_names");
+                  JsonTree reservedNames = en.get("reserved_names");
                   reservedNames.forEach(n -> eb.addReserved(n.asText()));
                }
                readOptions(en, eb);
@@ -134,22 +128,22 @@ public class ProtoLock {
       return new ProtoLock(descriptors);
    }
 
-   private static Map<String, Descriptor.Builder> readMessages(JsonNode json, String namePrefix) {
+   private static Map<String, Descriptor.Builder> readMessages(JsonTree json, String namePrefix) {
       if (json.has("messages")) {
          Map<String, Descriptor.Builder> messageBuilders = new LinkedHashMap<>();
-         ArrayNode messages = (ArrayNode) json.get("messages");
+         JsonTree messages = json.get("messages");
          for (int m = 0; m < messages.size(); m++) {
-            JsonNode message = messages.get(m);
+            JsonTree message = messages.get(m);
             String name = message.get("name").asText();
             Descriptor.Builder mb = messageBuilders.computeIfAbsent(name, n -> new Descriptor.Builder().withName(n).withFullName(namePrefix + n));
             if (message.has("type_id")) {
                mb.withDocumentation("@TypeId(" + message.get("type_id").asText() + ")");
             }
             if (message.has("fields")) {
-               ArrayNode fields = (ArrayNode) message.get("fields");
+               JsonTree fields = message.get("fields");
                Map<String, OneOfDescriptor.Builder> oneOfBuilders = new LinkedHashMap<>();
                for (int f = 0; f < fields.size(); f++) {
-                  JsonNode field = fields.get(f);
+                  JsonTree field = fields.get(f);
                   FieldDescriptor.Builder fb = new FieldDescriptor.Builder();
                   fb.withName(field.get("name").asText());
                   fb.withNumber(field.get("id").asInt());
@@ -172,9 +166,9 @@ public class ProtoLock {
                oneOfBuilders.values().forEach(mb::addOneOf);
             }
             if (message.has("maps")) {
-               ArrayNode maps = (ArrayNode) message.get("maps");
+               JsonTree maps = message.get("maps");
                for (int f = 0; f < maps.size(); f++) {
-                  JsonNode map = maps.get(f);
+                  JsonTree map = maps.get(f);
                   MapDescriptor.Builder fb = new MapDescriptor.Builder();
                   fb.withKeyTypeName(map.get("key_type").asText());
                   map = map.get("field");
@@ -186,12 +180,12 @@ public class ProtoLock {
                }
             }
             if (message.has("reserved_ids")) {
-               ArrayNode reservedIds = (ArrayNode) message.get("reserved_ids");
+               JsonTree reservedIds = message.get("reserved_ids");
                reservedIds.forEach(n -> mb.addReserved(n.asInt()));
 
             }
             if (message.has("reserved_names")) {
-               ArrayNode reservedNames = (ArrayNode) message.get("reserved_names");
+               JsonTree reservedNames = message.get("reserved_names");
                reservedNames.forEach(n -> mb.addReserved(n.asText()));
             }
             readOptions(message, mb);
@@ -204,7 +198,7 @@ public class ProtoLock {
       }
    }
 
-   private static void readOptions(JsonNode json, OptionContainer<?> container) {
+   private static void readOptions(JsonTree json, OptionContainer<?> container) {
       if (json.has("options")) {
          json.get("options").forEach(n -> container.addOption(new Option(n.get("name").asText(), n.get("value").asText())));
       }
