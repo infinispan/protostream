@@ -1,8 +1,6 @@
 module org.infinispan.protostream.core {
    requires java.compiler;
    requires jdk.unsupported;
-   requires com.fasterxml.jackson.core;
-   requires static com.fasterxml.jackson.databind;
    requires static com.google.errorprone.annotations;
    requires org.jboss.logging;
    requires static org.jboss.logging.annotations;
