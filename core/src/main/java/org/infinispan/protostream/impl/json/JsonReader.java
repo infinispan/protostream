@@ -1,7 +1,5 @@
 package org.infinispan.protostream.impl.json;
 
-import static com.fasterxml.jackson.core.JsonToken.START_OBJECT;
-import static com.fasterxml.jackson.core.JsonToken.VALUE_NULL;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BOOL;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_BYTES;
 import static org.infinispan.protostream.WrappedMessage.WRAPPED_CONTAINER_TYPE_ID;
@@ -26,6 +24,8 @@ import static org.infinispan.protostream.WrappedMessage.WRAPPED_UINT64;
 import static org.infinispan.protostream.impl.json.JsonHelper.EMPTY_ARRAY;
 import static org.infinispan.protostream.impl.json.JsonHelper.JSON_TYPE_FIELD;
 import static org.infinispan.protostream.impl.json.JsonHelper.JSON_VALUE_FIELD;
+import static org.infinispan.protostream.impl.json.JsonLexer.Token.START_OBJECT;
+import static org.infinispan.protostream.impl.json.JsonLexer.Token.VALUE_NULL;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -48,11 +48,7 @@ import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
+import org.infinispan.protostream.impl.json.JsonLexer.Token;
 
 /**
  * Utility class for conversion from canonical JSON.
@@ -75,14 +71,12 @@ import com.fasterxml.jackson.core.JsonToken;
  */
 public final class JsonReader {
 
-   private static final JsonFactory JSON_FACTORY = new JsonFactory();
-
    private JsonReader() { }
 
    public static byte[] fromJson(ImmutableSerializationContext ctx, Reader reader) throws IOException {
       try (reader) {
-         JsonParser parser = JSON_FACTORY.createParser(reader);
-         JsonToken token = parser.nextToken();
+         JsonLexer parser = new JsonLexer(reader);
+         Token token = parser.nextToken();
 
          if (token == null || token == VALUE_NULL)
             return EMPTY_ARRAY;
@@ -96,21 +90,21 @@ public final class JsonReader {
             writer.flush();
             return raos.toByteArray();
          }
-      } catch (JsonProcessingException e) {
+      } catch (JsonLexer.ParseException e) {
          throw new IllegalStateException("Invalid JSON", e);
       }
    }
 
-   private static void processDocument(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, Descriptor descriptor, Integer fieldNumber) throws IOException {
+   private static void processDocument(ImmutableSerializationContext ctx, JsonLexer parser, TagWriter writer, Descriptor descriptor, Integer fieldNumber) throws IOException {
       boolean keepParsing = true;
       while (keepParsing) {
          keepParsing = processSingleDocument(ctx, parser, writer, descriptor, fieldNumber);
       }
    }
 
-   private static boolean processSingleDocument(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber) throws IOException {
+   private static boolean processSingleDocument(ImmutableSerializationContext ctx, JsonLexer parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber) throws IOException {
       while (true) {
-         JsonToken token = parser.nextToken();
+         Token token = parser.nextToken();
          if (token == null) return false;
 
          switch (token) {
@@ -143,7 +137,7 @@ public final class JsonReader {
       }
    }
 
-   private static void processObject(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber, boolean topLevel) throws IOException {
+   private static void processObject(ImmutableSerializationContext ctx, JsonLexer parser, TagWriter writer, Descriptor messageDescriptor, Integer fieldNumber, boolean topLevel) throws IOException {
       assertDescriptorField(messageDescriptor);
       RandomAccessOutputStream raos = new RandomAccessOutputStreamImpl(ProtobufUtil.DEFAULT_ARRAY_BUFFER_SIZE);
       TagWriter nestedWriter = TagWriterImpl.newInstance(ctx, raos);
@@ -157,7 +151,7 @@ public final class JsonReader {
          // Objects in ProtoStream is prefixed with the `_type` to identify the message descriptor.
          // At this point, we either read primitive values, or an embedded object/array.
          // In the latter case, it should trigger the recursive search again for a full document.
-         JsonToken token = parser.nextToken();
+         Token token = parser.nextToken();
          if (token == null) {
             break;
          }
@@ -307,10 +301,10 @@ public final class JsonReader {
       writer.flush();
    }
 
-   private static void processArray(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, String type, String field, Integer fieldNumber) throws IOException {
+   private static void processArray(ImmutableSerializationContext ctx, JsonLexer parser, TagWriter writer, String type, String field, Integer fieldNumber) throws IOException {
       OUT:
       while (true) {
-         JsonToken token = parser.nextToken();
+         Token token = parser.nextToken();
          if (token == null) {
             break;
          }
@@ -348,11 +342,11 @@ public final class JsonReader {
                Descriptor d = (Descriptor) ctx.getDescriptorByName(type);
                FieldDescriptor fd = d.findFieldByName(field);
                if (!fd.isRepeated()) {
-                  if (token == JsonToken.VALUE_NUMBER_INT && Type.BYTES.equals(fd.getType())) {
+                  if (token == Token.VALUE_NUMBER_INT && Type.BYTES.equals(fd.getType())) {
                      // We want to parse a byte[] not only as Base64 but also from the JSON form: [7,7,7]
                      ArrayList<Byte> result = new ArrayList<>();
                      byte value;
-                     while (token == JsonToken.VALUE_NUMBER_INT) {
+                     while (token == Token.VALUE_NUMBER_INT) {
                         value = parser.getByteValue();
                         result.add(value);
                         token = parser.nextToken();
@@ -364,7 +358,7 @@ public final class JsonReader {
                      }
                      writer.writeBytes(fd.getNumber(), binary);
 
-                     if (token == JsonToken.END_ARRAY) {
+                     if (token == Token.END_ARRAY) {
                         return;
                      }
                   }
@@ -381,9 +375,9 @@ public final class JsonReader {
       }
    }
 
-   private static void processEnum(JsonParser parser, TagWriter writer, EnumDescriptor enumDescriptor) throws IOException {
+   private static void processEnum(JsonLexer parser, TagWriter writer, EnumDescriptor enumDescriptor) throws IOException {
       while (true) {
-         JsonToken token = parser.nextToken();
+         Token token = parser.nextToken();
          if (token == null) {
             break;
          }
@@ -434,10 +428,10 @@ public final class JsonReader {
       }
    }
 
-   private static void processMap(ImmutableSerializationContext ctx, MapDescriptor md, JsonParser parser, TagWriter writer) throws IOException {
+   private static void processMap(ImmutableSerializationContext ctx, MapDescriptor md, JsonLexer parser, TagWriter writer) throws IOException {
       OUT:
       while (true) {
-         JsonToken token = parser.nextToken();
+         Token token = parser.nextToken();
          if (token == null)
             return;
 
@@ -470,8 +464,8 @@ public final class JsonReader {
       }
    }
 
-   private static void processMapValue(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, MapDescriptor md) throws IOException {
-      JsonToken token = parser.nextToken();
+   private static void processMapValue(ImmutableSerializationContext ctx, JsonLexer parser, TagWriter writer, MapDescriptor md) throws IOException {
+      Token token = parser.nextToken();
       if (token == null) {
          return;
       }
@@ -489,7 +483,7 @@ public final class JsonReader {
             if (md.getType() == Type.ENUM) {
                writeEnumField(parser, writer, md, 2);
             } else {
-               writer.writeString(2, parser.getValueAsString());
+               writer.writeString(2, parser.getText());
             }
             break;
          case VALUE_NUMBER_INT:
@@ -516,7 +510,7 @@ public final class JsonReader {
       writer.flush();
    }
 
-   private static void readSingleField(ImmutableSerializationContext ctx, JsonParser parser, TagWriter writer, Descriptor messageDescriptor, String currentField, Integer outerFieldNumber) throws IOException {
+   private static void readSingleField(ImmutableSerializationContext ctx, JsonLexer parser, TagWriter writer, Descriptor messageDescriptor, String currentField, Integer outerFieldNumber) throws IOException {
       // If we don't have a descriptor, it means we are still ready the `_type` field in the JSON.
       // We assert that. Otherwise, we should have a descriptor already to identify the fields.
       if (messageDescriptor == null) {
@@ -544,7 +538,7 @@ public final class JsonReader {
          return;
       }
 
-      JsonToken token = Objects.requireNonNull(parser.nextToken(), "Field name not followed by value");
+      Token token = Objects.requireNonNull(parser.nextToken(), "Field name not followed by value");
       ByteArrayOutputStream baos = null;
       TagWriter out = writer;
       if (outerFieldNumber != null) {
@@ -580,8 +574,8 @@ public final class JsonReader {
       }
    }
 
-   private static void processPrimitive(JsonParser parser, TagWriter writer, Type fieldType, Integer fieldId) throws IOException {
-      JsonToken token = parser.nextToken();
+   private static void processPrimitive(JsonLexer parser, TagWriter writer, Type fieldType, Integer fieldId) throws IOException {
+      Token token = parser.nextToken();
       if (token == null) {
          return;
       }
@@ -607,7 +601,7 @@ public final class JsonReader {
       }
    }
 
-   private static void writeEnumField(JsonParser parser, TagWriter writer, FieldDescriptor fd, int fieldNumber) throws IOException {
+   private static void writeEnumField(JsonLexer parser, TagWriter writer, FieldDescriptor fd, int fieldNumber) throws IOException {
       String value = parser.getText();
       EnumDescriptor enumDescriptor = fd.getEnumType();
       EnumValueDescriptor valueDescriptor = enumDescriptor.findValueByName(value);
@@ -618,7 +612,7 @@ public final class JsonReader {
       writer.writeEnum(fieldNumber, choice);
    }
 
-   private static void writeField(JsonParser parser, TagWriter writer, Type fieldType, int fieldNumber) throws IOException {
+   private static void writeField(JsonLexer parser, TagWriter writer, Type fieldType, int fieldNumber) throws IOException {
       switch (fieldType) {
          // Signed 64 bits values.
          // We retrieve these directly with the parser.
