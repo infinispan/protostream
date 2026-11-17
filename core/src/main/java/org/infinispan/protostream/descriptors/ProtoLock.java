@@ -55,47 +55,63 @@ public class ProtoLock {
       }
    }
 
+   /**
+    * Reads a proto.lock file. The stream is read to the end but not closed: the caller owns it.
+    *
+    * @throws IOException if the stream cannot be read, is not valid JSON or is not a valid proto.lock file
+    */
    public static ProtoLock readLockFile(InputStream is) throws IOException {
       return readLockFile(is, Configuration.builder().build());
    }
 
+   /**
+    * Reads a proto.lock file. The stream is read to the end but not closed: the caller owns it.
+    *
+    * @throws IOException if the stream cannot be read, is not valid JSON or is not a valid proto.lock file
+    */
    public static ProtoLock readLockFile(InputStream is, Configuration configuration) throws IOException {
       // A strict decoder: malformed UTF-8 fails instead of being replaced
       JsonTree tree = JsonTree.parse(new InputStreamReader(is, StandardCharsets.UTF_8.newDecoder()));
       List<FileDescriptor> descriptors = new ArrayList<>();
-      JsonTree definitions = tree.get("definitions");
+      JsonTree definitions = required(tree, "definitions", "the root object");
       String packageName = "";
       for (int i = 0; i < definitions.size(); i++) {
          JsonTree definition = definitions.get(i);
          FileDescriptor.Builder fdb = new FileDescriptor.Builder();
-         fdb.withName(unescapePath(definition.get("protopath").asText()));
-         JsonTree def = definition.get("def");
+         String path = unescapePath(required(definition, "protopath", "definition " + i).asText());
+         fdb.withName(path);
+         String where = "'" + path + "'";
+         JsonTree def = required(definition, "def", "definition " + where);
          if (def.has("package")) {
-            packageName = def.get("package").get("name").asText();
+            packageName = required(def.get("package"), "name", "the package of " + where).asText();
             fdb.withPackageName(packageName);
          }
          if (def.has("imports")) {
-            def.get("imports").forEach(n -> fdb.addDependency(n.get("path").asText()));
+            for (JsonTree n : def.get("imports")) {
+               fdb.addDependency(required(n, "path", "an import of " + where).asText());
+            }
          }
-         readOptions(def, fdb);
-         Map<String, Descriptor.Builder> messageBuilders = readMessages(def, packageName.isEmpty() ? "" : packageName + ".");
+         readOptions(def, fdb, where);
+         Map<String, Descriptor.Builder> messageBuilders = readMessages(def, packageName.isEmpty() ? "" : packageName + ".", where);
          if (def.has("enums")) {
             JsonTree enums = def.get("enums");
             for (int e = 0; e < enums.size(); e++) {
                JsonTree en = enums.get(e);
                EnumDescriptor.Builder eb = new EnumDescriptor.Builder();
+               String enumName = required(en, "name", "an enum of " + where).asText();
+               String enumWhere = "enum '" + enumName + "' of " + where;
                if (en.has("type_id")) {
                   eb.withDocumentation("@TypeId(" + en.get("type_id").asText() + ")");
                }
-               JsonTree enumFields = en.get("enum_fields");
+               JsonTree enumFields = required(en, "enum_fields", enumWhere);
                for (int v = 0; v < enumFields.size(); v++) {
                   JsonTree enumField = enumFields.get(v);
                   EnumValueDescriptor.Builder evb = new EnumValueDescriptor.Builder();
-                  evb.withName(enumField.get("name").asText());
+                  evb.withName(required(enumField, "name", "a value of " + enumWhere).asText());
                   if (enumField.has("integer")) {
                      evb.withTag(enumField.get("integer").asInt());
                   }
-                  readOptions(enumField, evb);
+                  readOptions(enumField, evb, enumWhere);
                   eb.addValue(evb);
                }
                if (en.has("reserved_ids")) {
@@ -106,12 +122,14 @@ public class ProtoLock {
                   JsonTree reservedNames = en.get("reserved_names");
                   reservedNames.forEach(n -> eb.addReserved(n.asText()));
                }
-               readOptions(en, eb);
-               String enumName = en.get("name").asText();
+               readOptions(en, eb, enumWhere);
                int dot = enumName.lastIndexOf('.');
                if (dot > 0) {
                   eb.withName(enumName.substring(dot + 1));
                   Descriptor.Builder mb = messageBuilders.get(enumName.substring(0, dot));
+                  if (mb == null) {
+                     throw invalid("unknown message '" + enumName.substring(0, dot) + "' containing " + enumWhere);
+                  }
                   mb.addEnum(eb);
                } else {
                   eb.withName(enumName);
@@ -128,13 +146,14 @@ public class ProtoLock {
       return new ProtoLock(descriptors);
    }
 
-   private static Map<String, Descriptor.Builder> readMessages(JsonTree json, String namePrefix) {
+   private static Map<String, Descriptor.Builder> readMessages(JsonTree json, String namePrefix, String where) throws IOException {
       if (json.has("messages")) {
          Map<String, Descriptor.Builder> messageBuilders = new LinkedHashMap<>();
          JsonTree messages = json.get("messages");
          for (int m = 0; m < messages.size(); m++) {
             JsonTree message = messages.get(m);
-            String name = message.get("name").asText();
+            String name = required(message, "name", "a message of " + where).asText();
+            String messageWhere = "message '" + namePrefix + name + "' of " + where;
             Descriptor.Builder mb = messageBuilders.computeIfAbsent(name, n -> new Descriptor.Builder().withName(n).withFullName(namePrefix + n));
             if (message.has("type_id")) {
                mb.withDocumentation("@TypeId(" + message.get("type_id").asText() + ")");
@@ -145,16 +164,18 @@ public class ProtoLock {
                for (int f = 0; f < fields.size(); f++) {
                   JsonTree field = fields.get(f);
                   FieldDescriptor.Builder fb = new FieldDescriptor.Builder();
-                  fb.withName(field.get("name").asText());
-                  fb.withNumber(field.get("id").asInt());
-                  fb.withTypeName(field.get("type").asText());
+                  String fieldName = required(field, "name", "a field of " + messageWhere).asText();
+                  String fieldWhere = "field '" + fieldName + "' of " + messageWhere;
+                  fb.withName(fieldName);
+                  fb.withNumber(required(field, "id", fieldWhere).asInt());
+                  fb.withTypeName(required(field, "type", fieldWhere).asText());
                   if (field.has("is_repeated")) {
                      fb.withLabel(Label.REPEATED);
                   }
                   if (field.has("optional")) {
                      fb.withLabel(Label.OPTIONAL);
                   }
-                  readOptions(field, fb);
+                  readOptions(field, fb, fieldWhere);
                   if (field.has("oneof_parent")) {
                      String oneOf = field.get("oneof_parent").asText();
                      fb.withLabel(Label.ONE_OF);
@@ -170,12 +191,14 @@ public class ProtoLock {
                for (int f = 0; f < maps.size(); f++) {
                   JsonTree map = maps.get(f);
                   MapDescriptor.Builder fb = new MapDescriptor.Builder();
-                  fb.withKeyTypeName(map.get("key_type").asText());
-                  map = map.get("field");
-                  fb.withName(map.get("name").asText());
-                  fb.withNumber(map.get("id").asInt());
-                  fb.withValueTypeName(map.get("type").asText());
-                  readOptions(map, fb);
+                  fb.withKeyTypeName(required(map, "key_type", "a map of " + messageWhere).asText());
+                  map = required(map, "field", "a map of " + messageWhere);
+                  String mapName = required(map, "name", "a map of " + messageWhere).asText();
+                  String mapWhere = "map '" + mapName + "' of " + messageWhere;
+                  fb.withName(mapName);
+                  fb.withNumber(required(map, "id", mapWhere).asInt());
+                  fb.withValueTypeName(required(map, "type", mapWhere).asText());
+                  readOptions(map, fb, mapWhere);
                   mb.addMap(fb);
                }
             }
@@ -188,8 +211,8 @@ public class ProtoLock {
                JsonTree reservedNames = message.get("reserved_names");
                reservedNames.forEach(n -> mb.addReserved(n.asText()));
             }
-            readOptions(message, mb);
-            Map<String, Descriptor.Builder> nested = readMessages(message, namePrefix + name + ".");
+            readOptions(message, mb, messageWhere);
+            Map<String, Descriptor.Builder> nested = readMessages(message, namePrefix + name + ".", where);
             nested.values().forEach(mb::addMessage);
          }
          return messageBuilders;
@@ -198,10 +221,29 @@ public class ProtoLock {
       }
    }
 
-   private static void readOptions(JsonTree json, OptionContainer<?> container) {
+   private static void readOptions(JsonTree json, OptionContainer<?> container, String where) throws IOException {
       if (json.has("options")) {
-         json.get("options").forEach(n -> container.addOption(new Option(n.get("name").asText(), n.get("value").asText())));
+         for (JsonTree n : json.get("options")) {
+            String name = required(n, "name", "an option of " + where).asText();
+            container.addOption(new Option(name, required(n, "value", "option '" + name + "' of " + where).asText()));
+         }
       }
+   }
+
+   /**
+    * @return the value of a field that every proto.lock file has
+    * @throws IOException if the field is missing
+    */
+   private static JsonTree required(JsonTree json, String name, String where) throws IOException {
+      JsonTree value = json == null ? null : json.get(name);
+      if (value == null) {
+         throw invalid("missing '" + name + "' in " + where);
+      }
+      return value;
+   }
+
+   private static IOException invalid(String message) {
+      return new IOException("Invalid proto.lock file: " + message);
    }
 
    /**
