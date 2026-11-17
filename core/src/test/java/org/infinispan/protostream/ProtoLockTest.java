@@ -4,6 +4,7 @@ import static org.infinispan.protostream.impl.parser.DescriptorsTest.asFile;
 import static org.infinispan.protostream.impl.parser.DescriptorsTest.parseAndResolve;
 import static org.infinispan.protostream.impl.parser.DescriptorsTest.resolve;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -71,6 +72,31 @@ public class ProtoLockTest {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       protoLock.writeLockFile(baos);
       assertEquals(new String(expected, StandardCharsets.UTF_8), baos.toString(StandardCharsets.UTF_8));
+   }
+
+   @Test
+   public void testReadLockFileMissingFields() {
+      assertInvalid("{}", "missing 'definitions' in the root object");
+      assertInvalid("{\"definitions\":[{\"def\":{}}]}", "missing 'protopath' in definition 0");
+      assertInvalid("{\"definitions\":[{\"protopath\":\"a.proto\"}]}", "missing 'def' in definition 'a.proto'");
+      assertInvalid(lockFile("\"messages\":[{\"name\":\"M\",\"fields\":[{\"name\":\"f\",\"type\":\"int32\"}]}]"),
+            "missing 'id' in field 'f' of message 'p.M' of 'a.proto'");
+      assertInvalid(lockFile("\"messages\":[{\"name\":\"M\",\"maps\":[{\"key_type\":\"string\"}]}]"),
+            "missing 'field' in a map of message 'p.M' of 'a.proto'");
+      assertInvalid(lockFile("\"enums\":[{\"name\":\"E\",\"enum_fields\":[{\"integer\":1}]}]"),
+            "missing 'name' in a value of enum 'E' of 'a.proto'");
+      assertInvalid(lockFile("\"enums\":[{\"name\":\"M.E\",\"enum_fields\":[]}]"),
+            "unknown message 'M' containing enum 'M.E' of 'a.proto'");
+   }
+
+   private static String lockFile(String def) {
+      return "{\"definitions\":[{\"protopath\":\"a.proto\",\"def\":{\"package\":{\"name\":\"p\"}," + def + "}}]}";
+   }
+
+   private static void assertInvalid(String lockFile, String message) {
+      IOException e = assertThrows(IOException.class,
+            () -> ProtoLock.readLockFile(new ByteArrayInputStream(lockFile.getBytes(StandardCharsets.UTF_8))));
+      assertEquals("Invalid proto.lock file: " + message, e.getMessage());
    }
 
    private static ProtoLock createProtoLock() throws IOException {

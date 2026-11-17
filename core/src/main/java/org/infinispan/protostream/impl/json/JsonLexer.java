@@ -461,7 +461,8 @@ public final class JsonLexer {
       switch (c) {
          case EOF, ' ', '\t', '\n', '\r':
             return;
-         case ',', ':', ']', '}':
+         // Not ':', which only follows field names, and those are strings
+         case ',', ']', '}':
             if (depth > 0) {
                return;
             }

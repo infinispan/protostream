@@ -28,7 +28,7 @@ public final class JsonTree implements Iterable<JsonTree> {
    }
 
    /**
-    * Reads a single JSON document.
+    * Reads a single JSON document. The reader is read to the end but not closed: the caller owns it.
     *
     * @throws JsonLexer.ParseException if the input is empty or is not valid JSON
     */
