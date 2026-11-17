@@ -5,6 +5,7 @@ import static org.infinispan.protostream.impl.parser.DescriptorsTest.parseAndRes
 import static org.infinispan.protostream.impl.parser.DescriptorsTest.resolve;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -87,6 +88,18 @@ public class ProtoLockTest {
             "missing 'name' in a value of enum 'E' of 'a.proto'");
       assertInvalid(lockFile("\"enums\":[{\"name\":\"M.E\",\"enum_fields\":[]}]"),
             "unknown message 'M' containing enum 'M.E' of 'a.proto'");
+   }
+
+   @Test
+   public void testLockFileSortedByWrittenPath() throws IOException {
+      // '/' is written as ":/:", and '/' < '0' < ':', so sorting by the raw path would put "a/x.proto" first
+      FileDescriptorSource source = new FileDescriptorSource();
+      source.addProtoFile("a/x.proto", "package x; message X {}");
+      source.addProtoFile("a0.proto", "package y; message Y {}");
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      new ProtoLock(parseAndResolve(source, Configuration.builder().build()).values()).writeLockFile(baos);
+      String lockFile = baos.toString(StandardCharsets.UTF_8);
+      assertTrue(lockFile.indexOf("\"a0.proto\"") < lockFile.indexOf("\"a:/:x.proto\""), lockFile);
    }
 
    private static String lockFile(String def) {

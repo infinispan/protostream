@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -256,8 +257,11 @@ public class ProtoLock {
       j.writeStartObject();
       j.writeFieldName("definitions");
       j.writeStartArray();
-      // Sort by path: the descriptors map has no stable iteration order, and lock files are committed to repositories
-      for (Map.Entry<String, FileDescriptor> entry : new TreeMap<>(descriptors).entrySet()) {
+      // Sort by path as written: the descriptors map has no stable iteration order, and lock files are committed to
+      // repositories. Escaping is not injective ("a:/:b" and "a/b"), so ties fall back to the raw path.
+      Map<String, FileDescriptor> sorted = new TreeMap<>(Comparator.comparing(ProtoLock::escapePath).thenComparing(Comparator.naturalOrder()));
+      sorted.putAll(descriptors);
+      for (Map.Entry<String, FileDescriptor> entry : sorted.entrySet()) {
          FileDescriptor fd = entry.getValue();
          j.writeStartObject();
          j.writeStringField("protopath", escapePath(entry.getKey()));
