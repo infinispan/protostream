@@ -69,6 +69,8 @@
         <version.scm.plugin>2.2.1</version.scm.plugin>
         <version.source.plugin>3.4.0</version.source.plugin>
         <version.surefire.plugin>3.5.6</version.surefire.plugin>
+        <version.spotbugs.plugin>4.10.5.0</version.spotbugs.plugin>
+        <version.pmd.plugin>3.28.0</version.pmd.plugin>
         <version.maven.javacc>3.2.1</version.maven.javacc>
         <version.maven.sonatype.central>0.11.1</version.maven.sonatype.central>
         <version.maven.gpg>3.2.8</version.maven.gpg>
@@ -429,6 +431,16 @@
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>${version.jacoco}</version>
                 </plugin>
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${version.spotbugs.plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>${version.pmd.plugin}</version>
+                </plugin>
 
             </plugins>
 
@@ -522,6 +534,49 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>static-analysis</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>spotbugs</id>
+                                <goals>
+                                    <goal>spotbugs</goal>
+                                </goals>
+                                <phase>verify</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <effort>Max</effort>
+                            <!-- advisory: report findings without failing the build -->
+                            <failOnError>false</failOnError>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-pmd-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>cpd</id>
+                                <goals>
+                                    <goal>cpd</goal>
+                                </goals>
+                                <phase>verify</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <!-- advisory: report copy-paste duplication without failing the build -->
+                            <failOnViolation>false</failOnViolation>
+                            <minimumTokens>100</minimumTokens>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>community-release</id>
             <activation>
