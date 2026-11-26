@@ -20,6 +20,7 @@ The following table shows which versions are supported for vulnerability updates
 
 | Version | Supported          |
 |---------| ------------------ |
+| 6.0.x   | :white_check_mark: |
 | 5.0.x   | :white_check_mark: |
 | 4.6.x   | :white_check_mark: |
 | < 4.6.0 | :x:                |
