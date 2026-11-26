@@ -1,0 +1,41 @@
+name: 'Coverage'
+
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: 'JaCoCo coverage report'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: 'Setup Java'
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: 'Build with tests and aggregate coverage'
+        # the coverage profile instruments the tests, jacocoReport aggregates all
+        # modules into jacoco-report/ (the report-aggregate goal needs the whole
+        # reactor, hence the profile's module dependencies)
+        run: ./mvnw -B -ntp -Pcoverage,jacocoReport verify -Dcheckstyle.skip
+
+      - name: 'Upload coverage report'
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: jacoco-report
+          path: jacoco-report/
+          retention-days: 14
