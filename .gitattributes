@@ -1,0 +1,4 @@
+# Jazzer seed corpus and crashing inputs must be treated as binary so git does not
+# convert line endings on checkout (see the Jazzer JUnit integration docs,
+# "Directories and files")
+core/src/test/resources/**Inputs/** binary

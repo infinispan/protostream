@@ -12,9 +12,11 @@
 * **processor-tests-kotlin:** Tests for the annotation processor (Kotlin)
 * **types:** Pre-built adapters for common JDK types (`BigDecimal`, `UUID`, `LocalDateTime`, collections, etc.)
 * **integrationtests:** Integration tests
-* **sample-domain-definition:** Sample `.proto` domain definitions used across tests
-* **sample-domain-implementation:** Sample marshaller implementations used across tests
 * **maven-plugin:** Maven plugin for `.proto` schema backward compatibility checks
+
+The reusable sample test domain (`User`, `Address`, `Account`, etc., with their `.proto` schema and
+marshallers) lives in `core`'s test sources, under `org.infinispan.protostream.domain` and
+`org.infinispan.protostream.domain.marshallers` (see `MarshallerRegistration`).
 
 ## Common Build Commands
 * **Full build (skip tests):** `./mvnw install -DskipTests -Dcheckstyle.skip`

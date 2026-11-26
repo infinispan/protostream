@@ -56,7 +56,7 @@ public void testAnnotationProcessing() {
 
 ### Sample Domain Classes
 
-The `sample-domain-definition` and `sample-domain-implementation` modules provide reusable test domain objects (`User`, `Address`, `Account`, etc.) with their `.proto` schemas and marshallers. Use these in tests rather than creating ad-hoc domain classes when possible.
+The reusable sample test domain objects (`User`, `Address`, `Account`, etc.) with their `.proto` schema and marshallers live in `core`'s test sources under `org.infinispan.protostream.domain` and `org.infinispan.protostream.domain.marshallers` (register them via `MarshallerRegistration.registerMarshallers`, or extend `AbstractProtoStreamTest`). Use these in tests rather than creating ad-hoc domain classes when possible.
 
 ## Running Tests
 
@@ -74,3 +74,10 @@ The `sample-domain-definition` and `sample-domain-implementation` modules provid
 ./mvnw install -pl core,processor -DskipTests -Dcheckstyle.skip
 ./mvnw test -pl processor-tests -Dcheckstyle.skip
 ```
+
+### Fuzz Tests
+
+`*FuzzTest` classes (Jazzer) run in regression mode as ordinary tests in every normal test run,
+replaying the seed corpus. Run a coverage-guided fuzzing session with the `fuzz` profile, one fuzz
+test per run: `./mvnw test -Pfuzz -pl core -Dtest=ProtobufMessageEditorFuzzTest`. See
+[README-Build.md](README-Build.md) for corpus and crash-input handling.

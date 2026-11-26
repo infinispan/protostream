@@ -31,3 +31,4 @@ CURSOR.md
 .cursorrules
 .github/copilot-instructions.md
 jacoco-report
+core/.cifuzz-corpus/
