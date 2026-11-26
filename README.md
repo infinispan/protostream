@@ -2,6 +2,7 @@
 
 ![Maven Central Version](https://img.shields.io/maven-central/v/org.infinispan.protostream/protostream?versionPrefix=6&style=for-the-badge)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/infinispan/protostream/test_report.yaml?branch=main&style=for-the-badge)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/infinispan/protostream/badge)](https://securityscorecards.dev/viewer/?uri=github.com/infinispan/protostream)
 [![License](https://img.shields.io/github/license/infinispan/infinispan?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 ![Supported JVM Versions](https://img.shields.io/badge/JVM-17-green.svg?style=for-the-badge&logo=openjdk)
 [![Javadoc](https://img.shields.io/badge/Javadoc-online-green.svg?style=for-the-badge&logo=openjdk)](http://www.javadoc.io/doc/org.infinispan.protostream/protostream)
