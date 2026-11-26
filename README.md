@@ -121,6 +121,9 @@ Requires Java 17 or newer to build.
 
 Maven 3.6.0 or newer.
 
+Instructions for building ProtoStream from source, running its tests and its coverage-guided
+fuzzers are in [README-Build.md](README-Build.md).
+
 Bugs
 ----
 Bug reports go [here](https://issues.jboss.org/projects/IPROTO)

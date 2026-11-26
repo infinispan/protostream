@@ -78,6 +78,7 @@
         <version.infinispan.checkstyle>16.2.3</version.infinispan.checkstyle>
         <version.com.puppycrawl.tools.checkstyle>12.3.1</version.com.puppycrawl.tools.checkstyle>
         <version.junit>6.1.3</version.junit>
+        <version.jazzer>0.30.0</version.jazzer>
         <version.compile-testing>0.21</version.compile-testing>
         <version.mockito>5.23.0</version.mockito>
         <version.jboss.logging>3.6.3.Final</version.jboss.logging>
@@ -91,6 +92,10 @@
         <version.errorprone>2.50.0</version.errorprone>
         <version.protobuf>4.36.2</version.protobuf>
         <version.jacoco>0.8.16</version.jacoco>
+
+        <!-- Fuzzing with Jazzer: regression mode (corpus replay) by default, fuzzing mode with -Pfuzz -->
+        <jazzer.fuzz>0</jazzer.fuzz>
+        <jazzer.coverage>1</jazzer.coverage>
     </properties>
 
     <dependencyManagement>
@@ -194,6 +199,13 @@
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
                 <version>${version.junit}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.code-intelligence</groupId>
+                <artifactId>jazzer-junit</artifactId>
+                <version>${version.jazzer}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -522,6 +534,15 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>fuzz</id>
+            <properties>
+                <!-- JAZZER_FUZZ=1: run fuzz tests in fuzzing mode (one fuzz test per test run,
+                     selected with -Dtest=...FuzzTest) instead of regression mode -->
+                <jazzer.fuzz>1</jazzer.fuzz>
+                <jazzer.coverage>1</jazzer.coverage>
+            </properties>
+        </profile>
         <profile>
             <id>community-release</id>
             <activation>

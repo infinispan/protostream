@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
@@ -213,6 +215,187 @@ public final class ProtobufUtil {
    public static void toWrappedStream(ImmutableSerializationContext ctx, OutputStream out, Object t) throws IOException {
       TagWriter writer = out instanceof RandomAccessOutputStream raos ? TagWriter.newInstance(ctx, raos) : TagWriter.newInstance(ctx, out);
       WrappedMessage.write(ctx, writer, t);
+   }
+
+   /**
+    * The parts of a message wrapped according to the {@link WrappedMessage} proto definition.
+    *
+    * @param typeName the fully qualified type name ({@code WrappedMessage.WRAPPED_TYPE_NAME}), or {@code null}
+    * @param typeId   the numeric type id ({@code WrappedMessage.WRAPPED_TYPE_ID}), or {@code null}
+    * @param message  the raw (unwrapped) message bytes ({@code WrappedMessage.WRAPPED_MESSAGE}), or {@code null}
+    * @since 6.0.14
+    */
+   public record WrappedMessageParts(String typeName, Integer typeId, byte[] message) {
+   }
+
+   /**
+    * Splits a wrapped message into its parts, without decoding the inner message.
+    *
+    * @param wrapped the wrapped message bytes
+    * @return the type name, type id and inner message bytes (each possibly {@code null})
+    * @throws IOException if the wrapped bytes are malformed
+    * @since 6.0.14
+    */
+   public static WrappedMessageParts splitWrappedMessage(byte[] wrapped) throws IOException {
+      Objects.requireNonNull(wrapped, "wrapped cannot be null");
+      String typeName = null;
+      Integer typeId = null;
+      byte[] message = null;
+      int pos = 0;
+      int end = wrapped.length;
+      while (pos < end) {
+         long tag = readEnvelopeVarint(wrapped, pos, end);
+         pos += envelopeVarintSize(wrapped, pos);
+         int fieldNumber = (int) (tag >>> 3);
+         int wireType = (int) (tag & 7);
+         switch (wireType) {
+            case 0 -> {
+               long value = readEnvelopeVarint(wrapped, pos, end);
+               pos += envelopeVarintSize(wrapped, pos);
+               if (fieldNumber == WrappedMessage.WRAPPED_TYPE_ID) {
+                  typeId = (int) value;
+               }
+            }
+            case 2 -> {
+               long length = readEnvelopeVarint(wrapped, pos, end);
+               pos += envelopeVarintSize(wrapped, pos);
+               if (length < 0 || length > end - pos) {
+                  throw new MalformedProtobufException("Truncated wrapped message");
+               }
+               if (fieldNumber == WrappedMessage.WRAPPED_TYPE_NAME) {
+                  typeName = new String(wrapped, pos, (int) length, StandardCharsets.UTF_8);
+               } else if (fieldNumber == WrappedMessage.WRAPPED_MESSAGE) {
+                  message = Arrays.copyOfRange(wrapped, pos, pos + (int) length);
+               }
+               pos += (int) length;
+            }
+            case 1 -> {
+               if (end - pos < 8) {
+                  throw new MalformedProtobufException("Truncated wrapped message");
+               }
+               pos += 8;
+            }
+            case 5 -> {
+               if (end - pos < 4) {
+                  throw new MalformedProtobufException("Truncated wrapped message");
+               }
+               pos += 4;
+            }
+            case 3 -> {
+               int depth = 1;
+               int[] openGroups = new int[8];
+               openGroups[0] = fieldNumber;
+               while (depth > 0) {
+                  if (pos >= end) {
+                     throw new MalformedProtobufException("Unterminated group in wrapped message");
+                  }
+                  long gtag = readEnvelopeVarint(wrapped, pos, end);
+                  pos += envelopeVarintSize(wrapped, pos);
+                  int wt = (int) (gtag & 7);
+                  if (wt == 3) {
+                     if (depth == openGroups.length) {
+                        openGroups = Arrays.copyOf(openGroups, openGroups.length * 2);
+                     }
+                     openGroups[depth] = (int) (gtag >>> 3);
+                     depth++;
+                  } else if (wt == 4) {
+                     depth--;
+                     if ((int) (gtag >>> 3) != openGroups[depth]) {
+                        throw new MalformedProtobufException("Mismatched END_GROUP tag in wrapped message");
+                     }
+                  } else {
+                     switch (wt) {
+                        case 0 -> {
+                           long v = readEnvelopeVarint(wrapped, pos, end);
+                           pos += envelopeVarintSize(wrapped, pos);
+                        }
+                        case 1 -> {
+                           if (end - pos < 8) {
+                              throw new MalformedProtobufException("Truncated wrapped message");
+                           }
+                           pos += 8;
+                        }
+                        case 5 -> {
+                           if (end - pos < 4) {
+                              throw new MalformedProtobufException("Truncated wrapped message");
+                           }
+                           pos += 4;
+                        }
+                        case 2 -> {
+                           long l = readEnvelopeVarint(wrapped, pos, end);
+                           pos += envelopeVarintSize(wrapped, pos);
+                           if (l < 0 || l > end - pos) {
+                              throw new MalformedProtobufException("Truncated wrapped message");
+                           }
+                           pos += (int) l;
+                        }
+                        default -> throw new MalformedProtobufException("Invalid wire type in wrapped message");
+                     }
+                  }
+               }
+            }
+            default -> throw new MalformedProtobufException("Invalid wire type in wrapped message");
+         }
+      }
+      return new WrappedMessageParts(typeName, typeId, message);
+   }
+
+   /**
+    * Joins a wrapped message from its parts, mirroring the {@link WrappedMessage} envelope layout.
+    * The type name and type id are mutually exclusive, exactly as in {@link WrappedMessage#write}:
+    * supplying both is rejected.
+    *
+    * @param typeName the fully qualified type name, or {@code null}
+    * @param typeId   the numeric type id, or {@code null}
+    * @param message  the raw (unwrapped) message bytes, or {@code null}
+    * @return the wrapped message bytes
+    * @throws IllegalArgumentException if both {@code typeName} and {@code typeId} are supplied
+    * @throws IOException if the join fails
+    * @since 6.0.14
+    */
+   public static byte[] joinWrappedMessage(String typeName, Integer typeId, byte[] message) throws IOException {
+      if (typeName != null && typeId != null) {
+         throw new IllegalArgumentException("typeName and typeId are mutually exclusive");
+      }
+      RandomAccessOutputStream baos = RandomAccessOutputStream.withCapacity((message == null ? 0 : message.length) + 20);
+      TagWriter writer = TagWriter.newInstance(null, baos);
+      if (typeId != null) {
+         writer.writeUInt32(WrappedMessage.WRAPPED_TYPE_ID, typeId);
+      } else if (typeName != null) {
+         writer.writeString(WrappedMessage.WRAPPED_TYPE_NAME, typeName);
+      }
+      if (message != null) {
+         writer.writeBytes(WrappedMessage.WRAPPED_MESSAGE, message);
+      }
+      writer.flush();
+      return baos.toByteArray();
+   }
+
+   private static long readEnvelopeVarint(byte[] buf, int pos, int end) throws IOException {
+      long value = 0;
+      for (int i = 0; i < 64; i += 7) {
+         if (pos >= end) {
+            throw new MalformedProtobufException("Truncated wrapped message");
+         }
+         byte b = buf[pos++];
+         value |= (long) (b & 0x7F) << i;
+         if (b >= 0) {
+            return value;
+         }
+      }
+      throw new MalformedProtobufException("Malformed varint in wrapped message");
+   }
+
+   /**
+    * Returns the encoded size of the varint located at the given position (recoverable from its
+    * continuation bits).
+    */
+   private static int envelopeVarintSize(byte[] buf, int pos) {
+      int size = 0;
+      while ((buf[pos + size] & 0x80) != 0) {
+         size++;
+      }
+      return size + 1;
    }
 
    /**
